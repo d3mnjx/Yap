@@ -38,6 +38,14 @@ Access at `http://localhost:5221` - it's up to you how to make this accessible f
 - **Image/Video sharing** - Upload image(s) or videos and see them in inline gallery
 - **Social media previews/embeds** - Yap downloads that tiktok/youtube video so users dont need to go to these evil sites
 
+
 ## License
 
-This project is open source and available under the MIT License.
+YOU CAN USE THIS SOFTWARE "AS IS" (NO WARRANTY) IN ANY WAY YOU WANT, BUT BY DOING SO YOU ACKNOWLEDGE THAT:
+
+Science is a force for human liberation and one of humanity's greatest inventions. Through open inquiry, evidence, and the willingness to correct our errors, we expand our understanding and our ability to improve the human condition.
+
+Technology is the physical manifestation of our discoveries. By building better tools, we overcome limitations, reduce suffering, and create abundance.
+
+Free markets enable cooperation on an extraordinary scale. Through competition, exchange, and entrepreneurship, they reward useful ideas, spread innovation, and help lift people out of poverty.
+
