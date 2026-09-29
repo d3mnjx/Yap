@@ -179,9 +179,11 @@
         }
         else if (IsBot && Message.Content.Contains("[pwa-install]"))
         {
-            @EmojiService.ConvertEmojis(GetTextBefore("[pwa-install]"))
+            @* RenderMessageContent, not ConvertEmojis: the welcome DM also carries the user's
+               login link, and it must stay clickable on the phone branch too. *@
+            @EmojiService.RenderMessageContent(GetTextBefore("[pwa-install]"))
             <span class="bot-action-link" @onclick="HandlePwaInstall" @ontouchend="HandlePwaInstall" @ontouchend:preventDefault>install it</span>
-            @EmojiService.ConvertEmojis(GetTextAfter("[pwa-install]"))
+            @EmojiService.RenderMessageContent(GetTextAfter("[pwa-install]"))
         }
         else
         {

@@ -1,0 +1,228 @@
+@page "/invite/{Code}"
+@using Yap.Helpers
+@inject AccessLinkService AccessLinks
+@inject UserService UserService
+@inject UserStateService UserState
+@inject SystemBotService BotService
+@inject ChatConfigService ChatConfig
+@inject NavigationManager Navigation
+@inject UserActionLogService ActionLog
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IJSRuntime JS
+
+<PageTitle>@ChatConfig.ProjectName</PageTitle>
+
+@*
+    Opening a link never signs anyone in by itself. Messengers and our own link previewer
+    fetch every pasted URL, so a GET that logged in would count as a use (and fire a
+    "new device" DM) on every paste. The button posts to /auth/invite, which sets the cookie.
+*@
+<div class="invite-container">
+    @switch (_view)
+    {
+        case View.Busy:
+            <h2>One moment</h2>
+            <div class="invite-card">
+                <p class="invite-text">Too many sign-in attempts right now. Try this link again in a few minutes.</p>
+            </div>
+            break;
+
+        case View.Invalid:
+            <h2>This link no longer works</h2>
+            <div class="invite-card">
+                <p class="invite-text">It may have expired or been revoked. Ask the person who sent it for a new one.</p>
+                @if (UserState.IsLoggedIn)
+                {
+                    <a class="invite-secondary" href="/lobby">Back to chat</a>
+                }
+                else
+                {
+                    <a class="invite-secondary" href="/login">Go to the login page</a>
+                }
+            </div>
+            break;
+
+        case View.Join:
+            <h2>You're invited to @ChatConfig.ProjectName</h2>
+            <div class="invite-card">
+                <p class="invite-text">Pick a username to join.</p>
+                <div class="invite-form-row">
+                    <input type="text" @bind="usernameInput" @bind:event="oninput" @bind:after="ValidateUsername"
+                           placeholder="username" class="invite-input @(showError ? "invalid" : "")"
+                           @onkeypress="HandleKeyPress" maxlength="@UsernameRules.MaxLength"
+                           autocomplete="off" autocapitalize="none" spellcheck="false" />
+                    <button class="invite-button" @onclick="Join" disabled="@(!CanJoin)">
+                        @(_submitting ? "Joining…" : "Join")
+                    </button>
+                </div>
+                @if (showError)
+                {
+                    <div class="validation-error">@errorMessage</div>
+                }
+                else if (_bounceMessage != null)
+                {
+                    <div class="validation-error">@_bounceMessage</div>
+                }
+            </div>
+            break;
+
+        case View.Continue:
+            <h2>Welcome back, @_owner!.Username</h2>
+            <div class="invite-card">
+                <p class="invite-text">This link signs you in as <strong>@_owner.Username</strong> on this device.</p>
+                <button class="invite-button" @onclick="Continue" disabled="@_submitting">
+                    @(_submitting ? "Signing in…" : $"Continue as {_owner.Username}")
+                </button>
+            </div>
+            break;
+
+        case View.Switch:
+            <h2>Switch account?</h2>
+            <div class="invite-card">
+                <p class="invite-text">You are signed in as <strong>@UserState.Username</strong>. This link belongs to <strong>@_owner!.Username</strong>.</p>
+                <button class="invite-button" @onclick="Continue" disabled="@_submitting">
+                    @(_submitting ? "Switching…" : $"Switch to {_owner.Username}")
+                </button>
+                <a class="invite-secondary" href="/lobby">Stay as @UserState.Username</a>
+            </div>
+            break;
+    }
+    <div class="build-info">@BuildInfo.Time</div>
+</div>
+
+@code {
+    [Parameter]
+    public string Code { get; set; } = "";
+
+    // Set when /auth/invite bounced a join attempt (the link itself was fine).
+    [SupplyParameterFromQuery(Name = "reason")]
+    public string? Reason { get; set; }
+
+    private enum View { Busy, Invalid, Join, Continue, Switch }
+
+    private View _view = View.Invalid;
+    private AccessLink? _link;
+    private User? _owner;
+
+    private string usernameInput = "";
+    private string errorMessage = "";
+    private bool showError;
+    private bool _submitting;
+    private string? _bounceMessage;
+
+    private bool CanJoin => !_submitting && !showError && usernameInput.Length >= UsernameRules.MinLength;
+
+    protected override void OnInitialized()
+    {
+        _bounceMessage = Reason switch
+        {
+            "taken" => "That username is already taken. Pick another one.",
+            "invalid_name" => "That username is not allowed. Pick another one.",
+            _ => null
+        };
+
+        if (AccessLinks.IsBraked)
+        {
+            _view = View.Busy;
+            return;
+        }
+
+        _link = AccessLinks.Find(Code);
+        if (_link is not { IsActive: true })
+        {
+            // A miss on the page counts like a miss at the endpoint — this page shows the
+            // owner's name for a valid code, so it must not be a free oracle for guessing.
+            // Logged with the IP so the admin can see who is guessing after a brake DM.
+            AccessLinks.RecordFailure();
+            ActionLog.Log(null, UserActionLog.KnownActions.LOGIN_FAIL, info: "invite_invalid",
+                ip: HttpContextAccessor.HttpContext?.Items["ClientIp"]?.ToString());
+            _view = View.Invalid;
+            return;
+        }
+
+        if (_link.UserId is null)
+        {
+            _view = View.Join;
+            return;
+        }
+
+        _owner = UserService.GetById(_link.UserId.Value);
+        if (_owner is null)
+        {
+            _view = View.Invalid;
+            return;
+        }
+
+        if (UserState.UserId == _owner.Id)
+        {
+            // Already this user on this device: nothing to redeem.
+            Navigation.NavigateTo("/lobby");
+            return;
+        }
+
+        _view = UserState.IsLoggedIn ? View.Switch : View.Continue;
+    }
+
+    private void ValidateUsername()
+    {
+        showError = false;
+        errorMessage = "";
+        _bounceMessage = null;
+
+        if (usernameInput.Length == 0) return;
+
+        var error = UsernameRules.Check(usernameInput, out var normalized);
+        if (normalized != usernameInput)
+            usernameInput = normalized;
+
+        // Too short is not worth a red message while the user is still typing; the Join
+        // button simply stays disabled until the name is long enough.
+        if (error != null && usernameInput.Length >= UsernameRules.MinLength)
+        {
+            Fail(error);
+            return;
+        }
+
+        if (BotService.IsBotUser(usernameInput))
+        {
+            Fail("Nice try! 🤖");
+            return;
+        }
+
+        if (UserService.IsUsernameTaken(usernameInput))
+        {
+            Fail("That username is already taken");
+            return;
+        }
+
+        if (UserService.FindByDisplayName(usernameInput) is not null)
+        {
+            Fail("A member already goes by that name. Pick a different one.");
+        }
+    }
+
+    private void Fail(string message)
+    {
+        showError = true;
+        errorMessage = message;
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && CanJoin) await Join();
+    }
+
+    private async Task Join()
+    {
+        if (!CanJoin) return;
+        _submitting = true;
+        await JS.InvokeVoidAsync("postForm", "/auth/invite", new { code = Code, username = usernameInput, returnUrl = "/lobby" });
+    }
+
+    private async Task Continue()
+    {
+        if (_submitting) return;
+        _submitting = true;
+        await JS.InvokeVoidAsync("postForm", "/auth/invite", new { code = Code, returnUrl = "/lobby" });
+    }
+}

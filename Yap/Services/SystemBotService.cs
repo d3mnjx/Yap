@@ -13,6 +13,7 @@ public class SystemBotService
 {
     private readonly UserService _userService;
     private readonly ChatService _chatService;
+    private readonly AccessLinkService _accessLinks;
     private readonly IConfiguration _configuration;
     private readonly IWebHostEnvironment _env;
     private readonly ILogger<SystemBotService> _logger;
@@ -38,12 +39,14 @@ public class SystemBotService
     public SystemBotService(
         UserService userService,
         ChatService chatService,
+        AccessLinkService accessLinks,
         IConfiguration configuration,
         IWebHostEnvironment env,
         ILogger<SystemBotService> logger)
     {
         _userService = userService;
         _chatService = chatService;
+        _accessLinks = accessLinks;
         _configuration = configuration;
         _env = env;
         _logger = logger;
@@ -147,6 +150,7 @@ public class SystemBotService
 
         // Subscribe to events
         _chatService.OnUserChanged += HandleUserChanged;
+        _accessLinks.OnBrakeTripped += HandleBrakeTripped;
         _chatService.OnMessageReceived += HandleMessageReceived;
 
         _logger.LogInformation("System bot initialized: {Username} ({UserId})", _botUsername, _botUserId);
@@ -316,11 +320,20 @@ public class SystemBotService
             message += "\n\n📱 I noticed you're on a phone. It's a much better experience if you [pwa-install] to your homescreen — it will look and feel like a normal app. Please also allow notifications when prompted so you don't miss messages. You can change this anytime in Settings.";
         }
 
-        // Their secret code, born with the account (UserService.CreateUserAsync). This DM
-        // is the one place they can always find it again: when a fresh context greets them
-        // with the login page (installed app, new browser, new device), the code is the way
-        // back into THIS account instead of registering a doppelgänger.
-        if (user.Password != null)
+        // Their way back in, born with the account. This DM is the one place they can always
+        // find it again: when a fresh context greets them with the login page (installed app,
+        // new browser, new device), the link is the way back into THIS account instead of
+        // registering a doppelgänger. New accounts get a login link; accounts from before
+        // links existed still carry a passphrase.
+        if (_accessLinks.GetActiveForUser(user.Id) is { } link)
+        {
+            message += $"\n\n🔗 One more thing — this is your personal login link: {_accessLinks.BuildUrl(link.Code)}\n" +
+                       "Open it on any device or browser and you're straight back in this account (new phone, reinstalled app, second browser). " +
+                       "Save it somewhere safe, like your notes. Don't share it — anyone who has it can sign in as you. " +
+                       $"On the login page you can also type its code, {link.Code}, as your secret code. " +
+                       "You can manage the link anytime in Settings.";
+        }
+        else if (user.Password != null)
         {
             message += $"\n\n🔑 One more thing — your secret code is: {user.Password}\n" +
                        "If you ever see the login screen again (new device, new browser, reinstalled app), " +
@@ -365,7 +378,12 @@ public class SystemBotService
 
             var channel = _chatService.GetOrCreateDMChannel(_botUserId, _botUsername, user.Id, user.Username);
 
-            var methodLabel = loginMethod == "smart" ? "smart login (same network)" : "secret code";
+            var methodLabel = loginMethod switch
+            {
+                "smart" => "smart login (same network)",
+                "link" => "your login link",
+                _ => "secret code"
+            };
             var message = $"🔐 New device sign-in detected for your account using **{methodLabel}** from IP `{ip}`. If this wasn't you, open **Settings** and use **Sign out all other devices** immediately.";
 
             await _chatService.SendMessageAsync(channel.Id, _botUserId, _botUsername, message);
@@ -373,6 +391,48 @@ public class SystemBotService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error notifying {Username} of new device login", username);
+        }
+    }
+
+    /// <summary>
+    /// Tells a user that an admin replaced their login link (the rescue for someone locked
+    /// out of every device). Includes the new link: if they can still read this DM somewhere,
+    /// that is the fastest hand-over.
+    /// </summary>
+    public async Task NotifyLinkReplacedByAdminAsync(User user, AccessLink link)
+    {
+        if (!_initialized) return;
+
+        try
+        {
+            var channel = _chatService.GetOrCreateDMChannel(_botUserId, _botUsername, user.Id, user.Username);
+            await _chatService.SendMessageAsync(channel.Id, _botUserId, _botUsername,
+                $"🔗 An admin created a new login link for you: {_accessLinks.BuildUrl(link.Code)}\n" +
+                "Your previous link no longer works. Save this one somewhere safe.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error notifying {Username} of replaced login link", user.Username);
+        }
+    }
+
+    /// <summary>The access-link brake tripped: someone is probably guessing codes.</summary>
+    private async void HandleBrakeTripped(int failures)
+    {
+        try
+        {
+            var adminUsername = _chatService.GetAdmin();
+            var adminUser = adminUsername == null ? null : _userService.GetByUsername(adminUsername);
+            if (adminUser == null) return;
+
+            var channel = _chatService.GetOrCreateDMChannel(_botUserId, _botUsername, adminUser.Id, adminUser.Username);
+            await _chatService.SendMessageAsync(channel.Id, _botUserId, _botUsername,
+                $"🚨 {failures} failed login-link attempts in the last few minutes. Code sign-ins are paused for 10 minutes. " +
+                "Someone may be guessing codes — check the Logs tab in Admin for LOGIN_FAIL entries.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error notifying admin of access-link brake");
         }
     }
 

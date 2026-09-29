@@ -18,6 +18,7 @@ public class ChatDbContext : DbContext
     public DbSet<MediaUploadLog> MediaUploadLogs { get; set; } = null!;
     public DbSet<GifEntry> GifEntries { get; set; } = null!;
     public DbSet<FavoriteGif> FavoriteGifs { get; set; } = null!;
+    public DbSet<AccessLink> AccessLinks { get; set; } = null!;
 
     public ChatDbContext(DbContextOptions<ChatDbContext> options) : base(options)
     {
@@ -195,6 +196,30 @@ public class ChatDbContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(f => f.GifEntryId);
+        });
+
+        // AccessLink configuration (invite / login links)
+        modelBuilder.Entity<AccessLink>(entity =>
+        {
+            entity.HasKey(l => l.Id);
+            entity.HasIndex(l => l.Code).IsUnique();
+            entity.HasIndex(l => l.UserId);
+            entity.Property(l => l.Code).HasMaxLength(64);
+            entity.Property(l => l.Note).HasMaxLength(64);
+
+            // The owner's link dies with the owner. CreatedById has no FK on purpose: the
+            // admin who minted an invite is bookkeeping, not a dependency.
+            entity.HasOne<User>()
+                  .WithMany()
+                  .HasForeignKey(l => l.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            // Computed state, never columns
+            entity.Ignore(l => l.IsRevoked);
+            entity.Ignore(l => l.IsExpired);
+            entity.Ignore(l => l.IsActive);
+            entity.Ignore(l => l.IsClaimed);
+            entity.Ignore(l => l.AdminCanSeeCode);
         });
 
         // Reaction configuration

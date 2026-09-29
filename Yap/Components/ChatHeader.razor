@@ -1,6 +1,7 @@
 @inject ChatService ChatService
 @inject UserStateService UserState
 @inject UserService UserService
+@inject AccessLinkService AccessLinks
 @inject NotificationSettingsService NotificationSettings
 @inject UserActionLogService ActionLog
 @inject ChatNavigationState NavState
@@ -210,11 +211,14 @@
     {
         showDropdown = false;
 
-        // Warn if no secret code set — user won't be able to reclaim this username
-        if (UserState.Username != null && !UserService.HasPassword(UserState.Username))
+        // Warn when nothing can bring them back: no login link and no secret code
+        var hasWayBack = UserState.Username != null
+            && (UserService.HasPassword(UserState.Username)
+                || (UserState.UserId is { } uid && AccessLinks.HasActiveLink(uid)));
+        if (!hasWayBack)
         {
             var confirmed = await JS.InvokeAsync<bool>("confirm",
-                "You haven't set a secret code. Without one, you won't be able to reclaim this username. Continue signing out?");
+                "You have no login link and no secret code. Without one, you won't be able to get back into this account. Continue signing out?");
             if (!confirmed) return;
         }
 

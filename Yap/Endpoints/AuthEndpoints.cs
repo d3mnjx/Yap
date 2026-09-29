@@ -54,6 +54,95 @@ public static class AuthEndpoints
 
             return Results.Redirect(destination);
         });
+
+        // POST: invite / login-link redemption (from Invite.razor). POST on purpose: a GET
+        // that signed in would be redeemed by every messenger's link previewer.
+        app.MapPost("/auth/invite", async (HttpContext context, UserService userService, AccessLinkService accessLinks,
+            UserActionLogService actionLog, SystemBotService botService) =>
+        {
+            var form = await context.Request.ReadFormAsync();
+            return await HandleInvite(context, userService, accessLinks, actionLog, botService,
+                form["code"].ToString(), form["username"].ToString(), form["returnUrl"].ToString());
+        }).DisableAntiforgery();
+    }
+
+    /// <summary>
+    /// An open invite creates the account, bypassing RegistrationClosed and RequireApproval:
+    /// the admin vouched by minting it. A claimed link signs its owner in. Either way the
+    /// link is the credential, not the username the client sent.
+    /// </summary>
+    private static async Task<IResult> HandleInvite(HttpContext context, UserService userService, AccessLinkService accessLinks,
+        UserActionLogService actionLog, SystemBotService botService, string code, string? rawUsername, string? returnUrl)
+    {
+        var ip = IpHelper.GetClientIp(context);
+        var ua = context.Request.Headers.UserAgent.ToString();
+        var backToPage = $"/invite/{Uri.EscapeDataString(code.Trim())}";
+
+        if (accessLinks.IsBraked)
+        {
+            actionLog.Log(null, UserActionLog.KnownActions.LOGIN_FAIL, info: "invite_braked", ip: ip ?? "unknown", userAgent: ua);
+            return Results.Redirect(backToPage + "?reason=busy");
+        }
+
+        var link = accessLinks.Find(code);
+        if (link is not { IsActive: true })
+        {
+            // Straight to /login, not back to the page: the page would count the miss a
+            // second time, and this path is only reachable by posting a code by hand.
+            accessLinks.RecordFailure();
+            actionLog.Log(null, UserActionLog.KnownActions.LOGIN_FAIL, info: "invite_invalid", ip: ip ?? "unknown", userAgent: ua);
+            return Results.Redirect("/login");
+        }
+
+        User? user;
+        string? newDeviceMethod;
+
+        if (link.UserId is null)
+        {
+            // Open invite: the login page's username rules, enforced here because this is
+            // the one signup path that never passes through that page's validation.
+            if (UsernameRules.Check(rawUsername, out var username) is not null)
+                return Results.Redirect(backToPage + "?reason=invalid_name");
+
+            if (botService.IsBotUser(username) || userService.FindByDisplayName(username) is not null)
+                return Results.Redirect(backToPage + "?reason=taken");
+
+            user = await userService.CreateUserAsync(username);
+            if (user == null)
+                return Results.Redirect(backToPage + "?reason=taken");
+
+            if (!await accessLinks.ClaimAsync(link, user.Id))
+            {
+                // Lost a race for the same invite. The account exists now, so give it a link
+                // of its own rather than leaving it credential-less.
+                await accessLinks.CreateForUserAsync(user.Id, user.Id);
+            }
+
+            newDeviceMethod = null; // brand-new account, nothing to warn about
+            actionLog.Log(user.Id.ToString(), UserActionLog.KnownActions.LOGIN, info: $"invite_join:{username}", ip: ip ?? "unknown", userAgent: ua);
+        }
+        else
+        {
+            user = userService.GetById(link.UserId.Value);
+            if (user == null)
+                return Results.Redirect("/login");
+
+            await accessLinks.RecordUseAsync(link);
+            newDeviceMethod = "link";
+            actionLog.Log(user.Id.ToString(), UserActionLog.KnownActions.LOGIN, info: $"link:{user.Username}", ip: ip ?? "unknown", userAgent: ua);
+        }
+
+        AuthMiddleware.SetAuthCookie(context, user.Token);
+        userService.RecordKnownIp(user.Id, ip);
+
+        if (newDeviceMethod != null)
+            _ = botService.NotifyNewDeviceLoginAsync(user.Username, newDeviceMethod, ip ?? "unknown");
+
+        var destination = "/lobby";
+        if (!string.IsNullOrEmpty(returnUrl) && returnUrl.StartsWith("/") && !returnUrl.StartsWith("//"))
+            destination = returnUrl;
+
+        return Results.Redirect(destination);
     }
 
     private static async Task<IResult> HandleSignIn(HttpContext context, UserService userService, UserActionLogService actionLog, SystemBotService botService, string username, string? password, string? returnUrl)
@@ -78,13 +167,33 @@ public static class AuthEndpoints
 
         if (!string.IsNullOrEmpty(password))
         {
-            user = userService.VerifyPassword(username, password);
-            if (user == null)
+            var accessLinks = context.RequestServices.GetRequiredService<AccessLinkService>();
+            if (accessLinks.IsBraked)
             {
+                actionLog.Log(null, UserActionLog.KnownActions.LOGIN_FAIL, info: $"braked:{username}", ip: ip ?? "unknown", userAgent: ua);
+                return Results.Redirect("/");
+            }
+
+            // The "secret code" box takes either the passphrase or the user's login-link
+            // code. VerifyDevice already checked both; this is the cookie-setting leg.
+            user = userService.VerifyPassword(username, password);
+            if (user != null)
+            {
+                newDeviceMethod = "passphrase";
+            }
+            else if (userService.GetByUsername(username) is { } owner
+                     && accessLinks.VerifyCodeForUser(owner.Id, password) is { } link)
+            {
+                user = owner;
+                newDeviceMethod = "link";
+                await accessLinks.RecordUseAsync(link);
+            }
+            else
+            {
+                accessLinks.RecordFailure();
                 actionLog.Log(null, UserActionLog.KnownActions.LOGIN_FAIL, info: $"wrong_passphrase:{username}", ip: ip ?? "unknown", userAgent: ua);
                 return Results.Redirect("/");
             }
-            newDeviceMethod = "passphrase";
         }
         else
         {
@@ -143,6 +252,12 @@ public static class AuthEndpoints
                 user = await userService.CreateUserAsync(username);
                 if (user == null)
                     return Results.Redirect("/");
+
+                // Born with a login link (in place of the old auto-passphrase); the welcome
+                // DM hands it over. See UserService.CreateUserAsync for why a credential
+                // must exist from day one.
+                await context.RequestServices.GetRequiredService<AccessLinkService>()
+                    .CreateForUserAsync(user.Id, user.Id);
             }
         }
 

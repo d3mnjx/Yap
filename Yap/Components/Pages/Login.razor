@@ -1,9 +1,11 @@
 @page "/login"
+@using Yap.Helpers
 @inject ChatConfigService ChatConfig
 @inject UserService UserService
 @inject UserStateService UserState
 @inject SystemBotService BotService
 @inject RegistrationGateService RegistrationGate
+@inject AccessLinkService AccessLinks
 @inject ChatService ChatService
 @inject IHttpContextAccessor HttpContextAccessor
 @inject UserActionLogService ActionLog
@@ -70,8 +72,8 @@
                         <strong>Almost there!</strong> <span>This installed app starts signed out — your login for <strong>@usernameInput</strong> stayed in the browser you joined from.</span>
                         <ol>
                             <li>Open <strong>@ChatConfig.ProjectName</strong> in your browser — you should still be logged in there</li>
-                            <li>In <strong>Settings → Multi-Device Login</strong>, grab your <strong>Secret Code</strong> (enable it if there isn't one)</li>
-                            <li>Come back here and try again</li>
+                            <li>In <strong>Settings → Login Link</strong>, copy your link (create one if there isn't one), or just read its code</li>
+                            <li>Open the link here, or come back and type the code</li>
                         </ol>
                     }
                     else
@@ -79,8 +81,8 @@
                         <strong>Almost there!</strong> <span>To log in as <strong>@usernameInput</strong> on this device:</span>
                         <ol>
                             <li>Open the app on the device where you're already logged in</li>
-                            <li>In <strong>Settings → Multi-Device Login</strong>, grab your <strong>Secret Code</strong> (enable it if there isn't one)</li>
-                            <li>Come back here and try again</li>
+                            <li>In <strong>Settings → Login Link</strong>, copy your link (create one if there isn't one), or just read its code</li>
+                            <li>Open the link on this device, or come back here and type the code</li>
                         </ol>
                     }
                     <button type="button" @onclick="RetryMultiDevice" class="retry-link">Done, try again</button>
@@ -125,10 +127,6 @@
     private Timer? _pollTimer;
     private string? _clientIp;
     private string? _clientUa;
-
-    // Username rules: 2-23 chars, lowercase a-z, 0-9, underscore, period, no consecutive periods
-    private static readonly System.Text.RegularExpressions.Regex ValidUsernameRegex =
-        new(@"^[a-z0-9._]+$", System.Text.RegularExpressions.RegexOptions.Compiled);
 
     private bool IsValid => !string.IsNullOrWhiteSpace(usernameInput) && !_showMultiDeviceGuide && (!hasError || _usernameHasPassword || _smartModeMatch);
 
@@ -234,35 +232,18 @@
         if (string.IsNullOrWhiteSpace(usernameInput))
             return;
 
-        // Auto-trim and convert to lowercase
-        var normalized = usernameInput.Trim().ToLowerInvariant();
+        // Shape rules live in UsernameRules, shared with the invite page and endpoint
+        var shapeError = UsernameRules.Check(usernameInput, out var normalized);
         if (normalized != usernameInput)
         {
             usernameInput = normalized;
         }
 
-        // Length check (2-32 characters)
-        if (usernameInput.Length < 2)
+        if (shapeError != null)
         {
             hasError = true;
-            isLengthError = true;
-            errorMessage = "Username must be at least 2 characters";
-            return;
-        }
-
-        // Character validation (a-z, 0-9, underscore, period only)
-        if (!ValidUsernameRegex.IsMatch(usernameInput))
-        {
-            hasError = true;
-            errorMessage = "Only lowercase letters, numbers, _ and . allowed";
-            return;
-        }
-
-        // No consecutive periods
-        if (usernameInput.Contains(".."))
-        {
-            hasError = true;
-            errorMessage = "Cannot have consecutive periods";
+            isLengthError = usernameInput.Length < UsernameRules.MinLength;
+            errorMessage = shapeError;
             return;
         }
 
@@ -321,7 +302,10 @@
             }
         }
 
-        if (UserService.HasPassword(usernameInput))
+        // A passphrase or a login link: either one goes to the verify page, where the link's
+        // code is accepted as the secret code.
+        var target = UserService.GetByUsername(usernameInput);
+        if (UserService.HasPassword(usernameInput) || (target != null && AccessLinks.HasActiveLink(target.Id)))
         {
             _usernameHasPassword = true;
         }

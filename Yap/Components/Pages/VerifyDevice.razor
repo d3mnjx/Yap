@@ -1,5 +1,6 @@
 @page "/verify/{Username}"
 @inject UserService UserService
+@inject AccessLinkService AccessLinks
 @inject UserActionLogService ActionLog
 @inject IHttpContextAccessor HttpContextAccessor
 @inject NavigationManager Navigation
@@ -9,11 +10,11 @@
 
 <div class="verify-container">
     <h2>Welcome back, @Username</h2>
-    <p class="verify-hint">Enter your secret code to verify it's you.</p>
+    <p class="verify-hint">Enter your secret code, or the code from your login link.</p>
     <div class="verify-form">
         <div class="input-wrapper">
             <input type="text" @bind="passwordInput" @bind:event="oninput"
-                   placeholder="Enter your secret code" class="verify-input @(showError ? "invalid" : "")"
+                   placeholder="e.g. blue fox 4821" class="verify-input @(showError ? "invalid" : "")"
                    @onkeypress="HandleKeyPress" />
             @if (showError)
             {
@@ -49,8 +50,9 @@
     {
         _clientIp = HttpContextAccessor.HttpContext?.Items["ClientIp"]?.ToString();
 
-        // If user doesn't exist or has no password, redirect back to login
-        if (!UserService.HasPassword(Username))
+        // Nothing to verify against: unknown user, or neither a passphrase nor a login link
+        var user = UserService.GetByUsername(Username);
+        if (user == null || (!UserService.HasPassword(Username) && !AccessLinks.HasActiveLink(user.Id)))
         {
             Navigation.NavigateTo("/login");
         }
@@ -69,11 +71,25 @@
         showError = false;
         errorMessage = "";
 
-        var user = UserService.VerifyPassword(Username, passwordInput.Trim());
-        if (user == null)
+        if (AccessLinks.IsBraked)
         {
             showError = true;
-            errorMessage = "Wrong secret code";
+            errorMessage = "Too many attempts. Try again in a few minutes.";
+            return;
+        }
+
+        // Passphrase or the user's login-link code; the endpoint re-checks both before it
+        // sets the cookie. Misses feed the same brake as the invite page.
+        var code = passwordInput.Trim();
+        var user = UserService.VerifyPassword(Username, code);
+        if (user == null && UserService.GetByUsername(Username) is { } owner && AccessLinks.VerifyCodeForUser(owner.Id, code) != null)
+            user = owner;
+
+        if (user == null)
+        {
+            AccessLinks.RecordFailure();
+            showError = true;
+            errorMessage = "Wrong code";
             ActionLog.Log(null, UserActionLog.KnownActions.LOGIN_FAIL, info: $"wrong_passphrase:{Username}", ip: _clientIp);
             return;
         }

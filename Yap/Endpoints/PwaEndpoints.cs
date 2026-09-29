@@ -64,7 +64,8 @@ public static class PwaEndpoints
             }
 
             // A bad/expired token intentionally reveals nothing (no login oracle) — the
-            // user just falls into the normal flow, where the passphrase is the recovery.
+            // user just falls into the normal flow, where the login link (or an older
+            // account's passphrase) is the recovery.
             return Results.Redirect("/");
         });
     }

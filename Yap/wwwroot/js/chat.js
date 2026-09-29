@@ -674,28 +674,30 @@ window.dismissPushPermissionPrompt = () => {
     localStorage.setItem('push-prompt-dismiss-count', String(count + 1));
 };
 
-// Submit signin via hidden POST form (avoids password in URL)
-window.submitSigninForm = (username, password, returnUrl) => {
+// Submit a hidden POST form. The browser navigates, so the endpoint can set the auth cookie
+// (a Blazor circuit can't) and secrets stay out of the URL. Used by the passphrase page and
+// by the invite / login-link page.
+window.postForm = (action, fields) => {
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = '/auth/signin';
+    form.action = action;
     form.style.display = 'none';
 
-    const addField = (name, value) => {
+    for (const [name, value] of Object.entries(fields)) {
+        if (value == null) continue;
         const input = document.createElement('input');
         input.type = 'hidden';
         input.name = name;
         input.value = value;
         form.appendChild(input);
-    };
-
-    addField('username', username);
-    addField('password', password);
-    addField('returnUrl', returnUrl);
+    }
 
     document.body.appendChild(form);
     form.submit();
 };
+
+window.submitSigninForm = (username, password, returnUrl) =>
+    window.postForm('/auth/signin', { username, password, returnUrl });
 
 // Capture native install prompt (Chrome/Edge on desktop & Android)
 let _deferredInstallPrompt = null;

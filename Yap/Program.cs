@@ -167,6 +167,7 @@ builder.Services.AddSingleton<CircuitTracker>();  // Circuit diagnostics
 builder.Services.AddSingleton<NotificationAudit>();  // Push + unread audit trails (admin diagnostics)
 builder.Services.AddSingleton<UserService>();     // User management with token auth
 builder.Services.AddSingleton<LinkTokenService>(); // PWA start_url login link tokens
+builder.Services.AddSingleton<AccessLinkService>(); // invite / login links (/invite/{code})
 builder.Services.AddSingleton<NotificationSettingsService>();  // per-channel mute rules (read by ChatService)
 builder.Services.AddSingleton<ChatService>();
 builder.Services.AddSingleton<SystemBotService>();
@@ -217,6 +218,9 @@ await app.Services.InitializePersistenceAsync();
 
 // Initialize users from database (must be before ChatService.InitializeAsync)
 await app.Services.GetRequiredService<UserService>().LoadUsersAsync();
+
+// Invite / login links (after users, which the rows point at; before the bot, which subscribes to the brake)
+await app.Services.GetRequiredService<AccessLinkService>().LoadAsync();
 
 // Initialize GIF library (warm in-memory index from DB)
 await app.Services.GetRequiredService<GifService>().InitializeAsync();

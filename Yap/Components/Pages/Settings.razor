@@ -14,6 +14,7 @@
 @inject NotificationSettingsService NotificationSettings
 @inject EmojiService EmojiService
 @inject RegistrationGateService RegistrationGate
+@inject AccessLinkService AccessLinks
 @inject ILogger<Settings> Logger
 @implements IAsyncDisposable
 
@@ -26,7 +27,7 @@
             <span class="kicked-notice-icon">&#x1f512;</span>
             <div class="kicked-notice-text">
                 <strong>All other devices have been signed out.</strong>
-                Your secret code was automatically changed. See your new secret code below.
+                @(hasLink ? "Your login link keeps working. " : "")@(hasPassword ? "Your secret code was automatically changed. See the new one below." : "")
             </div>
             <button class="kicked-notice-dismiss" @onclick="() => showKickedNotice = false">&times;</button>
         </div>
@@ -144,9 +145,84 @@
         </div>
 
         <div class="settings-section">
-            <h3>Multi-Device Login</h3>
+            <h3>Login Link</h3>
 
             <span class="form-hint" style="margin-bottom: 12px;">@MultiDeviceSummary</span>
+
+            @if (loginLink != null)
+            {
+                <span class="form-hint" style="margin-bottom: 12px;">Open this link on any device or browser to sign in as <strong>@UserState.Username</strong>. Anyone who has it can sign in, so keep it private. On the login page you can also type the last part of the link (the code) as your secret code.</span>
+                <div class="passphrase-display">
+                    <span class="passphrase-value">@(showLink ? loginLinkUrl : MaskedLinkUrl)</span>
+                    <button class="passphrase-eye" @onclick="() => showLink = !showLink" title="@(showLink ? "Hide" : "Reveal")">
+                        @if (showLink)
+                        {
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                        }
+                        else
+                        {
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        }
+                    </button>
+                    <button class="passphrase-eye" @onclick="CopyLink" title="@(_copiedLink ? "Copied!" : "Copy")">
+                        @if (_copiedLink)
+                        {
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        }
+                        else
+                        {
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        }
+                    </button>
+                </div>
+                <div class="passphrase-actions">
+                    <button class="remove-button" @onclick="RegenerateLink">New Link</button>
+                    <button class="remove-button" @onclick="RevokeLink">Revoke</button>
+                    <select class="expiry-select" value="@linkExpiryChoice" @onchange="ChangeLinkExpiry" title="Expiry">
+                        @if (linkExpiryChoice == "current")
+                        {
+                            <option value="current">Expires @loginLink.ExpiresAt!.Value.ToString("yyyy-MM-dd")</option>
+                        }
+                        <option value="never">Never expires</option>
+                        <option value="1">Expires in 1 day</option>
+                        <option value="7">Expires in 7 days</option>
+                        <option value="30">Expires in 30 days</option>
+                    </select>
+                </div>
+                @if (linkSaveStatus != null)
+                {
+                    <span class="save-status saved" style="margin-top: 4px;">@linkSaveStatus</span>
+                }
+            }
+            else
+            {
+                <span class="form-hint" style="margin-bottom: 12px;">Create a link that signs you in on any device or browser. Save it somewhere safe, like your notes. It's the easiest way back into this account.</span>
+                <button class="upload-button" @onclick="CreateLink">Create Login Link</button>
+                @if (linkSaveStatus != null)
+                {
+                    <span class="save-status saved" style="margin-top: 4px;">@linkSaveStatus</span>
+                }
+            }
+
+            @if (RegistrationGate.SmartMode)
+            {
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-primary);">
+                    <label class="toggle-row">
+                        <div class="toggle-info">
+                            <span class="toggle-label">Allow smart login</span>
+                            <span class="toggle-hint">Log in without a code from a network you've used recently.</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked="@smartLoginAllowed" @onchange="ToggleSmartLogin" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </label>
+                </div>
+            }
+        </div>
+
+        <div class="settings-section">
+            <h3>Secret Code</h3>
 
             @if (hasPassword)
             {
@@ -185,28 +261,12 @@
             }
             else
             {
-                <span class="form-hint" style="margin-bottom: 12px;">Enable a secret code to log in from other devices or browsers.</span>
+                <span class="form-hint" style="margin-bottom: 12px;">The older way in: a short code you type together with your username on the login page. Optional now that login links exist.</span>
                 <button class="upload-button" @onclick="EnablePassphrase">Enable Secret Code</button>
                 @if (passwordSaveStatus != null)
                 {
                     <span class="save-status saved" style="margin-top: 4px;">@passwordSaveStatus</span>
                 }
-            }
-
-            @if (RegistrationGate.SmartMode)
-            {
-                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-primary);">
-                    <label class="toggle-row">
-                        <div class="toggle-info">
-                            <span class="toggle-label">Allow smart login</span>
-                            <span class="toggle-hint">Log in without a secret code from a network you've used recently.</span>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" checked="@smartLoginAllowed" @onchange="ToggleSmartLogin" />
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </label>
-                </div>
             }
         </div>
 
@@ -674,18 +734,34 @@
     private bool smartLoginAllowed = true;
     private bool _copiedPassphrase;
 
+    // Login link state (one active link per user, see AccessLinkService)
+    private AccessLink? loginLink;
+    private string loginLinkUrl = "";
+    private bool showLink;
+    private bool _copiedLink;
+    private string? linkSaveStatus;
+    private string linkExpiryChoice = "never";
+
+    private bool hasLink => loginLink != null;
+
+    // Keep the host visible, hide the code: "https://example.com/invite/••••••••••••"
+    private string MaskedLinkUrl => loginLinkUrl[..(loginLinkUrl.LastIndexOf('/') + 1)] + "••••••••••••";
+
     private string MultiDeviceSummary
     {
         get
         {
-            var smartEnabled = RegistrationGate.SmartMode && smartLoginAllowed;
-            if (hasPassword && smartEnabled)
-                return "You can log in from other devices using your secret code or automatically from the same network.";
-            if (hasPassword)
-                return "You can log in from other devices using your secret code.";
-            if (smartEnabled)
-                return "You can log in from other devices automatically when on the same network.";
-            return "This account is tied to this device only.";
+            var ways = new List<string>();
+            if (hasLink) ways.Add("your login link");
+            if (hasPassword) ways.Add("your secret code");
+            if (RegistrationGate.SmartMode && smartLoginAllowed) ways.Add("smart login from a network you used recently");
+
+            return ways.Count switch
+            {
+                0 => "This account is tied to this device only.",
+                1 => $"You can log in from other devices with {ways[0]}.",
+                _ => $"You can log in from other devices with {string.Join(", ", ways[..^1])} or {ways[^1]}."
+            };
         }
     }
 
@@ -743,6 +819,8 @@
             currentPassword = user.Password;
             hasPassword = currentPassword != null;
             smartLoginAllowed = !user.SmartLoginOptOut;
+
+            LoadLoginLink();
         }
 
         // Detect location from IP for the Detect button
@@ -1091,6 +1169,88 @@
             _copiedPassphrase = false;
             StateHasChanged();
         }));
+    }
+
+    // Login link methods
+
+    private void LoadLoginLink()
+    {
+        loginLink = UserState.UserId.HasValue ? AccessLinks.GetActiveForUser(UserState.UserId.Value) : null;
+        loginLinkUrl = loginLink == null ? "" : AccessLinks.BuildUrl(loginLink.Code);
+        linkExpiryChoice = loginLink?.ExpiresAt == null ? "never" : "current";
+    }
+
+    private async Task CreateLink()
+    {
+        if (!UserState.UserId.HasValue) return;
+
+        await AccessLinks.CreateForUserAsync(UserState.UserId.Value, UserState.UserId.Value);
+        LoadLoginLink();
+        showLink = true;
+        ShowLinkStatus("Login link created");
+    }
+
+    private async Task RegenerateLink()
+    {
+        if (!UserState.UserId.HasValue) return;
+
+        // Keeps the current expiry: "New Link" is about the code leaking, not the lifetime.
+        await AccessLinks.CreateForUserAsync(UserState.UserId.Value, UserState.UserId.Value, loginLink?.ExpiresAt);
+        LoadLoginLink();
+        showLink = true;
+        ShowLinkStatus("New link created. The old one no longer works.");
+    }
+
+    private async Task RevokeLink()
+    {
+        if (loginLink == null) return;
+
+        await AccessLinks.RevokeAsync(loginLink.Id);
+        LoadLoginLink();
+        showLink = false;
+        ShowLinkStatus("Login link revoked");
+    }
+
+    private async Task ChangeLinkExpiry(ChangeEventArgs e)
+    {
+        if (loginLink == null) return;
+
+        var choice = e.Value?.ToString() ?? "never";
+        if (choice == "current") return;
+
+        DateTime? expiresAt = int.TryParse(choice, out var days) ? DateTime.UtcNow.AddDays(days) : null;
+        await AccessLinks.SetExpiryAsync(loginLink.Id, expiresAt);
+        LoadLoginLink();
+        ShowLinkStatus(expiresAt == null ? "Link never expires" : $"Link expires {expiresAt:yyyy-MM-dd}");
+    }
+
+    private async Task CopyLink()
+    {
+        if (loginLink == null) return;
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", loginLinkUrl);
+        _copiedLink = true;
+        StateHasChanged();
+        _ = Task.Delay(2000).ContinueWith(_ => InvokeAsync(() =>
+        {
+            _copiedLink = false;
+            StateHasChanged();
+        }));
+    }
+
+    private void ShowLinkStatus(string message)
+    {
+        linkSaveStatus = message;
+        StateHasChanged();
+
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(3000);
+            await InvokeAsync(() =>
+            {
+                linkSaveStatus = null;
+                StateHasChanged();
+            });
+        });
     }
 
     private async Task ToggleSmartLogin(ChangeEventArgs e)

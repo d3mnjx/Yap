@@ -9,6 +9,7 @@
 @inject GeoLocationService GeoLocation
 @inject SystemBotService BotService
 @inject RegistrationGateService RegistrationGate
+@inject AccessLinkService AccessLinks
 @inject LinkPreviewSettingsService LinkPreviewSettings
 @inject MediaCacheService MediaCacheService
 @inject Yap.Services.Gifs.GifAdminSettingsService GifAdminSettings
@@ -64,6 +65,13 @@
             </svg>
             <span>Settings</span>
         </button>
+        <button class="nav-item @(activeSection == "invites" ? "active" : "")"
+                @onclick='() => activeSection = "invites"'>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
+            </svg>
+            <span>Invites</span>
+        </button>
         <button class="nav-item @(activeSection == "logs" ? "active" : "")"
                 @onclick="SelectLogsTab">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -117,6 +125,10 @@
         <button class="tab-item @(activeSection == "settings" ? "active" : "")"
                 @onclick='() => activeSection = "settings"'>
             Settings
+        </button>
+        <button class="tab-item @(activeSection == "invites" ? "active" : "")"
+                @onclick='() => activeSection = "invites"'>
+            Invites
         </button>
         <button class="tab-item @(activeSection == "logs" ? "active" : "")"
                 @onclick="SelectLogsTab">
@@ -510,6 +522,167 @@
                 </div>
             </div>
         }
+        @if (activeSection == "invites")
+        {
+            <div class="section-header">
+                <h3>Invite &amp; Login Links</h3>
+                <span class="section-count">@openInvites.Count open · @userLinks.Count(l => l.IsActive) active</span>
+            </div>
+
+            <div class="invite-create">
+                <div class="form-group">
+                    <label>For</label>
+                    <select @bind="inviteTargetUserId">
+                        <option value="">Someone new (invite)</option>
+                        @foreach (var u in users.Where(u => !BotService.IsBotUser(u.Username)))
+                        {
+                            <option value="@u.Id">@u.Username</option>
+                        }
+                    </select>
+                </div>
+                @if (string.IsNullOrEmpty(inviteTargetUserId))
+                {
+                    <div class="form-group">
+                        <label>Note</label>
+                        <input type="text" @bind="inviteNote" maxlength="64" placeholder="for Tom" />
+                    </div>
+                }
+                <div class="form-group">
+                    <label>Expires</label>
+                    <select @bind="inviteExpiryDays">
+                        <option value="0">Never</option>
+                        <option value="1">In 1 day</option>
+                        <option value="7">In 7 days</option>
+                        <option value="30">In 30 days</option>
+                    </select>
+                </div>
+                <button class="save-btn" @onclick="CreateInviteLink" disabled="@inviteCreating">
+                    @(inviteCreating ? "Creating..." : "Create link")
+                </button>
+                @if (inviteCreateResult != null)
+                {
+                    <span class="save-result">@inviteCreateResult</span>
+                }
+            </div>
+            <span class="form-hint invite-hint">
+                An invite lets whoever opens it pick a username and join, even while registration is closed.
+                A link for an existing user replaces their current one (the rescue for someone locked out of every device);
+                they get a bot DM about it. Codes stay readable here only until the link is first used.
+            </span>
+
+            <div class="section-header" style="margin-top: 2rem;">
+                <h3>Open invites</h3>
+                <span class="section-count">@openInvites.Count waiting</span>
+            </div>
+            @if (openInvites.Count == 0)
+            {
+                <span class="form-hint">No open invites.</span>
+            }
+            else
+            {
+                <div class="table-wrapper">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>Link</th>
+                                <th>Note</th>
+                                <th>Created</th>
+                                <th>Expires</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var link in openInvites)
+                            {
+                                var l = link;
+                                <tr>
+                                    <td class="link-cell">
+                                        <span class="link-code">@AccessLinks.BuildUrl(l.Code)</span>
+                                        @CopyButton(l)
+                                    </td>
+                                    <td>@(l.Note ?? "—")</td>
+                                    <td class="date-cell">@FormatTimeAgo(l.CreatedAt)</td>
+                                    <td class="date-cell">@ExpiryLabel(l)</td>
+                                    <td>
+                                        <div class="link-actions">
+                                            @ExpirySelect(l)
+                                            <button class="reject-btn" @onclick="() => RevokeLink(l)">Revoke</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            <div class="section-header" style="margin-top: 2rem;">
+                <h3>User login links</h3>
+                <span class="section-count">@userLinks.Count(l => l.IsActive) active</span>
+            </div>
+            @if (userLinks.Count == 0)
+            {
+                <span class="form-hint">No user links yet.</span>
+            }
+            else
+            {
+                <div class="table-wrapper">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Status</th>
+                                <th>Link</th>
+                                <th>Created</th>
+                                <th>Used</th>
+                                <th>Expires</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var link in userLinks)
+                            {
+                                var l = link;
+                                var owner = UserService.GetById(l.UserId!.Value);
+                                <tr>
+                                    <td>@(owner?.Username ?? "(deleted)")</td>
+                                    <td>
+                                        <span class="status-pill @(l.IsActive ? "online" : "offline")">
+                                            <span class="status-dot"></span>
+                                            @LinkStatus(l)
+                                        </span>
+                                    </td>
+                                    <td class="link-cell">
+                                        @if (l.AdminCanSeeCode)
+                                        {
+                                            <span class="link-code">@AccessLinks.BuildUrl(l.Code)</span>
+                                            @CopyButton(l)
+                                        }
+                                        else
+                                        {
+                                            <span class="link-hidden" title="Only the user can see this code">🔒 hidden</span>
+                                        }
+                                    </td>
+                                    <td class="date-cell">@FormatTimeAgo(l.CreatedAt)@(l.CreatedById != l.UserId ? " by admin" : "")</td>
+                                    <td class="date-cell">@(l.UseCount == 0 ? "never" : $"{l.UseCount}× · {FormatTimeAgo(l.LastUsedAt!.Value)}")</td>
+                                    <td class="date-cell">@ExpiryLabel(l)</td>
+                                    <td>
+                                        @if (l.IsActive)
+                                        {
+                                            <div class="link-actions">
+                                                @ExpirySelect(l)
+                                                <button class="reject-btn" @onclick="() => RevokeLink(l)">Revoke</button>
+                                            </div>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        }
+
         @if (activeSection == "settings")
         {
             <div class="section-header">
@@ -1468,6 +1641,16 @@
 
     private List<(ThemeDefinition Theme, int Count)> themeStats = new();
 
+    // Invites section
+    private List<AccessLink> openInvites = new();
+    private List<AccessLink> userLinks = new();
+    private string inviteTargetUserId = "";
+    private string inviteNote = "";
+    private string inviteExpiryDays = "0";
+    private bool inviteCreating;
+    private string? inviteCreateResult;
+    private Guid? copiedLinkId;
+
     // Stats/detail count the *effective* theme: an unset or stale id (theme renamed/removed,
     // no data migration) has no CSS block, so those users render the :root default look.
     private static ThemeDefinition EffectiveTheme(User user)
@@ -1531,6 +1714,8 @@
         regApproval = RegistrationGate.RequireApproval;
         smartMode = RegistrationGate.SmartMode;
         pendingUsersList = RegistrationGate.GetPendingUsers();
+
+        LoadLinks();
 
         // Load link preview settings
         linkPreviewsEnabled = LinkPreviewSettings.Enabled;
@@ -1672,6 +1857,118 @@
         }
     }
 
+
+    // Invites section
+
+    private void LoadLinks()
+    {
+        var all = AccessLinks.GetAll();
+        openInvites = all.Where(l => !l.IsClaimed && l.IsActive)
+            .OrderByDescending(l => l.CreatedAt).ToList();
+        // Revoked user links are history (every "New Link" leaves one behind). Expired ones
+        // stay listed so the admin can see why someone can't get in.
+        userLinks = all.Where(l => l.IsClaimed && !l.IsRevoked)
+            .OrderByDescending(l => l.IsActive).ThenByDescending(l => l.CreatedAt).ToList();
+    }
+
+    private async Task CreateInviteLink()
+    {
+        if (!UserState.UserId.HasValue || inviteCreating) return;
+        inviteCreating = true;
+        inviteCreateResult = null;
+
+        try
+        {
+            DateTime? expiresAt = int.TryParse(inviteExpiryDays, out var days) && days > 0
+                ? DateTime.UtcNow.AddDays(days)
+                : null;
+
+            if (Guid.TryParse(inviteTargetUserId, out var targetId) && UserService.GetById(targetId) is { } target)
+            {
+                var link = await AccessLinks.CreateForUserAsync(targetId, UserState.UserId.Value, expiresAt);
+                if (link != null)
+                {
+                    _ = BotService.NotifyLinkReplacedByAdminAsync(target, link);
+                    inviteCreateResult = $"New link for {target.Username} created. Their old one no longer works.";
+                }
+                else
+                {
+                    inviteCreateResult = "Failed to create link";
+                }
+            }
+            else
+            {
+                var link = await AccessLinks.CreateInviteAsync(UserState.UserId.Value, inviteNote, expiresAt);
+                inviteCreateResult = link != null ? "Invite created" : "Failed to create invite";
+                inviteNote = "";
+            }
+
+            LoadLinks();
+        }
+        finally
+        {
+            inviteCreating = false;
+        }
+    }
+
+    private async Task RevokeLink(AccessLink link)
+    {
+        await AccessLinks.RevokeAsync(link.Id);
+        LoadLinks();
+    }
+
+    private async Task ChangeLinkExpiry(AccessLink link, ChangeEventArgs e)
+    {
+        var choice = e.Value?.ToString() ?? "current";
+        if (choice == "current") return;
+
+        DateTime? expiresAt = int.TryParse(choice, out var days) ? DateTime.UtcNow.AddDays(days) : null;
+        await AccessLinks.SetExpiryAsync(link.Id, expiresAt);
+        LoadLinks();
+    }
+
+    private async Task CopyInviteLink(AccessLink link)
+    {
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", AccessLinks.BuildUrl(link.Code));
+        copiedLinkId = link.Id;
+        StateHasChanged();
+        _ = Task.Delay(2000).ContinueWith(_ => InvokeAsync(() =>
+        {
+            if (copiedLinkId == link.Id) copiedLinkId = null;
+            StateHasChanged();
+        }));
+    }
+
+    private static string ExpiryLabel(AccessLink link) => link.ExpiresAt is { } at
+        ? (at <= DateTime.UtcNow ? $"expired {at:yyyy-MM-dd}" : at.ToString("yyyy-MM-dd"))
+        : "never";
+
+    private static string LinkStatus(AccessLink link) =>
+        link.IsRevoked ? "Revoked" : link.IsExpired ? "Expired" : "Active";
+
+    private RenderFragment<AccessLink> CopyButton => l =>
+        @<button class="refresh-btn" title="@(copiedLinkId == l.Id ? "Copied!" : "Copy link")" @onclick="() => CopyInviteLink(l)">
+            @if (copiedLinkId == l.Id)
+            {
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            }
+            else
+            {
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+            }
+        </button>;
+
+    private RenderFragment<AccessLink> ExpirySelect => l =>
+        @<select class="link-expiry" value="@(l.ExpiresAt == null ? "never" : "current")" @onchange="e => ChangeLinkExpiry(l, e)" title="Change expiry">
+            @if (l.ExpiresAt != null)
+            {
+                <option value="current">@ExpiryLabel(l)</option>
+            }
+            <option value="never">Never</option>
+            <option value="1">In 1 day</option>
+            <option value="7">In 7 days</option>
+            <option value="30">In 30 days</option>
+        </select>;
 
     private void ApprovePending(string username)
     {

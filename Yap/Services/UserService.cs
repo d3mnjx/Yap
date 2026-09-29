@@ -110,15 +110,14 @@ public class UserService
             isAdmin = _adminUserId == null;
         }
 
-        var user = new User(username, token)
-        {
-            IsAdmin = isAdmin,
-            // Every account is born with a secret code. Without one, a user whose next
-            // context started signed out (installed PWA, second browser) had no way back
-            // into their account and would register a fresh name instead — one real user
-            // forked into seven accounts that way. The welcome DM shows them the code.
-            Password = GeneratePassphrase()
-        };
+        // No passphrase at birth any more. New accounts get a login link instead, minted by
+        // the caller (AuthEndpoints) because AccessLinkService sits above this service, and
+        // the link's code doubles as the typed secret code. Accounts that already have a
+        // passphrase keep it, and Settings can still enable one. The reason a credential
+        // must exist from day one stands: a context that starts signed out (installed PWA,
+        // second browser) otherwise has no way back in, and one real user forked into
+        // seven accounts that way.
+        var user = new User(username, token) { IsAdmin = isAdmin };
 
         // Atomic uniqueness check — TryAdd returns false if username already exists
         if (!_usernameToId.TryAdd(user.Username, user.Id))

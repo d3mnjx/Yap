@@ -411,6 +411,8 @@
 
 .passphrase-value {
     flex: 1;
+    min-width: 0; /* a long login URL must shrink and wrap instead of pushing the icons out of the box */
+    overflow-wrap: anywhere;
     color: var(--text-primary);
     font-size: 1rem;
     font-family: inherit;
@@ -420,7 +422,12 @@
 
 .passphrase-actions {
     display: flex;
+    flex-wrap: wrap; /* phone width: link row holds two buttons and the expiry select */
     gap: 8px;
+}
+
+.passphrase-actions .remove-button {
+    white-space: nowrap;
 }
 
 .passphrase-eye {
@@ -437,6 +444,16 @@
 
 .passphrase-eye:hover {
     color: var(--text-primary);
+}
+
+.expiry-select {
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    color: var(--text-primary);
+    padding: 0.4rem 0.5rem;
+    font-size: 0.8125rem;
+    font-family: inherit;
 }
 
 /* Kicked notice banner */

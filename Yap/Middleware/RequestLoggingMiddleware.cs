@@ -27,6 +27,38 @@ public class RequestLoggingMiddleware
         _actionLog = actionLog;
     }
 
+    /// <summary>
+    /// Bearer credentials travel in a few URLs. Strip them before the URL reaches any sink
+    /// (the CSV file and the action-log DB both get the full URL).
+    /// </summary>
+    private static string RedactCredentials(string path, QueryString query)
+    {
+        if (path.StartsWith("/invite/", StringComparison.OrdinalIgnoreCase))
+            return "/invite/REDACTED" + query;
+        if (!query.HasValue)
+            return path;
+        if (path.Equals("/pwa-launch", StringComparison.OrdinalIgnoreCase))
+            return path + "?lt=REDACTED";
+        if (path.Equals("/auth/refresh-token", StringComparison.OrdinalIgnoreCase))
+            return path + "?token=REDACTED";
+        return path + query;
+    }
+
+    /// <summary>
+    /// The Referer is the previous page's full URL, so every request the invite page makes
+    /// (the POST, fonts, the redirect target) would carry the code in it.
+    /// </summary>
+    private static string RedactReferer(string referer)
+    {
+        if (referer.Length == 0 || !Uri.TryCreate(referer, UriKind.Absolute, out var uri))
+            return referer;
+
+        var redacted = RedactCredentials(uri.AbsolutePath, new QueryString(uri.Query));
+        return redacted == uri.PathAndQuery
+            ? referer
+            : uri.GetLeftPart(UriPartial.Authority) + redacted;
+    }
+
     public async Task InvokeAsync(HttpContext context, UserStateService userState)
     {
         var path = context.Request.Path.Value ?? "";
@@ -49,11 +81,7 @@ public class RequestLoggingMiddleware
 
             var clientIp = IpHelper.GetClientIp(context) ?? "unknown";
 
-            // /pwa-launch's lt query value is a bearer login credential — redact it before
-            // it reaches any sink (the CSV file and the action-log DB both get the full URL).
-            var loggedUrl = path.Equals("/pwa-launch", StringComparison.OrdinalIgnoreCase) && context.Request.QueryString.HasValue
-                ? path + "?lt=REDACTED"
-                : path + context.Request.QueryString;
+            var loggedUrl = RedactCredentials(path, context.Request.QueryString);
 
             var entry = new RequestLogEntry
             {
@@ -64,7 +92,7 @@ public class RequestLoggingMiddleware
                 DurationMs = stopwatch.ElapsedMilliseconds,
                 ClientIp = clientIp,
                 UserAgent = context.Request.Headers.UserAgent.ToString(),
-                Referer = context.Request.Headers.Referer.ToString(),
+                Referer = RedactReferer(context.Request.Headers.Referer.ToString()),
                 Protocol = context.Request.Protocol,
                 ConnectionId = context.Connection.Id
             };

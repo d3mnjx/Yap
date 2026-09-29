@@ -18,7 +18,7 @@ public class AuthMiddleware
         _next = next;
     }
 
-    public async Task InvokeAsync(HttpContext context, UserService userService, UserStateService userState)
+    public async Task InvokeAsync(HttpContext context, UserService userService, UserStateService userState, AccessLinkService accessLinks)
     {
         var token = context.Request.Cookies[CookieName];
 
@@ -56,6 +56,10 @@ public class AuthMiddleware
                     // Also refresh smart-login's IP memory here: long-lived cookie sessions
                     // never re-login, so page loads are where their current network shows up.
                     userService.RecordKnownIp(user.Id, IpHelper.GetClientIp(context));
+
+                    // Bot DMs need an absolute /invite/... URL and there is no config key for
+                    // the public host — real page loads are where it shows up.
+                    accessLinks.ObserveOrigin(context);
                 }
             }
         }
