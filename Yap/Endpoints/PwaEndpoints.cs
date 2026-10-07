@@ -38,6 +38,10 @@ public static class PwaEndpoints
 
             // no-store: a token must never be cached, and an anonymous copy cached
             // pre-login must not be what a later install picks up.
+            // Known gap, accepted: Chrome sometimes reuses an already-fetched manifest for the
+            // install prompt. If that copy was fetched pre-login the install gets start_url "/".
+            // Harmless on Android (the Lax cookie covers it). iOS Safari fetches the manifest at
+            // Add-to-Home-Screen time, so the funnel that matters always gets a fresh token.
             context.Response.Headers.CacheControl = "no-store";
             return Results.Content(manifest.ToJsonString(), "application/manifest+json");
         });

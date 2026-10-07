@@ -84,6 +84,14 @@ Push is off unless `Vapid:Subject/PublicKey/PrivateKey` are set in `appsettings.
 verifies the public key is the true pair of the private key and disables push loudly if not.
 Subscriptions are stored as JSON or in the DB per `ChatSettings:PushSubscriptionStorage`.
 
+## Platform limits (iOS)
+
+Safari has no install prompt. The user installs through Share, then Add to Home Screen. Push and the
+app badge need iOS 16.4 or later and work only in the installed PWA, not in the Safari tab. The badge
+also needs notification permission. The permission request must come from a user gesture. Safari
+evicts the PWA's storage after about 7 days without use. `setAppBadge(0)` clears the badge instead of
+showing a dot, so the client calls `clearAppBadge()` to clear and `setAppBadge(n)` only when n > 0.
+
 ## Removed: the old PushMuted flag
 
 `User.PushMuted` used to mean "send the badge, suppress the banner". It is gone from the UI, from

@@ -66,7 +66,7 @@ Now the worst case was 5 seconds instead of 60. That is a better number and stil
 
 ### Round 3: trace the whole flow
 
-In early February (commit `841b7f5`) we stopped patching and traced one complete send, step by step, into a 472-line analysis (`docs/message-send-flow-analysis.md`). The scenario: Alice uploads an image, Bob and Charlie watch the room. The trace found where the seconds went:
+In early February (commit `841b7f5`) we stopped patching and traced one complete send, step by step, into a 472-line analysis (the file is gone; `git show 841b7f5:docs/message-send-flow-analysis.md` has it). The scenario: Alice uploads an image, Bob and Charlie watch the room. The trace found where the seconds went:
 
 - Alice's circuit stayed blocked through the entire chain: DB persist, typing dispatch, message dispatch, unread dispatch. She could not type or click until all of it finished.
 - The message dispatch was bounded by the slowest circuit, because each handler ran 3 to 4 JavaScript interop round trips (scroll, visibility checks) inside the awaited handler. On a healthy connection each trip costs 1 to 5 ms. On a slow phone, 50 to 100 ms.

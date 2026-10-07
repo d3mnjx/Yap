@@ -1,6 +1,12 @@
 # Input-Locality Round-Trip Analysis
 
-*2026-08-06 — follow-up to the July responsiveness round (`docs/message-send-flow-analysis.md`, memory: `responsiveness-latency-analysis`). Scope: the main chat loop — typing, sending, opening the emoji/GIF pickers, selecting emojis/GIFs. Goal: make actions local; keep the server the source of truth.*
+> **Status:** all four items shipped 2026-08-07 and were field-validated 2026-08-11 (users on slow
+> connections reported the chat loop as much better). The per-item plans were removed; their
+> invariants live in code comments (`MessageInput.razor`, `PickerPane.razor`, `chat.js`) and in the
+> `input-locality-roadmap` memory. Line references below are as of 2026-08-06. The "Deliberately
+> parked" list is the live backlog.
+
+*2026-08-06 — follow-up to the July responsiveness round (`git show 841b7f5:docs/message-send-flow-analysis.md`, memory: `responsiveness-latency-analysis`). Scope: the main chat loop — typing, sending, opening the emoji/GIF pickers, selecting emojis/GIFs. Goal: make actions local; keep the server the source of truth.*
 
 ## Baseline — already local
 
@@ -47,7 +53,7 @@ Tapping a GIF card: Blazor `@onclick` → RTT → server bookkeeping (fast — n
 
 **Proposal:** capture-phase listener on `.gif-card` clicks (guard `!closest('.gif-fav-btn')`) that immediately (1) hides the picker client-side and (2) appends an **optimistic GIF ghost** to `.pending-echoes` — a `.pending-message` div containing an `<img>` built from the clicked card's own preview `src` + aspect-ratio (DOM-sourced, `createElement`, XSS-safe). The existing reconciler needs **zero changes** (FIFO removal on own `.message-group` arrival, 15s self-expiry, `clearPendingEchoes` on channel switch, `scrollToBottom` waits for late images). Tap → picker gone, GIF visible; the real message swaps in flicker-free one RTT later.
 
-→ Detailed plan: `docs/gif-select-instant-feedback-plan.md`.
+→ Detailed plan: removed; see `git show 9870997:docs/gif-select-instant-feedback-plan.md`.
 
 ## Deliberately parked
 

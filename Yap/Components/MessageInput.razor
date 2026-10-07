@@ -103,7 +103,12 @@ else
         @* Plain @bind (change granularity): keystrokes never round-trip. The send pipeline
            (chat.js) commits the draft with a synthetic change right before the send click's
            RPC — in-order circuit processing lands it ahead of HandleSend. Typing-indicator
-           bursts come from setupTypingTracker, ~2 dispatches per burst. *@
+           bursts come from setupTypingTracker, ~2 dispatches per burst.
+           The DOM value runs ahead of messageText the whole time the user types. That is safe:
+           Blazor rewrites a bound input's value only when the RENDERED value changed between
+           renders, so re-renders from typing indicators, pickers or the reply bar leave the
+           uncommitted draft alone. The only server writes to messageText are the change events
+           (echoing the DOM) and HandleSend's clear (paired with the client-side clear). *@
         <textarea @bind="messageText" placeholder="@placeholder" class="message-input"
                   rows="1" id="@TextareaId"></textarea>
         <div class="emoji-toggle-wrapper">
