@@ -1,42 +1,92 @@
 # Yap Configuration Guide
 
-## Overview
+## Which file is read
 
-Yap supports configurable project/room names and randomized UI text variations to make the chat experience more entertaining.
+The project ships `Yap/appsettings.json`. At runtime the app looks for `Data/appsettings.json`
+(the `Data/` folder next to the app, the config volume in Docker).
 
-## Configuration File
+- If `Data/appsettings.json` does not exist, the app copies `Yap/appsettings.json` there on first start.
+- If it exists, it **replaces** `Yap/appsettings.json` completely. The project file is removed from
+  the configuration sources. This avoids the .NET array-merge behavior, where a shorter array in an
+  override file would leave stale items from the base file.
 
-All configuration is in `Yap/appsettings.json`.
+So edit `Data/appsettings.json` on a running deployment. A change to `Yap/appsettings.json` does
+not reach an existing `Data/` copy. Delete the `Data/` copy to re-seed it, or mirror the change by
+hand. Edits to `Data/appsettings.json` reload without a restart, but most values are read once at
+startup, so restart to be sure.
 
-## Configuration Structure
+`appsettings.Development.json` still loads in Development. The `Data/` file loads after it, so the
+`Data/` file wins for every key it contains. In practice this means environment-specific files are
+only useful for keys that the `Data/` file leaves out (logging levels, for example).
 
-### Basic Settings
+## Top-level keys
 
 ```json
 {
-  "ChatSettings": {
-    "ProjectName": "Yap",
-    "RoomName": "lobby",
-    "ClearUploadsOnStart": true,
-    "MaxMessagesPerChannel": 100,
-    "FunnyTexts": {
-      // Text variation collections
-    }
-  }
+  "Logging": { ... },
+  "AllowedHosts": "*",
+  "Vapid": { "Subject": "mailto:...", "PublicKey": "...", "PrivateKey": "..." },
+  "ChatSettings": { ... }
 }
 ```
 
+### Vapid
+
+Push notifications stay off until all three keys are set and the public key is the real pair of the
+private key. Startup checks this and logs loudly if the pair is wrong. Generate a valid pair with
+the script in the repo root. It uses the same WebPush library the app sends with:
+
+```
+dotnet run vapidgen.cs -- mailto:you@example.com
+```
+
+Do not use online generators or `npx web-push`. A malformed pair from one of those broke push in
+production once and the failure is silent on the client side.
+
+### ChatSettings
+
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `ProjectName` | string | "Yap" | App name shown in UI |
-| `RoomName` | string | "lobby" | Default chat room name |
-| `ClearUploadsOnStart` | bool | true | Delete all uploaded files when app starts |
-| `MaxMessagesPerChannel` | int | 100 | Maximum messages kept in memory per channel |
+| `ProjectName` | string | "Yap" | App name in the browser tab and login page |
+| `RoomName` | string | "lobby" | Default room. Users land here after login |
+| `ClearUploadsOnStart` | bool | false | Delete all uploaded files when the app starts |
+| `MaxUploadSizeMB` | int | 100 | Upload size limit for images and videos |
+| `UploadUrl` | string | "" | Upload endpoint. Empty means same origin (`/api/tus`). Set a full URL to bypass a proxy upload limit (Cloudflare) |
+| `Ipv4BeaconUrl` | string | "" | Origin with an A record only, pointing at this app. The admin panel uses it to learn the IPv4 of dual-stack clients. Empty disables it |
+| `PushSubscriptionStorage` | string | "Json" | `"Json"` stores push subscriptions in `Data/push-subscriptions.json`. `"Database"` stores them in the DB |
+| `WelcomePageEnabled` | bool | true | Show `Data/welcome/welcome.html` before the login page, if the file exists |
+| `Bot` | object | | The system bot. `Enabled`, `Username`, `DisplayName`, `WelcomeMessage` (`{0}` is the project name). Runtime bot settings from the admin panel live in `Data/bot-settings.json` |
+| `Persistence` | object | | `Enabled`, `Provider` (`"SQLite"` only; Postgres is a placeholder), `ConnectionStrings`. With persistence off, everything lives in memory and is wiped on restart |
+| `GifSettings` | object | | `Provider` (`"klipy"`), `UserQuotaMB`, `MaxPackSizeMB`, `Klipy.ApiKey` (free key from partner.klipy.com), `Klipy.CustomerId`, `Klipy.Locale`. Without an API key, provider search and trending are off. Own uploads and server collections still work |
+| `FunnyTexts` | object | | Randomized UI text, see below |
 
-### Text Collections
+The comments in `Yap/appsettings.json` are the source of truth for these keys. If this table and
+that file disagree, trust the file.
+
+## Settings the admin panel owns
+
+Some settings are changed from `/admin` at runtime and are not in `appsettings.json`. They persist
+as JSON files in `Data/`:
+
+| File | Owner |
+|------|-------|
+| `Data/registration-settings.json` | Registration gate: open, closed, or approval required |
+| `Data/bot-settings.json` | System bot runtime settings |
+| `Data/gif-settings.json` | GIF content rating and server collections |
+| `Data/link-preview-settings.json` | Link preview behavior |
+| `Data/push-subscriptions.json` | Push subscriptions when storage is `"Json"` |
+
+Branding overrides go in `Data/branding/` (manifest, icons). The custom welcome page is
+`Data/welcome/welcome.html`.
+
+## FunnyTexts
+
+Each UI element picks a random item from its list every time it renders. `{0}` and `{1}` are
+replaced with the project name, username, or count as noted. If a list is missing, the code uses a
+plain default.
 
 #### Welcome Messages
-Displayed when users first arrive. Use `{0}` as placeholder for project name.
+Shown on the login page above the username input. `{0}` is the project name.
 
 ```json
 "WelcomeMessages": [
@@ -47,7 +97,6 @@ Displayed when users first arrive. Use `{0}` as placeholder for project name.
 ```
 
 #### Join Button Texts
-Random text for the join button:
 
 ```json
 "JoinButtonTexts": [
@@ -59,7 +108,6 @@ Random text for the join button:
 ```
 
 #### Username Placeholders
-Placeholder text for the username input:
 
 ```json
 "UsernamePlaceholders": [
@@ -70,7 +118,6 @@ Placeholder text for the username input:
 ```
 
 #### Message Placeholders
-Placeholder text for the message input:
 
 ```json
 "MessagePlaceholders": [
@@ -81,7 +128,6 @@ Placeholder text for the message input:
 ```
 
 #### Connection Statuses
-Connection state indicators:
 
 ```json
 "ConnectionStatuses": {
@@ -91,7 +137,7 @@ Connection state indicators:
 ```
 
 #### System Messages
-User join/leave messages. Use `{0}` for username:
+User join and leave messages. `{0}` is the username.
 
 ```json
 "SystemMessages": {
@@ -109,7 +155,6 @@ User join/leave messages. Use `{0}` for username:
 ```
 
 #### Typing Indicators
-Messages shown when users are typing:
 
 ```json
 "TypingIndicators": {
@@ -141,76 +186,32 @@ Messages shown when users are typing:
 ]
 ```
 
-### How It Works
+To add variations, add strings to any list. There is no registry to update.
 
-1. **Random Selection**: Each UI element randomly selects from its configured text variations
-2. **Fallback Values**: If a configuration is missing, sensible defaults are used
-3. **Placeholder Formatting**: `{0}`, `{1}` are replaced with actual values (username, count, etc.)
+## Technical notes
 
-## Environment-Specific Configuration
-
-Create `appsettings.Development.json` for development overrides:
-
-```json
-{
-  "ChatSettings": {
-    "ProjectName": "DevYap",
-    "FunnyTexts": {
-      "WelcomeMessages": [
-        "Welcome to {0} DEV MODE!"
-      ]
-    }
-  }
-}
-```
-
-Create `appsettings.Production.json` for production:
-
-```json
-{
-  "Logging": {
-    "LogLevel": {
-      "Default": "Warning"
-    }
-  }
-}
-```
-
-## Adding New Variations
-
-Simply add more strings to any array in the configuration. The system automatically includes them in random selection.
-
-## Technical Implementation
-
-The `ChatConfigService` class handles:
-- Loading configuration from `IConfiguration`
-- Random selection of text variations
-- Formatting placeholders with actual values
-- Providing fallback defaults
-
-The service is registered as scoped in `Program.cs` and injected into the Chat component.
-
+`ChatConfigService` reads these values from `IConfiguration` on each access, picks the random text,
+formats the placeholders, and supplies the defaults. It is registered as scoped in `Program.cs` and
+injected where needed (login, welcome, the chat pages, the sidebar, the message input, the pickers, admin, invite).
 
 ## Custom Emojis
 
-Yap supports custom emojis. Place image files in the `Data/custom-emojis/` folder (created automatically on first run).
+Place image files in `Data/custom-emojis/` (created on first run). Supported formats are PNG, SVG,
+GIF, WebP, and JPG/JPEG.
 
-### Supported Formats
-PNG, SVG, GIF, WebP, JPG/JPEG
+The filename without extension becomes the shortcode. Use only letters, numbers, hyphens, and
+underscores.
 
-### Naming
-The filename (without extension) becomes the shortcode. Use only letters, numbers, hyphens, and underscores.
+| File | Shortcode |
+|------|-----------|
+| `pepe.png` | `:pepe:` |
+| `party-parrot.gif` | `:party-parrot:` |
 
-| File | Shortcode | Usage |
-|------|-----------|-------|
-| `pepe.png` | `:pepe:` | Type `:pepe:` in chat |
-| `party-parrot.gif` | `:party-parrot:` | Type `:party-parrot:` in chat |
+- The folder is scanned once at startup. Restart after adding files.
+- Custom emojis appear as the first category in the emoji picker and work in messages and reactions.
+- Duplicate shortcodes (same name, different extension) are logged and skipped.
+- Built-in emoji packs ship under `Yap/wwwroot/emoji-packs/`. See the README there for pack layout
+  and search keywords.
 
-### How It Works
-- Emojis are scanned on app startup — restart required after adding new files
-- When custom emojis exist, they appear as the first category in the emoji picker
-- Custom emojis can be used in messages and as reactions
-- Duplicate shortcodes (same name, different extension) are logged and skipped
-
-### Docker
-Custom emojis are inside the `Data/` folder, which is already mounted as the config volume. Just place your images in the `custom-emojis/` subfolder within your mounted config directory.
+In Docker, `Data/` is the config volume, so drop the images into `custom-emojis/` inside the
+mounted directory.
