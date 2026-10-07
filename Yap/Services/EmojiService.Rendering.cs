@@ -35,7 +35,7 @@ public partial class EmojiService
 
     // === Switch the active emoji set here (code-only; nothing in the UI). ===
     // Self-hosted overrides in wwwroot/emoji-fallback/ always take priority in both modes.
-    private const EmojiStyle ActiveEmojiStyle = EmojiStyle.Twemoji;   // flip to EmojiStyle.Twemoji
+    private const EmojiStyle ActiveEmojiStyle = EmojiStyle.Twemoji;   // Twemoji since 2026-06-23 (c36b95b); flip to Apple to go back
 
     private const char VariationSelector = (char)0xFE0F; // U+FE0F
 
