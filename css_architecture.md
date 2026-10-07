@@ -36,6 +36,12 @@ This project uses **Blazor CSS Isolation** - each component has its own `.razor.
 | `Components/ImageGalleryModal.razor.css` | **Fullscreen image viewer** | `.image-modal`, `.modal-nav` |
 | `Components/Layout/ReconnectModal.razor.css` | **Connection banner** | `#components-reconnect-modal`, `.reconnect-banner-content` |
 | `Components/Layout/MainLayout.razor.css` | **Blazor error UI only** | `#blazor-error-ui` |
+| `wwwroot/themes.css` | **Color themes** - one `[data-theme="x"]` block per theme, plus the canvas and pattern layers | `[data-theme]`, `[data-context]`, `--canvas-*`, `--pattern-*` |
+| `wwwroot/themes/teahouse.css` | **Generated** Tea House theme (from `themes/teahouse/gen_theme_css.py`) | `[data-theme="teahouse"]`, `[data-scene]` |
+
+The table lists the files that define the layout. Every other component (Settings, Admin, Invite,
+VerifyDevice, the pickers, GifLibraryManager, LinkPreviewCard, MediaPlayer, Avatar, the PWA prompts)
+has its own `.razor.css` next to it, scoped the same way. Twenty-five in total as of 2026-10.
 
 ---
 
@@ -147,20 +153,18 @@ CSS variables cascade through the DOM regardless of Blazor's CSS isolation:
 }
 ```
 
-### Future Theming
+### Theming
 
-To add a light theme, override variables with a data attribute selector:
+Themes override these variables in `wwwroot/themes.css`, one `[data-theme="x"]` block each. The
+default `discord-dark` has no block and falls through to `:root`. `ThemeRegistry.cs` holds only
+metadata (id, name, preview swatches); no colors live in C#.
 
-```css
-[data-theme="light"] {
-    --bg-primary: #ffffff;
-    --bg-sidebar: #f2f3f5;
-    --text-primary: #2e3338;
-    /* ... override other variables ... */
-}
-```
-
-Then toggle themes by setting `data-theme` on the `<html>` element.
+`data-theme` is server-rendered onto `<html>` in `App.razor` so the first paint has no flash.
+`applyTheme` in `chat.js` switches it live from Settings. Two more attributes compose with it:
+`data-context` (`room` or `dm`, on `.chat-container`) and `data-scene` (time of day, set by an
+inline `<head>` script from the browser clock). Image themes paint a canvas layer behind the
+layout; Tea House is the first and its CSS is generated. The design and the decisions are in
+`docs/themes-2.0.md`.
 
 ---
 
@@ -216,40 +220,25 @@ Two breakpoints used:
 2. Look at the scoped attribute: `[b-36jla8vlnc]`
 3. In Sources panel, search for that hash to find the component
 
-### Common Elements to Adjust
+### Where the spacing lives
 
-**Space below messages:**
-```css
-/* ChatLayout.razor.css line ~31 */
-::deep .messages {
-    padding: 1rem 0 0.25rem 0;  /* last value = bottom padding */
-}
-```
+Search the class name in the file. Line numbers and values drift, so none are given here.
 
-**Input box spacing from bottom:**
-```css
-/* MessageInput.razor.css line ~8 */
-.message-input-container {
-    padding-bottom: 1rem;  /* adjust this */
-}
-```
+- Space below the message list: `::deep .messages` in `ChatLayout.razor.css`, last padding value.
+- Input box distance from the bottom edge: `.message-input-container` in `MessageInput.razor.css`.
+- Gap between messages: `.message-group` in `MessageItem.razor.css` (it also reserves the avatar column).
+- Single-image size in a message: `.gallery-single .gallery-image` in `MessageItem.razor.css`.
 
-**Message spacing:**
-```css
-/* MessageItem.razor.css line ~3 */
-.message-group {
-    padding: 0.125rem 1rem;
-}
-```
+### Unstyled page after switching OS
 
-**Gallery image size:**
-```css
-/* MessageItem.razor.css line ~106 */
-.gallery-single .gallery-image {
-    max-height: 300px;
-    max-width: min(400px, 100%);
-}
-```
+The same working tree is built from Windows and from Linux. Blazor hashes the component path into
+the scope id, and `Components\Pages\Login.razor` hashes differently from `Components/Pages/Login.razor`.
+A build on the other OS recompiles the `.razor` files but does not regenerate the per-file scoped
+CSS when the `.razor.css` sources are unchanged, so the bundle keeps the old ids and nothing matches.
+Every CSS file returns 200 and there are no console errors. The tell is a `b-xxxxxxxxxx` attribute
+in the DOM that does not appear in the served `Yap.styles.css`. Fix: delete `bin/` and `obj/` and
+rebuild. Do not use `--artifacts-path`, it splits the build and makes this worse. Full record in
+`.claude-memory/blazor-scoped-css-cross-os-scope-id-mismatch.md`.
 
 ---
 
@@ -257,7 +246,7 @@ Two breakpoints used:
 
 **What's Good:**
 - Component isolation prevents style conflicts
-- CSS variables for all colors - easy theming support
+- CSS variables for all colors - theming is a per-theme variable block
 - Consistent Discord-like color scheme
 - Mobile responsive with clear breakpoints
 

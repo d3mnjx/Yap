@@ -1,7 +1,15 @@
-# Themes 2.0 — Plan & Ideas
+# Themes 2.0 — Design & Record
 
-**Status: planning. Nothing here is implemented.** This doc exists so we agree on the shape
-before any code is written. Audience: future maintainers (you and Claude).
+**Status: shipped 2026-08-25.** Every piece below is live: the canvas layer, Tea House, room vs DM,
+time of day, the pattern layer, Terminal and Neon Glow, the relaxed status rule and the glow axis.
+`solarized-light` joined the lineup on 2026-08-27. The doc was written as a plan before any code
+existed and is kept as the record of why the system is shaped the way it is. Where a section says
+"we would" or "today", read it as of August 2026; the **DONE** markers and the dated notes say what
+actually happened. Code comments in `ChatLayout.razor.css`, `app.css` and
+`themes/teahouse/gen_theme_css.py` point here. Audience: future maintainers (you and Claude).
+
+**Still open:** the Meomi credit in Settings (see Decisions) is not done. Only a comment in
+`teahouse.css` carries it.
 
 ## TL;DR
 
@@ -31,9 +39,12 @@ Patterns (piece 4.5) turned out to belong with 3, not with 1 — see [Seamless p
 
 ---
 
-## Where themes are today
+## Where themes were before 2.0 (August 2026 baseline)
 
-The current system is small and good, and we should not damage it.
+The system was small and good, and 2.0 did not damage it. Numbers below are from before the
+work; as of 2026-10 `ThemeRegistry` has 11 themes (`discord-dark`, `midnight`, `nord`, `ocean`,
+`sunset`, `aurora`, `terminal`, `neon-glow`, `teahouse`, `daylight`, `solarized-light`),
+`themes.css` is 464 lines, and `applyTheme` sits near line 1588 of `chat.js`.
 
 - `Services/ThemeRegistry.cs` — 7 `ThemeDefinition` records: `Id`, `Name`, `PreviewBg`,
   `PreviewAccent`, `HasGradient`. Metadata only; **no colors live in C#**.
@@ -41,13 +52,13 @@ The current system is small and good, and we should not damage it.
   variables from `:root` in `app.css`. Default `discord-dark` has *no* block and falls through.
 - `Components/App.razor:5` — `data-theme` is **server-rendered** onto `<html>`, deliberately, for
   zero flash on load.
-- `wwwroot/js/chat.js:1432` — `applyTheme(id)` sets `documentElement.dataset.theme` for live
+- `wwwroot/js/chat.js` — `applyTheme(id)` sets `documentElement.dataset.theme` for live
   switching in Settings.
 - **Status colours were deliberately never overridden** (green = online, red = danger) — a rule
   written at the top of themes.css. **Themes 2.0 relaxes this**; the replacement convention and the
   one case that stays dangerous are in [Status colours: rule relaxed](#status-colours-rule-relaxed).
 
-**Prior art already in the repo:** `Components/Layout/ChatLayout.razor:15` swaps
+**Prior art already in the repo:** `Components/Layout/ChatLayout.razor` (the header `<img>`) swaps
 `purpleline01_3px.png` ⇄ `turqline01_3px.png` under the header based on
 `NavState.CurrentDmUser != null`. Room-vs-DM differentiation is not a new idea here — it is a
 3-pixel-tall version of it that already works. Piece 3 generalizes it.
@@ -558,25 +569,31 @@ them is wrong.
   `User.Theme`, so anyone who picked the old ids falls back to the default look and re-picks —
   graceful, no migration.
 - **Teahouse art licensing is cleared** (freely available, author unconcerned) — but **credit
-  Meomi** in Settings, as the source README asks.
+  Meomi** in Settings, as the source README asks. **Not done as of 2026-10**; the credit exists
+  only as a comment at the top of `teahouse.css`.
 - **Cypherpunk and cyberpunk ship without background images**, on pattern + glow alone. Images
   optional later.
 - **Not doing:** weather, user-uploaded backgrounds, per-DM colour derived from the other user
   (fun, but scope), an in-app theme editor.
 
-## Open questions
+## Open questions (all settled)
 
-1. **Teahouse light/dark: option A, B or C?** (See Piece 2.) This blocks the CSS generator and
-   nothing else — the canvas layer can be built before it is answered.
-2. Does the header-line swap survive Piece 3, or does the canvas shift replace it?
-3. Do non-image themes get a DM pattern by default, or is it opt-in per theme?
+Kept for the record. None of these is open any more.
+
+1. ~~Teahouse light/dark: option A, B or C?~~ **Settled: A**, Tea House is a light theme that darkens
+   at night by scene (see Piece 2).
+2. ~~Does the header-line swap survive Piece 3?~~ **Yes.** `ChatLayout.razor` still swaps the 3px
+   line by DM state, on top of the canvas shift.
+3. ~~Do non-image themes get a DM pattern by default?~~ **Default on, explicit opt-out.** The generic
+   rule gives every DM `waves`; the plain club (discord-dark, midnight, nord, aurora, solarized-light)
+   sets `none` by hand. The comment above that rule in `themes.css` says why both lines are needed.
+4. ~~Do Terminal / Neon Glow need background images?~~ **No.** They shipped pattern-only, and that
+   proved the pattern layer independently of the art pipeline.
+5. ~~Status-colour convention: comment or doc?~~ **Both.** The header of `themes.css` states the rule
+   (a theme may re-tint, `--color-danger` stays red, a context never touches them) and points here.
 6. ~~Is the day wash too pale?~~ **Settled 2026-08-25: no — keep it.** Checked on the deployed
    system; the user likes the pastel daytime reading. The bottom-stop alphas (0.58 light,
    0.68 dark) in `panel()` are correct as they stand, so don't "fix" them later.
-4. Do cypherpunk/cyberpunk need background images at all, or do pattern + glow carry them? They may
-   be cheaper and better as **pattern-only** themes — which would also prove the pattern layer
-   independently of the art pipeline.
-5. Should the relaxed status-colour convention be a comment in themes.css, or left to this doc?
 
 ## Build plan
 

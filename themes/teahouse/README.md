@@ -24,7 +24,7 @@ also appeared in a Google Hangouts "Happy New Year" animation.
   `https://ssl.gstatic.com/ui/v1/icons/mail/themes/teahouse/<version>/<file>.jpg`
 - Original iGoogle URL (historical):
   `http://www.google.com/ig/images/skins/teahouse/<version>/<file>`
-- GitHub mirrors and derivative projects (see `../findings.md` for the log):
+- GitHub mirrors and derivative projects:
   - https://github.com/UndarkAido/TeaHouse - full image set + viewer
   - https://github.com/cybojanek/tea_house - download + compose scripts
   - https://github.com/JoshuaD84/teahouse-fox-background - GNOME switcher,
@@ -46,6 +46,15 @@ also appeared in a Google Hangouts "Happy New Year" animation.
   the clock, up/down toggles the house)
 - `compose.py` - composes a full-size background at any resolution
 - `palette.json` - dominant colors per version and layer
+
+Yap pipeline (run from this folder, in this order, after any change to the
+layers or the palette):
+
+- `build_assets.py` - converts the JPEG layers to WebP and writes them to
+  `Yap/wwwroot/images/themes/teahouse/<scene>/<layer>.webp`
+- `gen_theme_css.py` - derives the theme CSS from `palette.json` and writes
+  `Yap/wwwroot/themes/teahouse.css`. The CSS is generated, do not hand-edit it.
+  The design behind the generator is in `docs/themes-2.0.md`.
 
 ## How Gmail assembles a version
 

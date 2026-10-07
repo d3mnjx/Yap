@@ -2,9 +2,11 @@
  * Color themes. Each block overrides CSS variables from :root in app.css.
  * Activated by data-theme="..." on the <html> element (set in App.razor).
  *
- * Status colors (online/away/danger/success/warning) are intentionally NOT
- * overridden — they carry semantic meaning that should stay consistent across
- * themes (green = online universally, red = danger, etc.).
+ * Status colors (online/away/danger/success/warning): a THEME may re-tint them
+ * to fit its palette (Terminal and Neon Glow do), but --color-danger must stay
+ * unmistakably red because it guards destructive actions, and a CONTEXT
+ * (data-context="dm", data-scene) must never touch them. Relaxed 2026-08-25,
+ * see docs/themes-2.0.md "Status colours: rule relaxed".
  *
  * Default theme (discord-dark) has no block here — it falls through to :root.
  */
