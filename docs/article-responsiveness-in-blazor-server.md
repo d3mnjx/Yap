@@ -52,16 +52,25 @@ The send button must look enabled exactly when the textarea has content. The usu
 The correction has zero lines of C# and zero lines of JS. The DOM knows if the textarea is empty. CSS can react to the value itself with `:placeholder-shown`:
 
 ```css
-/* Client-side enablement: dim purely on "is the box empty" —
-   reacts to the value itself, no circuit round trip. */
-.message-input:placeholder-shown ~ .send-button {
+/* Client-side visibility, no circuit round trip: the button collapses while
+   the box is empty AND no picker is open. :placeholder-shown reacts to the
+   value itself; data-picker is the client-owned picker state (Pattern 5). */
+.message-input-container:not([data-picker]):has(.message-input:placeholder-shown) .send-button {
+    flex-basis: 0;
+    width: 0;
+    margin-left: 0;
+    transform: scale(0);
+}
+
+/* Picker open over an empty box: visible but dimmed. Nothing to send yet. */
+.message-input-container[data-picker]:has(.message-input:placeholder-shown) .send-button {
     background: var(--bg-muted);
     opacity: 0.5;
     cursor: not-allowed;
 }
 ```
 
-The button is dim when the box is empty. It becomes bright at the first character, at monitor refresh rate. There is one requirement: the placeholder must not be an empty string. If there is no placeholder, `:placeholder-shown` never matches.
+The button is gone when the box is empty. It grows in at the first character, at monitor refresh rate. The first version of this rule only dimmed the button. It now collapses it, Discord style, and dims it only when a picker is open over an empty box, because users wanted to see the button while they browse emojis. The collapse uses `width: 0` and `scale(0)` instead of `display: none`, so the width animates and the Enter handler (Pattern 2) keeps a live target to click. There is one requirement: the placeholder must not be an empty string. If there is no placeholder, `:placeholder-shown` never matches.
 
 The search box of our emoji picker uses the same method. The clear button (✕) shows only while a query exists. Again `:placeholder-shown`, again no round trip.
 
@@ -171,26 +180,32 @@ const appendPendingEcho = (ghost) => {
 Reconciliation is a `MutationObserver` that watches the message list. When one of the sender's own messages renders, the observer removes the oldest ghost. The sequence is FIFO, thus many sends inside a single round trip all drain correctly. `MutationObserver` callbacks run before paint, thus the swap from ghost to real message shows no flicker:
 
 ```js
+const flow = document.querySelector('.messages-flow');
 echoObserver = new MutationObserver((mutations) => {
     for (const mutation of mutations)
         for (const node of mutation.addedNodes) {
             if (node.nodeType !== 1 || !node.matches?.('.message-group')) continue;
-            if (node.dataset.author !== currentUser) continue;
+            if (!currentUser || node.dataset.author !== currentUser) continue;
             document.querySelector('.pending-echoes .pending-message')?.remove();
         }
 });
-echoObserver.observe(messages, { childList: true });
+echoObserver.observe(flow, { childList: true });
 ```
+
+One detail cost us an afternoon. The observer watches direct children only, no `subtree`. So it must bind to the element that directly contains the message nodes. When a wrapper was added inside the list for the theme pattern layer, the observer still bound to the outer list and went blind. Ghosts lingered to the 15 second timeout next to the real message. Bind to the element that holds the children, and re-bind when navigation replaces it.
 
 The failure mode is honest by construction. If the send never echoes (the circuit dropped, or the server rejected the message), the ghost disappears after 15 seconds. The ghost that disappeared is the signal that the message did not send. No false message entered the authoritative message list.
 
 Where does the ghost live? That is the load-bearing detail. See the coexistence rules below:
 
 ```razor
-@* RoomChat.razor / DmChat.razor — Blazor renders this container, always empty *@
+@* RoomChat.razor / DmChat.razor — Blazor renders the ghost container, always empty *@
 <div class="messages">
-    @foreach (var message in messages) { ... }
-    <div class="pending-echoes"></div>
+    <div class="messages-flow">
+        @foreach (var message in messages) { ... }
+        <div class="messages-spacer"></div>
+        <div class="pending-echoes"></div>
+    </div>
 </div>
 ```
 
