@@ -26,6 +26,11 @@ async function until(check) {
         );
         pages = await Promise.all(contexts.map((c) => c.newPage()));
         const [alice, bob] = pages;
+        const readSources = [];
+        contexts[0].on('request', (request) => {
+            if (request.method() === 'POST' && request.url().endsWith('/api/chat/reads'))
+                readSources.push(...request.postDataJSON().map((marker) => marker.source));
+        });
         const errors = [];
         for (let i = 0; i < 2; i++) {
             pages[i].on('pageerror', (e) => errors.push(e.message));
@@ -112,6 +117,44 @@ async function until(check) {
         assert.equal(await alice.locator('#mailbox').isVisible(), true);
         await row(alice, names[1]).click();
         await until(async () => (await unread()) === 0);
+        // An independent cookie context models another device, with its own local DB.
+        const secondDevice = await browser.newContext({
+            storageState: await contexts[0].storageState(),
+        });
+        const secondPage = await secondDevice.newPage();
+        const streamedUnread = [];
+        secondPage.on('websocket', (socket) =>
+            socket.on('framereceived', ({ payload }) => {
+                for (const part of String(payload).split('\x1e').filter(Boolean)) {
+                    try {
+                        const packet = JSON.parse(part);
+                        for (const c of packet.item?.conversations || [])
+                            if (c.id === dm.id && c.state) streamedUnread.push(c.state.unread);
+                    } catch {}
+                }
+            }),
+        );
+        await secondPage.goto(origin + '/lobby');
+        await secondPage.waitForFunction(() =>
+            document.querySelector('#connection')?.textContent.startsWith('Synced'),
+        );
+        streamedUnread.length = 0;
+        await send('foreground without badge flash ' + names[0]);
+        await alice
+            .locator('#timeline .message-text')
+            .filter({ hasText: 'foreground without badge flash ' + names[0] })
+            .waitFor();
+        await pause(500);
+        assert.equal(await unread(), 0);
+        assert(streamedUnread.length > 0, 'Second device received the arrival metadata');
+        assert(
+            streamedUnread.every((count) => count === 0),
+            'No transient unread increment reached the second device',
+        );
+        await secondDevice.close();
+        console.log(
+            'PASS foreground reading delivers messages without an unread flash on another device',
+        );
         await status(alice, 'away');
         await send('manual Away retains unread ' + names[0]);
         await until(async () => (await unread()) === 1);
@@ -139,6 +182,11 @@ async function until(check) {
         console.log(
             'PASS background badges/mailbox, explicit-open reads, manual Away and visibility-gated auto-read',
         );
+        assert(
+            ['open', 'arrival', 'resume'].every((source) => readSources.includes(source)),
+            'Read writes distinguish navigation, arrival and resume in the audit',
+        );
+        console.log('PASS browser read writes retain open, arrival and resume sources');
         // Cache the unread first, open it offline, then deliver newer text before replaying the read.
         await alice.locator('#back').click();
         await send('observed before offline ' + names[0]);

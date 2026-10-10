@@ -27,8 +27,13 @@ public partial class ChatService
         return (state.UnreadCount, state.ReceivedCount, state.ReadThrough);
     }
 
+    // Clients acknowledge only visible, loaded/validated content: automatic reads also
+    // require a connected, non-Away viewer; explicit opens may be offline. A checkpoint
+    // never clears arrivals beyond the observed target, including delayed offline replay.
     public async Task MarkObservedReadAsync(Guid userId, Guid channelId, long? through, bool silent = false, string? callerSessionId = null, string source = "observed")
     {
+        if (source is not ("observed" or "open" or "arrival" or "resume" or "explicit"))
+            throw new ChatSendException(400, "invalid_read_source", "Unknown read source.");
         var channel = GetChannel(channelId);
         if (channel == null || !channel.CanAccess(userId))
             throw new ChatSendException(404, "conversation_unavailable", "This conversation is no longer available.");

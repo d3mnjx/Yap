@@ -1,3 +1,4 @@
+export const PROTOCOL = 2;
 // Persisted browser namespaces are compatibility contracts, independent of shell releases.
 export const DB_NAME = 'yap-chat-v1';
 export const DB_VERSION = 4;

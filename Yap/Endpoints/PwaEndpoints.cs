@@ -35,7 +35,8 @@ public static class PwaEndpoints
             // Explicit scope: the default would derive from start_url's directory, and a
             // "/pwa-launch?..." start_url must not narrow the app's scope.
             manifest["scope"] = "/";
-            // Token rotation changes start_url, but must not create a second app identity.
+            // Stable identity across token rotations. Older token-derived Android installs
+            // keep launching, but may not receive manifest updates; see the deploy note.
             if (manifest["id"] == null) manifest["id"] = "/";
 
             // no-store: a token must never be cached, and an anonymous copy cached

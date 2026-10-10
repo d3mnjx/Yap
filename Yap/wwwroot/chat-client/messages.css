@@ -1,4 +1,4 @@
-/* Scrollable timeline and bounded-history controls. */
+/* Timeline, message rows and editor controls; scoped message selectors override shared.css, chat.css owns shell state. */
 .messages {
     flex: 1;
     overflow-y: auto;

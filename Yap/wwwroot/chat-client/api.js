@@ -1,3 +1,4 @@
+import { PROTOCOL } from './constants.js';
 // Session credentials belong to this document/account, never to persisted offline data.
 let session,
     refreshing,
@@ -41,7 +42,7 @@ async function read(path, { signal } = {}) {
     const response = await fetch('/api/chat/' + path, {
         cache: 'no-store',
         headers: {
-            'X-Yap-Chat-Protocol': '2',
+            'X-Yap-Chat-Protocol': String(PROTOCOL),
             ...(!['bootstrap', 'session'].includes(path.split('?')[0]) && session?.userId
                 ? { 'X-Yap-Chat-User': session.userId }
                 : {}),
@@ -98,7 +99,7 @@ export async function post(path, body, credentials, { signal } = {}) {
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': credentials.csrfToken,
-                    'X-Yap-Chat-Protocol': '2',
+                    'X-Yap-Chat-Protocol': String(PROTOCOL),
                     ...(account ? { 'X-Yap-Chat-User': account } : {}),
                 },
                 body: JSON.stringify(body),

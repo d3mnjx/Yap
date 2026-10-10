@@ -246,6 +246,8 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddSingleton<Microsoft.AspNetCore.Routing.MatcherPolicy, ChatRootPolicy>();
+builder.Services.AddSingleton<AuthCookieRenewal>();
 var app = builder.Build();
 
 // Initialize persistence (migrations + load data) if enabled
@@ -439,6 +441,8 @@ app.Use(async (context, next) =>
     if (ChatRoutes.IsHub(context.Request.Path))
     {
         context.Response.Headers.CacheControl = "no-store";
+        if (!ChatProtocol.Accepts(context.Request, hub: true))
+        { context.Response.StatusCode = 426; await context.Response.WriteAsJsonAsync(new { code = "update_required" }); return; }
         // Browser metadata survives proxy URL rewriting. Missing metadata is accepted
         // for older clients; every hub request still requires a valid account cookie.
         if (context.Request.Headers["Sec-Fetch-Site"] == "cross-site")
@@ -450,21 +454,6 @@ app.Use(async (context, next) =>
     await next(context);
 });
 app.UseMiddleware<AuthMiddleware>();
-// Authenticated root visits can load the standalone client directly. Welcome/Login and
-// explicit return URLs retain their existing Razor flow; saved chat routes restore locally.
-app.Use(async (context, next) =>
-{
-    if (HttpMethods.IsGet(context.Request.Method) && context.Request.Path == "/"
-        && !context.Request.Query.ContainsKey("returnUrl")
-        && context.RequestServices.GetRequiredService<UserStateService>().IsLoggedIn)
-    {
-        context.Response.ContentType = "text/html; charset=utf-8";
-        context.Response.Headers.CacheControl = "no-store";
-        await OfflineEndpoints.ServeShell(context, app.Environment, context.RequestServices.GetRequiredService<UserStateService>());
-        return;
-    }
-    await next(context);
-});
 app.UseMiddleware<DeviceDetectionMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
 

@@ -44,6 +44,7 @@ Suite discovery reads `tests/browser/*.cjs`; the default selection remains the o
 | Suites | Purpose / prerequisites |
 | --- | --- |
 | **Default:** `sync-protocol`, `communication`, `review-recovery`, `review-composer`, `text-sending`, `history-interface`, `rich-content`, `message-actions`, `pwa-integration`, `local-http` | Protocol ordering, cached credentials, blocked catalog/window independence, one-POST writes, durable sends, upload cancellation/timeouts and independent-conversation progress, history and reply races, offline media/actions, PWA and worker failure. Use the isolated origin; create their own synthetic accounts. |
+| `design-decisions` | Conditional root routing, hub protocol rejection with retained draft, retained-page cookie renewal and existing-install guidance. Uses the isolated origin. |
 | `maintenance` | Requires a disposable instance with `OfflineChat:MaxTextLength=37`; checks configured compose/edit limits and HTTP 426 recovery with retained drafts. |
 | `locale` | Browser timezone/locale detection with US and Czech contexts, Settings saves preserving locale, clock formatting, saved reload and first-send independence from stalled detection. Uses the isolated origin. |
 | `restart-cache` | Requires `YAP_TEST_PACKAGE` (complete publish output). Copies it into a private fixture, owns port 8055, restarts the real server, blocks recovery, checks offline navigation with an updating indicator and later deletion reconciliation. |
@@ -109,3 +110,5 @@ For HTTPS/HTTP/2, run the two fixture packages on the same ports with trusted or
 ## Server fan-out load
 
 See [FanoutLoad](../FanoutLoad/README.md) for the 10/30/50-client .NET SignalR benchmark, synthetic fixture, server CPU and p95 delivery measurement. The contract suite also pauses a bounded server subscription to verify overflow invalidation and authorized-window recovery.
+
+The design-decision server checks cover conditional root endpoint selection and mobile request logging, protocol mismatch on hub negotiation/invocation, protected hourly cookie renewal, and foreground unread suppression with persisted checkpoint invariants. `presence-unread` also observes another device's stream for transient unread counts. `pwa-integration` covers existing-icon and standalone install guidance. These browser fixtures cannot verify Android manifest identity; follow the deployment guide's real-device check before deploying.

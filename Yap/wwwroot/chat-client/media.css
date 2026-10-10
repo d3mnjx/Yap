@@ -1,4 +1,4 @@
-/* Link previews and embedded media players. */
+/* Link previews and embedded players; owns card/player selectors, messages.css owns outer message layout. */
 /* LinkPreviewCard */
 .link-preview-card {
     display: flex;

@@ -167,40 +167,9 @@ window.addEventListener('beforeinstallprompt', (e) => {
 });
 
 window.showPwaInstallGuide = async () => {
-    sessionStorage.setItem('pwa-banner-dismissed', 'true');
-
-    // Use native prompt if available (desktop Chrome/Edge, Android Chrome)
-    if (_deferredInstallPrompt) {
-        _deferredInstallPrompt.prompt();
-        const result = await _deferredInstallPrompt.userChoice;
-        console.log('[PWA] Install prompt result:', result.outcome);
-        _deferredInstallPrompt = null;
-        return;
-    }
-
-    // Fallback: show add-to-homescreen guide (iOS Safari, etc.)
-    const cdnBase = 'https://cdn.jsdelivr.net/gh/philfung/add-to-homescreen@3.5/dist';
-
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = cdnBase + '/add-to-homescreen.min.css';
-    document.head.appendChild(link);
-
-    const script = document.createElement('script');
-    script.src = cdnBase + '/add-to-homescreen.min.js';
-    script.onload = () => {
-        if (window.AddToHomeScreen) {
-            const instance = window.AddToHomeScreen({
-                appName: 'Yap',
-                appIconUrl: 'icon-192.png',
-                assetUrl: cdnBase + '/assets/img/',
-                allowClose: false,
-                showArrow: true
-            });
-            instance.show('en');
-        }
-    };
-    document.body.appendChild(script);
+    const prompt = _deferredInstallPrompt;
+    _deferredInstallPrompt = null;
+    return (await import('/chat-client/pwa.js')).installGuide(prompt);
 };
 
 // Subscribe to push notifications

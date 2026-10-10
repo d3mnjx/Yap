@@ -247,14 +247,14 @@ export const forget = () =>
 
 export const reads = () =>
     transaction(['reads'], 'readonly', (tx) => request(tx.objectStore('reads').getAll()));
-export async function markRead(channelId, through, identity) {
+export async function markRead(channelId, through, identity, source = 'observed') {
     const changed = await locked(() =>
         transaction(['state', 'reads'], 'readwrite', async (tx) => {
             await owner(tx, identity);
             const store = tx.objectStore('reads');
             const old = await request(store.get(channelId));
             if (old?.through >= through) return false;
-            store.put({ channelId, through }, channelId);
+            store.put({ channelId, through, source }, channelId);
             return true;
         }),
     );

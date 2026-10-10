@@ -1,4 +1,4 @@
-/* Emoji/GIF panes, their category buttons and all picker overlays. */
+/* Emoji/GIF panes and overlays; scoped combined-picker rules override standalone dimensions within this file. */
 /* CombinedPicker */
 .combined-picker {
     display: flex;

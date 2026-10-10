@@ -18,13 +18,54 @@ window.addEventListener('beforeinstallprompt', (event) => {
     event.preventDefault();
     deferredInstall = event;
 });
-export async function installGuide() {
+export async function installGuide(nativePrompt) {
+    nativePrompt ||= deferredInstall;
+    if (nativePrompt) deferredInstall = nativePrompt;
     sessionStorage.setItem('pwa-banner-dismissed', 'true');
-    if (deferredInstall) {
-        const event = deferredInstall;
+    // An old manifest ID cannot be reliably detected from a browser tab. Let someone
+    // keep using their existing icon instead of driving a second installation prompt.
+    const dialog = document.createElement('dialog');
+    dialog.className = 'install-guide';
+    dialog.setAttribute('aria-labelledby', 'install-guide-title');
+    const title = document.createElement('h2');
+    title.id = 'install-guide-title';
+    title.textContent = installed() ? 'Yap is already installed' : 'Add Yap to your home screen';
+    const text = document.createElement('p');
+    text.textContent = installed()
+        ? 'Keep using this app. You do not need to install it again.'
+        : 'Already have a Yap icon? Open it to keep using your app. To replace an older install, save your login link in Settings, remove the old icon, then install here.';
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.textContent = installed() ? 'Close' : 'Use existing app';
+    const choice = new Promise((resolve) => {
+        close.onclick = () => {
+            dialog.close();
+            resolve(false);
+        };
+        dialog.addEventListener('cancel', () => resolve(false));
+        dialog.append(title, text, close);
+        if (!installed()) {
+            const install = document.createElement('button');
+            install.type = 'button';
+            install.textContent = 'Install app';
+            install.onclick = () => {
+                // Invoke the browser prompt directly inside this user gesture.
+                const prompt = nativePrompt ? nativePrompt.prompt() : null;
+                dialog.close();
+                resolve({ prompt });
+            };
+            dialog.append(install);
+        }
+    });
+    document.body.append(dialog);
+    dialog.showModal();
+    const selected = await choice;
+    dialog.remove();
+    if (!selected) return;
+    if (nativePrompt) {
         deferredInstall = null;
-        await event.prompt();
-        await event.userChoice;
+        await selected.prompt;
+        await nativePrompt.userChoice;
         return;
     }
     const base = '/chat-client/vendor/add-to-homescreen-3.5';
@@ -48,7 +89,7 @@ export async function installGuide() {
             appName: 'Yap',
             appIconUrl: '/icon-192.png',
             assetUrl: base + '/assets/img/',
-            allowClose: false,
+            allowClose: true,
             showArrow: true,
         })
         .show('en');

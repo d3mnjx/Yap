@@ -176,7 +176,7 @@ try
         var anti = (await sessionResponse.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("csrfToken").GetString()!;
         // This fixture switches auth tokens explicitly. An automatic cookie jar would append
         // the renewed old auth cookie and test a duplicate-cookie request instead of a switch.
-        var antiCookie = sessionResponse.Headers.GetValues("Set-Cookie").Single(c => !c.StartsWith("yap_auth=")).Split(';')[0];
+        var antiCookie = sessionResponse.Headers.GetValues("Set-Cookie").Single(c => c.StartsWith(".AspNetCore.Antiforgery.")).Split(';')[0];
         http.DefaultRequestHeaders.Remove("Cookie");
         http.DefaultRequestHeaders.Add("Cookie", "yap_auth=" + token + "; " + antiCookie);
         async Task<HttpResponseMessage> Send(Guid channelId, Guid operation, string content, bool csrf = true, string? origin = null, string? fetchSite = null)
@@ -321,6 +321,7 @@ try
         await DeliveryChecks.Run(factory.Services, alice);
         await LocaleChecks.Run(http, anti, alice);
         await FollowupChecks.Run(factory.Services, http, anti, alice);
+        await DesignChecks.Run(factory.Services, http, alice);
         await GifPagingChecks.Run(http, anti, chat, admin);
         await OriginChecks.Run(factory.Services, http);
         await users.RotateTokenAsync(alice.Id);

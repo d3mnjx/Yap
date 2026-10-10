@@ -26,13 +26,19 @@ export function createLive({ snapshot = () => null, identity, current, changed, 
         typingChannel = null;
         lastTypingSent = 0;
     };
+    const readingChannel = () => {
+        const c = current();
+        return c?.sync?.loaded && !c.sync.stale ? c.id : null;
+    };
+    let reportedChannel;
     const report = () => {
+        reportedChannel = readingChannel();
         lastReport = Date.now();
         return invoke(
             'Report',
             !document.hidden,
             (Date.now() - lastActivity) / 1000,
-            current()?.id ?? null,
+            readingChannel(),
         );
     };
     const activity = () => {
@@ -87,7 +93,7 @@ export function createLive({ snapshot = () => null, identity, current, changed, 
                     !document.hidden,
                     matchMedia('(pointer: coarse)').matches,
                     (Date.now() - lastActivity) / 1000,
-                    current()?.id ?? null,
+                    readingChannel(),
                 )
                 .subscribe({
                     next: (data) => {
@@ -110,7 +116,9 @@ export function createLive({ snapshot = () => null, identity, current, changed, 
                             connection = null;
                             view = null;
                             changed();
-                            if (error.message.includes('AUTH_REQUIRED')) authRequired();
+                            if (error.message.includes('UPDATE_REQUIRED'))
+                                document.dispatchEvent(new Event('chat-update-required'));
+                            else if (error.message.includes('AUTH_REQUIRED')) authRequired();
                         }
                     },
                 });
@@ -121,6 +129,9 @@ export function createLive({ snapshot = () => null, identity, current, changed, 
             typedAt = 0;
             typingChannel = null;
             changed();
+        },
+        refreshViewing() {
+            if (connection && reportedChannel !== readingChannel()) report();
         },
         navigate() {
             stopTyping();

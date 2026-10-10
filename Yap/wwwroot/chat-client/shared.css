@@ -1,4 +1,4 @@
-/* Shared layout, account controls, avatars and profiles for chat and retained Blazor pages. */
+/* Shared Blazor/chat layout, avatars and profiles; concern files own nested controls, chat.css wins for shell state. */
 /* Avatar */
 .avatar {
     display: flex;
@@ -999,4 +999,29 @@
     .profile-info-btn {
         display: flex;
     }
+}
+
+/* Install guidance is shared by the chat bot and retained Settings controls. */
+.install-guide {
+    max-width: min(28rem, calc(100vw - 2rem));
+    padding: 1.5rem;
+    color: var(--text-primary);
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+.install-guide::backdrop {
+    background: rgb(0 0 0 / 60%);
+}
+.install-guide h2 {
+    margin-top: 0;
+    font-size: 1.2rem;
+}
+.install-guide p {
+    line-height: 1.5;
+}
+.install-guide button {
+    margin-right: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
 }

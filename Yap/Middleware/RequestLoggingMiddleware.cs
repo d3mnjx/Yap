@@ -94,7 +94,8 @@ public class RequestLoggingMiddleware
                 UserAgent = context.Request.Headers.UserAgent.ToString(),
                 Referer = RedactReferer(context.Request.Headers.Referer.ToString()),
                 Protocol = context.Request.Protocol,
-                ConnectionId = context.Connection.Id
+                ConnectionId = context.Connection.Id,
+                DeviceClass = context.Items["IsMobile"] is true ? "mobile" : "desktop"
             };
 
             _logQueue.Enqueue(entry);
@@ -143,6 +144,7 @@ public record RequestLogEntry
     public string Referer { get; init; } = "";
     public string Protocol { get; init; } = "";
     public string ConnectionId { get; init; } = "";
+    public string DeviceClass { get; init; } = "";
 }
 
 /// <summary>
@@ -171,7 +173,7 @@ public class RequestLogWriter : IHostedService, IDisposable
     private Timer? _flushTimer;
     private readonly object _writeLock = new();
 
-    private const string CsvHeader = "Timestamp,Method,Path,StatusCode,DurationMs,ClientIP,UserAgent,Referer,Protocol,ConnectionId";
+    private const string CsvHeader = "Timestamp,Method,Path,StatusCode,DurationMs,ClientIP,UserAgent,Referer,Protocol,ConnectionId,DeviceClass";
 
     public RequestLogWriter(RequestLogQueue queue, IWebHostEnvironment env)
     {
@@ -237,6 +239,9 @@ public class RequestLogWriter : IHostedService, IDisposable
                 var fileName = $"{group.Key:yyyy-MM-dd}.csv";
                 var filePath = Path.Combine(_logDirectory, fileName);
 
+                // Preserve today's older CSV schema if this release changes the columns.
+                if (File.Exists(filePath) && File.ReadLines(filePath).FirstOrDefault() != CsvHeader)
+                    filePath = Path.Combine(_logDirectory, $"{group.Key:yyyy-MM-dd}-devices.csv");
                 var isNewFile = !File.Exists(filePath);
 
                 var sb = new StringBuilder();
@@ -270,7 +275,8 @@ public class RequestLogWriter : IHostedService, IDisposable
             EscapeCsv(entry.UserAgent),
             EscapeCsv(entry.Referer),
             EscapeCsv(entry.Protocol),
-            EscapeCsv(entry.ConnectionId)
+            EscapeCsv(entry.ConnectionId),
+            EscapeCsv(entry.DeviceClass)
         );
     }
 

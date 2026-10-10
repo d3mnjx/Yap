@@ -1,4 +1,4 @@
-/* Browser shell navigation, connection and delivery presentation. */
+/* Shell navigation, connection and delivery state; loaded last and owns shared visibility/state overrides. */
 [hidden] {
     display: none !important;
 }

@@ -13,18 +13,31 @@ namespace Yap.Offline;
 /// </summary>
 public sealed class OfflineHub(UserService users, OfflineSnapshotService snapshots, OfflineLiveService live, ChatConfigService branding, OfflineFanout fanout, ChatService chat) : Hub
 {
-    private User CurrentUser() => users.AuthenticateByToken(Context.GetHttpContext()?.Request.Cookies[AuthMiddleware.CookieName] ?? "")
-        ?? throw new HubException("AUTH_REQUIRED");
+    private User CurrentUser()
+    {
+        EnsureProtocol();
+        return users.AuthenticateByToken(Context.GetHttpContext()?.Request.Cookies[AuthMiddleware.CookieName] ?? "")
+            ?? throw new HubException("AUTH_REQUIRED");
+    }
+    private void EnsureProtocol()
+    {
+        if (Context.GetHttpContext() is { } http && !ChatProtocol.Accepts(http.Request, hub: true))
+            throw new HubException("UPDATE_REQUIRED");
+    }
     public Task Join(string ticket, UserStatus chosen, bool visible, bool mobile, double idleSeconds)
         => live.Join(Context.ConnectionId, CurrentUser(), ticket, chosen, visible, mobile, idleSeconds, Context.GetHttpContext()?.Items["ClientIp"] as string);
     public Task Report(bool visible, double idleSeconds, Guid? channelId)
-        => Permit("report") ? live.Report(Context.ConnectionId, CurrentUser(), visible, idleSeconds, channelId) : Task.CompletedTask;
+        => Permit("report") ? live.Report(Context.ConnectionId, CurrentUser(), visible, idleSeconds, channelId,
+            // Older, unversioned hub clients report a selection before its window loads.
+            // Keep their observed-read accounting until the new shell opts into this URL.
+            validatedView: Context.GetHttpContext()?.Request.Query["protocol"].ToString() == ChatProtocol.Version) : Task.CompletedTask;
     public Task SetStatus(UserStatus status) => !Permit("status") ? Task.CompletedTask : live.SetStatus(Context.ConnectionId, CurrentUser(), status);
     public Task Typing(Guid channelId, bool active) => !Permit("typing") ? Task.CompletedTask : live.Typing(Context.ConnectionId, CurrentUser(), channelId, active);
     // A small burst allows normal navigation/status changes; a sustained caller is limited
     // to four changes/second. State lives with the connection, not a transient Hub instance.
     private bool Permit(string operation)
     {
+        EnsureProtocol();
         lock (Context.Items)
         {
             var key = "rate:" + operation;

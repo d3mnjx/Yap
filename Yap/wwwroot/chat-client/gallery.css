@@ -1,8 +1,7 @@
-/* Gallery thumbnails, fullscreen viewer and gestures. */
+/* Fullscreen gallery and gestures; owns gallery selectors, messages.css owns timeline media thumbnails. */
 /* ImageGalleryModal */
-/* Full-screen media viewer. Layout and gestures are client-owned (see chat.js "Image gallery
-   viewer"): the strip swipes with native scroll-snap, "fill" / "dragging" / "closing" are
-   classes chat.js toggles, --drag is a 0..1 inline variable it sets during a drag-to-close. */
+/* Full-screen media viewer. Layout and gestures are client-owned (see gallery.js): the strip swipes with native scroll-snap, "fill" / "dragging" / "closing" are
+   classes gallery.js toggles, --drag is a 0..1 inline variable it sets during a drag-to-close. */
 .image-modal {
     position: fixed;
     inset: 0;

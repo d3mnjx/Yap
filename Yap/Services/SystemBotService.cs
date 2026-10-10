@@ -317,7 +317,7 @@ public class SystemBotService
 
         if (_chatService.IsUserMobile(user.Username))
         {
-            message += "\n\n📱 I noticed you're on a phone. It's a much better experience if you [pwa-install] to your homescreen — it will look and feel like a normal app. Please also allow notifications when prompted so you don't miss messages. You can change this anytime in Settings.";
+            message += "\n\n📱 I noticed you're on a phone. If you do not already have a home-screen icon, [pwa-install] for an app-like experience. If you already installed Yap, keep using that icon; you do not need a second copy. Please also allow notifications when prompted so you don't miss messages. You can change this anytime in Settings.";
         }
 
         // Their way back in, born with the account. This DM is the one place they can always

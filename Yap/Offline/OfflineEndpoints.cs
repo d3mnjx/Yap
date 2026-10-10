@@ -23,8 +23,12 @@ public static class OfflineEndpoints
         });
         MapApi(app.MapGroup("/api/chat"));
         app.MapHub<OfflineHub>("/hubs/chat");
-        foreach (var path in new[] { "/chat", "/lobby", "/room/{id:guid}", "/dm/{username}" })
-            app.MapGet(path, ServeShell);
+        foreach (var path in new[] { "/", "/chat", "/lobby", "/room/{id:guid}", "/dm/{username}" })
+        {
+            var endpoint = app.MapGet(path, ServeShell);
+            if (path == "/")
+                endpoint.WithOrder(-1).WithMetadata(new ChatRootPolicy());
+        }
     }
 
     // Only the neutral file is worker-cacheable. Online HTML carries current account
@@ -57,7 +61,7 @@ public static class OfflineEndpoints
             var authenticated = users.AuthenticateByToken(token);
             if (authenticated == null)
                 return Results.Unauthorized();
-            if (context.HttpContext.Request.Headers.TryGetValue("X-Yap-Chat-Protocol", out var protocol) && protocol != "2")
+            if (!ChatProtocol.Accepts(context.HttpContext.Request))
                 return Results.Json(new
                 {
                     code = "update_required",
@@ -199,7 +203,7 @@ public static class OfflineEndpoints
             UserService users, ChatService chat, OfflineSnapshotService snapshots, OfflineSync sync) =>
         {
             var user = users.AuthenticateByToken(http.Request.Cookies[AuthMiddleware.CookieName]!)!;
-            await chat.MarkObservedReadAsync(user.Id, id, request.Through);
+            await chat.MarkObservedReadAsync(user.Id, id, request.Through, source: request.Source);
             return Results.Ok(new
             {
                 through = request.Through,
@@ -243,7 +247,7 @@ public static class OfflineEndpoints
             foreach (var checkpoint in checkpoints.DistinctBy(c => c.ChannelId))
             {
                 if (chat.GetChannel(checkpoint.ChannelId)?.CanAccess(user.Id) == true)
-                    await chat.MarkObservedReadAsync(user.Id, checkpoint.ChannelId, checkpoint.Through);
+                    await chat.MarkObservedReadAsync(user.Id, checkpoint.ChannelId, checkpoint.Through, source: checkpoint.Source);
                 updates.Add(sync.Conversation(user, checkpoint.ChannelId));
             }
             return Results.Ok(new
@@ -307,7 +311,7 @@ public static class OfflineEndpoints
         var services = http.RequestServices;
         var users = services.GetRequiredService<UserService>();
         var user = users.AuthenticateByToken(http.Request.Cookies[AuthMiddleware.CookieName]!)!;
-        AuthMiddleware.SetAuthCookie(http, user.Token);
+        services.GetRequiredService<AuthCookieRenewal>().Refresh(http, user.Token);
         users.RecordKnownIp(user.Id, IpHelper.GetClientIp(http));
         users.RecordLoginOrigin(user.Id, $"{http.Request.Scheme}://{http.Request.Host}");
         return new
@@ -330,9 +334,9 @@ public static class OfflineEndpoints
     /// The highest arrival checkpoint observed by the client, leaving newer unseen arrivals unread.
     /// </summary>
     public record DetectedLocale(string TimeZone, string Locale, string? Path, string? HourCycle = null, Guid? ChannelId = null);
-    public record ReadRequest(long Through);
+    public record ReadRequest(long Through, string Source = "observed");
     /// <summary>An observed checkpoint in a batched background read acknowledgement.</summary>
-    public record ReadCheckpoint(Guid ChannelId, long Through);
+    public record ReadCheckpoint(Guid ChannelId, long Through, string Source = "observed");
     /// <summary>
     /// A new message's stable retry identity, text, reply target and optional uploaded or selected
     /// media references.

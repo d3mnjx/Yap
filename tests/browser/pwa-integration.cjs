@@ -296,6 +296,23 @@ if (!['localhost', '127.0.0.1'].includes(new URL(origin).hostname))
             b.close();
         });
         await page.locator('#msg-install-fixture .bot-action-link').click();
+        await page.getByRole('dialog').waitFor();
+        assert.equal(await page.evaluate(() => installRequests), 0);
+        await page.getByRole('button', { name: 'Use existing app', exact: true }).click();
+        assert.equal(await page.evaluate(() => installRequests), 0);
+        await page.locator('#msg-install-fixture .bot-action-link').click();
+        await page.getByRole('button', { name: 'Install app', exact: true }).click();
+        assert.equal(await page.evaluate(() => installRequests), 1);
+        await page.evaluate(() => {
+            Object.defineProperty(navigator, 'standalone', { configurable: true, value: true });
+            import('/chat-client/pwa.js').then((module) => module.installGuide());
+        });
+        await page.getByRole('heading', { name: 'Yap is already installed' }).waitFor();
+        assert.equal(
+            await page.getByRole('button', { name: 'Install app', exact: true }).count(),
+            0,
+        );
+        await page.getByRole('button', { name: 'Close', exact: true }).click();
         assert.equal(await page.evaluate(() => installRequests), 1);
         const removed = p.waitForResponse(
             (x) => x.url().endsWith('/api/push/unsubscribe') && x.status() === 200,

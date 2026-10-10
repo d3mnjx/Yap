@@ -66,7 +66,7 @@ public sealed class OfflineLiveService(ChatService chat, IDataProtectionProvider
         if (session.Channel is { } channel && !sessions.Any(pair => pair.Key != connection && pair.Value.UserId == session.UserId && pair.Value.Channel == channel && pair.Value.TypingUntil > DateTime.UtcNow))
             await chat.StopTypingAsync(channel, session.Username);
     }
-    public async Task Report(string connection, User user, bool visible, double idleSeconds, Guid? channelId)
+    public async Task Report(string connection, User user, bool visible, double idleSeconds, Guid? channelId, bool validatedView = true)
     {
         await gate.WaitAsync();
         try
@@ -86,7 +86,7 @@ public sealed class OfflineLiveService(ChatService chat, IDataProtectionProvider
                 Channel = channelId
             };
             var channel = channelId is { } current ? chat.GetChannel(current) : null;
-            chat.SetSessionViewing(Key(connection), channel == null ? null : channel.IsDirectMessage ? "DM: " + channel.GetOtherParticipant(user.Username) : "#" + channel.Name);
+            chat.SetSessionViewing(Key(connection), channel == null ? null : channel.IsDirectMessage ? "DM: " + channel.GetOtherParticipant(user.Username) : "#" + channel.Name, validatedView ? channelId : null);
             await chat.ReportClientStateAsync(Key(connection), visible, idleSeconds);
         }
         finally { gate.Release(); }

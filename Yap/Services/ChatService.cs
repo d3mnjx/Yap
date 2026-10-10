@@ -85,6 +85,7 @@ public partial class ChatService
         public bool Connected { get; init; } = true; // Retained disconnected sessions still serve presence/reconnect recovery.
         public string? CircuitId { get; init; }       // joins this session to CircuitTracker's transport/RTT telemetry
         public string? ViewingChannel { get; init; }  // display label of the channel this session has open
+        public Guid? ReadingChannelId { get; init; } // Only a loaded/validated browser window reports a read target.
         public DateTime CreatedAt { get; init; }
         public DateTime LastReportAt { get; init; }   // last client-state heartbeat — stale means frozen/disconnected/legacy client
     }
@@ -766,15 +767,15 @@ public partial class ChatService
         _users.TryGetValue(sessionId, out var session) && session.PageVisible;
 
     /// <summary>
-    /// Records which channel a session currently has open (display label, e.g. "#lobby" or "DM: bob").
-    /// Diagnostic — the admin Sessions table uses it to answer "which device is parked on that DM".
+    /// Records the Admin display label and an optional validated window for foreground read policy.
+    /// Retained Blazor callers pass only a label; only the versioned chat hub supplies a read target.
     /// </summary>
-    public void SetSessionViewing(string sessionId, string? label)
+    public void SetSessionViewing(string sessionId, string? label, Guid? readingChannelId = null)
     {
         lock (_connectionGate)
         {
             if (_users.TryGetValue(sessionId, out var session))
-                _users[sessionId] = session with { ViewingChannel = label };
+                _users[sessionId] = session with { ViewingChannel = label, ReadingChannelId = readingChannelId };
         }
     }
 
@@ -1413,6 +1414,16 @@ public partial class ChatService
 
             userIdsToIncrement = live.Concat(subscribed).Distinct().ToList();
         }
+
+        // A fresh foreground viewer already caught up in this channel needs no unread
+        // increment/clear round trip. Hidden, Away, disconnected or recovering windows
+        // keep normal observed checkpoints. Never clear older unread through this path.
+        var now = DateTime.UtcNow;
+        var foregroundReaders = _users.Values.Where(session =>
+            session.Connected && session.PageVisible && session.ReadingChannelId == channelId
+            && now - session.LastReportAt <= ForegroundReportWindow
+            && GetUserStatus(session.Username) != UserStatus.Away).Select(session => session.UserId).ToHashSet();
+        userIdsToIncrement.RemoveAll(id => foregroundReaders.Contains(id) && GetUnreadCount(id, channelId) == 0);
 
         if (userIdsToIncrement.Count == 0)
         {

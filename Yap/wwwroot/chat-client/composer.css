@@ -1,4 +1,4 @@
-/* Draft input, reply bar, upload controls and typing indicator. */
+/* Draft, reply and upload controls; owns composer selectors, messages.css owns the separate message editor. */
 /* MessageInput */
 /* Reply bar above message input */
 .reply-bar {

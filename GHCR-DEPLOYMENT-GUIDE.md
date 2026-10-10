@@ -319,9 +319,15 @@ Use a pinned candidate image and retain the original image digest and persistent
 
 ### Persistence and client state
 
-Durable sends require SQLite persistence. Preserve the complete `Data` directory, its effective `appsettings.json`, and `wwwroot/uploads`. Startup applies the additive `DurableTextSends` and `ObservedReadCheckpoints` migrations: operation receipts/message IDs and read checkpoints initialized from existing unread counts. Do not run two application versions against the same SQLite/data directory. The v33 shell upgrades the existing `yap-chat-v1` IndexedDB database from schema 3 to 4 without discarding drafts/outbox/read checkpoints. Already-open v32 documents retain their legacy HTTP/hub protocol during activation; new clients request protocol 2. The older schema-3 client cannot reopen a schema-4 database: prefer a forward fix, and do not clear site data to work around a downgrade.
+Durable sends require SQLite persistence. Preserve the complete `Data` directory, its effective `appsettings.json`, and `wwwroot/uploads`. Startup applies the additive `DurableTextSends` and `ObservedReadCheckpoints` migrations: operation receipts/message IDs and read checkpoints initialized from existing unread counts. Do not run two application versions against the same SQLite/data directory. The client uses `yap-chat-v1` IndexedDB schema 4 and preserves drafts/outbox/read checkpoints across shell updates. Protocol 2 is the only supported chat protocol; explicit API or hub protocol mismatches return 426 and request a reload without clearing local work. The older schema-3 client cannot reopen a schema-4 database: prefer a forward fix, and do not clear site data to work around a downgrade.
 
 Before stopping the original Blazor app, ask users to send or copy unfinished text and finish uploads. Its unsent draft lives in the old page/circuit and its reconnect handler can auto-reload; the replacement cannot recover it retroactively. The first offline release starts new browser storage and does not migrate prototype browser-only test queues. Subsequent releases should preserve the deployed chat namespace, drafts/outbox and receipt compatibility.
+
+### Existing Android installations and stable manifest identity
+
+The default manifest ID is now `/`. Earlier versions omitted an ID, so Chrome derived one from the token-bearing `start_url`; rotating that token could make the same site look like a new app. A stable ID prevents future identity changes, but existing Android installs can retain the old identity. They keep working and launching with their existing account, while manifest updates (name, icons or theme) may no longer reach them. Chrome may offer another installation. Use the existing icon, or save a login link in Settings, remove the old icon, and then install the replacement. Do not reinstall merely to recover offline drafts. The bot/Settings install guide offers an existing-app exit and does not prompt for another installation from standalone mode.
+
+Before deploying, use one real Android device: install the original version, sign in, deploy the candidate on the same origin, open the existing icon, confirm it launches signed in, and check whether Chrome offers a second installation. Record the Android/Chrome versions and observed result in the PR. Automated browser handoff tests do not establish this OS-level identity behavior; this check is still pending.
 
 ### HTTPS, reverse proxies and caches
 
@@ -339,7 +345,7 @@ The permissive default also accepts forwarded headers supplied directly by a cli
 
 `ReverseProxy:KnownNetworks` accepts CIDRs when a specific stable address is impractical. Leave both lists absent or empty to keep the permissive default. When opting into restriction, use valid IP addresses/CIDRs; malformed entries prevent startup.
 
-Preserve the public Host, and forward the original public scheme in `X-Forwarded-Proto`. With multiple proxies, the nearest proxy must pass that public URL through instead of reporting its internal HTTP connection. Forward `/api/chat/*`, `/hubs/chat*` with WebSocket upgrades, `/api/tus*`, `/service-worker.js`, `/chat-client/*` and retained Blazor routes. A normal Caddy `reverse_proxy` preserves the Host.
+Preserve the public Host, and forward the original public scheme in `X-Forwarded-Proto`. With multiple proxies, the nearest proxy must pass that public URL through instead of reporting its internal HTTP connection. Forward `/api/chat/*`, `/hubs/chat*` with WebSocket upgrades, `/api/tus*`, `/service-worker.js`, `/service-worker-module.js`, `/chat-client/*` and retained Blazor routes. A normal Caddy `reverse_proxy` preserves the Host.
 
 If the proxy hides the public Host, set the optional top-level `PublicOrigin` to an HTTP(S) origin such as `"https://chat.example.com"`; it overrides all invite/login-link origins. Otherwise bot links use per-user recorded origins: the recipient's for welcome DMs, the recipient's then issuing admin's for replacement DMs, and a site-relative link when neither is known. Settings/Admin use the viewing circuit's base URI. Origins contain no path. See [configuration](CONFIG_README.md#publicorigin).
 

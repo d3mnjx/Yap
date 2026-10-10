@@ -1,3 +1,4 @@
+import { PROTOCOL } from './constants.js';
 import { timestamp } from './dates.js';
 import { createScroll } from './scroll.js';
 import { watchWorkerUpdates, registerWorker } from './worker-updates.js';
@@ -658,7 +659,8 @@ async function render() {
     readMarkers = await storage.reads();
     if (turn === renderGeneration && selectedConversationId === id) {
         sidebar();
-        await reader.observe(c, switched);
+        await reader.observe(c, switched ? 'open' : 'arrival');
+        live.refreshViewing();
     }
     if (turn !== renderGeneration || selectedConversationId !== id) return;
     scrolling.update();
@@ -876,7 +878,9 @@ async function connectChat(bootstrap = null) {
             .catch(() => {});
         windows.schedule();
         hubConnection = new signalR.HubConnectionBuilder()
-            .withUrl('/hubs/chat')
+            .withUrl('/hubs/chat?protocol=' + PROTOCOL, {
+                headers: { 'X-Yap-Chat-Protocol': String(PROTOCOL) },
+            })
             .configureLogging(signalR.LogLevel.Warning)
             .build();
         await hubConnection.start();
@@ -910,7 +914,9 @@ async function connectChat(bootstrap = null) {
                 },
                 error: (error) => {
                     if (attemptGeneration !== connectionGeneration) return;
-                    if (error.message.includes('AUTH_REQUIRED')) loseAccount();
+                    if (error.message.includes('UPDATE_REQUIRED'))
+                        document.dispatchEvent(new Event('chat-update-required'));
+                    else if (error.message.includes('AUTH_REQUIRED')) loseAccount();
                     else {
                         live.detach();
                         status('Disconnected · cached chat');
@@ -930,7 +936,13 @@ async function connectChat(bootstrap = null) {
         });
     } catch (error) {
         if (attemptGeneration !== connectionGeneration) return;
-        if (error.message === 'AUTH_REQUIRED') await loseAccount();
+        if (
+            error.statusCode === 426 ||
+            error.message.includes('UPDATE_REQUIRED') ||
+            error.message.includes('426')
+        )
+            document.dispatchEvent(new Event('chat-update-required'));
+        else if (error.message === 'AUTH_REQUIRED') await loseAccount();
         else {
             status(snapshot ? 'Offline · cached chat' : 'Offline · connect to set up');
             if (!snapshot) notice('No available offline chat. Connect and sign in first.', true);
