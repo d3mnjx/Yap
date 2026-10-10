@@ -224,7 +224,7 @@ These are the maintained checks for the corresponding feature families. Their fi
 - Configured GIF/media providers and their failure combinations, large/interrupted uploads, full library ZIP/import/folder/quota workflows.
 - Storage quota/eviction, expiry and failed-upgrade stress; full registration/invite/secret-code/settings/admin matrices; broader accessibility, themes and visual variants.
 - Detailed client latency telemetry comparable to retained Blazor circuit diagnostics is not implemented. Client sessions participate in shared session reporting.
-- Accepted messages are durable before recipient unread/notification side effects. A later write failure can miss an unread increment; receipt replay does not repair it. See [recovery limits](offline-behavior.md#durability-and-recovery-limits).
+- Durable acceptance includes recipient unread checkpoints; a failed write rolls back for retry. Notification failures are isolated and logged. Legacy bot/server sends retain best-effort persistence. See [recovery limits](offline-behavior.md#durability-and-recovery-limits).
 
 ## Implementation references
 

@@ -92,9 +92,19 @@ public partial class ChatService
                 ContentHash = hash,
                 AcceptedAt = message.Timestamp
             };
+            List<Guid> affectedUserIds;
             try
             {
-                await _persistence.PersistTextAcceptanceAsync(message, receipt);
+                affectedUserIds = await IncrementUnreadCountsAsync(channelId, user.Id,
+                    async recipients =>
+                    {
+                        await _persistence.PersistTextAcceptanceAsync(message, receipt, recipients);
+                        // Publish the row before its checkpoint becomes observable. A window
+                        // must never acknowledge an arrival that is still absent from memory.
+                        lock (GetChannelLock(channelId))
+                            if (_channelMessages.TryGetValue(channelId, out var messages))
+                                messages.Add(message);
+                    });
             }
             catch (Microsoft.EntityFrameworkCore.DbUpdateException error) when (error.InnerException is Microsoft.Data.Sqlite.SqliteException { SqliteExtendedErrorCode: 1555 or 2067 })
             {
@@ -106,7 +116,7 @@ public partial class ChatService
             // Persistence is now authoritative. A notification failure cannot turn acceptance into failure.
             try
             {
-                await PublishMessageAsync(channel, message);
+                await PublishMessageAsync(channel, message, affectedUserIds);
             }
             catch (Exception ex) { _logger.LogError(ex, "Post-commit notification failed for {MessageId}", message.Id); }
             return receipt;

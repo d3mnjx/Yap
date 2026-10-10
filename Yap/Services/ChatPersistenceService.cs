@@ -123,7 +123,7 @@ public class ChatPersistenceService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to persist new message {MessageId}", message.Id);
-            throw;
+            // Legacy server/bot messages remain best-effort; callers still publish in memory.
         }
     }
 
@@ -139,15 +139,19 @@ public class ChatPersistenceService
         return await db.Messages.AsNoTracking().Include(m => m.Reactions).SingleOrDefaultAsync(m => m.Id == messageId);
     }
 
-    public async Task PersistTextAcceptanceAsync(ChatMessage message, TextSendReceipt receipt)
+    public async Task PersistTextAcceptanceAsync(ChatMessage message, TextSendReceipt receipt, IReadOnlyList<Guid>? recipients = null)
     {
         if (!IsEnabled) throw new InvalidOperationException("Durable sends require persistence.");
         await using var db = await _dbFactory!.CreateDbContextAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync();
         db.Messages.Add(new ChatMessage(message.ChannelId, message.UserId, message.Username, message.Content, message.Timestamp, message.ImageUrls, message.ReplyToMessageId, message.VideoUrls, message.GifAttachments)
         { Id = message.Id, OperationId = message.OperationId, ReplyToMessageId = message.ReplyToMessageId });
         db.TextSendReceipts.Add(receipt);
-        // EF commits both inserts in one transaction, or neither. Do not swallow persistence errors.
+        // A receipt promises both the message and recipient checkpoints. An unread write
+        // failure must roll back acceptance so retry can safely complete all three.
         await db.SaveChangesAsync();
+        await IncrementReadStatesAsync(db, message.ChannelId, recipients ?? []);
+        await transaction.CommitAsync();
     }
 
     public async Task PersistMutationAsync(TextSendReceipt receipt, string kind, string? content, string? emoji, bool active, string username)
@@ -171,8 +175,13 @@ public class ChatPersistenceService
             {
                 var existing = message.Reactions.Where(r => r.UserId == receipt.UserId && r.Emoji == emoji).ToArray();
                 if (!active) db.Reactions.RemoveRange(existing);
-                else if (existing.Length == 0) message.Reactions.Add(new Reaction { MessageId = message.Id,
-                    UserId = receipt.UserId, Username = username, Emoji = emoji! });
+                else if (existing.Length == 0) message.Reactions.Add(new Reaction
+                {
+                    MessageId = message.Id,
+                    UserId = receipt.UserId,
+                    Username = username,
+                    Emoji = emoji!
+                });
             }
         }
         // Mutation and receipt must commit together: a retry must not undo a newer accepted edit.
@@ -331,13 +340,19 @@ public class ChatPersistenceService
     public async Task IncrementReadStatesAsync(Guid channelId, IReadOnlyList<Guid> recipients)
     {
         if (!IsEnabled || recipients.Count == 0) return;
-        var channel = channelId.ToString().ToUpperInvariant();
-        var ids = System.Text.Json.JsonSerializer.Serialize(recipients.Select(id => id.ToString().ToUpperInvariant()));
         await using var db = await _dbFactory!.CreateDbContextAsync();
         await using var transaction = await db.Database.BeginTransactionAsync();
+        await IncrementReadStatesAsync(db, channelId, recipients);
+        await transaction.CommitAsync();
+    }
+
+    private static async Task IncrementReadStatesAsync(ChatDbContext db, Guid channelId, IReadOnlyList<Guid> recipients)
+    {
+        if (recipients.Count == 0) return;
+        var channel = channelId.ToString().ToUpperInvariant();
+        var ids = System.Text.Json.JsonSerializer.Serialize(recipients.Select(id => id.ToString().ToUpperInvariant()));
         await db.Database.ExecuteSqlInterpolatedAsync($"INSERT OR IGNORE INTO ChannelReadStates (UserId, ChannelId, LastReadAt, UnreadCount, ReceivedCount, ReadThrough) SELECT value, {channel}, {DateTime.MinValue}, 0, 0, 0 FROM json_each({ids})");
         await db.Database.ExecuteSqlInterpolatedAsync($"UPDATE ChannelReadStates SET UnreadCount = UnreadCount + 1, ReceivedCount = ReceivedCount + 1 WHERE ChannelId = {channel} AND UserId IN (SELECT value FROM json_each({ids}))");
-        await transaction.CommitAsync();
     }
 
     public Task PersistReadStateAsync(ChannelReadState state) => PersistReadStatesAsync([state]);

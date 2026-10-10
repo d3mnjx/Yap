@@ -970,7 +970,7 @@ public partial class ChatService
         await PublishMessageAsync(channel, message);
     }
 
-    private async Task PublishMessageAsync(Channel channel, ChatMessage message)
+    private async Task PublishMessageAsync(Channel channel, ChatMessage message, List<Guid>? acceptedRecipients = null)
     {
         var totalSw = Stopwatch.StartNew();
         var channelId = channel.Id;
@@ -979,15 +979,19 @@ public partial class ChatService
         var content = message.Content;
         lock (GetChannelLock(channelId))
         {
-            if (!_channelMessages.TryGetValue(channelId, out var messages) || messages.Any(m => m.Id == message.Id)) return;
-            messages.Add(message);
+            if (!_channelMessages.TryGetValue(channelId, out var messages)) return;
+            if (messages.Any(m => m.Id == message.Id))
+            {
+                if (acceptedRecipients == null) return;
+            }
+            else messages.Add(message);
         }
-        _gifService.IncrementReferences(message.GifAttachments);
+        RunNotification(() => _gifService.IncrementReferences(message.GifAttachments));
 
         // Update unread counts in memory + DB (awaited — fast, no events)
         var unreadSw = Stopwatch.StartNew();
-        List<Guid> affectedUserIds = [];
-        try { affectedUserIds = await IncrementUnreadCountsAsync(channelId, userId); }
+        List<Guid> affectedUserIds = acceptedRecipients ?? [];
+        try { if (acceptedRecipients == null) affectedUserIds = await IncrementUnreadCountsAsync(channelId, userId); }
         catch (Exception error)
         {
             // Acceptance is already durable. The incremental stream has no periodic full
@@ -1004,9 +1008,9 @@ public partial class ChatService
 
         // Notify all subscribers
         if (wasTyping)
-            OnTypingUsersChanged?.Invoke(channelId);
+            NotifySubscribers(OnTypingUsersChanged, channelId);
 
-        OnMessageReceived?.Invoke(message);
+        NotifySubscribers(OnMessageReceived, message);
         NotifyUnreadChanged(channelId, affectedUserIds);
 
         // Queue link preview fetches for URLs in the message (fire-and-forget)
@@ -1015,16 +1019,16 @@ public partial class ChatService
             var urls = LinkPreviewService.ExtractUrls(content);
             foreach (var url in urls.Take(5))
             {
-                _linkPreviewService.QueueFetch(message.Id, url);
+                RunNotification(() => _linkPreviewService.QueueFetch(message.Id, url));
 
                 // Also queue media caching (yt-dlp determines if URL is supported)
                 if (_linkPreviewSettings.MediaCachingEnabled)
-                    _mediaCacheService.QueueDownload(message.Id, url);
+                    RunNotification(() => _mediaCacheService.QueueDownload(message.Id, url));
             }
         }
 
         // Push (fire-and-forget, doesn't block the send).
-        DispatchPush(channel, username, message, content);
+        RunNotification(() => DispatchPush(channel, username, message, content));
     }
 
     /// <summary>
@@ -1477,7 +1481,20 @@ public partial class ChatService
     /// Increments unread count for all participants except the sender (memory + DB only).
     /// Returns the list of affected user IDs for notification.
     /// </summary>
-    private async Task<List<Guid>> IncrementUnreadCountsAsync(Guid channelId, Guid senderUserId)
+    // One faulty listener must not suppress the stream, other listeners, or push.
+    private void RunNotification(Action action)
+    {
+        try { action(); }
+        catch (Exception error) { _logger.LogError(error, "Chat notification failed"); }
+    }
+    private void NotifySubscribers<T>(Action<T>? handlers, T value)
+    {
+        if (handlers == null) return;
+        foreach (Action<T> handler in handlers.GetInvocationList()) RunNotification(() => handler(value));
+    }
+
+    private async Task<List<Guid>> IncrementUnreadCountsAsync(Guid channelId, Guid senderUserId,
+        Func<IReadOnlyList<Guid>, Task>? accept = null)
     {
         if (!_channels.TryGetValue(channelId, out var channel))
             return new List<Guid>();
@@ -1510,7 +1527,11 @@ public partial class ChatService
             userIdsToIncrement = live.Concat(subscribed).Distinct().ToList();
         }
 
-        if (userIdsToIncrement.Count == 0) return userIdsToIncrement;
+        if (userIdsToIncrement.Count == 0)
+        {
+            if (accept != null) await accept(userIdsToIncrement);
+            return userIdsToIncrement;
+        }
 
         await readStateGate.WaitAsync();
         try
@@ -1522,12 +1543,17 @@ public partial class ChatService
                 state.UnreadCount++;
                 return state;
             }).ToArray();
-            await _persistence.IncrementReadStatesAsync(channelId, userIdsToIncrement);
+            if (accept != null) await accept(userIdsToIncrement);
+            else
+            {
+                try { await _persistence.IncrementReadStatesAsync(channelId, userIdsToIncrement); }
+                catch (Exception error) { _logger.LogError(error, "Legacy unread persistence failed for {ChannelId}", channelId); }
+            }
             foreach (var state in updated) _readStates[(state.UserId, channelId)] = state;
             if (channel.IsDirectMessage)
                 foreach (var state in updated)
-                    _audit.RecordUnreadChange(_userService.GetById(state.UserId)?.Username ?? "?", DescribeChannel(channel), "+1",
-                        state.UnreadCount, $"msg from {_userService.GetById(senderUserId)?.Username}", "—");
+                    RunNotification(() => _audit.RecordUnreadChange(_userService.GetById(state.UserId)?.Username ?? "?", DescribeChannel(channel), "+1",
+                        state.UnreadCount, $"msg from {_userService.GetById(senderUserId)?.Username}", "—"));
         }
         finally { readStateGate.Release(); }
 
@@ -1545,7 +1571,9 @@ public partial class ChatService
     {
         foreach (var userId in userIds)
         {
-            OnUnreadChanged?.Invoke(userId, channelId);
+            if (OnUnreadChanged is { } handlers)
+                foreach (Action<Guid, Guid> handler in handlers.GetInvocationList())
+                    RunNotification(() => handler(userId, channelId));
         }
     }
 

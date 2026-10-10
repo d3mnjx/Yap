@@ -77,7 +77,7 @@ Observed reads persist the highest arrival checkpoint actually seen. The server 
 
 Sends serialize only competing operations on the same message; DM creation locks only the participant pair. SQLite transactions and receipt uniqueness remain authoritative. Recipient unread increments use two set-based statements under the existing read/checkpoint gate. Presence uses one shared 100 ms ticker; unchanged views produce no packet. Hub reports/status/typing use per-connection burst limits.
 
-Accepted message/receipt persistence precedes recipient unread/notification side effects. A failed unread write is logged without suppressing the accepted message event. A failure of the later write can miss an unread increment even though the message is durable. See the [durability and recovery limits](offline-behavior.md#durability-and-recovery-limits).
+Durable sends commit the message, receipt and recipient unread checkpoints in one transaction under the read/checkpoint gate. A failed unread write rolls back acceptance for safe retry. Notification subscribers run independently so one failure cannot suppress later listeners or push. Legacy bot/server sends retain best-effort persistence and continue publishing when it fails. See the [durability and recovery limits](offline-behavior.md#durability-and-recovery-limits).
 
 ## Shell changes and validation
 

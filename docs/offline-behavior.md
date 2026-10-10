@@ -72,7 +72,7 @@ Push permission remains an explicit installed-app flow. Granted subscriptions ar
 
 ## Durability and recovery limits
 
-- Message/mutation acceptance and its receipt are atomic. Recipient unread increments and push/notification side effects follow acceptance and are not an exactly-once delivery guarantee. A later write failure can permanently miss an unread increment; retrying the receipt does not repair it. It no longer suppresses the accepted message event.
+- Durable sends commit their message, receipt and recipient unread checkpoints atomically; unread failures roll back acceptance for safe retry. Mutations commit with their receipts. Notification listeners are isolated so one failure cannot suppress later listeners or push, but process termination after commit can still interrupt delivery; reconnect recovers authoritative state. Legacy bot/server messages retain best-effort persistence and publish in memory if a write fails.
 - Storage quota failures and browser eviction can lose local-only work. Server backups do not contain unsent browser drafts or queues.
 - Offline permissions are provisional. Removed access, deleted conversations or changed write permissions can cause queued operations to fail when the server sees them.
 - Original Blazor drafts held only in an old page/circuit are not migrated. Send or copy them before upgrading; see [deployment and rollback](../GHCR-DEPLOYMENT-GUIDE.md#upgrading-yap-to-the-offline-client).
