@@ -13,7 +13,8 @@ export function createHistory({ identity, current, changed, notice }) {
         );
     const version = (c) =>
         `${latest?.serverEpoch}:${c.historyLimited ? c.contentVersion : (c.historyVersion ?? c.contentVersion)}`;
-    const valid = (c) => pages[c.id]?.version === version(c);
+    const valid = (c) =>
+        pages[c.id]?.version === version(c) || pages[c.id]?.pendingVersion === version(c);
     const authorized = (id) => latest?.conversations.find((c) => c.id === id);
 
     async function persist(channel, owner = identity()) {
@@ -24,6 +25,8 @@ export function createHistory({ identity, current, changed, notice }) {
                 id,
                 {
                     ...p,
+                    serverEpoch: p.serverEpoch || p.version?.split(':')[0] || latest.serverEpoch,
+                    pendingVersion: undefined,
                     messages: p.messages.slice(-500),
                     hasMore: p.hasMore || p.messages.length > 500,
                 },
@@ -41,7 +44,7 @@ export function createHistory({ identity, current, changed, notice }) {
                 delete pages[id];
             }
         }
-        await storage.saveMetadata('history', cached, owner);
+        await storage.saveHistory(cached, channel, owner);
     }
 
     async function save(channel, page, owner) {
@@ -78,7 +81,13 @@ export function createHistory({ identity, current, changed, notice }) {
         if (!c || activeLoad || !navigator.onLine) return;
         const owner = identity();
         if (!owner) return;
-        const task = { channel: c.id, version: version(c), serial, evicted: [] };
+        const task = {
+            channel: c.id,
+            version: version(c),
+            sequence: latest.sequence,
+            serial,
+            evicted: [],
+        };
         const endForeground = beginForeground();
         activeLoad = task;
         refreshPage ||= !!pages[c.id] && !valid(c);
@@ -133,6 +142,11 @@ export function createHistory({ identity, current, changed, notice }) {
                     targets,
                     hasMore: result.hasMore,
                     version: task.version,
+                    serverEpoch: latest.serverEpoch,
+                    // Arrivals may advance the revision during paging without changing
+                    // this history version; the retained boundary rows already cover them.
+                    revision: String(authorized(c.id).contentVersion),
+                    sequence: authorized(c.id).sync?.metadata ?? task.sequence,
                 },
                 owner,
             );
@@ -187,6 +201,9 @@ export function createHistory({ identity, current, changed, notice }) {
                         targets: merge(old?.targets || [], [message]).slice(-20),
                         hasMore: old?.hasMore ?? current.hasMore,
                         version: stamp,
+                        serverEpoch: latest.serverEpoch,
+                        revision: String(current.contentVersion),
+                        sequence: latest.sequence,
                     },
                     owner,
                 );
@@ -233,31 +250,115 @@ export function createHistory({ identity, current, changed, notice }) {
                 }
             }
         },
-        async reconcile(snapshot) {
+        async reconcile(snapshot, update) {
             let cacheChanged = false;
             const previous = latest;
             latest = snapshot;
-            // An arrival only moves the recent-window boundary. Retain messages crossing
-            // that boundary when older history is open, without downloading the page again.
-            // Restricted histories still invalidate with content changes to honor access limits.
+            const patches = new Map((update?.conversations || []).map((p) => [p.id, p]));
+            const authors = new Map((update?.authors || []).map((a) => [a.id, a]));
             for (const c of snapshot.conversations) {
                 const before = previous?.conversations.find((old) => old.id === c.id);
+                const page = pages[c.id];
+                const patch = patches.get(c.id);
+                const sameEpoch = previous?.serverEpoch === snapshot.serverEpoch;
+                const wasValid =
+                    before &&
+                    page &&
+                    (page.version ===
+                        `${previous.serverEpoch}:${before.historyLimited ? before.contentVersion : (before.historyVersion ?? before.contentVersion)}` ||
+                        page.pendingVersion ===
+                            `${previous.serverEpoch}:${before.historyVersion ?? before.contentVersion}`);
+                if (
+                    page &&
+                    wasValid &&
+                    sameEpoch &&
+                    !c.historyLimited &&
+                    patch &&
+                    update.serverEpoch === snapshot.serverEpoch
+                ) {
+                    page.revision ??= String(before.contentVersion);
+                    const stale = update.sequence < (page.sequence || 0);
+                    const continuous = patch.baseRevision === page.revision;
+                    const duplicate = patch.revision === page.revision;
+                    if (
+                        !stale &&
+                        ((patch.invalidate && !duplicate) ||
+                            (patch.baseRevision && !continuous && !duplicate))
+                    ) {
+                        page.version = null;
+                        delete page.pendingVersion;
+                        cacheChanged = true;
+                    } else if (
+                        !stale &&
+                        !patch.window &&
+                        !patch.invalidate &&
+                        (!patch.baseRevision || continuous || duplicate) &&
+                        (patch.baseRevision ||
+                            patch.messages.length ||
+                            patch.removed.length ||
+                            !valid(c))
+                    ) {
+                        // The recent window drops old upserts; apply the original delta to
+                        // visited pages too. Per-record stamps protect against late HTTP acks.
+                        const changed = new Map(
+                            patch.messages.map((m) => [
+                                m.id,
+                                { ...m, author: authors.get(m.authorId) },
+                            ]),
+                        );
+                        const removed = new Set(patch.removed);
+                        page.records ||= {};
+                        const apply = (messages) =>
+                            messages.flatMap((message) => {
+                                if (
+                                    update.sequence <=
+                                    (page.records[message.id] || page.sequence || 0)
+                                )
+                                    return [message];
+                                if (removed.has(message.id)) return [];
+                                return [changed.get(message.id) || message];
+                            });
+                        page.messages = apply(page.messages);
+                        page.targets = apply(page.targets || []);
+                        for (const id of [...changed.keys(), ...removed])
+                            page.records[id] = Math.max(page.records[id] || 0, update.sequence);
+                        if (continuous || duplicate) {
+                            page.revision = patch.revision;
+                            page.version = `${snapshot.serverEpoch}:${patch.state.historyVersion ?? patch.state.contentVersion}`;
+                            page.sequence = Math.max(page.sequence || 0, update.sequence);
+                            page.records = Object.fromEntries(
+                                Object.entries(page.records).filter(
+                                    ([, seq]) => seq > page.sequence,
+                                ),
+                            );
+                        }
+                        // A compact acknowledgement/metadata packet is not a complete revision
+                        // chain. Keep the mounted view until the stream catches up or signals a
+                        // gap; never persist that provisional validation across a reload.
+                        page.pendingVersion = version(c);
+                        cacheChanged = true;
+                    }
+                }
+                // Retain messages crossing the recent-window boundary, without imposing
+                // the disk cache's 500-row budget on the reader's mounted history.
                 if (
                     !before ||
-                    previous.serverEpoch !== snapshot.serverEpoch ||
+                    !sameEpoch ||
                     c.historyLimited ||
-                    before.historyVersion === undefined ||
-                    before.historyVersion !== c.historyVersion
+                    (!valid(c) &&
+                        !(
+                            activeLoad?.channel === c.id &&
+                            before.historyVersion === c.historyVersion
+                        ))
                 )
                     continue;
                 const ids = new Set(c.messages.map((m) => m.id));
-                const evicted = before.messages.filter((m) => !ids.has(m.id));
+                const removed = new Set(patch?.removed || []);
+                const evicted = before.messages.filter((m) => !ids.has(m.id) && !removed.has(m.id));
                 if (activeLoad?.channel === c.id)
                     activeLoad.evicted = merge(activeLoad.evicted, evicted);
-                if (valid(c) && evicted.length) {
-                    const combined = merge(pages[c.id].messages, evicted);
-                    pages[c.id].hasMore ||= combined.length > 500;
-                    pages[c.id].messages = combined.slice(-500);
+                if (page && evicted.length) {
+                    page.messages = merge(page.messages, evicted);
                     cacheChanged = true;
                 }
             }
@@ -275,7 +376,9 @@ export function createHistory({ identity, current, changed, notice }) {
             // view() checks versions before merging, including after an offline reload.
             // Never display known stale history while an asynchronous refresh is pending.
             if (cacheChanged) await persist(current()?.id);
-            return refresh();
+            // Persist patched pages before painting them, but never make rendering wait
+            // on network recovery for an invalidated page.
+            refresh()?.catch(() => {});
         },
         clear() {
             serial++;

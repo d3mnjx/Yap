@@ -61,6 +61,27 @@ export function createScroll(scroller) {
     resize.observe(scroller.querySelector('.messages-flow'));
     return {
         update,
+        preserve() {
+            if (following) return () => {};
+            const bounds = scroller.getBoundingClientRect();
+            const anchors = [];
+            for (const node of scroller.querySelectorAll('#timeline > .message-group')) {
+                const rect = node.getBoundingClientRect();
+                if (rect.top > bounds.bottom) break;
+                if (rect.bottom > bounds.top) anchors.push({ id: node.id, top: rect.top });
+            }
+            return () => {
+                // A reaction/edit above the viewport can change its height; a deletion can
+                // remove the first visible row. Keep the next surviving visible row in place.
+                for (const anchor of anchors) {
+                    const node = document.getElementById(anchor.id);
+                    if (!node) continue;
+                    scroller.scrollTop += node.getBoundingClientRect().top - anchor.top;
+                    previousTop = scroller.scrollTop;
+                    break;
+                }
+            };
+        },
         bottom() {
             following = true;
             update();

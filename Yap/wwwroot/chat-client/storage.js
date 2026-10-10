@@ -208,7 +208,9 @@ export async function commitUpdate(update, identity, acknowledgedOperation = nul
             return snapshot;
         }),
     );
-    if (result) notify('snapshot');
+    // Sibling tabs need the original older-message patches too; their recent windows
+    // may already have discarded those records. The account lease still gates every read.
+    if (result) notify({ type: 'snapshot', update, ownerEpoch: identity.epoch });
     return result;
 }
 
@@ -406,6 +408,41 @@ export const saveMetadata = (key, value, identity) =>
             tx.objectStore('state').put(value, key);
         }),
     );
+// A slower sibling must not overwrite a page that already includes a newer mutation.
+export const saveHistory = (pages, selected, identity) =>
+    locked(() =>
+        transaction(['state'], 'readwrite', async (tx) => {
+            const active = await owner(tx, identity);
+            const store = tx.objectStore('state');
+            const previous = (await request(store.get('history'))) || {};
+            for (const [id, page] of Object.entries(pages)) {
+                const old = previous[id];
+                if (active.retiredEpochs?.includes(page.serverEpoch)) {
+                    if (old) pages[id] = old;
+                    else delete pages[id];
+                    continue;
+                }
+                if (
+                    old?.serverEpoch === page.serverEpoch &&
+                    Number(old.revision) > Number(page.revision)
+                )
+                    pages[id] = old;
+            }
+            let count = Object.values(pages).reduce(
+                (n, p) => n + p.messages.length + (p.targets?.length || 0),
+                0,
+            );
+            for (const id of Object.keys(pages)) {
+                if (count <= 2000) break;
+                if (id !== selected) {
+                    count -= pages[id].messages.length + (pages[id].targets?.length || 0);
+                    delete pages[id];
+                }
+            }
+            store.put(pages, 'history');
+        }),
+    );
+
 export const patchOutgoing = (id, patch, identity) =>
     locked(() =>
         transaction(['state', 'outbox'], 'readwrite', async (tx) => {

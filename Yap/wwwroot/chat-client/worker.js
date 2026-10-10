@@ -1,5 +1,5 @@
 // Loaded by the single root worker. Never cache personalized HTML, API responses or auth redirects.
-const CHAT_SHELL = 'yap-chat-shell-v36';
+const CHAT_SHELL = 'yap-chat-shell-v37';
 // Pinned, unmodified artwork outlives shell releases. Change this only with Twemoji.
 const CHAT_EMOJI_CACHE = 'yap-chat-emoji-17.0.3';
 const CHAT_EMOJI_DEFAULTS = [

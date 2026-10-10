@@ -89,12 +89,73 @@ fs.mkdirSync(artifacts, { recursive: true });
         console.log(
             'PASS arrival preserves loaded history and window boundary without a history request',
         );
+        const sibling = await context.newPage();
+        await sibling.goto(origin + '/dm/' + name + 'b');
+        await sibling.waitForFunction(() =>
+            document.querySelector('#connection')?.textContent.startsWith('Synced'),
+        );
+        await sibling.locator('.messages').evaluate((node) => (node.scrollTop = 0));
+        await sibling.locator('#msg-' + first).waitFor();
+        await page.bringToFront();
+        // Mutations arrive over the real stream while the reader is away from the bottom.
+        await page.locator('.messages').evaluate((node) => (node.scrollTop = 300));
+        const anchor = await page.locator('#timeline .message-group').evaluateAll((nodes) => {
+            const top = document.querySelector('.messages').getBoundingClientRect().top;
+            const node = nodes.find((node) => node.getBoundingClientRect().top > top + 20);
+            window.historyAnchor = node;
+            return { id: node.id, top: node.getBoundingClientRect().top };
+        });
+        const second = await page.locator('#timeline .message-group').nth(1).getAttribute('id');
+        for (const [target, kind, content] of [
+            [first, 'reaction', null],
+            [last, 'edit', 'Recent edit while reading history'],
+            [first, 'edit', 'Older edit while reading history'],
+            [second.slice(4), 'delete', null],
+        ]) {
+            const result = await context.request.post(
+                origin + `/api/chat/conversations/${id}/messages/${target}/actions`,
+                {
+                    headers,
+                    data: {
+                        operationId: require('node:crypto').randomUUID(),
+                        kind,
+                        content,
+                        emoji: '👍',
+                        active: true,
+                    },
+                },
+            );
+            assert.equal(result.status(), 200);
+            if (kind === 'delete')
+                await page.locator('#msg-' + target).waitFor({ state: 'detached' });
+            else if (kind === 'edit')
+                await page.waitForFunction(
+                    ({ target, content }) =>
+                        document.getElementById('msg-' + target)?.textContent.includes(content),
+                    { target, content },
+                );
+            else await page.locator('#msg-' + target + ' .reaction-pill').waitFor();
+            assert.equal(await page.locator('#msg-' + first).count(), 1);
+            assert.equal(historyRequests, 0, 'ordinary mutations must not refetch older pages');
+            assert(
+                await page.evaluate(() => window.historyAnchor.isConnected),
+                'visible row must stay mounted',
+            );
+            const top = await page
+                .locator('#' + anchor.id)
+                .evaluate((node) => node.getBoundingClientRect().top);
+            assert(Math.abs(top - anchor.top) < 3, `reading anchor moved by ${top - anchor.top}px`);
+        }
+        await sibling.close();
+        console.log(
+            'PASS streamed reactions, recent/older edits and deletes across sibling tabs retain mounted history and reading anchor without refetch',
+        );
         await page.locator('#msg-' + last + ' .reply-preview').click();
         await page.locator('#msg-' + first + '.highlight-message').waitFor();
         await context.setOffline(true);
         await page.reload();
         await page.locator('#msg-' + first).waitFor();
-        assert.equal(await page.locator('#timeline .message-group').count(), 123);
+        assert.equal(await page.locator('#timeline .message-group').count(), 122);
         // Edit a message outside the server's recent window from another instance of the same account.
         const edit = await context.request.post(
             origin + `/api/chat/conversations/${id}/messages/${first}/actions`,

@@ -307,6 +307,234 @@ if (
         console.log(
             'PASS snapshot during history fetch discards the stale response and refreshes again',
         );
+        await page.evaluate(async () => {
+            const { createHistory } = await import('/chat-client/history.js');
+            const old = Array.from({ length: 650 }, (_, i) => ({
+                id: 'old-' + i,
+                content: 'original',
+                author: { id: 'alice' },
+                timestamp: new Date(Date.UTC(2026, 0, 1, 0, i)).toISOString(),
+            }));
+            let room = {
+                id: 'large',
+                contentVersion: 1,
+                historyVersion: 1,
+                messages: [{ id: 'recent', timestamp: '2026-02-01T00:00:00Z' }],
+                hasMore: true,
+            };
+            let state = { serverEpoch: 'server', sequence: 1, conversations: [room] };
+            await store.saveMetadata(
+                'history',
+                {
+                    large: {
+                        messages: old,
+                        targets: [old[0]],
+                        hasMore: false,
+                        version: 'server:1',
+                        revision: '1',
+                        sequence: 1,
+                    },
+                },
+                owner,
+            );
+            const history = createHistory({
+                identity: () => owner,
+                current: () => null,
+                changed: async () => {},
+                notice: () => {},
+            });
+            await history.restore(state);
+            const deliver = async (
+                sequence,
+                revision,
+                baseRevision,
+                messages = [],
+                removed = [],
+                extra = {},
+            ) => {
+                room = { ...room, contentVersion: revision, historyVersion: revision };
+                state = { ...state, sequence, conversations: [room] };
+                await history.reconcile(state, {
+                    serverEpoch: 'server',
+                    sequence,
+                    authors: [{ id: 'alice', username: 'alice' }],
+                    conversations: [
+                        {
+                            id: room.id,
+                            state: room,
+                            revision: String(revision),
+                            baseRevision,
+                            messages,
+                            removed,
+                            ...extra,
+                        },
+                    ],
+                });
+            };
+            await deliver(10, 2, '1', [
+                {
+                    ...old[0],
+                    authorId: 'alice',
+                    content: 'edited',
+                    reactions: [{ emoji: '👍', users: ['alice'] }],
+                },
+            ]);
+            if (
+                history.view(room).messages.length !== 651 ||
+                history.view(room).messages[0].content !== 'edited'
+            )
+                throw Error(
+                    'Contiguous edit dropped or failed to patch the large inactive history',
+                );
+            // The HTTP ack can precede its complete stream delta; it cannot certify the revision chain.
+            await deliver(30, 3, null, [], ['old-1']);
+            if (
+                history.view(room).messages.length !== 650 ||
+                history.view(room).messages.some((m) => m.id === 'old-1')
+            )
+                throw Error('Acknowledgement dropped history or failed to remove deleted row');
+            const provisional = (await store.metadata('history')).large;
+            if (provisional.pendingVersion || provisional.version !== 'server:2')
+                throw Error('Partial acknowledgement was persisted as complete history authority');
+            await deliver(20, 3, '2', [], ['old-1']);
+            await deliver(40, 4, '3', [{ ...old[0], authorId: 'alice', content: 'newer' }]);
+            await history.reconcile(state, {
+                serverEpoch: 'server',
+                sequence: 10,
+                authors: [{ id: 'alice' }],
+                conversations: [
+                    {
+                        id: room.id,
+                        state: room,
+                        revision: '2',
+                        baseRevision: '1',
+                        messages: [{ ...old[0], authorId: 'alice' }],
+                        removed: [],
+                    },
+                ],
+            });
+            if (
+                history.view(room).messages[0].content !== 'newer' ||
+                history.view(room).messages.length !== 650
+            )
+                throw Error('Late authority overwrote a newer edit or truncated mounted history');
+            const cached = (await store.metadata('history')).large;
+            if (cached.messages.length !== 500 || !cached.hasMore)
+                throw Error('Disk history budget was lost');
+            await store.saveHistory(
+                { large: { ...cached, revision: '1', version: 'server:1', messages: [old[0]] } },
+                'large',
+                owner,
+            );
+            if ((await store.metadata('history')).large.revision !== cached.revision)
+                throw Error('A slow sibling overwrote newer persisted history');
+            await deliver(60, 6, '5', [], []);
+            if (history.view(room).messages.length !== 1)
+                throw Error('A revision gap must invalidate unverified old history');
+            await store.saveHistory(
+                {
+                    large: {
+                        ...cached,
+                        serverEpoch: 'new-server',
+                        revision: '0',
+                        version: 'new-server:0',
+                        messages: [],
+                    },
+                },
+                'large',
+                owner,
+            );
+            if ((await store.metadata('history')).large.serverEpoch !== 'new-server')
+                throw Error('A restart must allow a lower revision from the new server epoch');
+        });
+        console.log(
+            'PASS large inactive history patches, deletion/ack ordering and bounded persistence; revision gaps still invalidate',
+        );
+        await page.evaluate(async () => {
+            const { createHistory } = await import('/chat-client/history.js');
+            const message = (id, day) => ({
+                id,
+                content: id,
+                timestamp: `2026-01-0${day}T00:00:00Z`,
+                author: { id: 'alice' },
+            });
+            let room = {
+                id: 'loading',
+                contentVersion: 1,
+                historyVersion: 1,
+                sync: { metadata: 1 },
+                messages: [message('boundary', 2)],
+            };
+            let state = { serverEpoch: 'server', sequence: 1, conversations: [room] };
+            await store.saveMetadata('history', {}, owner);
+            const history = createHistory({
+                identity: () => owner,
+                current: () => null,
+                changed: async () => {},
+                notice: () => {},
+            });
+            await history.restore(state);
+            let release, requested;
+            const started = new Promise((resolve) => (requested = resolve));
+            window.fetch = async () =>
+                new Promise((resolve) => {
+                    release = resolve;
+                    requested();
+                });
+            const loading = history.load(room);
+            await started;
+            room = {
+                ...room,
+                contentVersion: 2,
+                sync: { metadata: 2 },
+                messages: [message('arrival', 3)],
+            };
+            state = { ...state, sequence: 2, conversations: [room] };
+            await history.reconcile(state, {
+                serverEpoch: 'server',
+                sequence: 2,
+                authors: [{ id: 'alice' }],
+                conversations: [
+                    {
+                        id: room.id,
+                        state: room,
+                        revision: '2',
+                        baseRevision: '1',
+                        messages: [{ ...message('arrival', 3), authorId: 'alice' }],
+                        removed: [],
+                    },
+                ],
+            });
+            release(Response.json({ messages: [message('older', 1)], hasMore: false }));
+            await loading;
+            room = { ...room, contentVersion: 3, historyVersion: 2, sync: { metadata: 3 } };
+            state = { ...state, sequence: 3, conversations: [room] };
+            await history.reconcile(state, {
+                serverEpoch: 'server',
+                sequence: 3,
+                authors: [{ id: 'alice' }],
+                conversations: [
+                    {
+                        id: room.id,
+                        state: room,
+                        revision: '3',
+                        baseRevision: '2',
+                        messages: [
+                            { ...message('older', 1), content: 'edited', authorId: 'alice' },
+                        ],
+                        removed: [],
+                    },
+                ],
+            });
+            if (
+                history.view(room).messages.length !== 3 ||
+                history.view(room).messages[0].content !== 'edited'
+            )
+                throw Error('Arrival during paging left a stale revision or lost the boundary row');
+        });
+        console.log(
+            'PASS arrival during a history request retains its boundary and advances the revision before the next mutation',
+        );
         await context.close();
         console.log('PASS Chromium ' + browser.version());
     } finally {

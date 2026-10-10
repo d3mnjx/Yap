@@ -5,6 +5,7 @@ import { createMessages, avatar, needsMessageHeader } from './messages.js';
 import { createComposer } from './composer.js';
 import { createPwa } from './pwa.js';
 import { createHistory } from './history.js';
+import { mergeUpdate } from './sync.js';
 import { createProfiles } from './profiles.js';
 import { chatLabel, loadContent, richText, showEmoji, quickReactions } from './content.js';
 import { favorite } from './gifs.js';
@@ -617,7 +618,9 @@ async function render() {
           }
         : c;
     sidebar();
+    const restoreScroll = !switched && scrolling.preserve();
     messageView.render(display);
+    if (restoreScroll) restoreScroll();
     // Arm following as soon as destination content exists. Read acknowledgements may
     // trigger a newer render before this one finishes its remaining IndexedDB awaits.
     if (switched) scrolling.bottom();
@@ -732,8 +735,11 @@ function acceptSnapshot(
             if (attemptGeneration !== connectionGeneration) return;
             const old = snapshot;
             if (data.protocol === 2) {
-                snapshot =
-                    (await storage.commitUpdate(data, identity, acknowledgedOperation)) || snapshot;
+                const committed = await storage.commitUpdate(data, identity, acknowledgedOperation);
+                if (attemptGeneration !== connectionGeneration) return;
+                // Shared storage can already contain another tab's later delta. Advance this
+                // view from the ordered packet so history sees every mutation in that chain.
+                if (committed) snapshot = mergeUpdate(snapshot, data);
                 if (old?.serverEpoch === snapshot?.serverEpoch) {
                     const before = new Map(old.conversations.map((c) => [c.id, c]));
                     snapshot.conversations = snapshot.conversations.map((c) => {
@@ -748,7 +754,9 @@ function acceptSnapshot(
                 snapshot = committed ? data : (await storage.readState())?.snapshot;
             }
             if (attemptGeneration !== connectionGeneration || !snapshot) return;
-            chatHistory.reconcile(snapshot).catch(() => {});
+            await chatHistory
+                .reconcile(snapshot, data.protocol === 2 ? data : undefined)
+                .catch(() => {});
             await notifications.observe(snapshot, notificationOptions);
             if (attemptGeneration !== connectionGeneration) return;
             const affectsCurrent =
@@ -976,8 +984,9 @@ async function boot() {
         notice(`Chat could not start: ${error.message}`);
     }
 }
-storage.onExternalChange(async (type) => {
-    if (type?.type === 'cancel-upload') type = 'outbox';
+storage.onExternalChange(async (event) => {
+    let type = event?.type || event;
+    if (type === 'cancel-upload') type = 'outbox';
     if (type === 'reads') {
         readMarkers = await storage.reads();
         if (snapshot) sidebar();
@@ -995,14 +1004,36 @@ storage.onExternalChange(async (type) => {
         identity = null;
         status('Account changed');
         notice('Offline data changed in another tab. Reload to continue.', true);
-    } else if (identity && (type === 'outbox' || type === 'snapshot')) {
-        const current = await storage.readState();
-        if (current?.epoch === identity.epoch && !current.locked) {
-            snapshot = current.snapshot;
-            if (snapshot) chatHistory.reconcile(snapshot).catch(() => {});
-            await render();
-            sender.flush();
-        }
+    } else if (identity && type === 'outbox') {
+        await render();
+        sender.flush();
+    } else if (identity && type === 'snapshot') {
+        const owner = identity;
+        // Keep sibling authority ordered with this tab's HTTP and stream callbacks. Reading
+        // newer shared metadata without its delta would invalidate visited history first.
+        snapshotQueue = snapshotQueue
+            .catch(() => {})
+            .then(async () => {
+                const current = await storage.readState();
+                if (
+                    identity?.epoch !== owner.epoch ||
+                    current?.epoch !== owner.epoch ||
+                    current.locked
+                )
+                    return;
+                if (event?.update) {
+                    if (
+                        event.ownerEpoch !== owner.epoch ||
+                        event.update.userId !== owner.userId ||
+                        current.retiredEpochs?.includes(event.update.serverEpoch)
+                    )
+                        return;
+                    snapshot = mergeUpdate(snapshot, event.update);
+                } else snapshot = current.snapshot;
+                if (snapshot) await chatHistory.reconcile(snapshot, event?.update).catch(() => {});
+                await render();
+                sender.flush();
+            });
     }
 });
 window.addEventListener('online', () => {
