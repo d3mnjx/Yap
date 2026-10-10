@@ -196,14 +196,15 @@ builder.Services.AddSingleton<NotificationSettingsService>();  // per-channel mu
 builder.Services.AddSingleton<ChatService>();
 builder.Services.AddSignalR();
 builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
-builder.Services.AddScoped<OfflineSnapshotService>();
-builder.Services.AddScoped<OfflineSync>();
+builder.Services.AddSingleton<OfflineSnapshotService>();
+builder.Services.AddSingleton<OfflineSync>();
 builder.Services.AddSingleton<OfflineChangeSignal>();
+builder.Services.AddSingleton<OfflineFanout>();
 builder.Services.AddSingleton<OfflineLiveService>();
 builder.Services.AddHostedService<OfflineLiveCleanup>();
 builder.Services.AddSingleton<SystemBotService>();
 builder.Services.AddSingleton<RegistrationGateService>();
-builder.Services.AddScoped<ChatConfigService>();
+builder.Services.AddSingleton<ChatConfigService>();
 builder.Services.AddScoped<EmojiService>();
 builder.Services.AddScoped<UserStateService>();
 builder.Services.AddScoped<ChatNavigationState>();
@@ -261,6 +262,9 @@ await app.Services.GetRequiredService<PushSubscriptionStore>().InitializeAsync()
 
 // Initialize system bot (must be after UserService + ChatService)
 await app.Services.GetRequiredService<SystemBotService>().InitializeAsync();
+
+// Start shared revision/profile subscriptions before the first bootstrap or hub connection.
+_ = app.Services.GetRequiredService<OfflineFanout>();
 
 // Clean up old action logs (keep last 100 per user, delete older than 6 months)
 await app.Services.GetRequiredService<UserActionLogService>().CleanupAsync();

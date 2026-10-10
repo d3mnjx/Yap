@@ -28,7 +28,7 @@ if (new URL(origin).hostname !== '127.0.0.1' || new URL(origin).port === '7543')
         }
         await login(page, name);
         assert(
-            (await (await admin.request.get(origin + '/api/chat/bootstrap')).json()).isAdmin,
+            (await (await admin.request.get(origin + '/api/chat/sync')).json()).isAdmin,
             'This test requires a fresh server with no existing admin',
         );
         await login(reader, other);

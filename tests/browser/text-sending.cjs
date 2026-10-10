@@ -39,9 +39,7 @@ const suffix = Date.now().toString(36),
             );
             assert.equal(await pages[i].locator('script[src*="blazor"]').count(), 0);
         }
-        const bootstrap = await (
-            await contexts[0].request.get(origin + '/api/chat/bootstrap')
-        ).json();
+        const bootstrap = await (await contexts[0].request.get(origin + '/api/chat/sync')).json();
         const lobbyId = bootstrap.conversations.find((c) => c.isDefault).id;
         for (const route of ['/chat', '/room/' + lobbyId]) {
             await alice.goto(origin + route);

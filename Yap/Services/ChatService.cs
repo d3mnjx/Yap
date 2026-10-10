@@ -265,7 +265,7 @@ public partial class ChatService
     /// Gets or creates a lock object for a specific channel.
     /// This allows concurrent operations on different channels.
     /// </summary>
-    private object GetChannelLock(Guid channelId) =>
+    internal object GetChannelLock(Guid channelId) =>
         _channelLocks.GetOrAdd(channelId, _ => new object());
 
     public List<Channel> GetRooms() =>
@@ -470,6 +470,8 @@ public partial class ChatService
 
         return GetOrCreateDMChannel(user1.Id, user1.Username, user2.Id, user2.Username);
     }
+
+    internal IEnumerable<Channel> GetAllDMChannels() => _channels.Values.Where(c => c.IsDirectMessage);
 
     /// <summary>
     /// Gets all DM channels for a user
@@ -984,7 +986,14 @@ public partial class ChatService
 
         // Update unread counts in memory + DB (awaited — fast, no events)
         var unreadSw = Stopwatch.StartNew();
-        var affectedUserIds = await IncrementUnreadCountsAsync(channelId, userId);
+        List<Guid> affectedUserIds = [];
+        try { affectedUserIds = await IncrementUnreadCountsAsync(channelId, userId); }
+        catch (Exception error)
+        {
+            // Acceptance is already durable. The incremental stream has no periodic full
+            // snapshot to repair a swallowed event, so publish even if unread persistence fails.
+            _logger.LogError(error, "Unread persistence failed after accepting {MessageId}", message.Id);
+        }
         var unreadMs = unreadSw.ElapsedMilliseconds;
 
         // Clear typing state in memory (fast, no event dispatch)
@@ -1146,8 +1155,9 @@ public partial class ChatService
 
         _logger.LogInformation("Generated {Count} test messages in channel {ChannelId} spanning {TimeSpan}", count, channelId, timeSpan);
 
-        // Fire event so open chat pages refresh
-        OnMessageReceived?.Invoke(testMessages[^1]);
+        // Incremental subscribers need every inserted record; one final pulse no longer
+        // causes a full snapshot rebuild. Their bounded queues coalesce this burst.
+        foreach (var message in testMessages) OnMessageReceived?.Invoke(message);
 
         return count;
     }
@@ -1184,6 +1194,17 @@ public partial class ChatService
         (Guid.Parse("aa000000-0000-0000-0000-000000000004"), "Diana"),
         (Guid.Parse("aa000000-0000-0000-0000-000000000005"), "Eve"),
     ];
+
+    internal bool HasMoreMessages(User user, Guid channelId, int limit)
+    {
+        lock (GetChannelLock(channelId))
+        {
+            if (!_channelMessages.TryGetValue(channelId, out var messages)) return false;
+            var channel = GetChannel(channelId);
+            if (IsAdmin(user.Id) || channel is { SinceJoined: false, HistoryLimit: HistoryLimit.Unlimited }) return messages.Count > limit;
+            return messages.Where(m => CanReadMessage(user, m)).Take(limit + 1).Count() > limit;
+        }
+    }
 
     public List<ChatMessage> GetMessages(Guid channelId, int count = 50)
     {
@@ -1501,7 +1522,7 @@ public partial class ChatService
                 state.UnreadCount++;
                 return state;
             }).ToArray();
-            await _persistence.PersistReadStatesAsync(updated);
+            await _persistence.IncrementReadStatesAsync(channelId, userIdsToIncrement);
             foreach (var state in updated) _readStates[(state.UserId, channelId)] = state;
             if (channel.IsDirectMessage)
                 foreach (var state in updated)

@@ -326,6 +326,20 @@ public class ChatPersistenceService
 
     #region Read State Operations
 
+    // json_each uses one parameter for any recipient count (no SQLite variable-limit cliff).
+    // The read-state gate in ChatService spans this transaction and memory publication.
+    public async Task IncrementReadStatesAsync(Guid channelId, IReadOnlyList<Guid> recipients)
+    {
+        if (!IsEnabled || recipients.Count == 0) return;
+        var channel = channelId.ToString().ToUpperInvariant();
+        var ids = System.Text.Json.JsonSerializer.Serialize(recipients.Select(id => id.ToString().ToUpperInvariant()));
+        await using var db = await _dbFactory!.CreateDbContextAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        await db.Database.ExecuteSqlInterpolatedAsync($"INSERT OR IGNORE INTO ChannelReadStates (UserId, ChannelId, LastReadAt, UnreadCount, ReceivedCount, ReadThrough) SELECT value, {channel}, {DateTime.MinValue}, 0, 0, 0 FROM json_each({ids})");
+        await db.Database.ExecuteSqlInterpolatedAsync($"UPDATE ChannelReadStates SET UnreadCount = UnreadCount + 1, ReceivedCount = ReceivedCount + 1 WHERE ChannelId = {channel} AND UserId IN (SELECT value FROM json_each({ids}))");
+        await transaction.CommitAsync();
+    }
+
     public Task PersistReadStateAsync(ChannelReadState state) => PersistReadStatesAsync([state]);
 
     public async Task PersistReadStatesAsync(IEnumerable<ChannelReadState> states)

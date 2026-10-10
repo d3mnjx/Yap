@@ -91,12 +91,11 @@ public static class OfflineEndpoints
         {
             var user = users.AuthenticateByToken(http.Request.Cookies[AuthMiddleware.CookieName]!)!;
             var session = Session(http);
-            return Modern(http) ? Results.Ok(new
+            return Results.Ok(new
             {
                 session,
                 update = sync.Bootstrap(user, path, channelId, epoch, revision, knownUser)
-            })
-                : Results.Ok(snapshots.Snapshot(user));
+            });
         });
         api.MapGet("/windows/{id:guid}", (Guid id, HttpContext http, UserService users, OfflineSync sync) =>
             Results.Ok(sync.Conversation(users.AuthenticateByToken(http.Request.Cookies[AuthMiddleware.CookieName]!)!, id, full: true)));
@@ -112,20 +111,11 @@ public static class OfflineEndpoints
                     request.GifEntryId
                 }) : null,
                 resolveMedia: hasMedia ? () => OfflineContent.ResolveMedia(http, user, request.UploadIds, request.GifEntryId) : null);
-            if (Modern(http))
-                return Results.Ok(new
-                {
-                    receipt.OperationId,
-                    receipt.MessageId,
-                    update = sync.Conversation(user, id, receipt.MessageId)
-                });
             return Results.Ok(new
             {
                 receipt.OperationId,
                 receipt.MessageId,
-                receipt.ChannelId,
-                receipt.AcceptedAt,
-                snapshot = snapshots.Snapshot(user)
+                update = sync.Conversation(user, id, receipt.MessageId)
             });
         });
         api.MapPost("/conversations/{id:guid}/messages/{messageId:guid}/actions", async (Guid id, Guid messageId,
@@ -133,17 +123,11 @@ public static class OfflineEndpoints
         {
             var user = users.AuthenticateByToken(http.Request.Cookies[AuthMiddleware.CookieName]!)!;
             var receipt = await chat.MutateMessageAsync(user, id, messageId, request.OperationId, request.Kind, request.Content, request.Emoji, request.Active);
-            if (Modern(http))
-                return Results.Ok(new
-                {
-                    receipt.OperationId,
-                    receipt.MessageId,
-                    update = sync.Conversation(user, id, receipt.MessageId)
-                });
             return Results.Ok(new
             {
                 receipt.OperationId,
-                snapshot = snapshots.Snapshot(user)
+                receipt.MessageId,
+                update = sync.Conversation(user, id, receipt.MessageId)
             });
         });
         api.MapPost("/conversations/{id:guid}/read", async (Guid id, ReadRequest request, HttpContext http,
@@ -151,16 +135,10 @@ public static class OfflineEndpoints
         {
             var user = users.AuthenticateByToken(http.Request.Cookies[AuthMiddleware.CookieName]!)!;
             await chat.MarkObservedReadAsync(user.Id, id, request.Through);
-            if (Modern(http))
-                return Results.Ok(new
-                {
-                    through = request.Through,
-                    update = sync.Conversation(user, id)
-                });
             return Results.Ok(new
             {
                 through = request.Through,
-                snapshot = snapshots.Snapshot(user)
+                update = sync.Conversation(user, id)
             });
         });
         // Already-queued text/actions can share one request, without delaying the first
@@ -213,16 +191,10 @@ public static class OfflineEndpoints
         {
             var user = users.AuthenticateByToken(http.Request.Cookies[AuthMiddleware.CookieName]!)!;
             var channel = await chat.OpenDirectMessageAsync(user, username);
-            if (Modern(http))
-                return Results.Ok(new
-                {
-                    channelId = channel.Id,
-                    update = sync.Conversation(user, channel.Id, full: true)
-                });
             return Results.Ok(new
             {
                 channelId = channel.Id,
-                snapshot = snapshots.Snapshot(user)
+                update = sync.Conversation(user, channel.Id, full: true)
             });
         });
         api.MapGet("/sync", (HttpContext http, UserService users, OfflineSnapshotService snapshots) =>
@@ -253,8 +225,6 @@ public static class OfflineEndpoints
         });
     }
 
-    // Protocol 1 is retained while an already-open v32 document activates the new worker.
-    private static bool Modern(HttpContext http) => http.Request.Headers["X-Yap-Chat-Protocol"] == "2";
     private static object Session(HttpContext http)
     {
         var services = http.RequestServices;

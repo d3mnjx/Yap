@@ -12,7 +12,6 @@ public sealed class ChatSendException(int status, string code, string message) :
 
 public partial class ChatService
 {
-    private readonly SemaphoreSlim textSendGate = new(1, 1);
     public bool DurableSendingEnabled => _persistence.IsEnabled;
     public const int MaxTextLength = 4000;
 
@@ -53,10 +52,7 @@ public partial class ChatService
         else
             receiptPayload = content;
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(receiptPayload)));
-        // One application owns the SQLite store. Serialize acceptance, including memory publication.
-        // The database's composite key remains the final uniqueness constraint.
-        await textSendGate.WaitAsync();
-        try
+        using (await LockAcceptance("message:" + operationId))
         {
             var previous = await _persistence.GetTextReceiptAsync(user.Id, operationId);
             if (previous != null)
@@ -96,7 +92,17 @@ public partial class ChatService
                 ContentHash = hash,
                 AcceptedAt = message.Timestamp
             };
-            await _persistence.PersistTextAcceptanceAsync(message, receipt);
+            try
+            {
+                await _persistence.PersistTextAcceptanceAsync(message, receipt);
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException error) when (error.InnerException is Microsoft.Data.Sqlite.SqliteException { SqliteExtendedErrorCode: 1555 or 2067 })
+            {
+                var accepted = await _persistence.GetTextReceiptAsync(user.Id, operationId);
+                if (accepted == null || accepted.ChannelId != channelId || accepted.ContentHash != hash)
+                    throw new ChatSendException(409, "operation_conflict", "This send ID was already used for different content.");
+                return accepted;
+            }
             // Persistence is now authoritative. A notification failure cannot turn acceptance into failure.
             try
             {
@@ -105,7 +111,6 @@ public partial class ChatService
             catch (Exception ex) { _logger.LogError(ex, "Post-commit notification failed for {MessageId}", message.Id); }
             return receipt;
         }
-        finally { textSendGate.Release(); }
     }
 
     public async Task<Channel> OpenDirectMessageAsync(User user, string username)
@@ -113,8 +118,8 @@ public partial class ChatService
         var other = _userService.GetByUsername(username);
         if (other == null || other.Id == user.Id)
             throw new ChatSendException(404, "user_unavailable", "That direct message is unavailable.");
-        await textSendGate.WaitAsync();
-        try
+        var pair = new[] { user.Id, other.Id }.Order().ToArray();
+        using (await LockAcceptance($"dm:{pair[0]}:{pair[1]}"))
         {
             var existing = GetDMChannels(user.Username).FirstOrDefault(c => c.IsDMBetween(user.Id, other.Id));
             var channel = existing ?? Channel.CreateDM(user.Id, user.Username, other.Id, other.Username);
@@ -129,6 +134,5 @@ public partial class ChatService
             }
             return channel;
         }
-        finally { textSendGate.Release(); }
     }
 }

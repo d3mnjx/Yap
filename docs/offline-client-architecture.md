@@ -65,7 +65,7 @@ Authentication failure locks local access while retaining unsent work for same-a
 
 ## History, reads and rendering
 
-Bootstrap supplies account/session metadata, conversation summaries and the selected recent window. `OfflineSync` compares authorized snapshots internally; `WatchChanges` transmits changed records and removals with deduplicated authors. No persistent change log is introduced. `sync.js` merges each record using its sequence and deletion/window watermarks. Complete revisions advance the window; a gap queues `/windows/{id}`. IndexedDB schema 4 stores conversations separately so an arrival does not rewrite all other message bodies.
+Bootstrap supplies account/session metadata, conversation summaries and the selected recent window. `OfflineChangeSignal` assigns channel content/history counters and a process-wide sequence. `OfflineFanout` projects each message event once, applies viewer-specific visibility/reply/favorite rules, and routes patches to bounded connection queues. `WatchChanges` coalesces queued records per conversation, retaining independent sequence stamps and deduplicated authors; it never builds or hashes snapshots. Queue overflow and mismatched reconnect revisions invalidate authorized windows. No persistent change log is introduced. `sync.js` merges each record using its sequence and deletion/window watermarks. Complete revisions advance the window; a gap queues `/windows/{id}`. IndexedDB schema 4 stores conversations separately so an arrival does not rewrite all other message bodies.
 
 `history.js` owns older pages and stores a server epoch/history version. Ordinary arrivals preserve unlimited loaded history and retain messages leaving the recent window. Edits, reactions, deletes, permission changes and restart invalidate older pages; they refresh on selection. Restricted histories conservatively use the content version. Reconcile every newer snapshot, including inactive conversations; otherwise navigating back can expose stale edits/deletions until another packet arrives. A version change during a history request invalidates its response.
 
@@ -73,7 +73,9 @@ Observed reads persist the highest arrival checkpoint actually seen. The server 
 
 `messages.js` compares row signatures before changing DOM. Reaction-only updates replace reaction/actions controls while retaining media elements. Active editors stay mounted until the action lifecycle releases them. Hydrated message-image object URLs belong to the timeline; shared emoji artwork belongs to `content.js` and must not be revoked when a message changes.
 
-Accepted message/receipt persistence precedes recipient unread/notification side effects. A failure of the later write can miss an unread increment even though the message is durable. See the [durability and recovery limits](offline-behavior.md#durability-and-recovery-limits).
+Sends serialize only competing operations on the same message; DM creation locks only the participant pair. SQLite transactions and receipt uniqueness remain authoritative. Recipient unread increments use two set-based statements under the existing read/checkpoint gate. Presence uses one shared 100 ms ticker; unchanged views produce no packet. Hub reports/status/typing use per-connection burst limits.
+
+Accepted message/receipt persistence precedes recipient unread/notification side effects. A failed unread write is logged without suppressing the accepted message event. A failure of the later write can miss an unread increment even though the message is durable. See the [durability and recovery limits](offline-behavior.md#durability-and-recovery-limits).
 
 ## Shell changes and validation
 

@@ -176,7 +176,9 @@ fs.mkdirSync(output, { recursive: true });
             });
             await page.reload();
             await row('Offline edited').waitFor();
-            assert.equal(await draft.inputValue(), 'Offline reply draft');
+            await page.waitForFunction(
+                () => document.querySelector('#draft')?.value === 'Offline reply draft',
+            );
             await page.locator('.reply-bar:not([hidden])').waitFor();
             await send('Offline reply');
             await page.locator('#pending .reply-preview').waitFor();
@@ -197,11 +199,10 @@ fs.mkdirSync(output, { recursive: true });
             );
             await row('Offline reply').locator('.reply-preview').waitFor();
             await row('Offline edited').locator('.reaction-pill').waitFor();
-            assert.equal(
-                await page.evaluate(
-                    async () => (await (await import('/chat-client/storage.js')).outbox()).length,
-                ),
-                0,
+            // The last queued mutation may still await its HTTP receipt after pending text
+            // disappears. Wait for durable reconciliation, not just its optimistic DOM state.
+            await page.waitForFunction(
+                async () => (await (await import('/chat-client/storage.js')).outbox()).length === 0,
             );
             console.log(
                 'PASS offline edit/reaction/reply draft survive reload; unsent edit/cancel and reconnect reconcile',

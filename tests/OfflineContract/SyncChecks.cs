@@ -22,11 +22,28 @@ static class SyncChecks
             && bootstrap.Conversations.Single(c => c.Window != null).Id == channel.Id,
             "bootstrap contains only the active conversation window");
         var before = snapshots.Snapshot(alice);
-        Check(sync.Changes(snapshots.Snapshot(alice), before) == null, "unchanged state produces no live payload");
+        // Flatten independent wire packets only for assertions; the browser receives their
+        // original per-conversation sequences, never this combined diagnostic value.
+        static async Task<ChatUpdate> Read(OfflineFanout.Subscription subscription, CancellationToken token)
+        {
+            var packets = await subscription.Read(token);
+            var latest = packets.Last();
+            return latest with
+            {
+                State = packets.LastOrDefault(p => p.State != null)?.State,
+                Conversations = packets.SelectMany(p => p.Conversations).GroupBy(c => c.Id).Select(g => g.Last()).ToArray(),
+                Authors = packets.SelectMany(p => p.Authors).DistinctBy(a => a.Id).ToArray(),
+                Reset = packets.Any(p => p.Reset)
+            };
+        }
+        var fanout = services.GetRequiredService<OfflineFanout>();
+        using var subscription = fanout.Subscribe(alice, bootstrap.Conversations.ToDictionary(c => c.Id, c => c.Revision));
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        await Read(subscription, timeout.Token);
         var operation = Guid.NewGuid();
         var receipt = await chat.SendTextAsync(alice, channel.Id, operation, "incremental contract");
         var after = snapshots.Snapshot(alice);
-        var delta = sync.Changes(after, before)!;
+        var delta = await Read(subscription, timeout.Token);
         Check(after.Conversations.Single(c => c.Id == channel.Id).HistoryVersion == before.Conversations.Single(c => c.Id == channel.Id).HistoryVersion,
             "new arrivals preserve older history authority");
         Check(delta.Conversations.Sum(c => c.Messages.Length) == 1
@@ -38,12 +55,82 @@ static class SyncChecks
         var deleted = snapshots.Snapshot(alice);
         Check(deleted.Conversations.Single(c => c.Id == channel.Id).HistoryVersion > after.Conversations.Single(c => c.Id == channel.Id).HistoryVersion,
             "deletion invalidates cached history even outside the recent window");
-        var deletion = sync.Changes(deleted, after)!;
+        var deletion = await Read(subscription, timeout.Token);
         Check(deletion.Conversations.Any(c => c.Removed.Contains(receipt.MessageId))
             && deletion.Conversations.All(c => c.Messages.All(m => m.Id != receipt.MessageId) && c.Messages.Length <= 1), "delete sends removal and only necessary window backfill");
         var replay = sync.Conversation(alice, channel.Id, receipt.MessageId);
         Check(replay.Conversations[0].Removed.Contains(receipt.MessageId) && replay.Conversations[0].Messages.Length == 0,
             "compact receipt recovery reflects current deletion");
+
+        using (var slow = fanout.Subscribe(alice, new Dictionary<Guid, string>(), capacity: 2))
+        {
+            await Read(slow, timeout.Token);
+            for (var i = 0; i < 5; i++)
+                await chat.SendTextAsync(bob, channel.Id, Guid.NewGuid(), "overflow " + i);
+            var recovery = await Read(slow, timeout.Token);
+            Check(slow.Overflows > 0 && recovery.Reset && recovery.Conversations.All(c => c.Invalidate), "paused subscriber overflows into bounded invalidation recovery");
+            var window = sync.Conversation(alice, channel.Id, full: true);
+            Check(window.Conversations[0].Messages.Last().Content == "overflow 4", "overflow window recovers the latest accepted content");
+        }
+
+        var users = services.GetRequiredService<UserService>();
+        var outsider = users.GetByUsername("carolfixture")!;
+        using (var privateObserver = fanout.Subscribe(outsider, new Dictionary<Guid, string>()))
+        {
+            await Read(privateObserver, timeout.Token);
+            await chat.SendTextAsync(alice, channel.Id, Guid.NewGuid(), "private fanout");
+            using var quiet = new CancellationTokenSource(TimeSpan.FromMilliseconds(150));
+            var leaked = false;
+            try
+            {
+                await Read(privateObserver, quiet.Token);
+                leaked = true;
+            }
+            catch (OperationCanceledException) { }
+            Check(!leaked, "private messages and recipient unread updates never wake unrelated accounts");
+        }
+        var parallel = Enumerable.Range(0, 12).Select(i => chat.SendTextAsync(bob, channel.Id, Guid.NewGuid(), "parallel " + i)).ToArray();
+        await Task.WhenAll(parallel);
+        var coalesced = await Read(subscription, timeout.Token);
+        Check(coalesced.Conversations.SelectMany(c => c.Messages).Count(m => m.Content.StartsWith("parallel ")) == 12,
+            "concurrent distinct sends remain complete when the stream coalesces its queue");
+        var known = coalesced.Conversations.ToDictionary(c => c.Id, c => c.Revision);
+        using (var reconnected = fanout.Subscribe(alice, known))
+        {
+            var baseline = await Read(reconnected, timeout.Token);
+            Check(baseline.Conversations.Single(c => c.Id == channel.Id).Invalidate == false,
+                "matching reconnect revision keeps the cached window");
+        }
+        known[channel.Id] = "stale";
+        using (var stale = fanout.Subscribe(alice, known))
+            Check((await Read(stale, timeout.Token)).Conversations.Single(c => c.Id == channel.Id).Invalidate,
+                "mismatched reconnect revision requests an authorized window");
+
+        await users.UpdateProfileAsync(bob.Id, "Fanout profile", bob.ProfilePictureUrl, bob.Bio, bob.Country);
+        var profile = await Read(subscription, timeout.Token);
+        Check(profile.State!.People.Any(p => p.Id == bob.Id && p.DisplayName == "Fanout profile")
+            && profile.Conversations.Any(c => c.Id == channel.Id && c.Invalidate),
+            "profile changes refresh the header and invalidate embedded author windows");
+        await users.SetDmNotificationModeAsync(alice.Id, NotificationMode.MuteAll);
+        var preferences = await Read(subscription, timeout.Token);
+        Check(preferences.Conversations.Single(c => c.Id == channel.Id).State.Muted,
+            "account preferences update its metadata without a snapshot poll");
+        await users.SetDmNotificationModeAsync(alice.Id, NotificationMode.AllowAll);
+        await Read(subscription, timeout.Token);
+        var checkpoint = chat.GetReadCheckpoint(alice.Id, channel.Id);
+        await chat.MarkObservedReadAsync(alice.Id, channel.Id, checkpoint.Received);
+        var read = await Read(subscription, timeout.Token);
+        Check(read.Conversations.All(c => c.Messages.Length == 0) && read.State == null,
+            "observed-read acknowledgements send only recipient metadata");
+
+        await chat.SendTextAsync(alice, channel.Id, Guid.NewGuid(), "before independent acknowledgement");
+        var acknowledgement = sync.Conversation(alice, channel.Id);
+        var lobby = chat.GetRooms().Single(c => c.IsDefault);
+        await chat.SendTextAsync(alice, lobby.Id, Guid.NewGuid(), "later unrelated room");
+        var independent = await subscription.Read(timeout.Token);
+        Check(independent.Single(p => p.Conversations.Any(c => c.Id == channel.Id)).Sequence < acknowledgement.Sequence
+            && independent.Single(p => p.Conversations.Any(c => c.Id == lobby.Id)).Sequence > acknowledgement.Sequence,
+            "coalescing preserves independent conversation stamps across an intervening HTTP acknowledgement");
 
         async Task<HttpResponseMessage> Post(string path, object value, string? expectedUser = null)
         {

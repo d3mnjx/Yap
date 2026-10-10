@@ -36,8 +36,7 @@ public partial class ChatService
             emoji,
             active
         })));
-        await textSendGate.WaitAsync();
-        try
+        using (await LockAcceptance("message:" + messageId))
         {
             // Old cached sends may have a different server ID; resolve the sender's own receipt.
             var originalSend = await _persistence.GetTextReceiptAsync(user.Id, messageId);
@@ -97,6 +96,5 @@ public partial class ChatService
                 OnMessageUpdated?.Invoke(persisted);
             return receipt;
         }
-        finally { textSendGate.Release(); }
     }
 }

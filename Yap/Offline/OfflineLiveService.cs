@@ -18,7 +18,7 @@ public record LiveView(string Status, string ChosenStatus, int OnlineCount, Live
 /// Coordinates connection-owned presence, visibility and typing through the shared chat service;
 /// this transient state is never replayed from offline storage.
 /// </summary>
-public sealed class OfflineLiveService(ChatService chat, IDataProtectionProvider protection)
+public sealed class OfflineLiveService(ChatService chat, IDataProtectionProvider protection, UserService users)
 {
     private readonly ITimeLimitedDataProtector tickets = protection.CreateProtector("Yap.Chat.Live.v1").ToTimeLimitedDataProtector();
     private readonly SemaphoreSlim gate = new(1, 1);
@@ -75,6 +75,11 @@ public sealed class OfflineLiveService(ChatService chat, IDataProtectionProvider
         try
         {
             var session = Require(connection, user);
+            var now = DateTime.UtcNow;
+            if (reports.TryGetValue(connection, out var previous) && previous.Visible == visible && previous.Channel == channelId
+                && (previous.Idle >= 300) == (idleSeconds >= 300) && now - previous.At < TimeSpan.FromMilliseconds(250))
+                return;
+            reports[connection] = (now, visible, idleSeconds, channelId);
             if (channelId is { } id && chat.GetChannel(id)?.CanAccess(user.Id) != true)
                 channelId = null;
             if (session.Channel != channelId || !visible)
@@ -94,6 +99,8 @@ public sealed class OfflineLiveService(ChatService chat, IDataProtectionProvider
         Require(connection, user);
         if (!Enum.IsDefined(status))
             throw new InvalidOperationException("Invalid status");
+        if ((chat.GetStatusBeforeAutoAway(user.Username) ?? chat.GetUserStatus(user.Username)) == status)
+            return;
         await chat.SetUserStatusAsync(Key(connection), status);
     }
     public async Task Typing(string connection, User user, Guid channelId, bool active)
@@ -118,14 +125,66 @@ public sealed class OfflineLiveService(ChatService chat, IDataProtectionProvider
         }
         finally { gate.Release(); }
     }
-    public LiveView View(string connection, User user)
+    private LivePerson[] people = [];
+    private readonly ConcurrentDictionary<string, System.Threading.Channels.Channel<LiveView>> listeners = new();
+    private readonly ConcurrentDictionary<string, (LiveView View, DateTime At)> lastViews = new();
+    private readonly ConcurrentDictionary<string, (DateTime At, bool Visible, double Idle, Guid? Channel)> reports = new();
+
+    public LiveView View(string connection, User user) => BuildView(connection, user);
+    private LiveView BuildView(string connection, User user, Dictionary<Guid, string[]>? typingByChannel = null)
     {
         var session = Require(connection, user);
         var status = chat.GetUserStatus(user.Username) ?? UserStatus.Online;
-        var people = chat.GetAllUsersWithStatus().OrderBy(p => p.Username).Select(p => new LivePerson(p.Username, p.Status.ToString().ToLowerInvariant())).ToArray();
         var typing = session.Channel is { } channel && chat.GetChannel(channel)?.CanAccess(user.Id) == true
-            ? chat.GetTypingUsers(channel).Where(name => name != user.Username).Order().ToArray() : [];
+            ? (typingByChannel?.GetValueOrDefault(channel) ?? chat.GetTypingUsers(channel).Order().ToArray()).Where(name => name != user.Username).ToArray() : [];
         return new(status.ToString().ToLowerInvariant(), (chat.GetStatusBeforeAutoAway(user.Username) ?? status).ToString().ToLowerInvariant(), people.Length, people, session.Channel, typing);
+    }
+    public async IAsyncEnumerable<LiveView> Watch(string connection, User user, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var queue = System.Threading.Channels.Channel.CreateBounded<LiveView>(new System.Threading.Channels.BoundedChannelOptions(1) { FullMode = System.Threading.Channels.BoundedChannelFullMode.DropOldest });
+        if (!listeners.TryAdd(connection, queue))
+            throw new InvalidOperationException("Activity stream already active");
+        try
+        {
+            yield return BuildView(connection, user);
+            await foreach (var view in queue.Reader.ReadAllAsync(cancellationToken))
+                yield return view;
+        }
+        finally { listeners.TryRemove(connection, out _); lastViews.TryRemove(connection, out _); }
+    }
+    public void Tick()
+    {
+        // One shared people projection and one typing lookup per viewed channel per tick.
+        var currentPeople = chat.GetAllUsersWithStatus().OrderBy(p => p.Username).Select(p => new LivePerson(p.Username, p.Status.ToString().ToLowerInvariant())).ToArray();
+        if (!people.SequenceEqual(currentPeople))
+            people = currentPeople;
+        var typing = sessions.Values.Where(s => s.DisconnectedAt == null && s.Channel.HasValue)
+            .Select(s => s.Channel!.Value).Distinct().ToDictionary(id => id, id => chat.GetTypingUsers(id).Order().ToArray());
+        foreach (var pair in listeners)
+        {
+            if (!sessions.TryGetValue(pair.Key, out var session))
+                continue;
+            var user = users.GetById(session.UserId);
+            if (user == null)
+            {
+                pair.Value.Writer.TryComplete();
+                continue;
+            }
+            try
+            {
+                var view = BuildView(pair.Key, user, typing);
+                var now = DateTime.UtcNow;
+                if (lastViews.TryGetValue(pair.Key, out var previous)
+                    && ReferenceEquals(previous.View.Users, view.Users) && previous.View.Status == view.Status
+                    && previous.View.ChosenStatus == view.ChosenStatus && previous.View.ChannelId == view.ChannelId
+                    && previous.View.Typing.SequenceEqual(view.Typing)
+                    && (view.Typing.Length == 0 || now - previous.At < TimeSpan.FromSeconds(1)))
+                    continue;
+                lastViews[pair.Key] = (view, now);
+                pair.Value.Writer.TryWrite(view);
+            }
+            catch (InvalidOperationException error) { pair.Value.Writer.TryComplete(error); }
+        }
     }
     public async Task Leave(string connection)
     {
@@ -134,6 +193,7 @@ public sealed class OfflineLiveService(ChatService chat, IDataProtectionProvider
         {
             if (!sessions.TryGetValue(connection, out var session) || session.DisconnectedAt != null)
                 return;
+            reports.TryRemove(connection, out _);
             await Stop(connection, session);
             sessions[connection] = sessions[connection] with
             {
@@ -190,13 +250,19 @@ public sealed class OfflineLiveCleanup(OfflineLiveService live, ILogger<OfflineL
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+        var lastSweep = DateTime.MinValue;
+        using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(100));
         try
         {
             while (await timer.WaitForNextTickAsync(stoppingToken))
                 try
                 {
-                    await live.Sweep(DateTime.UtcNow);
+                    live.Tick();
+                    if (DateTime.UtcNow - lastSweep >= TimeSpan.FromSeconds(1))
+                    {
+                        lastSweep = DateTime.UtcNow;
+                        await live.Sweep(lastSweep);
+                    }
                 }
                 catch (Exception error) { logger.LogError(error, "Live session cleanup failed"); }
         }

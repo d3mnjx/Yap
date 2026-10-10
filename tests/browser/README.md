@@ -98,3 +98,7 @@ For HTTPS/HTTP/2, run the two fixture packages on the same ports with trusted or
 `interaction-locality.cjs` holds API writes open and measures paintable local feedback for sending, reactions, edit/save and emoji interactions. Run it on a disposable rewrite with `YAP_TEST_ORIGIN`; `YAP_LOCALITY_OUTPUT` writes timings. It reports known queued-edit blocking as a `FINDING`, rather than implying that all interactions satisfy the latency rule. Those measurements include two animation frames and are distinct from the main benchmark's DOM-mutation timings.
 
 `YAP_STARTUP_ONLY=1 YAP_CACHE_STAGES=cold,warm,settled YAP_STARTUP_TRIALS=1` adds a third reload without message measurements. This distinguishes the first reload after installation from a later reload after on-use artwork has entered the worker cache. The recorded comparison uses HTTPS, two cold/warm pairs and five message samples per version/profile, plus this supplementary cache check. Timings are descriptive samples, not a production percentile or capacity estimate.
+
+## Server fan-out load
+
+See [FanoutLoad](../FanoutLoad/README.md) for the 10/30/50-client .NET SignalR benchmark, synthetic fixture, server CPU and p95 delivery measurement. The contract suite also pauses a bounded server subscription to verify overflow invalidation and authorized-window recovery.

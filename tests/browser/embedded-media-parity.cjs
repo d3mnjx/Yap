@@ -97,7 +97,7 @@ fs.mkdirSync(out, { recursive: true });
                 }
                 if (label === 'rewrite') {
                     const data = await (
-                            await context.request.get(origin + '/api/chat/bootstrap')
+                            await context.request.get(origin + '/api/chat/sync')
                         ).json(),
                         msg = data.conversations
                             .flatMap((c) => c.messages)

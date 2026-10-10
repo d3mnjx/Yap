@@ -1,5 +1,4 @@
-using System.Security.Cryptography;
-using System.Text.Json;
+using System.Collections.Concurrent;
 using Yap.Helpers;
 using Yap.Models;
 using Yap.Services;
@@ -50,11 +49,13 @@ public record ReaderSnapshot(int Protocol, string Revision, string ServerEpoch, 
 /// </summary>
 public sealed class OfflineSnapshotService(ChatService chat, UserService users, IConfiguration config, ChatConfigService branding, SystemBotService bots, NotificationSettingsService notifications, GifService gifs, LinkPreviewService previews, MediaCacheService media, IWebHostEnvironment env, OfflineChangeSignal changes)
 {
-    private static readonly object SnapshotGate = new();
-    private static readonly string ServerEpoch = Guid.NewGuid().ToString("N");
-    private static long sequence;
+    private readonly ConcurrentDictionary<Guid, ReaderUser> summaries = new();
+    public void InvalidateUser(Guid id) => summaries.TryRemove(id, out _);
+    public string Epoch => changes.Epoch;
+    public long Stamp() => changes.Stamp();
+    public ReaderUser Summary(User user) => summaries.GetOrAdd(user.Id, _ => BuildSummary(user));
     public int RecentLimit => Math.Clamp(config.GetValue("OfflineChat:RecentMessageLimit", 100), 1, 500);
-    public ReaderUser Summary(User user)
+    private ReaderUser BuildSummary(User user)
     {
         var picture = user.ProfilePictureUrl;
         // Profile filenames are overwritten; version the URL so immutable offline caching stays fresh.
@@ -68,21 +69,39 @@ public sealed class OfflineSnapshotService(ChatService chat, UserService users, 
     }
     public bool IsDirectMessage(Guid? id) => id is { } value && chat.GetChannel(value)?.IsDirectMessage == true;
 
-    public ReaderConversation? Conversation(User user, Guid id, int? limit = null)
+    public Channel[] Channels(User user) => chat.GetRooms().Concat(chat.GetDMChannels(user.Username))
+        .Where(c => c.CanAccess(user.Id)).DistinctBy(c => c.Id).ToArray();
+
+    public ReaderConversation? Metadata(User user, Guid id, bool? hasMore = null)
     {
         var channel = chat.GetChannel(id);
         if (channel == null || !channel.CanAccess(user.Id))
             return null;
         var checkpoint = chat.GetReadCheckpoint(user.Id, id);
-        var page = chat.GetMessagesPaginated(id, limit ?? RecentLimit, isAdmin: users.IsAdmin(user.Id), userId: user.Id);
         return new(id, channel.IsDirectMessage ? "dm" : "room",
             channel.IsDirectMessage ? users.GetById(channel.GetOtherParticipantId(user.Id) ?? Guid.Empty)?.EffectiveDisplayName
                 ?? channel.GetOtherParticipant(user.Username) ?? "Deleted user" : channel.Name,
             channel.Description, channel.IsDefault, channel.IsDirectMessage
                 ? "/dm/" + Uri.EscapeDataString(channel.GetOtherParticipant(user.Username) ?? "")
-                : channel.IsDefault ? "/lobby" : $"/room/{id}", channel.CanWrite(user.Id, users.IsAdmin(user.Id)), page.HasMore,
-            checkpoint.Unread, chat.IsChannelMuted(user.Id, id), page.Messages.Select(m => Message(m, user.Id)).ToArray(), checkpoint.Received, checkpoint.ReadThrough,
+                : channel.IsDefault ? "/lobby" : $"/room/{id}", channel.CanWrite(user.Id, users.IsAdmin(user.Id)), hasMore ?? chat.HasMoreMessages(user, id, RecentLimit),
+            checkpoint.Unread, chat.IsChannelMuted(user.Id, id), [], checkpoint.Received, checkpoint.ReadThrough,
             channel.IsDirectMessage ? chat.IsChannelMuted(user.Id, id) : !notifications.IsServerMuted(user) && user.NotifRoomMode == NotificationMode.Individual && notifications.IsChannelMutedIndividually(user, id, false), changes.ContentVersion(id), !users.IsAdmin(user.Id) && (channel.HistoryLimit != HistoryLimit.Unlimited || channel.SinceJoined), changes.HistoryVersion(id));
+    }
+
+    public ReaderConversation? Conversation(User user, Guid id, int? limit = null)
+    {
+        lock (chat.GetChannelLock(id))
+        {
+            var metadata = Metadata(user, id);
+            if (metadata == null)
+                return null;
+            var page = chat.GetMessagesPaginated(id, limit ?? RecentLimit, isAdmin: users.IsAdmin(user.Id), userId: user.Id);
+            return metadata with
+            {
+                HasMore = page.HasMore,
+                Messages = page.Messages.Select(m => Message(m, user.Id)).ToArray()
+            };
+        }
     }
 
     public ReaderMessage Message(ChatMessage message, Guid? viewerId = null)
@@ -133,24 +152,48 @@ public sealed class OfflineSnapshotService(ChatService chat, UserService users, 
             }).OfType<LinkPreview>().ToArray(), reply);
     }
 
+    // Diagnostic full view; never used by the live stream or a write acknowledgement.
     public ReaderSnapshot Snapshot(User user)
     {
-        lock (SnapshotGate)
-            return BuildSnapshot(user);
+        var header = Header(user);
+        var conversations = Channels(user).Select(c => Conversation(user, c.Id)).OfType<ReaderConversation>().ToArray();
+        return header with
+        {
+            Sequence = Stamp(),
+            Conversations = conversations,
+            Revision = string.Join(";", conversations.Select(c => $"{c.Id}:{c.ContentVersion}"))
+        };
     }
 
-    // A write result only projects its own conversation. Stamp the projection under the
-    // same gate as stream snapshots so delayed responses can be ordered per record.
-    public (string Epoch, long Sequence, ReaderConversation? Conversation, ReaderMessage? Message) Capture(User user, Guid id, Guid? messageId)
+    public (string Epoch, long Sequence, ReaderConversation? Conversation, ReaderMessage? Message) Capture(User user, Guid id, Guid? messageId, bool full = false)
     {
-        lock (SnapshotGate)
+        lock (chat.GetChannelLock(id))
         {
-            var count = chat.GetRooms().Concat(chat.GetDMChannels(user.Username)).Count(c => c.CanAccess(user.Id));
-            var conversation = Conversation(user, id, Math.Min(RecentLimit, Math.Max(1, 20000 / Math.Max(1, count))));
+            var conversation = full ? Conversation(user, id) : Metadata(user, id);
             var message = messageId is { } target ? chat.GetMessageById(id, target) : null;
-            return (ServerEpoch, ++sequence, conversation,
+            return (Epoch, Stamp(), conversation,
                 conversation != null && message != null && chat.CanReadMessage(user, message) ? Message(message, user.Id) : null);
         }
+    }
+
+    // Expensive media/emoji projection is shared; only reply permission and favorite flags vary by viewer.
+    public ReaderMessage ForViewer(ReaderMessage projected, ChatMessage message, User viewer)
+    {
+        var target = message.ReplyToMessageId is { } id ? chat.GetMessageById(message.ChannelId, id) : null;
+        ReaderReply? reply = null;
+        if (target != null && chat.CanReadMessage(viewer, target))
+        {
+            var author = users.GetById(target.UserId);
+            reply = new(target.Id, author != null ? Summary(author) : new(target.UserId, target.Username, target.Username, null, AvatarColor.GetGradientCss(target.Username)),
+                string.IsNullOrEmpty(target.Content) && target.HasMedia ? "Click to see attachment" : target.Content);
+        }
+        return projected with
+        {
+            Reply = reply,
+            Gifs = message.GifAttachments.Count == 0 ? projected.Gifs :
+            message.GifAttachments.Select(a => gifs.GetEntry(a.GifEntryId)).OfType<GifEntry>()
+                .Select(e => OfflineContent.Gif(e, gifs, viewer.Id, users.GetById(e.UploadedByUserId ?? Guid.Empty)?.Username)).ToArray()
+        };
     }
 
     private static object DateSettings(User user)
@@ -180,19 +223,12 @@ public sealed class OfflineSnapshotService(ChatService chat, UserService users, 
         };
     }
 
-    private ReaderSnapshot BuildSnapshot(User user)
+    public ReaderSnapshot Header(User user)
     {
-        var channels = chat.GetRooms().Concat(chat.GetDMChannels(user.Username))
-            .Where(c => c.CanAccess(user.Id)).DistinctBy(c => c.Id).ToArray();
+        var channels = Channels(user);
         var limit = Math.Min(RecentLimit, Math.Max(1, 20000 / Math.Max(1, channels.Length)));
-        var conversations = channels.Select(c => Conversation(user, c.Id, limit)).OfType<ReaderConversation>().ToArray();
-        var snapshot = new ReaderSnapshot(1, "", ServerEpoch, 0, Summary(user), users.IsAdmin(user.Id), user.Theme ?? "discord-dark",
+        return new ReaderSnapshot(2, "", Epoch, 0, Summary(user), users.IsAdmin(user.Id), user.Theme ?? "discord-dark",
             user.FontSize, user.TimeZone, user.DateFormat, branding.ProjectName, limit,
-            chat.DurableSendingEnabled, ChatService.MaxTextLength, users.GetAllUsers().Where(u => u.Id == user.Id || chat.HasActiveSession(u.Username) || channels.Any(c => c.IsDirectMessage && c.CanAccess(u.Id))).OrderBy(u => u.Username).Select(Summary).ToArray(), conversations, DateSettings(user));
-        return snapshot with
-        {
-            Revision = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(snapshot))),
-            Sequence = ++sequence
-        };
+            chat.DurableSendingEnabled, ChatService.MaxTextLength, users.GetAllUsers().Where(u => u.Id == user.Id || chat.HasActiveSession(u.Username) || channels.Any(c => c.IsDirectMessage && c.CanAccess(u.Id))).OrderBy(u => u.Username).Select(Summary).ToArray(), [], DateSettings(user));
     }
 }

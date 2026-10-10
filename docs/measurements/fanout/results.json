@@ -1,0 +1,105 @@
+{
+  "baselineCommit": "a3cb057",
+  "reviewedFanoutCommit": "8231ef4",
+  "date": "2026-10-10",
+  "runtime": ".NET 10.0.12 / SDK 10.0.401",
+  "workload": {
+    "registeredUsers": 50,
+    "rooms": 5,
+    "seedMessagesPerRoom": 100,
+    "messagesPerSecond": 2,
+    "warmupSendsPerCase": 10,
+    "measuredSendsPerCase": 30,
+    "processWarmedBeforeCases": true
+  },
+  "results": {
+    "before": {
+      "dllSha256": "1f143a17585e38de4b212f1e350d11df372849462e34679108f47dd255efcc2a",
+      "cases": [
+        {
+          "clients": 10,
+          "samples": 30,
+          "warmup": 10,
+          "targetMessagesPerSecond": 2,
+          "elapsedMs": 14547.7968,
+          "cpuMs": 1780,
+          "cpuMsPerMessage": 59.333333333333336,
+          "cpuOneCorePercent": 12.23552962854465,
+          "ackToLastP95Ms": 46.7414,
+          "postToLastP95Ms": 55.1288,
+          "allSubscribersReceived": true
+        },
+        {
+          "clients": 30,
+          "samples": 30,
+          "warmup": 10,
+          "targetMessagesPerSecond": 2,
+          "elapsedMs": 14600.3778,
+          "cpuMs": 4350,
+          "cpuMsPerMessage": 145,
+          "cpuOneCorePercent": 29.79374937959654,
+          "ackToLastP95Ms": 87.5961,
+          "postToLastP95Ms": 96.6577,
+          "allSubscribersReceived": true
+        },
+        {
+          "clients": 50,
+          "samples": 30,
+          "warmup": 10,
+          "targetMessagesPerSecond": 2,
+          "elapsedMs": 14623.9148,
+          "cpuMs": 8750,
+          "cpuMsPerMessage": 291.6666666666667,
+          "cpuOneCorePercent": 59.83349916785963,
+          "ackToLastP95Ms": 148.7787,
+          "postToLastP95Ms": 156.8238,
+          "allSubscribersReceived": true
+        }
+      ]
+    },
+    "after": {
+      "dllSha256": "8269ada0052f6990b16794e9d4f078c2a294e95ecdd9ce61c9fc528c3d8579ca",
+      "cases": [
+        {
+          "clients": 10,
+          "samples": 30,
+          "warmup": 10,
+          "targetMessagesPerSecond": 2,
+          "elapsedMs": 14513.8284,
+          "cpuMs": 800,
+          "cpuMsPerMessage": 26.666666666666668,
+          "cpuOneCorePercent": 5.51198469454138,
+          "ackToLastP95Ms": 0.5219,
+          "postToLastP95Ms": 19.0064,
+          "allSubscribersReceived": true
+        },
+        {
+          "clients": 30,
+          "samples": 30,
+          "warmup": 10,
+          "targetMessagesPerSecond": 2,
+          "elapsedMs": 14511.522,
+          "cpuMs": 550,
+          "cpuMsPerMessage": 18.333333333333332,
+          "cpuOneCorePercent": 3.790091736827524,
+          "ackToLastP95Ms": 1.0964,
+          "postToLastP95Ms": 11.7931,
+          "allSubscribersReceived": true
+        },
+        {
+          "clients": 50,
+          "samples": 30,
+          "warmup": 10,
+          "targetMessagesPerSecond": 2,
+          "elapsedMs": 14508.6395,
+          "cpuMs": 450,
+          "cpuMsPerMessage": 15,
+          "cpuOneCorePercent": 3.1016002354900314,
+          "ackToLastP95Ms": 1.2921,
+          "postToLastP95Ms": 15.4138,
+          "allSubscribersReceived": true
+        }
+      ]
+    }
+  }
+}

@@ -1,65 +1,72 @@
+using System.Collections.Concurrent;
 using Yap.Models;
 using Yap.Services;
+using Yap.Services.Gifs;
 
 namespace Yap.Offline;
 
-/// <summary>
-/// Coalesces chat changes into shared stream wake-ups and content versions, avoiding per-browser
-/// service subscriptions and private message broadcasts.
-/// </summary>
+/// <summary>Process-local revision counters and ordered channel events; recovery uses windows, not a durable log.</summary>
 public sealed class OfflineChangeSignal : IDisposable
 {
     private readonly ChatService chat;
-    private readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, long> contentVersions = new();
-    private readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, long> historyVersions = new();
-    public long HistoryVersion(Guid channelId) => historyVersions.GetValueOrDefault(channelId);
-    public long ContentVersion(Guid channelId) => contentVersions.GetValueOrDefault(channelId);
-    private void ContentChanged(Guid channelId, bool historyChanged = true)
-    {
-        // Arrivals cannot change older pages. Edits, deletions and permission changes can.
-        if (historyChanged)
-            historyVersions.AddOrUpdate(channelId, 1, (_, version) => version + 1);
-        contentVersions.AddOrUpdate(channelId, 1, (_, version) => version + 1);
-        Pulse();
-    }
-    private readonly object gate = new();
-    private TaskCompletionSource changed = NewSignal();
-    private static TaskCompletionSource NewSignal() => new(TaskCreationOptions.RunContinuationsAsynchronously);
-    public Task Next
-    {
-        get
-        {
-            lock (gate)
-                return changed.Task;
-        }
-    }
-    public OfflineChangeSignal(ChatService chat)
+    private readonly GifService gifs;
+    private readonly ConcurrentDictionary<Guid, long> contentVersions = new();
+    private readonly ConcurrentDictionary<Guid, long> historyVersions = new();
+    private long sequence;
+    public string Epoch { get; } = Guid.NewGuid().ToString("N");
+    public long Stamp() => Interlocked.Increment(ref sequence);
+    public long HistoryVersion(Guid id) => historyVersions.GetValueOrDefault(id);
+    public long ContentVersion(Guid id) => contentVersions.GetValueOrDefault(id);
+    public event Action<Guid, Guid?, bool, long, long, long>? Changed;
+    public OfflineChangeSignal(ChatService chat, GifService gifs)
     {
         this.chat = chat;
+        this.gifs = gifs;
         chat.OnMessageReceived += Arrived;
         chat.OnMessageUpdated += Message;
         chat.OnReactionChanged += Message;
         chat.OnMessageDeleted += Deleted;
         chat.OnChannelCreated += Channel;
         chat.OnChannelUpdated += Channel;
-        chat.OnChannelDeleted += Id;
-        chat.OnUsersListChanged += Pulse;
-        chat.OnUnreadChanged += Unread;
+        chat.OnChannelDeleted += Removed;
+        chat.OnLinkPreviewReady += Enriched;
+        chat.OnMediaCacheReady += Enriched;
+        gifs.OnGifEntryUpdated += GifChanged;
+        gifs.OnGifLibraryChanged += GifLibraryChanged;
     }
-    private void Unread(Guid _, Guid __) => Pulse();
-    private void Arrived(ChatMessage message) => ContentChanged(message.ChannelId, false);
-    private void Message(ChatMessage message) => ContentChanged(message.ChannelId);
-    private void Channel(Channel channel) => ContentChanged(channel.Id);
-    private void Deleted(Guid _, Guid channelId) => ContentChanged(channelId);
-    private void Id(Guid _) => Pulse();
-    private void Pulse()
+    private void Change(Guid id, Guid? message, bool history, bool removed = false)
     {
-        lock (gate)
+        // Window capture and event projection share only this conversation's lock.
+        lock (chat.GetChannelLock(id))
         {
-            var previous = changed;
-            changed = NewSignal();
-            previous.TrySetResult();
+            var before = ContentVersion(id);
+            contentVersions[id] = before + 1;
+            if (history)
+                historyVersions.AddOrUpdate(id, 1, (_, value) => value + 1);
+            Changed?.Invoke(id, message, removed, before, before + 1, Stamp());
         }
+    }
+    public void Refresh(Guid id) => Change(id, null, true);
+    private void Arrived(ChatMessage m) => Change(m.ChannelId, m.Id, false);
+    private void Message(ChatMessage m) => Change(m.ChannelId, m.Id, true);
+    private void Deleted(Guid message, Guid channel) => Change(channel, message, true, true);
+    private void Channel(Channel channel) => Change(channel.Id, null, true);
+    private void Removed(Guid channel) => Change(channel, null, true, true);
+    private void Enriched(Guid message)
+    {
+        foreach (var channel in chat.GetRooms().Concat(chat.GetAllDMChannels()))
+            if (chat.GetMessageById(channel.Id, message) is { } found)
+            {
+                Message(found);
+                break;
+            }
+    }
+    private void GifLibraryChanged(GifEntry entry) => GifChanged(entry.Id);
+    private void GifChanged(Guid id)
+    {
+        foreach (var channel in chat.GetRooms().Concat(chat.GetAllDMChannels()))
+            foreach (var message in chat.GetMessages(channel.Id, int.MaxValue).Where(m => m.GifAttachments.Any(g => g.GifEntryId == id)))
+                Message(message);
     }
     public void Dispose()
     {
@@ -69,8 +76,10 @@ public sealed class OfflineChangeSignal : IDisposable
         chat.OnMessageDeleted -= Deleted;
         chat.OnChannelCreated -= Channel;
         chat.OnChannelUpdated -= Channel;
-        chat.OnChannelDeleted -= Id;
-        chat.OnUsersListChanged -= Pulse;
-        chat.OnUnreadChanged -= Unread;
+        chat.OnChannelDeleted -= Removed;
+        chat.OnLinkPreviewReady -= Enriched;
+        chat.OnMediaCacheReady -= Enriched;
+        gifs.OnGifEntryUpdated -= GifChanged;
+        gifs.OnGifLibraryChanged -= GifLibraryChanged;
     }
 }

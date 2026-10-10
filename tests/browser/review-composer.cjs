@@ -49,7 +49,8 @@ if (
         };
         const first = await send(dm.channelId, 'First saved reply');
         const second = await send(dm.channelId, 'Second saved reply');
-        const lobbyId = dm.snapshot.conversations.find((c) => c.isDefault).id;
+        const snapshot = await (await context.request.get(origin + '/api/chat/sync')).json();
+        const lobbyId = snapshot.conversations.find((c) => c.isDefault).id;
         const lobbyTarget = await send(lobbyId, 'Lobby reply');
         const selectReply = (id) =>
             page.locator('#msg-' + id + ' .action-reply').click({ force: true });

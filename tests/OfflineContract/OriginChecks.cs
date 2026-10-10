@@ -45,7 +45,7 @@ static class OriginChecks
             "another account's session cannot overwrite the recipient's origin");
         await Visit(attacker, "/api/chat/bootstrap?path=/lobby", "legacy-protocol.example.test");
         Check(attacker.LoginOrigin == "https://legacy-protocol.example.test",
-            "legacy bootstrap also records its authenticated user's origin");
+            "bootstrap without a protocol header records its authenticated user's origin");
         users.RecordLoginOrigin(admin.Id, "https://admin.example.test/settings?ignored=true#ignored");
         Check(admin.LoginOrigin == "https://admin.example.test", "stored origins exclude paths, queries and fragments");
         Check(links.BuildUrl("fixture", "https://viewer.example.test:8443/settings/") == "https://viewer.example.test:8443/invite/fixture",

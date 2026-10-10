@@ -37,7 +37,7 @@ Durable sends require enabled SQLite persistence. When durable persistence is di
 
 ## Reconnection, history and read state
 
-Compact HTTP acknowledgements and SignalR deltas converge through the same atomic commit path. Changed messages, deletions and conversation metadata replace account-wide snapshot traffic; author profiles travel once per update. The server still constructs authorized snapshots internally and compares them, without a durable event log. Each server process has an epoch and increasing sequence; per-record ordering prevents delayed acknowledgements from overwriting newer edits/deletions. Server restart establishes a new epoch and fresh authority while local unsent work remains separate.
+Compact HTTP acknowledgements and SignalR deltas converge through the same atomic commit path. Changed messages, deletions and conversation metadata replace account-wide snapshot traffic; author profiles travel once per update. The server projects each message event once and routes authorized patches through bounded connection queues. Content counters replace hashes. Overflow discards queued records and sends invalidations; reconnect compares known content versions and refetches mismatched windows. Full windows are projected only on demand, without a durable event log. Each server process has an epoch and increasing sequence; per-record ordering prevents delayed acknowledgements from overwriting newer edits/deletions. Server restart establishes a new epoch and fresh authority while local unsent work remains separate.
 
 `OfflineChat:RecentMessageLimit` defaults to 100 and is clamped to 1–500. Bootstrap includes all accessible summaries and only the selected recent window. Matching cached active revisions omit repeated bodies. Missing windows download in a cancellable background queue (active first, then unread), while new messages stream immediately even for inactive conversations. All accessible conversations retain metadata, with recent windows reduced fairly above a 20,000-message target and at least one message per conversation. This is a client window limit, not a server message-memory redesign. Older visited pages have a separate bounded cache. Ordinary arrivals retain loaded unlimited history without fetching it again. Mutations, permission changes and restart invalidate older pages for a bounded refresh; restricted histories remain conservative. Their server epoch/history version is checked even while the conversation is inactive, so later navigation cannot knowingly display stale edits/deletions. Reply target lookup applies the same history authorization.
 
@@ -60,7 +60,7 @@ An online return obtains current antiforgery credentials during bootstrap. ASP.N
 
 ## Presence, notifications and installation
 
-Online/Away/Invisible choices use the existing server policy, including manual status preservation, idle handling and disconnect grace. Typing is transient, authorized to the writable selected conversation, excludes the sender and expires after inactivity. Navigation, hiding, send, disconnect and authentication loss stop it.
+Online/Away/Invisible choices use the existing server policy, including manual status preservation, idle handling and disconnect grace. A shared 100 ms ticker builds the people list once and typing once per viewed channel; only changed views and active typing renewals are transmitted. Reports, status changes and typing calls are limited per connection (12-call burst, four calls/second per method). Typing is transient, authorized to the writable selected conversation, excludes the sender and expires after inactivity. Navigation, hiding, send, disconnect and authentication loss stop it.
 
 Hidden-tab titles count fresh eligible arrivals and reset in the foreground. Room pages are silent; hidden DM pages may play the notification sound for unmuted DM arrivals. The arriving conversation's mute policy controls notification eligibility. Own sends, edits, reactions, typing and read acknowledgements do not create new arrival notifications.
 
@@ -72,7 +72,7 @@ Push permission remains an explicit installed-app flow. Granted subscriptions ar
 
 ## Durability and recovery limits
 
-- Message/mutation acceptance and its receipt are atomic. Recipient unread increments and push/notification side effects follow acceptance and are not an exactly-once delivery guarantee. A later write failure can permanently miss an unread increment; retrying the receipt does not repair it.
+- Message/mutation acceptance and its receipt are atomic. Recipient unread increments and push/notification side effects follow acceptance and are not an exactly-once delivery guarantee. A later write failure can permanently miss an unread increment; retrying the receipt does not repair it. It no longer suppresses the accepted message event.
 - Storage quota failures and browser eviction can lose local-only work. Server backups do not contain unsent browser drafts or queues.
 - Offline permissions are provisional. Removed access, deleted conversations or changed write permissions can cause queued operations to fail when the server sees them.
 - Original Blazor drafts held only in an old page/circuit are not migrated. Send or copy them before upgrading; see [deployment and rollback](../GHCR-DEPLOYMENT-GUIDE.md#upgrading-yap-to-the-offline-client).

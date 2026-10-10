@@ -18,6 +18,7 @@ namespace Yap.Services;
 /// </remarks>
 public class NotificationSettingsService
 {
+    public event Action<Guid, Guid>? OnChanged;
     private readonly UserService _userService;
     private readonly ChatPersistenceService _persistence;
     private readonly ILogger<NotificationSettingsService> _logger;
@@ -121,6 +122,7 @@ public class NotificationSettingsService
             ChannelId = channelId,
             Muted = muted
         });
+        OnChanged?.Invoke(userId, channelId);
     }
 
     /// <summary>

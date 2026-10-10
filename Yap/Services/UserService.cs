@@ -12,6 +12,8 @@ namespace Yap.Services;
 /// </summary>
 public class UserService
 {
+    public event Action<Guid, bool>? OnProfileChanged;
+
     private readonly IDbContextFactory<ChatDbContext>? _dbFactory;
     private readonly ILogger<UserService> _logger;
     private readonly bool _persistenceEnabled;
@@ -391,6 +393,7 @@ public class UserService
         user.ProfilePictureUrl = profilePictureUrl;
         user.Bio = bio;
         user.Country = country;
+        OnProfileChanged?.Invoke(userId, true);
 
         // Persist to database
         if (_persistenceEnabled)
@@ -425,6 +428,7 @@ public class UserService
         var expiry = muted ? until : null;
         user.NotifServerMuted = muted;
         user.NotifServerMuteUntil = expiry;
+        OnProfileChanged?.Invoke(userId, false);
 
         if (_persistenceEnabled)
         {
@@ -453,6 +457,7 @@ public class UserService
             return;
 
         user.NotifDmMode = mode;
+        OnProfileChanged?.Invoke(userId, false);
 
         if (_persistenceEnabled)
         {
@@ -479,6 +484,7 @@ public class UserService
             return;
 
         user.NotifRoomMode = mode;
+        OnProfileChanged?.Invoke(userId, false);
 
         if (_persistenceEnabled)
         {
@@ -505,6 +511,7 @@ public class UserService
             return;
 
         user.NotifNewDmsMuted = muted;
+        OnProfileChanged?.Invoke(userId, false);
 
         if (_persistenceEnabled)
         {
@@ -555,6 +562,7 @@ public class UserService
             return;
 
         user.Theme = themeId;
+        OnProfileChanged?.Invoke(userId, false);
 
         if (_persistenceEnabled)
         {
@@ -586,6 +594,7 @@ public class UserService
             fontSize = null;
 
         user.FontSize = fontSize;
+        OnProfileChanged?.Invoke(userId, false);
 
         if (_persistenceEnabled)
         {
@@ -616,6 +625,7 @@ public class UserService
         user.Locale = locale;
         if (dateFormat != null)
             user.DateFormat = dateFormat;
+        OnProfileChanged?.Invoke(userId, false);
 
         if (_persistenceEnabled)
         {

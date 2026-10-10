@@ -1304,7 +1304,7 @@
                             marker-end="url(#send-arrow)"
                         />
                         <text x="700" y="398" class="sub">
-                            B · change signal wakes WatchChanges
+                            B · channel event enters subscriber queues
                         </text>
                         <path
                             d="M668 409H950"
@@ -1347,10 +1347,10 @@
                             immediately.
                         </p>
                         <p>
-                            Shared events wake an authorized snapshot comparison, coalesced for 15
-                            ms. A ten-second timeout catches other changes and rechecks
-                            authentication; unchanged state sends no data. Snapshots still exist
-                            internally. Gaps or restart recover bounded windows, without a
+                            Each message event is projected once and routed to bounded subscriber
+                            queues. Pending records coalesce; overflow and reconnect mismatches
+                            invalidate authorized windows. Content counters replace hashes.
+                            A ten-second idle check revalidates authentication. Recovery needs no
                             persistent event log. Older loaded history survives ordinary arrivals;
                             mutations invalidate its bounded cache.
                         </p>
@@ -1385,8 +1385,8 @@
                     eliminates one serial round trip. The
                     <a href="offline-network-measurements.md">simulated 900 ms comparison</a>
                     measures startup, delivery and cache costs against the frozen original;
-                    real-deployment telemetry remains unmeasured. Server-side snapshot comparison
-                    remains a potential scaling cost. Older-history mutations conservatively trigger
+                    real-deployment telemetry remains unmeasured. The server now uses targeted
+                    event queues; the reusable fan-out load harness measures its scaling. Older-history mutations conservatively trigger
                     bounded refresh rather than a second persistent event-log protocol.
                 </p>
             </div>
@@ -1563,15 +1563,15 @@
                                 <a href="../Yap/Offline/OfflineHub.cs">OfflineHub.cs</a
                                 ><span
                                     >WatchChanges / WatchActivity and Report / SetStatus / Typing.
-                                    Legacy Watch/WatchLive remain for open older documents.</span
+                                    Each connection has one bounded change stream; legacy Watch is removed.</span
                                 >
                             </li>
                             <li>
                                 <a href="../Yap/Offline/OfflineChangeSignal.cs"
                                     >OfflineChangeSignal.cs</a
                                 ><span
-                                    >Shared service-event subscription and coalesced wake-ups; no
-                                    private payload broadcast.</span
+                                    >Shared event ordering and content counters; OfflineFanout routes
+                                    authorized patches to bounded connection queues.</span
                                 >
                             </li>
                             <li>
@@ -1744,9 +1744,10 @@
                     <a class="source" href="../Yap/Program.cs">Yap/Program.cs · line 194 ↗</a>
                     <pre><code>builder.Services.AddSignalR();
 builder.Services.AddAntiforgery(options =&gt; options.HeaderName = &quot;X-CSRF-TOKEN&quot;);
-builder.Services.AddScoped&lt;OfflineSnapshotService&gt;();
-builder.Services.AddScoped&lt;OfflineSync&gt;();
+builder.Services.AddSingleton&lt;OfflineSnapshotService&gt;();
+builder.Services.AddSingleton&lt;OfflineSync&gt;();
 builder.Services.AddSingleton&lt;OfflineChangeSignal&gt;();
+builder.Services.AddSingleton&lt;OfflineFanout&gt;();
 builder.Services.AddSingleton&lt;OfflineLiveService&gt;();
 builder.Services.AddHostedService&lt;OfflineLiveCleanup&gt;();</code></pre>
                     <p>

@@ -156,9 +156,9 @@ fs.mkdirSync(artifacts, { recursive: true });
             },
         );
         assert.equal(inactiveDelete.status(), 200);
-        const changedVersion = (await inactiveDelete.json()).snapshot.conversations.find(
+        const changedVersion = (await inactiveDelete.json()).update.conversations.find(
             (c) => c.id === id,
-        ).contentVersion;
+        ).state.contentVersion;
         await page.waitForFunction(
             async ({ id, changedVersion }) =>
                 (
