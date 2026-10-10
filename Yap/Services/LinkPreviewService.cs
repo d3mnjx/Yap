@@ -2,6 +2,9 @@ using System.Buffers;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Yap.Models;
 
@@ -12,11 +15,12 @@ public partial class LinkPreviewService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<LinkPreviewService> _logger;
 
-    // Cache: URL -> LinkPreview (with 1-hour TTL)
+    // Successful cards survive refresh expiry and process restarts.
     private readonly ConcurrentDictionary<string, LinkPreview> _cache = new();
 
     // Dedup in-flight requests
-    private readonly ConcurrentDictionary<string, byte> _inFlight = new();
+    private readonly Dictionary<string, HashSet<Guid>> _inFlight = new();
+    private readonly string _cacheDirectory;
 
     private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(1);
     // Hard cap on how much of a page we read while looking for the end of <head>. YouTube's
@@ -30,10 +34,11 @@ public partial class LinkPreviewService
     /// </summary>
     public Action<Guid, string, LinkPreview>? OnPreviewFetched { get; set; }
 
-    public LinkPreviewService(IHttpClientFactory httpClientFactory, ILogger<LinkPreviewService> logger)
+    public LinkPreviewService(IHttpClientFactory httpClientFactory, ILogger<LinkPreviewService> logger, IWebHostEnvironment env)
     {
         _httpClientFactory = httpClientFactory;
         _logger = logger;
+        _cacheDirectory = Path.Combine(env.ContentRootPath, "Data", "link-previews");
     }
 
     /// <summary>
@@ -71,70 +76,96 @@ public partial class LinkPreviewService
         return urls;
     }
 
-    /// <summary>
-    /// Pure cache lookup — no side effects.
-    /// </summary>
+    private string CachePath(string url) => Path.Combine(_cacheDirectory,
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(url))) + ".json");
+
+    /// <summary>Returns the last known card, including stale successful results.</summary>
     public LinkPreview? GetCachedPreview(string url)
     {
-        if (_cache.TryGetValue(url, out var preview))
+        if (_cache.TryGetValue(url, out var preview)) return preview;
+        try
         {
-            if (DateTime.UtcNow - preview.FetchedAt < CacheTtl)
-                return preview;
-
-            // Expired
-            _cache.TryRemove(url, out _);
+            var path = CachePath(url);
+            if (File.Exists(path))
+            {
+                preview = JsonSerializer.Deserialize<LinkPreview>(File.ReadAllText(path));
+                if (preview?.Url == url && preview.HasContent)
+                    return _cache.GetOrAdd(url, preview);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+        {
+            _logger.LogWarning(ex, "Could not read stored link preview");
         }
         return null;
     }
 
-    /// <summary>
-    /// Gets existing preview or creates a minimal one (for media cache to attach to
-    /// when OG scrape failed or hasn't completed).
-    /// </summary>
-    public LinkPreview GetOrCreatePreview(string url)
-    {
-        if (_cache.TryGetValue(url, out var existing) && DateTime.UtcNow - existing.FetchedAt < CacheTtl)
-            return existing;
+    public LinkPreview GetOrCreatePreview(string url) => GetCachedPreview(url)
+        ?? _cache.GetOrAdd(url, key => new LinkPreview { Url = key, FetchedAt = DateTime.UtcNow });
 
-        var preview = new LinkPreview { Url = url, FetchedAt = DateTime.UtcNow };
-        _cache[url] = preview;
+    /// <summary>Projection may request recovery, but must never synchronously publish an event.</summary>
+    public LinkPreview? GetPreview(Guid messageId, string url)
+    {
+        var preview = GetCachedPreview(url);
+        if (preview == null || DateTime.UtcNow - preview.FetchedAt >= CacheTtl)
+            QueueFetch(messageId, url);
         return preview;
     }
 
-    /// <summary>
-    /// Fire-and-forget background fetch. Invokes OnPreviewFetched when done.
-    /// </summary>
     public void QueueFetch(Guid messageId, string url)
     {
-        // Already cached?
-        if (GetCachedPreview(url) != null)
+        var cached = GetCachedPreview(url);
+        if (cached != null && DateTime.UtcNow - cached.FetchedAt < CacheTtl) return;
+        lock (_inFlight)
         {
-            OnPreviewFetched?.Invoke(messageId, url, _cache[url]);
-            return;
+            // Another fetch may have completed between the cache read and this lock.
+            if (_cache.TryGetValue(url, out var current) && DateTime.UtcNow - current.FetchedAt < CacheTtl) return;
+            if (_inFlight.TryGetValue(url, out var waiting))
+            {
+                waiting.Add(messageId);
+                return;
+            }
+            _inFlight[url] = [messageId];
         }
-
-        // Already in flight?
-        if (!_inFlight.TryAdd(url, 0))
-            return;
-
         _ = Task.Run(async () =>
         {
-            try
-            {
-                var preview = await FetchPreviewAsync(url);
-                _cache[url] = preview;
-                OnPreviewFetched?.Invoke(messageId, url, preview);
-            }
+            LinkPreview preview;
+            try { preview = await FetchPreviewAsync(url); }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Failed to fetch link preview for {Url}", url);
-                var failed = new LinkPreview { Url = url, Failed = true, FetchedAt = DateTime.UtcNow };
-                _cache[url] = failed;
+                preview = new LinkPreview { Url = url, Failed = true, FetchedAt = DateTime.UtcNow };
             }
-            finally
+            // A provider outage must not remove a previously rendered card. Retry after
+            // the normal TTL, while keeping the successful copy available on disk too.
+            if (!preview.HasContent && cached?.HasContent == true)
+                preview = cached;
+            preview.FetchedAt = DateTime.UtcNow;
+            _cache[url] = preview;
+            if (preview.HasContent)
             {
-                _inFlight.TryRemove(url, out _);
+                try
+                {
+                    Directory.CreateDirectory(_cacheDirectory);
+                    var path = CachePath(url);
+                    await File.WriteAllTextAsync(path + ".tmp", JsonSerializer.Serialize(preview));
+                    File.Move(path + ".tmp", path, true);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    _logger.LogWarning(ex, "Could not store link preview");
+                }
             }
+            Guid[] messages;
+            lock (_inFlight)
+            {
+                messages = _inFlight[url].ToArray();
+                _inFlight.Remove(url);
+            }
+            // Every waiting message needs its own targeted delta, including duplicate URLs
+            // in different conversations. Never hold the fetch lock while publishing.
+            foreach (var id in messages)
+                OnPreviewFetched?.Invoke(id, url, preview);
         });
     }
 

@@ -47,7 +47,7 @@ public record ReaderSnapshot(int Protocol, string Revision, string ServerEpoch, 
 /// Projects authorized chat state into bounded, credential-free snapshots with content revisions
 /// and ordering for browser reconciliation.
 /// </summary>
-public sealed class OfflineSnapshotService(ChatService chat, UserService users, IConfiguration config, ChatConfigService branding, SystemBotService bots, NotificationSettingsService notifications, GifService gifs, LinkPreviewService previews, MediaCacheService media, IWebHostEnvironment env, OfflineChangeSignal changes)
+public sealed class OfflineSnapshotService(ChatService chat, UserService users, IConfiguration config, ChatConfigService branding, SystemBotService bots, NotificationSettingsService notifications, GifService gifs, LinkPreviewService previews, LinkPreviewSettingsService previewSettings, MediaCacheService media, IWebHostEnvironment env, OfflineChangeSignal changes)
 {
     private readonly ConcurrentDictionary<Guid, ReaderUser> summaries = new();
     public void InvalidateUser(Guid id) => summaries.TryRemove(id, out _);
@@ -128,7 +128,8 @@ public sealed class OfflineSnapshotService(ChatService chat, UserService users, 
             message.GifAttachments.Select(a => gifs.GetEntry(a.GifEntryId)).OfType<GifEntry>().Select(e => OfflineContent.Gif(e, gifs, viewerId ?? Guid.Empty, users.GetById(e.UploadedByUserId ?? Guid.Empty)?.Username)).ToArray(),
             LinkPreviewService.ExtractUrls(message.Content).Take(5).Select(url =>
             {
-                var preview = previews.GetCachedPreview(url);
+                var preview = previewSettings.Enabled && !message.HasMedia
+                    ? previews.GetPreview(message.Id, url) : previews.GetCachedPreview(url);
                 var cached = media.GetCachedMedia(url);
                 if (cached == null && preview?.HasContent != true && preview?.CachedMediaUrl == null)
                     return null;

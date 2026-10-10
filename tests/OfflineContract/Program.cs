@@ -72,6 +72,7 @@ try
         var carol = (await users.CreateUserAsync("carolfixture"))!;
         token = alice.Token;
         MediaChecks.Run(factory.Services, root, alice, snapshots);
+        await PreviewChecks.Run(factory.Services, alice);
         var dm = chat.GetOrCreateDMChannel(alice.Id, alice.Username, bob.Id, bob.Username);
         dmId = dm.Id;
         Check((await http.GetAsync("/api/chat/bootstrap")).StatusCode == HttpStatusCode.Unauthorized, "anonymous snapshot denied");

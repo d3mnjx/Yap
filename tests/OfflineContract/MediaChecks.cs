@@ -20,6 +20,7 @@ static class MediaChecks
             Console.WriteLine("PASS " + label);
         }
         var url = "https://example.com/portrait-fixture";
+        previews.GetOrCreatePreview(url); // Keep this disk-media fixture independent of external OG fetching.
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(url)))[..16].ToLowerInvariant();
         // Disk lookup only; browser tests supply real decodable media separately.
         File.WriteAllBytes(Path.Combine(folder, hash + ".mp4"), [0]);

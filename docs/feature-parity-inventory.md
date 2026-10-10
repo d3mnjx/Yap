@@ -101,7 +101,7 @@ Login and invite pages remain online Blazor Server entry points. Chat routes are
 | MEDIA-07 | Gallery requests large images with medium fallback. During outages it should open locally and show an available cached variant. | large source upgrade/medium fallback and actual offline selected-image reload/decode | Implemented |
 | MEDIA-08 | Uploaded videos show posters and a play overlay, then inline playback controls with compressed/original sources. | actual MP4-with-audio tus upload, local poster/play overlay, source fallbacks and native playback | Implemented |
 | MEDIA-09 | External cached video/audio supports playback, titles, source links, and portrait aspect ratios. Media updates appear after server processing. | actual cache → snapshot → UI portrait/landscape/square sizing, title/poster and uninterrupted playback on reaction add/remove; MP4/WAV decode; external extraction/device codecs pending | Implemented |
-| MEDIA-10 | Server services generate previews, convert media, and store media/GIFs. Unavailable media is identified explicitly; uncached bytes are unavailable offline. | Existing conversion/preview/GIF services reused; local media stays bounded and missing content explicit | Partial verification |
+| MEDIA-10 | Server services generate previews, convert media, and store media/GIFs. Unavailable media is identified explicitly; uncached bytes are unavailable offline. | Plain-link cards persist in `Data/link-previews`, remain during refresh and provider failure, and recover from cold projections; expiry/restart/shared-URL HTTP fixtures pass. External sites remain unverified; local media stays bounded and missing content explicit | Partial verification |
 
 ## Presence, unread state, and notifications
 
