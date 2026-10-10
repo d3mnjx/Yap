@@ -1,0 +1,242 @@
+{
+  "capturedAt": "2026-10-09T22:29:41.155Z",
+  "node": "v22.22.1",
+  "packages": {
+    "reference": "0f11403184f10b03926ba0078e183acd8e734e01fa7c3d4a8b90bcd75ebc75a2",
+    "rewrite": "07856b4c42d6378c8adecf7e960d10d2cd5f6d84e33d0525ee05b89f84785e91"
+  },
+  "method": "Shared encrypted-byte proxy; HTTPS/WS and TLS handshakes equally shaped; excludes TCP handshake/loss",
+  "profiles": {
+    "local": {
+      "rtt": 0,
+      "down": "unlimited",
+      "up": "unlimited"
+    },
+    "latency900": {
+      "rtt": 900,
+      "down": "unlimited",
+      "up": "unlimited"
+    },
+    "slow900": {
+      "rtt": 900,
+      "down": 125000,
+      "up": 32000
+    }
+  },
+  "trials": 1,
+  "samples": 5,
+  "cacheStages": [
+    "cold",
+    "warm",
+    "settled"
+  ],
+  "startupOnly": true,
+  "calibration": {
+    "slow900": [
+      {
+        "bytes": 64,
+        "ms": 909.9887000000001,
+        "expectedMs": 900.5745
+      },
+      {
+        "bytes": 64,
+        "ms": 908.8900999999998,
+        "expectedMs": 900.5745
+      },
+      {
+        "bytes": 64,
+        "ms": 909.2859999999996,
+        "expectedMs": 900.5745
+      },
+      {
+        "bytes": 131072,
+        "ms": 1972.8451,
+        "expectedMs": 1948.7635
+      }
+    ]
+  },
+  "cases": [
+    {
+      "profile": "slow900",
+      "label": "reference",
+      "startup": [
+        {
+          "trial": 0,
+          "cache": "cold",
+          "readyMs": 18829.4349,
+          "atReady": {
+            "up": 9525,
+            "down": 732765
+          },
+          "after15s": {
+            "up": 10677,
+            "down": 1157902
+          },
+          "pageTraffic": {
+            "httpRequests": 21,
+            "http2Responses": 21,
+            "http11Responses": 0,
+            "compressedWsConnections": 1,
+            "wsUpFrames": 48,
+            "wsDownFrames": 51,
+            "wsUpPayload": 7854,
+            "wsDownPayload": 614861,
+            "sessionRequests": 0,
+            "bootstrapRequests": 0,
+            "messagePosts": 0
+          }
+        },
+        {
+          "trial": 0,
+          "cache": "warm",
+          "readyMs": 17713.5731,
+          "atReady": {
+            "up": 6039,
+            "down": 577809
+          },
+          "after15s": {
+            "up": 7022,
+            "down": 1001998
+          },
+          "pageTraffic": {
+            "httpRequests": 21,
+            "http2Responses": 21,
+            "http11Responses": 0,
+            "compressedWsConnections": 1,
+            "wsUpFrames": 47,
+            "wsDownFrames": 48,
+            "wsUpPayload": 7808,
+            "wsDownPayload": 610975,
+            "sessionRequests": 0,
+            "bootstrapRequests": 0,
+            "messagePosts": 0
+          }
+        },
+        {
+          "trial": 0,
+          "cache": "settled",
+          "readyMs": 12352.174599999998,
+          "atReady": {
+            "up": 5217,
+            "down": 108019
+          },
+          "after15s": {
+            "up": 6082,
+            "down": 141429
+          },
+          "pageTraffic": {
+            "httpRequests": 20,
+            "http2Responses": 20,
+            "http11Responses": 0,
+            "compressedWsConnections": 1,
+            "wsUpFrames": 42,
+            "wsDownFrames": 42,
+            "wsUpPayload": 7808,
+            "wsDownPayload": 610974,
+            "sessionRequests": 0,
+            "bootstrapRequests": 0,
+            "messagePosts": 0
+          }
+        }
+      ],
+      "sends": [],
+      "receives": [],
+      "inactive": [],
+      "startupOnly": true
+    },
+    {
+      "profile": "slow900",
+      "label": "rewrite",
+      "startup": [
+        {
+          "trial": 0,
+          "cache": "cold",
+          "readyMs": 9447.2794,
+          "atReady": {
+            "up": 6785,
+            "down": 672456
+          },
+          "after15s": {
+            "up": 9652,
+            "down": 2341039
+          },
+          "pageTraffic": {
+            "httpRequests": 55,
+            "http2Responses": 49,
+            "http11Responses": 0,
+            "compressedWsConnections": 0,
+            "wsUpFrames": 5,
+            "wsDownFrames": 1,
+            "wsUpPayload": 789,
+            "wsDownPayload": 3,
+            "sessionRequests": 0,
+            "bootstrapRequests": 1,
+            "messagePosts": 0
+          },
+          "preparedByMs": 48624.734700000015,
+          "beforeNextReload": {
+            "up": 12986,
+            "down": 4192684
+          }
+        },
+        {
+          "trial": 0,
+          "cache": "warm",
+          "readyMs": 1341.1068000000087,
+          "atReady": {
+            "up": 379,
+            "down": 8343
+          },
+          "after15s": {
+            "up": 2967,
+            "down": 1193753
+          },
+          "pageTraffic": {
+            "httpRequests": 51,
+            "http2Responses": 50,
+            "http11Responses": 0,
+            "compressedWsConnections": 0,
+            "wsUpFrames": 5,
+            "wsDownFrames": 3,
+            "wsUpPayload": 1215,
+            "wsDownPayload": 4108,
+            "sessionRequests": 0,
+            "bootstrapRequests": 1,
+            "messagePosts": 0
+          }
+        },
+        {
+          "trial": 0,
+          "cache": "settled",
+          "readyMs": 1354.4898000000103,
+          "atReady": {
+            "up": 379,
+            "down": 8343
+          },
+          "after15s": {
+            "up": 3048,
+            "down": 274345
+          },
+          "pageTraffic": {
+            "httpRequests": 52,
+            "http2Responses": 52,
+            "http11Responses": 0,
+            "compressedWsConnections": 0,
+            "wsUpFrames": 5,
+            "wsDownFrames": 3,
+            "wsUpPayload": 1216,
+            "wsDownPayload": 4108,
+            "sessionRequests": 0,
+            "bootstrapRequests": 1,
+            "messagePosts": 0
+          }
+        }
+      ],
+      "sends": [],
+      "receives": [],
+      "inactive": [],
+      "startupOnly": true
+    }
+  ],
+  "browser": "156.0.8078.4"
+}

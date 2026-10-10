@@ -1,0 +1,1818 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="color-scheme" content="light" />
+        <title>Yap · Offline architecture</title>
+        <style>
+            :root {
+                --paper: #f6f5f0;
+                --white: #fff;
+                --ink: #172d35;
+                --muted: #536970;
+                --line: #d6ded9;
+                --green: #13634d;
+                --mint: #def0e5;
+                --orange: #ac451f;
+                --sand: #f7e6d4;
+                --blue: #215b9a;
+                --radius: 18px;
+            }
+            * {
+                box-sizing: border-box;
+            }
+            html {
+                scroll-behavior: smooth;
+                scroll-padding-top: 90px;
+            }
+            body {
+                margin: 0;
+                background: var(--paper);
+                color: var(--ink);
+                font:
+                    16px/1.6 system-ui,
+                    -apple-system,
+                    BlinkMacSystemFont,
+                    'Segoe UI',
+                    sans-serif;
+            }
+            a {
+                color: var(--green);
+                text-underline-offset: 4px;
+            }
+            button,
+            summary,
+            a {
+                -webkit-tap-highlight-color: transparent;
+            }
+            button {
+                font: inherit;
+                cursor: pointer;
+            }
+            :focus-visible {
+                outline: 3px solid var(--blue);
+                outline-offset: 5px;
+            }
+            code,
+            .mono,
+            .eyebrow,
+            .tag {
+                font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+            }
+            code {
+                font-size: 0.87em;
+                overflow-wrap: anywhere;
+            }
+            p {
+                margin: 0 0 1em;
+            }
+            h1,
+            h2,
+            h3 {
+                line-height: 1.15;
+                letter-spacing: -0.04em;
+                margin: 0;
+            }
+            h1 {
+                font-size: clamp(3.3rem, 7vw, 6.4rem);
+                font-weight: 650;
+                max-width: 830px;
+            }
+            h2 {
+                font-size: clamp(2rem, 4vw, 3rem);
+                font-weight: 620;
+            }
+            h3 {
+                font-size: 1.3rem;
+                letter-spacing: -0.025em;
+            }
+            .wrap {
+                width: min(1180px, calc(100% - 64px));
+                margin: auto;
+            }
+            .skip {
+                position: absolute;
+                left: 20px;
+                top: -80px;
+                padding: 12px;
+                background: white;
+                z-index: 5;
+            }
+            .skip:focus {
+                top: 10px;
+            }
+            .topbar {
+                position: sticky;
+                top: 0;
+                z-index: 3;
+                background: rgba(246, 245, 240, 0.97);
+                border-bottom: 1px solid var(--line);
+            }
+            .topbar .wrap {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                min-height: 74px;
+                gap: 24px;
+            }
+            .brand {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                font-size: 22px;
+                font-weight: 750;
+                text-decoration: none;
+                color: var(--ink);
+                letter-spacing: -1px;
+            }
+            .brand-icon {
+                width: 30px;
+                height: 29px;
+                background: var(--green);
+                border-radius: 9px 9px 9px 2px;
+                display: grid;
+                place-items: center;
+                color: white;
+                font-size: 16px;
+            }
+            .brand span:last-child {
+                font-size: 12px;
+                font-weight: 500;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                padding-left: 14px;
+                border-left: 1px solid var(--line);
+            }
+            nav {
+                display: flex;
+                gap: 24px;
+                font-size: 13px;
+            }
+            nav a {
+                color: var(--muted);
+                text-decoration: none;
+            }
+            nav a:hover {
+                color: var(--green);
+                text-decoration: underline;
+            }
+            .hero {
+                padding: 80px 0 48px;
+            }
+            .eyebrow {
+                color: var(--green);
+                font-size: 11px;
+                letter-spacing: 0.16em;
+                text-transform: uppercase;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 25px;
+            }
+            .dot {
+                width: 7px;
+                height: 7px;
+                border-radius: 50%;
+                background: currentColor;
+                display: inline-block;
+            }
+            .hero h1 em {
+                font-style: normal;
+                color: var(--green);
+            }
+            .hero-bottom {
+                display: flex;
+                align-items: flex-end;
+                justify-content: space-between;
+                gap: 35px;
+                margin-top: 30px;
+            }
+            .lede {
+                color: var(--muted);
+                font-size: 19px;
+                max-width: 650px;
+                line-height: 1.65;
+                margin: 0;
+            }
+            .version {
+                border-left: 1px solid var(--line);
+                padding-left: 24px;
+                min-width: 175px;
+                font-size: 12px;
+                color: var(--muted);
+            }
+            .version strong {
+                display: block;
+                color: var(--ink);
+                font-size: 14px;
+                margin-bottom: 3px;
+            }
+            .principles {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                border-top: 1px solid var(--line);
+                margin-top: 42px;
+            }
+            .principles article {
+                padding: 24px 24px 0 0;
+            }
+            .principles b {
+                font-size: 14px;
+            }
+            .principles p {
+                color: var(--muted);
+                font-size: 13px;
+                margin: 5px 0 0;
+                max-width: 300px;
+            }
+            section {
+                padding: 56px 0;
+                border-top: 1px solid var(--line);
+            }
+            .section-head {
+                display: grid;
+                grid-template-columns: 45px 1fr;
+                gap: 15px;
+                margin-bottom: 30px;
+            }
+            .section-no {
+                font-size: 12px;
+                color: var(--green);
+                padding-top: 10px;
+            }
+            .section-head p {
+                color: var(--muted);
+                max-width: 740px;
+                margin: 14px 0 0;
+            }
+            .diagram-panel {
+                background: #142e36;
+                color: #edf5ee;
+                border-radius: var(--radius);
+                overflow: hidden;
+            }
+            .diagram-toolbar {
+                padding: 22px 28px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 16px;
+                border-bottom: 1px solid #36515a;
+            }
+            .diagram-toolbar h3 {
+                font-size: 15px;
+                letter-spacing: 0;
+            }
+            .segmented {
+                display: flex;
+                border: 1px solid #64838b;
+                border-radius: 7px;
+                padding: 3px;
+                gap: 3px;
+            }
+            .segmented button {
+                border: 0;
+                border-radius: 4px;
+                padding: 6px 14px;
+                color: #d6e5e5;
+                background: transparent;
+                font-size: 12px;
+            }
+            .segmented button[aria-pressed='true'] {
+                background: #d9f1dc;
+                color: #183c32;
+            }
+            .diagram-scroll {
+                overflow-x: auto;
+                padding: 15px 18px 0;
+            }
+            svg {
+                width: 100%;
+                display: block;
+                min-width: 1000px;
+                font-family: system-ui, sans-serif;
+            }
+            svg .lane {
+                fill: #1b3841;
+                stroke: #4c6870;
+                stroke-dasharray: 4 5;
+            }
+            svg .node {
+                fill: #25454c;
+                stroke: #64838b;
+            }
+            svg .store {
+                fill: #254e45;
+                stroke: #80b29d;
+            }
+            svg .text {
+                fill: #f0f5f0;
+                font-size: 16px;
+                font-weight: 600;
+            }
+            svg .sub {
+                fill: #b9d0d1;
+                font-size: 12px;
+            }
+            svg .label {
+                fill: #b9d0d1;
+                font-size: 11px;
+                letter-spacing: 1.5px;
+            }
+            svg .wire {
+                stroke: #9bc1b0;
+                stroke-width: 2;
+                fill: none;
+            }
+            svg .network {
+                transition: opacity 0.2s;
+            }
+            [data-mode='offline'] .network {
+                opacity: 0.18;
+            }
+            .diagram-caption {
+                display: grid;
+                grid-template-columns: 140px 1fr;
+                gap: 20px;
+                padding: 20px 28px;
+                border-top: 1px solid #36515a;
+                font-size: 13px;
+            }
+            .diagram-caption b {
+                color: #aaddb9;
+            }
+            .diagram-caption p {
+                margin: 0;
+                color: #ccdddd;
+            }
+            .under-note {
+                font-size: 12px;
+                color: var(--muted);
+                margin: 14px 0 0;
+            }
+            .boundary {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
+                margin-top: 22px;
+            }
+            .boundary article {
+                padding: 23px;
+                border: 1px solid var(--line);
+                border-radius: 12px;
+            }
+            .boundary h3 {
+                font-size: 17px;
+                margin-bottom: 10px;
+            }
+            .boundary p {
+                font-size: 14px;
+                color: var(--muted);
+                margin: 0;
+            }
+            .flow {
+                display: grid;
+                grid-template-columns: 300px 1fr;
+                background: var(--white);
+                border: 1px solid var(--line);
+                border-radius: var(--radius);
+                overflow: hidden;
+            }
+            .flow-steps {
+                padding: 18px;
+                border-right: 1px solid var(--line);
+                display: grid;
+                gap: 6px;
+            }
+            .step {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                padding: 16px 12px;
+                border: 1px solid transparent;
+                background: transparent;
+                color: var(--muted);
+                text-align: left;
+                border-radius: 9px;
+            }
+            .step span {
+                font:
+                    12px ui-monospace,
+                    monospace;
+                border: 1px solid var(--line);
+                border-radius: 50%;
+                width: 28px;
+                height: 28px;
+                display: grid;
+                place-items: center;
+                flex-shrink: 0;
+            }
+            .step[aria-pressed='true'] {
+                background: var(--mint);
+                color: var(--green);
+                border-color: #aecfba;
+            }
+            .step[aria-pressed='true'] span {
+                border-color: var(--green);
+                background: var(--green);
+                color: white;
+            }
+            .step b {
+                font-size: 14px;
+            }
+            .flow-content {
+                padding: 36px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+            .flow-content .eyebrow {
+                margin-bottom: 16px;
+            }
+            .flow-content h3 {
+                font-size: 28px;
+                max-width: 530px;
+                margin-bottom: 18px;
+            }
+            .flow-content p {
+                font-size: 15px;
+                color: var(--muted);
+                max-width: 590px;
+            }
+            .trace {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 10px;
+                font-size: 12px;
+                margin-top: 12px;
+            }
+            .trace code {
+                padding: 9px 12px;
+                background: var(--paper);
+                border: 1px solid var(--line);
+                border-radius: 6px;
+            }
+            .flow-foot {
+                margin-top: 24px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 20px;
+            }
+            .small-button {
+                border: 1px solid var(--green);
+                color: var(--green);
+                background: white;
+                border-radius: 7px;
+                padding: 9px 15px;
+                font-size: 12px;
+            }
+            .flow-foot .mono {
+                font-size: 11px;
+                color: var(--muted);
+            }
+            .callout {
+                margin-top: 18px;
+                padding: 22px 25px;
+                background: var(--sand);
+                border-left: 3px solid var(--orange);
+                border-radius: 0 10px 10px 0;
+                font-size: 14px;
+            }
+            .callout b {
+                color: var(--orange);
+            }
+            .callout p {
+                margin: 5px 0 0;
+            }
+            .invariants {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+            .invariant {
+                padding: 26px;
+                border: 1px solid var(--line);
+                border-radius: 12px;
+                background: #fafbf7;
+            }
+            .invariant .tag {
+                color: var(--green);
+                font-size: 11px;
+                display: block;
+                margin-bottom: 14px;
+            }
+            .invariant h3 {
+                margin-bottom: 13px;
+            }
+            .invariant p {
+                color: var(--muted);
+                font-size: 14px;
+                margin: 0;
+            }
+            .invariant code {
+                display: block;
+                margin-top: 17px;
+                color: var(--ink);
+                font-size: 12px;
+            }
+            .reading-note {
+                padding: 22px 0 0;
+                font-size: 14px;
+                color: var(--muted);
+            }
+            .reading-note strong {
+                color: var(--ink);
+            }
+            .repo-summary {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 16px;
+                margin-bottom: 25px;
+            }
+            .repo-summary div {
+                padding: 20px 24px;
+                background: var(--mint);
+                border-radius: 10px;
+            }
+            .repo-summary strong {
+                display: block;
+                font-size: 27px;
+                line-height: 1.2;
+                letter-spacing: -1px;
+            }
+            .repo-summary span {
+                font-size: 12px;
+                color: var(--green);
+            }
+            .repo {
+                border: 1px solid var(--line);
+                border-radius: var(--radius);
+                overflow: hidden;
+                background: white;
+            }
+            .repo-header {
+                padding: 18px 24px;
+                border-bottom: 1px solid var(--line);
+                background: #edf0e9;
+                display: flex;
+                justify-content: space-between;
+                gap: 14px;
+                align-items: center;
+            }
+            .repo-header b {
+                font:
+                    13px ui-monospace,
+                    monospace;
+            }
+            .repo-header span {
+                font-size: 11px;
+                color: var(--muted);
+            }
+            .repo details {
+                border-bottom: 1px solid var(--line);
+            }
+            .repo details:last-child {
+                border: 0;
+            }
+            summary {
+                cursor: pointer;
+                padding: 19px 24px;
+                font-size: 14px;
+            }
+            summary::marker {
+                color: var(--green);
+            }
+            summary code {
+                font-size: 13px;
+                font-weight: 600;
+                margin-left: 6px;
+            }
+            .tag {
+                font-size: 10px;
+                letter-spacing: 0.03em;
+                display: inline-block;
+                padding: 3px 8px;
+                border-radius: 4px;
+                background: var(--mint);
+                color: var(--green);
+                margin-left: 10px;
+                vertical-align: middle;
+            }
+            .tag.changed {
+                background: #e7eef8;
+                color: var(--blue);
+            }
+            .repo-body {
+                margin: 0 24px 24px 45px;
+                max-width: 960px;
+            }
+            .repo-body p {
+                color: var(--muted);
+                font-size: 14px;
+            }
+            .file-list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px 25px;
+            }
+            .file-list li {
+                font-size: 12px;
+                color: var(--muted);
+                padding-left: 12px;
+                border-left: 2px solid var(--line);
+            }
+            .file-list code {
+                display: block;
+                color: var(--ink);
+                font-size: 12px;
+                margin-bottom: 3px;
+            }
+            .cleanup {
+                display: grid;
+                grid-template-columns: 1fr 44px 1fr;
+                align-items: stretch;
+            }
+            .cleanup-panel {
+                padding: 28px;
+                border: 1px solid var(--line);
+                border-radius: 12px;
+            }
+            .cleanup-panel.after {
+                border-color: #aecfba;
+                background: var(--mint);
+            }
+            .cleanup-panel .eyebrow {
+                margin-bottom: 14px;
+            }
+            .cleanup-panel h3 {
+                margin-bottom: 15px;
+            }
+            .cleanup-panel ul {
+                margin: 0;
+                padding-left: 20px;
+                font-size: 14px;
+            }
+            .cleanup-panel li {
+                margin: 8px 0;
+            }
+            .cleanup-arrow {
+                display: grid;
+                place-items: center;
+                color: var(--green);
+                font-size: 25px;
+            }
+            .ownership {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 12px;
+                margin-top: 18px;
+            }
+            .ownership div {
+                border: 1px solid var(--line);
+                padding: 20px;
+                border-radius: 10px;
+            }
+            .ownership b {
+                display: block;
+                font:
+                    13px ui-monospace,
+                    monospace;
+                margin-bottom: 7px;
+            }
+            .ownership p {
+                color: var(--muted);
+                font-size: 13px;
+                margin: 0;
+            }
+            .final-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 35px;
+            }
+            .final-grid h3 {
+                margin-bottom: 16px;
+            }
+            .checks {
+                list-style: none;
+                margin: 0;
+                padding: 0;
+            }
+            .checks li {
+                border-top: 1px solid var(--line);
+                padding: 12px 0;
+                font-size: 14px;
+                color: var(--muted);
+            }
+            .checks li::before {
+                content: '✓';
+                color: var(--green);
+                margin-right: 10px;
+                font-weight: 700;
+            }
+            .limits li::before {
+                content: '↗';
+                color: var(--orange);
+            }
+            .links {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-top: 30px;
+            }
+            .links a {
+                padding: 10px 15px;
+                border: 1px solid var(--line);
+                background: white;
+                border-radius: 7px;
+                font-size: 12px;
+                text-decoration: none;
+            }
+            .links a:hover {
+                border-color: var(--green);
+            }
+            footer {
+                padding: 25px 0 40px;
+                font-size: 11px;
+                color: var(--muted);
+                border-top: 1px solid var(--line);
+            }
+            footer .wrap {
+                display: flex;
+                justify-content: space-between;
+                gap: 20px;
+            }
+            noscript p {
+                padding: 15px;
+                background: var(--sand);
+            }
+            @media (max-width: 760px) {
+                .wrap {
+                    width: calc(100% - 36px);
+                }
+                .topbar .wrap {
+                    min-height: 66px;
+                    gap: 12px;
+                }
+                .brand span:last-child {
+                    display: none;
+                }
+                nav {
+                    gap: 14px;
+                    font-size: 11px;
+                }
+                .hero {
+                    padding-top: 45px;
+                }
+                .hero-bottom {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 22px;
+                }
+                .version {
+                    border-left: 0;
+                    padding-left: 0;
+                }
+                .principles {
+                    grid-template-columns: 1fr;
+                }
+                .principles article {
+                    padding-top: 18px;
+                }
+                .principles p {
+                    max-width: none;
+                }
+                section {
+                    padding: 38px 0;
+                }
+                .section-head {
+                    grid-template-columns: 28px 1fr;
+                    gap: 8px;
+                }
+                .diagram-toolbar {
+                    padding: 18px;
+                    flex-wrap: wrap;
+                }
+                .diagram-caption {
+                    grid-template-columns: 1fr;
+                    padding: 18px;
+                    gap: 6px;
+                }
+                .boundary,
+                .invariants,
+                .final-grid {
+                    grid-template-columns: 1fr;
+                }
+                .flow {
+                    grid-template-columns: 1fr;
+                }
+                .flow-steps {
+                    grid-template-columns: 1fr 1fr;
+                    padding: 12px;
+                    border-right: 0;
+                    border-bottom: 1px solid var(--line);
+                }
+                .step {
+                    padding: 10px 7px;
+                    gap: 8px;
+                }
+                .step b {
+                    font-size: 12px;
+                }
+                .flow-content {
+                    padding: 25px;
+                }
+                .repo-summary {
+                    gap: 8px;
+                }
+                .repo-summary div {
+                    padding: 15px 12px;
+                }
+                .repo-summary strong {
+                    font-size: 22px;
+                }
+                .repo-header {
+                    padding: 15px;
+                    flex-wrap: wrap;
+                }
+                summary {
+                    padding: 17px 15px;
+                }
+                summary code {
+                    font-size: 11px;
+                }
+                .tag {
+                    margin-left: 4px;
+                    font-size: 9px;
+                }
+                .repo-body {
+                    margin: 0 20px 20px 30px;
+                }
+                .file-list,
+                .ownership {
+                    grid-template-columns: 1fr;
+                }
+                .cleanup {
+                    grid-template-columns: 1fr;
+                }
+                .cleanup-arrow {
+                    transform: rotate(90deg);
+                    padding: 8px;
+                }
+                footer .wrap {
+                    flex-direction: column;
+                    gap: 5px;
+                }
+            }
+            @media (prefers-reduced-motion: reduce) {
+                html {
+                    scroll-behavior: auto;
+                }
+                svg .network {
+                    transition: none;
+                }
+            }
+            @media print {
+                body {
+                    background: white;
+                    font-size: 11pt;
+                }
+                .wrap {
+                    width: 100%;
+                }
+                .topbar {
+                    position: static;
+                }
+                nav,
+                .segmented,
+                .flow-foot button {
+                    display: none;
+                }
+                .hero {
+                    padding: 30px 0;
+                }
+                h1 {
+                    font-size: 44pt;
+                }
+                h2 {
+                    font-size: 25pt;
+                }
+                section {
+                    padding: 25px 0;
+                }
+                .diagram-panel {
+                    print-color-adjust: exact;
+                    -webkit-print-color-adjust: exact;
+                }
+                .diagram-scroll {
+                    overflow: visible;
+                }
+                svg {
+                    min-width: 0;
+                }
+                .flow {
+                    display: block;
+                }
+                .flow-steps {
+                    display: none;
+                }
+                .flow-content {
+                    padding: 20px;
+                }
+                .boundary article,
+                .invariant,
+                .repo details,
+                .cleanup-panel {
+                    break-inside: avoid;
+                }
+                .links a {
+                    border: 0;
+                    padding: 0;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <a class="skip" href="#overview">Skip to architecture</a>
+        <header class="topbar">
+            <div class="wrap">
+                <a class="brand" href="#top" aria-label="Yap architecture, top"
+                    ><span class="brand-icon" aria-hidden="true">y</span>yap<span
+                        >Engineering notes</span
+                    ></a
+                >
+                <nav aria-label="Page sections">
+                    <a href="#overview">Architecture</a><a href="#journey">Message flow</a
+                    ><a href="#repository">Code map</a><a href="#handoff">Handoff</a>
+                </nav>
+            </div>
+        </header>
+        <main id="top" class="wrap">
+            <div class="hero">
+                <div class="eyebrow">
+                    <span class="dot" aria-hidden="true"></span> Offline rewrite / Architecture
+                    field guide
+                </div>
+                <h1>A live conversation.<br /><em>Even between connections.</em></h1>
+                <div class="hero-bottom">
+                    <p class="lede">
+                        Yap keeps chat, drafts and outgoing work on the device. The server accepts
+                        changes durably and brings the browser back into sync when the connection
+                        returns.
+                    </p>
+                    <div class="version">
+                        <strong>Browser + ASP.NET</strong>Native JavaScript modules<br />SQLite-backed
+                        acceptance
+                    </div>
+                </div>
+                <div class="principles">
+                    <article>
+                        <b>Local work survives interruption</b>
+                        <p>
+                            Drafts, replies, uploads and mutations use account-bound browser
+                            storage.
+                        </p>
+                    </article>
+                    <article>
+                        <b>Retries keep the same identity</b>
+                        <p>
+                            Operation receipts let the server recognize work it has already
+                            accepted.
+                        </p>
+                    </article>
+                    <article>
+                        <b>Recovery stays straightforward</b>
+                        <p>
+                            Incremental updates merge changed records; gaps reload a bounded window.
+                            Older history is versioned separately.
+                        </p>
+                    </article>
+                </div>
+            </div>
+
+            <aside class="callout">
+                <p>
+                    Current communication: one bootstrap validates the account and supplies the
+                    active window. Catalog, missing inactive windows and bounded media warming run
+                    independently. Live changes carry only affected records. Shell v34 uses
+                    IndexedDB schema 4, preserving drafts and queues. See the
+                    <a href="offline-communication.html">communication guide</a> for startup,
+                    transport and priority diagrams.
+                </p>
+            </aside>
+            <section id="overview">
+                <div class="section-head">
+                    <span class="section-no mono">01 /</span>
+                    <div>
+                        <h2>One application. Two places for state.</h2>
+                        <p>
+                            The browser owns the chat experience and pending work. The existing
+                            ASP.NET application remains the authority for identity, permissions and
+                            accepted messages.
+                        </p>
+                    </div>
+                </div>
+                <div class="diagram-panel" id="architecture-diagram" data-mode="online">
+                    <div class="diagram-toolbar">
+                        <h3>Runtime architecture</h3>
+                        <div class="segmented" role="group" aria-label="Connection scenario">
+                            <button type="button" data-mode-button="online" aria-pressed="true">
+                                Connected</button
+                            ><button type="button" data-mode-button="offline" aria-pressed="false">
+                                Offline
+                            </button>
+                        </div>
+                    </div>
+                    <div
+                        class="diagram-scroll"
+                        tabindex="0"
+                        role="region"
+                        aria-label="Architecture diagram; scroll horizontally on narrow screens"
+                    >
+                        <svg
+                            viewBox="0 0 1100 470"
+                            role="img"
+                            aria-labelledby="diagram-title diagram-desc"
+                        >
+                            <title id="diagram-title">Yap browser and server architecture</title>
+                            <desc id="diagram-desc">
+                                The JavaScript chat client writes to IndexedDB and uses a service
+                                worker and media cache. It sends HTTP operations to authenticated
+                                server endpoints and receives SignalR deltas. Shared chat services
+                                atomically persist messages and receipts to SQLite. Login, Settings
+                                and Admin remain on Blazor Server. Offline, the browser continues
+                                using local state while server communication pauses.
+                            </desc>
+                            <defs>
+                                <marker
+                                    id="arrow"
+                                    viewBox="0 0 10 10"
+                                    refX="9"
+                                    refY="5"
+                                    markerWidth="6"
+                                    markerHeight="6"
+                                    orient="auto-start-reverse"
+                                >
+                                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#9bc1b0" />
+                                </marker>
+                            </defs>
+                            <rect class="lane" x="18" y="24" width="420" height="413" rx="16" />
+                            <rect class="lane" x="668" y="24" width="414" height="413" rx="16" />
+                            <text class="label" x="42" y="55">BROWSER / PER ORIGIN</text>
+                            <text class="label" x="692" y="55">SERVER / EXISTING YAP APP</text>
+                            <rect class="node" x="42" y="82" width="372" height="91" rx="10" />
+                            <text class="text" x="62" y="113">JavaScript chat client</text>
+                            <text class="sub" x="62" y="139">
+                                app · composer · messages · sender
+                            </text>
+                            <text class="sub" x="62" y="157">
+                                Normal routes: /lobby · /room/… · /dm/…
+                            </text>
+                            <path
+                                class="wire"
+                                d="M228 174 V217"
+                                marker-start="url(#arrow)"
+                                marker-end="url(#arrow)"
+                            />
+                            <text class="sub" x="240" y="200">account-scoped transactions</text>
+                            <rect class="store" x="42" y="226" width="372" height="79" rx="10" />
+                            <text class="text" x="62" y="256">IndexedDB</text>
+                            <text class="sub" x="62" y="281">
+                                Conversation records · drafts · outbox · reads
+                            </text>
+                            <rect class="store" x="42" y="337" width="372" height="77" rx="10" />
+                            <text class="text" x="62" y="367">Service worker + Cache Storage</text>
+                            <text class="sub" x="62" y="392">
+                                Static shell + separate account media caches
+                            </text>
+                            <g class="network">
+                                <path class="wire" d="M415 108 H690" marker-end="url(#arrow)" />
+                                <text class="sub" x="455" y="96">HTTP operations / uploads</text>
+                                <path class="wire" d="M691 149 H415" marker-end="url(#arrow)" />
+                                <text class="sub" x="461" y="176">Deltas + live events</text>
+                                <text class="label" x="484" y="223">COOKIE + CSRF</text>
+                                <text class="sub" x="468" y="246">One origin, two transports</text>
+                            </g>
+                            <rect class="node" x="692" y="82" width="366" height="91" rx="10" />
+                            <text class="text" x="712" y="112">HTTP endpoints + SignalR hub</text>
+                            <text class="sub" x="712" y="139">
+                                /api/chat · /api/tus · /hubs/chat
+                            </text>
+                            <text class="sub" x="712" y="157">
+                                Authentication · permissions · safe DTOs
+                            </text>
+                            <path class="wire" d="M875 174 V216" marker-end="url(#arrow)" />
+                            <rect class="node" x="692" y="226" width="366" height="64" rx="10" />
+                            <text class="text" x="712" y="251">
+                                Shared chat &amp; media services
+                            </text>
+                            <text class="sub" x="712" y="273">
+                                Acceptance · history · presence · media
+                            </text>
+                            <path class="wire" d="M875 291 V318" marker-end="url(#arrow)" />
+                            <rect class="store" x="692" y="327" width="366" height="53" rx="10" />
+                            <text class="text" x="712" y="349">
+                                SQLite: messages + operation receipts
+                            </text>
+                            <text class="sub" x="712" y="369">
+                                Atomic acceptance; read checkpoints persisted
+                            </text>
+                            <text class="sub" x="713" y="410">
+                                Login / Settings / Admin → retained Blazor UI
+                            </text>
+                        </svg>
+                    </div>
+                    <div class="diagram-caption" aria-live="polite">
+                        <b id="mode-label">Connected</b>
+                        <p id="mode-description">
+                            Local writes happen first. HTTP sends operations; SignalR delivers
+                            personalized deltas and live updates. Both acceptance paths converge
+                            through the same snapshot queue.
+                        </p>
+                    </div>
+                </div>
+                <p class="under-note">
+                    On a small screen, scroll the diagram sideways. The connection switch
+                    illustrates behavior; it does not change any running server.
+                </p>
+                <div class="boundary">
+                    <article>
+                        <h3>What works without a connection</h3>
+                        <p>
+                            Read cached conversations and media, switch cached rooms, preserve
+                            drafts, and queue text, replies, attachments, edits, deletes and
+                            reactions for later acceptance.
+                        </p>
+                    </article>
+                    <article>
+                        <h3>What still needs the server</h3>
+                        <p>
+                            Initial login, uncached history and media, new server lookups,
+                            presence/typing, external providers and Settings/Admin. Queued actions
+                            are authorized again when sent.
+                        </p>
+                    </article>
+                </div>
+            </section>
+
+            <section id="journey">
+                <div class="section-head">
+                    <span class="section-no mono">02 /</span>
+                    <div>
+                        <h2>Follow one message.</h2>
+                        <p>
+                            Five steps connect a local user action to accepted server state. Select
+                            a step to see its owner and the safeguard that matters.
+                        </p>
+                    </div>
+                </div>
+                <div class="flow">
+                    <div class="flow-steps" role="group" aria-label="Message lifecycle steps">
+                        <button type="button" class="step" data-step="0" aria-pressed="true">
+                            <span>1</span><b>Capture the intent</b>
+                        </button>
+                        <button type="button" class="step" data-step="1" aria-pressed="false">
+                            <span>2</span><b>Save before sending</b>
+                        </button>
+                        <button type="button" class="step" data-step="2" aria-pressed="false">
+                            <span>3</span><b>Deliver or resume</b>
+                        </button>
+                        <button type="button" class="step" data-step="3" aria-pressed="false">
+                            <span>4</span><b>Accept once</b>
+                        </button>
+                        <button type="button" class="step" data-step="4" aria-pressed="false">
+                            <span>5</span><b>Reconcile the view</b>
+                        </button>
+                    </div>
+                    <div class="flow-content">
+                        <div id="step-content" aria-live="polite" aria-atomic="true">
+                            <div class="eyebrow" id="step-owner">Browser / composer.js</div>
+                            <h3 id="step-title">
+                                Keep the action tied to its original conversation.
+                            </h3>
+                            <p id="step-body">
+                                Capture the account, conversation and reply selection before
+                                awaiting anything. Wait for preceding draft writes. Navigation or a
+                                newer reply selection must not change what this send means.
+                            </p>
+                            <div class="trace" id="step-trace">
+                                <code>Account epoch</code><span aria-hidden="true">+</span
+                                ><code>Conversation</code><span aria-hidden="true">+</span
+                                ><code>Reply draft ID</code>
+                            </div>
+                        </div>
+                        <div class="flow-foot">
+                            <span class="mono" id="step-count">STEP 01 / 05</span
+                            ><button class="small-button" type="button" id="next-step">
+                                Next step →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <noscript
+                    ><p>
+                        Message flow: capture account/conversation/reply → save operation and
+                        conditional draft cleanup atomically in IndexedDB → deliver under a per-user
+                        lock → persist message and receipt atomically → reconcile HTTP/SignalR
+                        authority and clear accepted pending work.
+                    </p></noscript
+                >
+                <div class="callout">
+                    <b>If the acknowledgement gets lost</b>
+                    <p>
+                        The browser retries the same operation ID and payload. The server recognizes
+                        its receipt and returns acceptance without repeating the mutation. A deleted
+                        message stays deleted; replaying an old receipt cannot recreate it.
+                    </p>
+                </div>
+            </section>
+
+            <section id="ordering">
+                <div class="section-head">
+                    <span class="section-no mono">03 /</span>
+                    <div>
+                        <h2>Four clocks, four responsibilities.</h2>
+                        <p>
+                            Asynchronous work can finish after an account change, reconnect or
+                            navigation. These independent guards decide whether its result still
+                            belongs.
+                        </p>
+                    </div>
+                </div>
+                <div class="invariants">
+                    <article class="invariant">
+                        <span class="tag">PERSISTED / ACCOUNT</span>
+                        <h3>Whose work is this?</h3>
+                        <p>
+                            The local account lease fences storage writes. An old task cannot write
+                            into another account after a purge or account replacement.
+                        </p>
+                        <code>identity.epoch → storage transaction</code>
+                    </article>
+                    <article class="invariant">
+                        <span class="tag">SERVER / SNAPSHOT</span>
+                        <h3>Is this newer authority?</h3>
+                        <p>
+                            A process epoch and per-record sequence checks order authority across
+                            tabs and restarts. A delayed old response cannot restore stale data.
+                        </p>
+                        <code>serverEpoch + sequence → per-record ordering</code>
+                    </article>
+                    <article class="invariant">
+                        <span class="tag">PAGE / CONNECTION</span>
+                        <h3>Is this still our connection?</h3>
+                        <p>
+                            Each connection attempt has a generation. Stopping a connection
+                            invalidates its callbacks before they can affect the replacement.
+                        </p>
+                        <code>connectionGeneration → network callbacks</code>
+                    </article>
+                    <article class="invariant">
+                        <span class="tag">PAGE / RENDER</span>
+                        <h3>Is this still the current view?</h3>
+                        <p>
+                            Rendering has a separate generation. Delayed draft reads cannot
+                            overwrite a newer room selection or a more recent render.
+                        </p>
+                        <code>renderGeneration → DOM and draft restoration</code>
+                    </article>
+                </div>
+                <p class="reading-note">
+                    <strong>Two more boundaries to preserve.</strong> Older history carries a
+                    content version, including in inactive rooms. Read acknowledgements carry the
+                    highest arrival checkpoint actually observed, so an offline read cannot clear
+                    newer unseen messages.
+                </p>
+            </section>
+
+            <section id="repository">
+                <div class="section-head">
+                    <span class="section-no mono">04 /</span>
+                    <div>
+                        <h2>Where the repository changed.</h2>
+                        <p>
+                            The offline rewrite keeps one deployable application. Expand a folder to
+                            see what was added or extended and why.
+                        </p>
+                    </div>
+                </div>
+                <div class="repo-summary">
+                    <div><strong>1</strong><span>existing deployable ASP.NET app</span></div>
+                    <div><strong>+1</strong><span>standalone .NET contract test project</span></div>
+                    <div>
+                        <strong>0</strong><span>frontend build steps required to publish</span>
+                    </div>
+                </div>
+                <div class="repo">
+                    <div class="repo-header">
+                        <b>Yap/ <span>repository root</span></b
+                        ><span>NEW = added area · MODIFIED = existing area extended</span>
+                    </div>
+                    <details open>
+                        <summary>
+                            <code>Yap/wwwroot/chat-client/</code><span class="tag">NEW</span>
+                        </summary>
+                        <div class="repo-body">
+                            <p>
+                                The browser chat application: native JavaScript modules, shell
+                                markup and styles. Owns normal chat routes. Local vendor/emoji
+                                assets keep shell dependencies available offline.
+                            </p>
+                            <ul class="file-list">
+                                <li>
+                                    <code>app.js · composer.js · messages.js</code>Page
+                                    coordination, composition and timeline rendering.
+                                </li>
+                                <li>
+                                    <code>storage.js · sender.js · uploads.js · api.js</code>Durable
+                                    browser state and network delivery.
+                                </li>
+                                <li>
+                                    <code>actions.js · history.js · reader.js</code>Mutations, older
+                                    pages and observed-read acknowledgements.
+                                </li>
+                                <li>
+                                    <code>live.js · notifications.js · pwa.js</code>Presence/typing,
+                                    title/audio and install/push integration.
+                                </li>
+                                <li>
+                                    <code>content.js · gifs.js · pickers.js</code>Emoji and GIF
+                                    catalogs, search and picker lifecycle.
+                                </li>
+                                <li>
+                                    <code>media.js · rich-media.js · gallery.js · scroll.js</code
+                                    >Media caching/rendering, gallery and scroll behavior.
+                                </li>
+                                <li>
+                                    <code>worker.js · worker-updates.js</code>Shell cache and
+                                    installed-worker activation.
+                                </li>
+                                <li>
+                                    <code>contracts.js · index.html · chat.css</code>Editor data
+                                    shapes, HTML entry and client styles.
+                                </li>
+                            </ul>
+                        </div>
+                    </details>
+                    <details>
+                        <summary><code>Yap/Offline/</code><span class="tag">NEW</span></summary>
+                        <div class="repo-body">
+                            <p>
+                                A focused HTTP/SignalR adapter inside the existing web project. It
+                                reuses the chat, user, GIF and media services; it is not a
+                                separately deployed backend.
+                            </p>
+                            <ul class="file-list">
+                                <li>
+                                    <code>OfflineEndpoints.cs · ChatRoutes.cs</code>Chat shell
+                                    routes and canonical authenticated API groups.
+                                </li>
+                                <li>
+                                    <code>OfflineSnapshotService.cs · OfflineSync.cs</code>Explicit
+                                    safe DTOs, incremental wire updates and authoritative recent
+                                    windows.
+                                </li>
+                                <li>
+                                    <code>OfflineHub.cs · OfflineChangeSignal.cs</code>Personalized
+                                    incremental streaming and mutation invalidation.
+                                </li>
+                                <li>
+                                    <code>OfflineLiveService.cs · OfflineContent.cs</code
+                                    >Presence/typing plus catalog, GIF and completed-upload
+                                    endpoints.
+                                </li>
+                            </ul>
+                        </div>
+                    </details>
+                    <details>
+                        <summary>
+                            <code>Yap/Services/</code><span class="tag changed">MODIFIED</span>
+                        </summary>
+                        <div class="repo-body">
+                            <p>
+                                Existing business logic remains shared. New partial class files
+                                isolate durable operations without creating a second chat service.
+                            </p>
+                            <ul class="file-list">
+                                <li>
+                                    <code>ChatService.Text.cs</code>New: idempotent text/media
+                                    acceptance and receipt compatibility.
+                                </li>
+                                <li>
+                                    <code>ChatService.Actions.cs · ChatService.Reads.cs</code>New:
+                                    accepted mutations and observed read checkpoints.
+                                </li>
+                                <li>
+                                    <code>ChatService.cs · ChatPersistenceService.cs</code>Modified:
+                                    change notifications, history versions and atomic persistence.
+                                </li>
+                                <li>
+                                    <code>AccessLinkService.cs · ChatCircuitHandler.cs</code
+                                    >Modified: login-link renewal and retained Blazor session
+                                    integration.
+                                </li>
+                            </ul>
+                        </div>
+                    </details>
+                    <details>
+                        <summary>
+                            <code>Yap/Models/ · Data/ · Migrations/</code
+                            ><span class="tag changed">MODIFIED</span>
+                        </summary>
+                        <div class="repo-body">
+                            <p>
+                                Extend the existing EF/SQLite schema for retry identity and observed
+                                reads. The two migrations preserve existing messages and accounts.
+                            </p>
+                            <ul class="file-list">
+                                <li>
+                                    <code>Models/TextSendReceipt.cs</code>New durable operation
+                                    receipt model.
+                                </li>
+                                <li>
+                                    <code>Models/ChatMessage.cs · ChannelReadState.cs</code
+                                    >Operation association and recipient checkpoints.
+                                </li>
+                                <li>
+                                    <code>Data/ChatDbContext.cs</code>Receipt mapping and related
+                                    schema configuration.
+                                </li>
+                                <li>
+                                    <code>DurableTextSends · ObservedReadCheckpoints</code>Two new
+                                    migrations, generated designers and updated model snapshot.
+                                </li>
+                            </ul>
+                        </div>
+                    </details>
+                    <details>
+                        <summary>
+                            <code>Yap/Components/</code><span class="tag changed">MODIFIED</span>
+                        </summary>
+                        <div class="repo-body">
+                            <p>
+                                Chat route ownership moved out of <code>RoomChat.razor</code> and
+                                <code>DmChat.razor</code>. The old components remain in the
+                                repository; their former public chat routes are removed. Login,
+                                Settings, Admin and other retained pages continue using Blazor
+                                Server.
+                            </p>
+                            <ul class="file-list">
+                                <li>
+                                    <code
+                                        >Pages/Settings.razor · Admin.razor ·
+                                        ChannelSettings.razor</code
+                                    >Session display, return routes and links into the new client.
+                                </li>
+                                <li>
+                                    <code
+                                        >Layout/ChatLayout.razor · ChatHeader.razor ·
+                                        ChatSidebar.razor</code
+                                    >Retained navigation and session integration; existing component
+                                    styles are reused by the client.
+                                </li>
+                            </ul>
+                        </div>
+                    </details>
+                    <details>
+                        <summary>
+                            <code>Yap/Program.cs · Endpoints/ · Middleware/</code
+                            ><span class="tag changed">MODIFIED</span>
+                        </summary>
+                        <div class="repo-body">
+                            <p>
+                                Wire the new client into the existing application: register services
+                                and hub, map routes, validate sessions, accept proxy forwarding with
+                                optional address restrictions and revalidate deployment assets.
+                            </p>
+                            <ul class="file-list">
+                                <li>
+                                    <code>Endpoints/TusEndpoints.cs · PwaEndpoints.cs</code
+                                    >Account-bound uploads, completed-upload receipts and PWA
+                                    handoff.
+                                </li>
+                                <li>
+                                    <code>Middleware/AuthMiddleware.cs · Program.cs</code>Route/auth
+                                    integration, public-origin handling and asset cache policy.
+                                </li>
+                                <li>
+                                    <code>wwwroot/service-worker.js · app.css · themes.css</code
+                                    >Extend the root worker for offline chat; shared appearance and
+                                    legibility adjustments.
+                                </li>
+                                <li>
+                                    <code>Yap.csproj</code>Embed reused component styles and package
+                                    the required static dependencies.
+                                </li>
+                            </ul>
+                        </div>
+                    </details>
+                    <details>
+                        <summary>
+                            <code>tests/OfflineContract/ · tests/browser/</code
+                            ><span class="tag">NEW</span>
+                        </summary>
+                        <div class="repo-body">
+                            <p>
+                                <code>OfflineContract.csproj</code> is a new standalone test harness
+                                referencing Yap. It is outside <code>BlazorChat.sln</code>. Browser
+                                checks use Playwright against isolated running instances and the
+                                frozen original.
+                            </p>
+                            <ul class="file-list">
+                                <li>
+                                    <code>OfflineContract/*.cs</code>Authorization, receipts,
+                                    persistence/restart, migrations, media, presence and upgrades.
+                                </li>
+                                <li>
+                                    <code>browser/*.cjs</code>Recovery, parity, UI races, offline
+                                    operations, PWA and upgrade regressions.
+                                </li>
+                            </ul>
+                        </div>
+                    </details>
+                    <details>
+                        <summary>
+                            <code>scripts/ · package.json · formatter config</code
+                            ><span class="tag">NEW</span>
+                        </summary>
+                        <div class="repo-body">
+                            <p>
+                                Development tooling only. Pinned Playwright and Prettier, a
+                                sequential browser runner, and scoped C# formatting conventions. The
+                                existing .NET publish process remains independent of npm.
+                            </p>
+                            <ul class="file-list">
+                                <li>
+                                    <code>scripts/browser-tests.mjs</code>Named suites,
+                                    isolated-origin guard, fail-fast execution and per-suite
+                                    artifacts.
+                                </li>
+                                <li>
+                                    <code
+                                        >package-lock.json · .prettierrc.json · .prettierignore ·
+                                        .editorconfig</code
+                                    >Repeatable dependencies and formatting; generated/vendor assets
+                                    excluded.
+                                </li>
+                            </ul>
+                        </div>
+                    </details>
+                    <details>
+                        <summary>
+                            <code>docs/ · AGENTS.md · README.md</code
+                            ><span class="tag changed">ADDED / UPDATED</span>
+                        </summary>
+                        <div class="repo-body">
+                            <p>
+                                Current architecture and offline behavior, feature coverage,
+                                testing instructions and deployment guidance. Project instructions
+                                record coding principles and validation expectations.
+                            </p>
+                            <p>
+                                Private runtime databases and credentials stay outside the
+                                repository. Tests use isolated synthetic data.
+                            </p>
+                        </div>
+                    </details>
+                </div>
+                <p class="under-note">
+                    Directory names are relative to the repository root. The offline client is
+                    shipped by <code>Yap/Yap.csproj</code>; no separate SPA service or new
+                    production project was introduced.
+                </p>
+            </section>
+
+            <section id="ownership">
+                <div class="section-head">
+                    <span class="section-no mono">05 /</span>
+                    <div>
+                        <h2>Keep state with its owner.</h2>
+                        <p>
+                            Focused modules make asynchronous behavior easier to change. The
+                            coordinator stays explicit where account, connection and render ordering
+                            must agree.
+                        </p>
+                    </div>
+                </div>
+                <div class="ownership">
+                    <div>
+                        <b>app.js</b>
+                        <p>
+                            Owns account, connection, snapshot queue, routing and render
+                            coordination. These lifecycles stay together because their ordering
+                            matters.
+                        </p>
+                    </div>
+                    <div>
+                        <b>composer.js</b>
+                        <p>
+                            Owns draft writes, reply selection, restoration, submission and
+                            attachment input. User actions capture their original account and
+                            conversation.
+                        </p>
+                    </div>
+                    <div>
+                        <b>messages.js</b>
+                        <p>
+                            Owns timeline rows and hydrated image URLs. Active editors and playing
+                            media survive unrelated updates.
+                        </p>
+                    </div>
+                </div>
+                <p class="reading-note">
+                    <strong>Keep the contracts visible.</strong> <code>contracts.js</code> documents
+                    account, snapshot and outbox shapes for editors. Runtime authorization stays on
+                    the server; storage transactions enforce account ownership and ordering.
+                </p>
+            </section>
+
+            <section id="handoff">
+                <div class="section-head">
+                    <span class="section-no mono">06 /</span>
+                    <div>
+                        <h2>Validation and operating limits.</h2>
+                        <p>
+                            The architecture is designed for occasional outages. Its correctness
+                            comes from a few durable boundaries and the regression checks around
+                            them.
+                        </p>
+                    </div>
+                </div>
+                <div class="final-grid">
+                    <article>
+                        <h3>Maintained regression checks</h3>
+                        <ul class="checks">
+                            <li>
+                                Server authorization, persistence, receipt replay and migrations.
+                            </li>
+                            <li>
+                                Browser sends, reply races, history reconciliation and cached media.
+                            </li>
+                            <li>Draft/outbox survival, worker activation and offline reload.</li>
+                            <li>
+                                Retained Settings/Admin integration and instrumented PWA behavior.
+                                Coverage is scoped in the feature reference.
+                            </li>
+                        </ul>
+                    </article>
+                    <article>
+                        <h3>Boundaries still worth knowing</h3>
+                        <ul class="checks limits">
+                            <li>
+                                Device installation, external push/providers, Safari and broader
+                                storage/accessibility coverage remain separate checks.
+                            </li>
+                            <li>
+                                Browser storage can be evicted; it is not a backup. Cold offline
+                                access has no elapsed-time limit for an unlocked saved account.
+                            </li>
+                            <li>
+                                Recipient unread/notification side effects follow message
+                                acceptance. A later failure can miss an unread increment.
+                            </li>
+                            <li>
+                                Keep deployed browser namespaces stable. Add runtime assets to the
+                                worker and bump its shell version; keep APIs and tokens out of
+                                static caches.
+                            </li>
+                        </ul>
+                    </article>
+                </div>
+                <div class="links">
+                    <a href="offline-communication.html">Communication &amp; startup ↗</a>
+                    <a href="offline-client-architecture.md">Maintenance guide ↗</a
+                    ><a href="../tests/browser/README.md">Tests &amp; formatting ↗</a
+                    ><a href="feature-parity-inventory.md">Feature reference ↗</a
+                    ><a href="../GHCR-DEPLOYMENT-GUIDE.md#upgrading-yap-to-the-offline-client"
+                        >Deployment &amp; rollback ↗</a
+                    ><a href="offline-behavior.md">Offline behavior ↗</a>
+                </div>
+            </section>
+        </main>
+        <footer>
+            <div class="wrap">
+                <span>Yap / Offline architecture</span
+                ><span>Self-contained HTML · no network dependencies · printable</span>
+            </div>
+        </footer>
+        <script>
+            // Presentation-only scenarios; this document never connects to the chat instance.
+            const diagram = document.getElementById('architecture-diagram');
+            const modes = {
+                online: [
+                    'Connected',
+                    'Local writes happen first. HTTP sends operations; SignalR delivers personalized deltas and live updates. Both acceptance paths converge through the same snapshot queue.',
+                ],
+                offline: [
+                    'Offline',
+                    'The local client, saved drafts, cached history and outbox remain usable. Server communication pauses. On reconnect, queued operations are authorized and retried with their original IDs, and one active bootstrap and incremental updates reconcile the view.',
+                ],
+            };
+            document.querySelectorAll('[data-mode-button]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const mode = button.dataset.modeButton;
+                    diagram.dataset.mode = mode;
+                    document
+                        .querySelectorAll('[data-mode-button]')
+                        .forEach((item) =>
+                            item.setAttribute('aria-pressed', String(item === button)),
+                        );
+                    document.getElementById('mode-label').textContent = modes[mode][0];
+                    document.getElementById('mode-description').textContent = modes[mode][1];
+                });
+            });
+            const steps = [
+                {
+                    owner: 'Browser / composer.js',
+                    title: 'Keep the action tied to its original conversation.',
+                    body: 'Capture the account, conversation and reply selection before awaiting anything. Wait for preceding draft writes. Navigation or a newer reply selection must not change what this send means.',
+                    trace: ['Account epoch', 'Conversation', 'Reply draft ID'],
+                },
+                {
+                    owner: 'Browser / storage.js',
+                    title: 'Make the intent durable before delivery.',
+                    body: 'Save the operation ID and payload in IndexedDB. Enqueue and conditional draft/reply cleanup share one transaction. Only then show the pending message. Reloading or losing the network leaves the queued work available.',
+                    trace: ['User intent', 'IDB transaction', 'Durable outbox'],
+                },
+                {
+                    owner: 'Browser / sender.js + uploads.js',
+                    title: 'One sender per account, across tabs.',
+                    body: 'A per-user Web Lock elects one coordinator. Up to three conversations progress independently, preserving order within each, with at most one upload. Normal writes reuse credentials and need one POST. Attachments keep resumable upload IDs and offsets. Bounded requests and cancellation prevent a stalled upload from holding the queue forever. Retry keeps the original operation ID.',
+                    trace: ['Sender lock', 'Resume upload', 'HTTP operation'],
+                },
+                {
+                    owner: 'Server / ChatService + persistence',
+                    title: 'Persist the change and its receipt together.',
+                    body: 'Validate identity, permissions and payload. Commit the message or mutation with its receipt atomically. If the request already succeeded, recognize the receipt without applying the mutation again. Receipt hash serialization is persisted protocol data.',
+                    trace: ['Authorize', 'Message + receipt', 'SQLite commit'],
+                },
+                {
+                    owner: 'Browser / app.js → storage.js → messages.js',
+                    title: 'Converge on accepted state without a duplicate.',
+                    body: 'Compact HTTP acknowledgements and SignalR deltas use the same atomic commit path. Storage orders authority and reconciles accepted operation IDs, even when the stream arrives first. Rendering preserves active editors and playing media; versioned older history is reconciled separately.',
+                    trace: ['Snapshot queue', 'Commit + reconcile', 'Update timeline'],
+                },
+            ];
+            let selectedStep = 0;
+            function showStep(index) {
+                selectedStep = index;
+                const step = steps[index];
+                document
+                    .querySelectorAll('[data-step]')
+                    .forEach((button) =>
+                        button.setAttribute(
+                            'aria-pressed',
+                            String(Number(button.dataset.step) === index),
+                        ),
+                    );
+                document.getElementById('step-owner').textContent = step.owner;
+                document.getElementById('step-title').textContent = step.title;
+                document.getElementById('step-body').textContent = step.body;
+                const trace = document.getElementById('step-trace');
+                trace.replaceChildren();
+                step.trace.forEach((label, position) => {
+                    if (position) {
+                        const arrow = document.createElement('span');
+                        arrow.textContent = index ? '→' : '+';
+                        arrow.setAttribute('aria-hidden', 'true');
+                        trace.append(arrow);
+                    }
+                    const node = document.createElement('code');
+                    node.textContent = label;
+                    trace.append(node);
+                });
+                document.getElementById('step-count').textContent = `STEP 0${index + 1} / 05`;
+                document.getElementById('next-step').textContent =
+                    index === steps.length - 1 ? 'Back to start ↺' : 'Next step →';
+            }
+            document
+                .querySelectorAll('[data-step]')
+                .forEach((button) =>
+                    button.addEventListener('click', () => showStep(Number(button.dataset.step))),
+                );
+            document
+                .getElementById('next-step')
+                .addEventListener('click', () => showStep((selectedStep + 1) % steps.length));
+            // Include the expanded repository map in print output, then restore the reader's view.
+            let expandedBeforePrint = [];
+            window.addEventListener('beforeprint', () => {
+                expandedBeforePrint = [...document.querySelectorAll('details')].map(
+                    (node) => node.open,
+                );
+                document.querySelectorAll('details').forEach((node) => {
+                    node.open = true;
+                });
+            });
+            window.addEventListener('afterprint', () => {
+                document.querySelectorAll('details').forEach((node, index) => {
+                    node.open = expandedBeforePrint[index];
+                });
+            });
+        </script>
+    </body>
+</html>

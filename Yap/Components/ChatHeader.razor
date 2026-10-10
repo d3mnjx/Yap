@@ -388,7 +388,8 @@
 
     private void NavigateBack()
     {
-        Navigation.NavigateTo("/lobby");
+        // Chat routes are document endpoints outside the retained Blazor router.
+        Navigation.NavigateTo("/lobby", forceLoad: true);
     }
 
     private void OpenSettings()

@@ -197,7 +197,7 @@
         if (firstRender && _shouldRedirect)
         {
             var destination = SafeReturnUrl ?? "/lobby";
-            Navigation.NavigateTo(destination);
+            Navigation.NavigateTo(destination, forceLoad: true);
         }
     }
 

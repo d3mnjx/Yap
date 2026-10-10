@@ -1,0 +1,42 @@
+{
+  "reaction": {
+    "updated": true,
+    "handlerMs": 0.4000000059604645,
+    "ms": 31
+  },
+  "openEditor": {
+    "updated": true,
+    "handlerMs": 17.099999994039536,
+    "ms": 30
+  },
+  "saveEdit": {
+    "updated": true,
+    "handlerMs": 0.20000000298023224,
+    "ms": 26.299999997019768
+  },
+  "firstEmojiOpen": {
+    "updated": true,
+    "handlerMs": 297,
+    "ms": 656.0999999940395
+  },
+  "emojiReopen": {
+    "updated": true,
+    "handlerMs": 1.3999999910593033,
+    "ms": 77.3999999910593
+  },
+  "emojiInsert": {
+    "updated": true,
+    "handlerMs": 1.2999999970197678,
+    "ms": 13.900000005960464
+  },
+  "send": {
+    "updated": true,
+    "handlerMs": 0.10000000894069672,
+    "ms": 31.100000008940697
+  },
+  "editNeverAttemptedMessage": {
+    "updated": false,
+    "handlerMs": 0.10000000894069672,
+    "ms": 2007.800000011921
+  }
+}

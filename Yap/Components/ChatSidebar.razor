@@ -454,7 +454,8 @@
         _popupUser = null; // dismiss any open profile card
         NavState.CloseSidebar();
         var url = roomId == ChatService.GetLobbyId() ? "/lobby" : $"/room/{roomId}";
-        Navigation.NavigateTo(url);
+        // Chat routes are document endpoints outside the retained Blazor router.
+        Navigation.NavigateTo(url, forceLoad: true);
     }
 
     private void NavigateToCreateRoom()
@@ -480,7 +481,8 @@
 
         // After the self-tap guard: tapping yourself navigates nowhere, so the panel stays put.
         NavState.CloseSidebar();
-        Navigation.NavigateTo($"/dm/{Uri.EscapeDataString(targetUser)}");
+        // Chat routes are document endpoints outside the retained Blazor router.
+        Navigation.NavigateTo($"/dm/{Uri.EscapeDataString(targetUser)}", forceLoad: true);
     }
 
     private IEnumerable<(string Username, UserStatus Status, bool? IsMobile)> GetSortedUsersWithStatus()

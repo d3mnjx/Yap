@@ -1664,7 +1664,8 @@
         // Auth + admin guard
         if (!UserState.IsLoggedIn || !UserState.UserId.HasValue || !UserService.IsAdmin(UserState.UserId.Value))
         {
-            Navigation.NavigateTo("/lobby");
+            // Chat routes are document endpoints outside the retained Blazor router.
+            Navigation.NavigateTo("/lobby", forceLoad: true);
             return;
         }
     }
@@ -2103,7 +2104,8 @@
 
     private void GoBack()
     {
-        Navigation.NavigateTo("/lobby");
+        // Chat routes are document endpoints outside the retained Blazor router.
+        Navigation.NavigateTo("/lobby", forceLoad: true);
     }
 
     private async Task DebounceFilterAsync(CancellationToken token, Func<Task> loadAction)

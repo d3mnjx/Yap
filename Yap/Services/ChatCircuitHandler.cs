@@ -79,6 +79,7 @@ public sealed class ChatCircuitHandler : CircuitHandler, IDisposable
     public override async Task OnConnectionUpAsync(Circuit circuit, CancellationToken cancellationToken)
     {
         _circuitTracker.OnConnectionUp(circuit.Id);
+        if (_userState.SessionId is { } connectedSession) _chatService.SetSessionConnected(connectedSession, true);
         CancelDisconnectGraceTimer();
 
         // Re-label on every connection-up: the username can hydrate after circuit open, and a
@@ -148,6 +149,7 @@ public sealed class ChatCircuitHandler : CircuitHandler, IDisposable
             // dropped/closed device stops suppressing push to the user's other devices (e.g. phone).
             // Otherwise PageVisible stays true for the whole disconnected-circuit retention window (~4h).
             _chatService.SetPageVisibility(_userState.SessionId, false);
+            _chatService.SetSessionConnected(_userState.SessionId, false);
 
             // If the user is auto-Away right now, save the CHOSEN status underneath instead —
             // restoring the auto-Away itself on reconnect would re-apply it as a manual status

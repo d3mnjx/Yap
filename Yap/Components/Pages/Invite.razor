@@ -156,7 +156,8 @@
         if (UserState.UserId == _owner.Id)
         {
             // Already this user on this device: nothing to redeem.
-            Navigation.NavigateTo("/lobby");
+            // Chat routes are document endpoints outside the retained Blazor router.
+            Navigation.NavigateTo("/lobby", forceLoad: true);
             return;
         }
 

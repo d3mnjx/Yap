@@ -5,6 +5,7 @@
 @inject NavigationManager Navigation
 @inject CircuitTracker CircuitTracker
 @inject CircuitIdentity CircuitIdentity
+@inject IHttpContextAccessor HttpContextAccessor
 @inject IJSRuntime JS
 @inject ILogger<ChatLayout> Logger
 @implements IDisposable
@@ -83,6 +84,20 @@
         // because ChatLayout is one-per-circuit and survives page navigation.
         try
         {
+            // Settings/Admin now open fresh circuits without ChatBase. Register here so status
+            // controls and "sign out other devices" have a current session to preserve.
+            if (UserState.UserId is { } userId && UserState.Username is { } username
+                && (UserState.SessionId == null || !ChatService.HasSession(UserState.SessionId)))
+            {
+                UserState.SessionId = Guid.NewGuid().ToString();
+                UserState.Status = ChatService.GetStatusBeforeAutoAway(username)
+                    ?? ChatService.GetUserStatus(username) ?? UserState.Status;
+                UserState.IsMobile ??= HttpContextAccessor.HttpContext?.Items["IsMobile"] as bool?;
+                var visible = await JS.InvokeAsync<bool>("isPageVisible");
+                await ChatService.AddUserAsync(UserState.SessionId, userId, username, UserState.Status,
+                    UserState.IsMobile, HttpContextAccessor.HttpContext?.Items["ClientIp"] as string,
+                    CircuitIdentity.CircuitId, pageVisible: visible);
+            }
             selfRef = DotNetObjectReference.Create(this);
             await JS.InvokeVoidAsync("setupLatencyProbe", selfRef, UserState.Username);
         }

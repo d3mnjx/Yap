@@ -43,6 +43,7 @@
     --accent-hover: #4752c4;
     --accent-light: #dee0fc;
     --accent-focus: #00aff4;
+    --link-color: var(--accent-focus);
     --accent-tint: hsl(235 85.6% 64.7% / 0.16);
 
     /* Status colors */
@@ -355,3 +356,8 @@ h1:focus {
     max-width: 100%;
     border-radius: 8px;
 }
+
+/* Give prose links an author color in every state; browser blue/purple is unreadable
+   on dark themes. Component navigation/card styles still own their own colors. */
+a { color: var(--link-color); }
+a:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }

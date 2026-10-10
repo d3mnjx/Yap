@@ -1,3 +1,6 @@
+using Yap.Offline;
+using System.Net;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.Components.Web;
@@ -10,6 +13,24 @@ using Yap.Services;
 using Yap.Services.Gifs;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Deployments use different proxies and dynamic container addresses. Accept forwarded
+// public URLs by default; an explicit address/network list opts into restricted trust.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
+    var proxies = builder.Configuration.GetSection("ReverseProxy:KnownProxies").Get<string[]>() ?? [];
+    var networks = builder.Configuration.GetSection("ReverseProxy:KnownNetworks").Get<string[]>() ?? [];
+    if (proxies.Length == 0 && networks.Length == 0)
+    {
+        options.KnownProxies.Clear();
+        options.KnownIPNetworks.Clear();
+    }
+    foreach (var address in proxies)
+        options.KnownProxies.Add(IPAddress.Parse(address));
+    foreach (var network in networks)
+        options.KnownIPNetworks.Add(System.Net.IPNetwork.Parse(network));
+});
 
 // No framework-level size limits — actual limit enforced in upload endpoint via ChatSettings:MaxUploadSizeMB
 builder.WebHost.ConfigureKestrel(options =>
@@ -170,6 +191,13 @@ builder.Services.AddSingleton<LinkTokenService>(); // PWA start_url login link t
 builder.Services.AddSingleton<AccessLinkService>(); // invite / login links (/invite/{code})
 builder.Services.AddSingleton<NotificationSettingsService>();  // per-channel mute rules (read by ChatService)
 builder.Services.AddSingleton<ChatService>();
+builder.Services.AddSignalR();
+builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
+builder.Services.AddScoped<OfflineSnapshotService>();
+builder.Services.AddScoped<OfflineSync>();
+builder.Services.AddSingleton<OfflineChangeSignal>();
+builder.Services.AddSingleton<OfflineLiveService>();
+builder.Services.AddHostedService<OfflineLiveCleanup>();
 builder.Services.AddSingleton<SystemBotService>();
 builder.Services.AddSingleton<RegistrationGateService>();
 builder.Services.AddScoped<ChatConfigService>();
@@ -248,6 +276,7 @@ if (builder.Configuration.GetValue<bool>("ChatSettings:ClearUploadsOnStart", tru
 }
 
 // Configure the HTTP request pipeline.
+app.UseForwardedHeaders();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
@@ -258,6 +287,15 @@ app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages:
 app.UseCors();
 app.UseHttpsRedirection();
 app.UseAntiforgery();
+
+app.Use(async (context, next) =>
+{
+    // These stable URLs change between releases. The worker owns offline caching; browser
+    // and CDN caches must revalidate so an upgrade/rollback can replace that worker promptly.
+    if (context.Request.Path == "/service-worker.js" || context.Request.Path.StartsWithSegments("/chat-client"))
+        context.Response.OnStarting(() => { context.Response.Headers.CacheControl = "no-cache"; return Task.CompletedTask; });
+    await next(context);
+});
 
 // Serve custom branding overrides from Data/branding/ (favicon, PWA icons, etc.)
 // Files here override same-named files from wwwroot — no rebuild needed.
@@ -375,7 +413,48 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 // Custom middlewares - positioned after UseStaticFiles() to skip static file requests
+// Reuse the legacy cookie, validating both handshake and long-lived stream.
+app.Use(async (context, next) =>
+{
+    if (ChatRoutes.IsApi(context.Request.Path) || ChatRoutes.IsHub(context.Request.Path))
+    {
+        var statusPages = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IStatusCodePagesFeature>();
+        if (statusPages != null) statusPages.Enabled = false;
+        if (ChatRoutes.IsApi(context.Request.Path) && HttpMethods.IsPost(context.Request.Method))
+        {
+            var sizeLimit = context.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpMaxRequestBodySizeFeature>();
+            if (sizeLimit is { IsReadOnly: false }) sizeLimit.MaxRequestBodySize = 64 * 1024;
+        }
+    }
+    if (ChatRoutes.IsHub(context.Request.Path))
+    {
+        context.Response.Headers.CacheControl = "no-store";
+        // Browser metadata survives proxy URL rewriting. Missing metadata is accepted
+        // for older clients; every hub request still requires a valid account cookie.
+        if (context.Request.Headers["Sec-Fetch-Site"] == "cross-site")
+        { context.Response.StatusCode = 403; return; }
+        var token = context.Request.Cookies[AuthMiddleware.CookieName] ?? "";
+        if (context.RequestServices.GetRequiredService<UserService>().AuthenticateByToken(token) == null)
+        { context.Response.StatusCode = 401; return; }
+    }
+    await next(context);
+});
 app.UseMiddleware<AuthMiddleware>();
+// Authenticated root visits can load the standalone client directly. Welcome/Login and
+// explicit return URLs retain their existing Razor flow; saved chat routes restore locally.
+app.Use(async (context, next) =>
+{
+    if (HttpMethods.IsGet(context.Request.Method) && context.Request.Path == "/"
+        && !context.Request.Query.ContainsKey("returnUrl")
+        && context.RequestServices.GetRequiredService<UserStateService>().IsLoggedIn)
+    {
+        context.Response.ContentType = "text/html; charset=utf-8";
+        context.Response.Headers.CacheControl = "no-store";
+        await context.Response.SendFileAsync(Path.Combine(app.Environment.WebRootPath, "chat-client", "index.html"));
+        return;
+    }
+    await next(context);
+});
 app.UseMiddleware<DeviceDetectionMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
 
@@ -394,5 +473,6 @@ app.MapAdminEndpoints();
 app.MapDiagnosticsEndpoints();
 app.MapGifLibraryEndpoints();
 app.MapBeaconEndpoints();
+app.MapOfflineChat();
 
 app.Run();

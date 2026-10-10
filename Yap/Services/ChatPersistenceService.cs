@@ -42,7 +42,7 @@ public class ChatPersistenceService
 
     #region Channel Operations
 
-    public async Task PersistChannelAsync(Channel channel)
+    public async Task PersistChannelAsync(Channel channel, bool throwOnFailure = false)
     {
         if (!IsEnabled) return;
 
@@ -65,6 +65,7 @@ public class ChatPersistenceService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to persist channel {ChannelId}", channel.Id);
+            if (throwOnFailure) throw;
         }
     }
 
@@ -112,6 +113,7 @@ public class ChatPersistenceService
             )
             {
                 Id = message.Id,
+                OperationId = message.OperationId,
                 IsEdited = message.IsEdited
             };
 
@@ -121,7 +123,61 @@ public class ChatPersistenceService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to persist new message {MessageId}", message.Id);
+            throw;
         }
+    }
+
+    public async Task<TextSendReceipt?> GetTextReceiptAsync(Guid userId, Guid operationId)
+    {
+        await using var db = await _dbFactory!.CreateDbContextAsync();
+        return await db.TextSendReceipts.AsNoTracking().SingleOrDefaultAsync(r => r.UserId == userId && r.OperationId == operationId);
+    }
+
+    public async Task<ChatMessage?> GetAcceptedMessageAsync(Guid messageId)
+    {
+        await using var db = await _dbFactory!.CreateDbContextAsync();
+        return await db.Messages.AsNoTracking().Include(m => m.Reactions).SingleOrDefaultAsync(m => m.Id == messageId);
+    }
+
+    public async Task PersistTextAcceptanceAsync(ChatMessage message, TextSendReceipt receipt)
+    {
+        if (!IsEnabled) throw new InvalidOperationException("Durable sends require persistence.");
+        await using var db = await _dbFactory!.CreateDbContextAsync();
+        db.Messages.Add(new ChatMessage(message.ChannelId, message.UserId, message.Username, message.Content, message.Timestamp, message.ImageUrls, message.ReplyToMessageId, message.VideoUrls, message.GifAttachments)
+        { Id = message.Id, OperationId = message.OperationId, ReplyToMessageId = message.ReplyToMessageId });
+        db.TextSendReceipts.Add(receipt);
+        // EF commits both inserts in one transaction, or neither. Do not swallow persistence errors.
+        await db.SaveChangesAsync();
+    }
+
+    public async Task PersistMutationAsync(TextSendReceipt receipt, string kind, string? content, string? emoji, bool active, string username)
+    {
+        await using var db = await _dbFactory!.CreateDbContextAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        var message = await db.Messages.Include(m => m.Reactions).SingleOrDefaultAsync(m => m.Id == receipt.MessageId && m.ChannelId == receipt.ChannelId);
+        if (message == null && kind != "delete")
+            throw new ChatSendException(404, "message_unavailable", "This message was deleted or is no longer available.");
+        if (message != null)
+        {
+            if (kind != "reaction" && message.UserId != receipt.UserId)
+                throw new ChatSendException(403, "not_owner", "You can only change your own messages.");
+            if (kind == "edit")
+            {
+                if (message.HasMedia) throw new ChatSendException(400, "media_message", "Media messages cannot be edited.");
+                message.Content = content!; message.IsEdited = true;
+            }
+            else if (kind == "delete") db.Messages.Remove(message);
+            else
+            {
+                var existing = message.Reactions.Where(r => r.UserId == receipt.UserId && r.Emoji == emoji).ToArray();
+                if (!active) db.Reactions.RemoveRange(existing);
+                else if (existing.Length == 0) message.Reactions.Add(new Reaction { MessageId = message.Id,
+                    UserId = receipt.UserId, Username = username, Emoji = emoji! });
+            }
+        }
+        // Mutation and receipt must commit together: a retry must not undo a newer accepted edit.
+        db.TextSendReceipts.Add(receipt);
+        await db.SaveChangesAsync(); await transaction.CommitAsync();
     }
 
     public async Task PersistMessagesInBulkAsync(IReadOnlyList<ChatMessage> messages)
@@ -270,65 +326,22 @@ public class ChatPersistenceService
 
     #region Read State Operations
 
-    public async Task PersistReadStateAsync(ChannelReadState readState)
+    public Task PersistReadStateAsync(ChannelReadState state) => PersistReadStatesAsync([state]);
+
+    public async Task PersistReadStatesAsync(IEnumerable<ChannelReadState> states)
     {
         if (!IsEnabled) return;
-
-        try
+        await using var db = await _dbFactory!.CreateDbContextAsync();
+        foreach (var state in states)
         {
-            await using var db = await _dbFactory!.CreateDbContextAsync();
-
-            var existing = await db.ChannelReadStates.FindAsync(readState.UserId, readState.ChannelId);
-            if (existing != null)
-            {
-                existing.LastReadAt = readState.LastReadAt;
-                existing.UnreadCount = readState.UnreadCount;
-            }
-            else
-            {
-                db.ChannelReadStates.Add(new ChannelReadState
-                {
-                    UserId = readState.UserId,
-                    ChannelId = readState.ChannelId,
-                    LastReadAt = readState.LastReadAt,
-                    UnreadCount = readState.UnreadCount
-                });
-            }
-
-            await db.SaveChangesAsync();
+            var existing = await db.ChannelReadStates.FindAsync(state.UserId, state.ChannelId);
+            if (existing == null) { existing = new ChannelReadState { UserId = state.UserId, ChannelId = state.ChannelId }; db.ChannelReadStates.Add(existing); }
+            existing.LastReadAt = state.LastReadAt;
+            existing.UnreadCount = state.UnreadCount;
+            existing.ReceivedCount = state.ReceivedCount;
+            existing.ReadThrough = state.ReadThrough;
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to persist read state for user {UserId} channel {ChannelId}",
-                readState.UserId, readState.ChannelId);
-        }
-    }
-
-    /// <summary>
-    /// Batch increment unread count for multiple users in a single query.
-    /// </summary>
-    public async Task IncrementUnreadForUsersAsync(Guid channelId, IEnumerable<Guid> userIds)
-    {
-        if (!IsEnabled) return;
-
-        try
-        {
-            var userIdList = userIds.ToList();
-            if (userIdList.Count == 0) return;
-
-            await using var db = await _dbFactory!.CreateDbContextAsync();
-
-            // Single query to increment all existing read states
-            var updated = await db.ChannelReadStates
-                .Where(r => r.ChannelId == channelId && userIdList.Contains(r.UserId))
-                .ExecuteUpdateAsync(r => r.SetProperty(x => x.UnreadCount, x => x.UnreadCount + 1));
-
-            _logger.LogDebug("Batch incremented unread for {Count} users in channel {ChannelId}", updated, channelId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to batch increment unread for channel {ChannelId}", channelId);
-        }
+        await db.SaveChangesAsync();
     }
 
     #endregion

@@ -287,8 +287,9 @@ public class AccessLinkService
     /// </summary>
     public void ObserveOrigin(HttpContext context)
     {
-        var scheme = context.Request.Headers["X-Forwarded-Proto"].FirstOrDefault()?.Split(',')[0].Trim();
-        if (string.IsNullOrEmpty(scheme)) scheme = context.Request.Scheme;
+        // ForwardedHeaders middleware has already checked proxy trust. Reading the raw
+        // header here would let an untrusted caller override the validated public scheme.
+        var scheme = context.Request.Scheme;
 
         var host = context.Request.Host;
         if (!host.HasValue) return;

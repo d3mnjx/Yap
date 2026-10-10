@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en" data-theme="discord-dark">
+    <head>
+        <meta charset="utf-8" /><meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, interactive-widget=resizes-content"
+        />
+        <meta name="theme-color" content="#202225" /><title>Yap | Chat</title>
+        <link rel="icon" href="/icon.svg" /><link
+            rel="manifest"
+            href="/manifest.webmanifest"
+            crossorigin="use-credentials"
+        />
+        <link rel="stylesheet" href="/app.css" /><link rel="stylesheet" href="/themes.css" /><link
+            rel="stylesheet"
+            href="/themes/teahouse.css"
+        />
+        <link rel="stylesheet" href="/chat-client/component-styles.css" /><link
+            rel="stylesheet"
+            href="/chat-client/chat.css"
+        />
+        <!-- Preload the module graph to avoid sequential discovery round trips on a cold visit. -->
+        <link rel="modulepreload" href="/chat-client/actions.js" />
+        <link rel="modulepreload" href="/chat-client/api.js" />
+        <link rel="modulepreload" href="/chat-client/composer.js" />
+        <link rel="modulepreload" href="/chat-client/content.js" />
+        <link rel="modulepreload" href="/chat-client/dates.js" />
+        <link rel="modulepreload" href="/chat-client/gallery.js" />
+        <link rel="modulepreload" href="/chat-client/gifs.js" />
+        <link rel="modulepreload" href="/chat-client/history.js" />
+        <link rel="modulepreload" href="/chat-client/live.js" />
+        <link rel="modulepreload" href="/chat-client/media.js" />
+        <link rel="modulepreload" href="/chat-client/messages.js" />
+        <link rel="modulepreload" href="/chat-client/notifications.js" />
+        <link rel="modulepreload" href="/chat-client/pickers.js" />
+        <link rel="modulepreload" href="/chat-client/profiles.js" />
+        <link rel="modulepreload" href="/chat-client/pwa.js" />
+        <link rel="modulepreload" href="/chat-client/reader.js" />
+        <link rel="modulepreload" href="/chat-client/rich-media.js" />
+        <link rel="modulepreload" href="/chat-client/scroll.js" />
+        <link rel="modulepreload" href="/chat-client/sender.js" />
+        <link rel="modulepreload" href="/chat-client/storage.js" />
+        <link rel="modulepreload" href="/chat-client/sync.js" />
+        <link rel="modulepreload" href="/chat-client/uploads.js" />
+        <link rel="modulepreload" href="/chat-client/warnings.js" />
+        <link rel="modulepreload" href="/chat-client/windows.js" />
+        <script defer src="/chat-client/vendor/signalr-10.0.0.min.js"></script
+        ><!-- Load upgrade handling even while an older worker serves the previous app.js. -->
+        <script type="module" src="/chat-client/worker-updates.js"></script>
+        <script type="module" src="/chat-client/app.js"></script>
+    </head>
+    <body>
+        <div class="chat-container" data-context="room">
+            <div class="theme-scene"></div><div class="theme-scrim"></div>
+            <header class="chat-header"
+                ><div class="dm-header-title"
+                    ><button id="back" class="back-button" aria-label="Back to lobby" hidden
+                        ><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"
+                            /></svg></button
+                    ><span id="header-avatar"></span><h3 id="title">Yap</h3></div
+                ><div class="header-controls">
+                    <span id="connection" role="status">Opening cached chat…</span>
+                    <div class="status-dropdown-container"
+                        ><button
+                            id="menu-button"
+                            class="status-button status-online"
+                            aria-label="Account menu"
+                            aria-expanded="false"
+                            ><span class="status-indicator"></span
+                            ><span id="status-username" class="status-username">Account</span
+                            ><svg
+                                class="dropdown-gear"
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                            >
+                                <path
+                                    d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"
+                                /></svg></button
+                        ><div id="menu-backdrop" class="dropdown-backdrop" hidden></div
+                        ><div id="account-menu" class="status-dropdown chat-menu" hidden>
+                            <button class="dropdown-item" data-status="online"
+                                ><span class="status-dot online"></span><span>Online</span></button
+                            >
+                            <button class="dropdown-item" data-status="away"
+                                ><span class="status-dot away"></span><span>Away</span></button
+                            >
+                            <button class="dropdown-item" data-status="invisible"
+                                ><span class="status-dot invisible"></span
+                                ><span>Invisible</span></button
+                            >
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="/settings"
+                                ><svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                >
+                                    <path
+                                        d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"
+                                    /></svg
+                                ><span>Settings</span></a
+                            ><a class="dropdown-item" href="/settings#notification-settings"
+                                ><svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                >
+                                    <path
+                                        d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"
+                                    /></svg
+                                ><span>Notification settings</span></a
+                            ><a id="admin-link" class="dropdown-item" href="/admin" hidden
+                                ><svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                >
+                                    <path
+                                        d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"
+                                    /></svg
+                                ><span>Admin</span></a
+                            >
+
+                            <button id="forget" class="dropdown-item">Forget offline data</button
+                            ><button id="signout" class="dropdown-item signout"
+                                ><svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                >
+                                    <path
+                                        d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"
+                                    /></svg
+                                ><span>Sign Out</span></button
+                            >
+                        </div></div
+                    >
+                    <button
+                        id="mailbox"
+                        class="mailbox-button has-unread"
+                        title="Unread messages"
+                        hidden
+                        ><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5v-3h3.56c.69 1.19 1.97 2 3.45 2s2.75-.81 3.45-2H19v3zm0-5h-4.99c0 1.1-.9 2-2 2s-2-.9-2-2H5V5h14v9z"
+                            /></svg
+                        ><span id="mailbox-count" class="mailbox-badge"></span
+                    ></button>
+                    <button
+                        id="sidebar-button"
+                        class="users-toggle"
+                        aria-label="Conversations"
+                        aria-expanded="false"
+                        ><svg
+                            class="icon-people"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                        >
+                            <path
+                                d="M14 8.00598C14 10.211 12.206 12.006 10 12.006C7.795 12.006 6 10.211 6 8.00598C6 5.80098 7.795 4.00598 10 4.00598C12.206 4.00598 14 5.80098 14 8.00598ZM2 19.006C2 15.473 5.29 13.006 10 13.006C14.711 13.006 18 15.473 18 19.006V20.006H2V19.006Z"
+                            />
+                            <path
+                                d="M20.0001 20.006H22.0001V19.006C22.0001 16.4433 20.2697 14.4415 17.5213 13.5352C19.0621 14.9127 20.0001 16.8059 20.0001 19.006V20.006Z"
+                            />
+                            <path
+                                d="M14.8834 11.9077C16.6657 11.5044 18.0001 9.9077 18.0001 8.00598C18.0001 5.96916 16.4693 4.28218 14.4971 4.0367C15.4322 5.09511 16.0001 6.48524 16.0001 8.00598C16.0001 9.44888 15.4889 10.7742 14.6378 11.8102C14.7203 11.8734 14.8022 11.9388 14.8834 11.9077Z"
+                            /></svg
+                        ><svg
+                            class="icon-hamburger"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                        >
+                            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" /></svg
+                        ><span id="online-count" class="online-count"></span
+                    ></button> </div
+            ></header>
+
+            <img id="header-line" src="/images/turqline01_3px.png" class="header-line" alt="" />
+            <div id="notice" role="alert" hidden></div>
+            <main class="chat-main">
+                <section class="messages-container" aria-label="Conversation">
+                    <div id="recovery" class="error-content" role="alert" hidden
+                        ><h3>Something went wrong</h3
+                        ><button id="retry-client" class="error-retry-button">Try Again</button
+                        ><button id="reload-client" class="error-reload-button"
+                            >Reload Page</button
+                        ></div
+                    >
+                    <div class="messages"
+                        ><div class="messages-flow"
+                            ><div id="history-loading" class="loading-more" hidden
+                                ><div class="loading-spinner"></div
+                                ><span>Loading older messages...</span></div
+                            ><p class="history-start" id="history-note"
+                                >Connect once to save your conversations for offline reading.</p
+                            ><button id="load-history" class="history-load-button" hidden
+                                >Load earlier messages</button
+                            ><div class="messages-spacer"></div><div id="timeline"></div
+                            ><div id="pending"></div></div
+                    ></div>
+                    <div class="typing-indicator-container"
+                        ><div id="typing" class="typing-indicator" hidden
+                            ><span
+                                style="
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 0.5rem;
+                                    color: #72767d;
+                                "
+                                ><span class="typing-dots"
+                                    ><span class="dot"></span><span class="dot"></span
+                                    ><span class="dot"></span></span
+                                ><span id="typing-text"></span></span></div
+                    ></div>
+                    <div id="permission-note" class="readonly-bar" hidden></div>
+                    <div id="reply-bar" class="reply-bar" hidden
+                        ><span class="reply-bar-text"
+                            >Replying to <strong id="reply-name"></strong></span
+                        ><button id="cancel-reply" class="reply-bar-close" aria-label="Cancel reply"
+                            >✕</button
+                        ></div
+                    >
+                    <div class="message-input-container"
+                        ><div class="input-box">
+                            <button
+                                disabled
+                                id="upload-button"
+                                class="image-upload-button"
+                                title="Upload files"
+                                aria-label="Upload file"
+                                ><svg
+                                    width="22"
+                                    height="22"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                >
+                                    <line x1="12" y1="5" x2="12" y2="19" />
+                                    <line x1="5" y1="12" x2="19" y2="12" /></svg
+                            ></button>
+                            <input
+                                id="upload-files"
+                                type="file"
+                                accept="image/*,video/*"
+                                multiple
+                                hidden
+                            />
+                            <textarea
+                                id="draft"
+                                class="message-input"
+                                rows="1"
+                                aria-label="Message draft"
+                                placeholder="Type a message…"
+                                disabled
+                            ></textarea>
+                            <div class="emoji-toggle-wrapper"
+                                ><button
+                                    disabled
+                                    id="gif-button"
+                                    class="gif-toggle-button"
+                                    title="GIF picker"
+                                    aria-label="GIF"
+                                    ><span class="gif-toggle-badge">GIF</span></button
+                                ><button
+                                    disabled
+                                    id="emoji-button"
+                                    class="emoji-toggle-button"
+                                    title="Emoji picker"
+                                    aria-label="Emoji"
+                                    ><span class="emoji-toggle-icon"></span></button
+                            ></div> </div
+                        ><button
+                            id="send"
+                            class="send-button"
+                            disabled
+                            title="Send message"
+                            aria-label="Send message"
+                            ><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg></button
+                    ></div>
+                </section>
+                <aside class="users-sidebar" aria-label="Conversations"
+                    ><div class="sidebar-section"
+                        ><h4>ROOMS</h4><nav id="rooms" class="rooms-list"></nav></div
+                    ><div class="sidebar-section"
+                        ><h4 id="users-heading">Online Users</h4
+                        ><nav id="dms" class="users-list"></nav></div
+                    ><div id="outgoing-section" class="sidebar-section" hidden
+                        ><h4>OUTGOING</h4><nav id="outgoing"></nav></div
+                ></aside> </main
+            ><div class="sidebar-backdrop"></div>
+        </div> </body
+></html>

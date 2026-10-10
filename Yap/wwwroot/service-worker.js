@@ -1,3 +1,4 @@
+importScripts('/chat-client/worker.js');
 // Service Worker for Yap PWA
 // Handles: push notifications, badge updates, notification clicks
 // Blazor Server requires live connection, so minimal caching
@@ -12,15 +13,12 @@ self.addEventListener('install', (event) => {
     console.log('[SW] Installing service worker');
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll([
-                '/icon.svg',
-                '/icon-192.png',
-                '/icon-512.png',
-                '/notif.mp3'
-            ]).catch(() => {
-                // Ignore cache failures for missing files
-            });
-        })
+            return cache
+                .addAll(['/icon.svg', '/icon-192.png', '/icon-512.png', '/notif.mp3'])
+                .catch(() => {
+                    // Ignore cache failures for missing files
+                });
+        }),
     );
     self.skipWaiting();
 });
@@ -29,26 +27,42 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
     console.log('[SW] Activating service worker');
     event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            const keep = [CACHE_NAME, MEDIA_CACHE];
-            return Promise.all(
-                cacheNames
-                    .filter((name) => !keep.includes(name))
-                    .map((name) => caches.delete(name))
-            );
-        }).then(() => self.clients.claim())
+        caches
+            .keys()
+            .then((cacheNames) => {
+                const keep = [CACHE_NAME, MEDIA_CACHE];
+                return Promise.all(
+                    cacheNames
+                        .filter((name) => !keep.includes(name) && !name.startsWith('yap-chat-'))
+                        .map((name) => caches.delete(name)),
+                );
+            })
+            .then(() => self.clients.claim()),
     );
 });
 
 // Fetch: network-first (Blazor Server needs live connection)
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
-    if (event.request.method !== 'GET') return;
+    // The client worker owns these fetches; responding twice would break media/range recovery.
+    if (
+        url.origin === self.location.origin &&
+        (CHAT_ASSETS.includes(url.pathname) ||
+            isChatNavigation(url.pathname) ||
+            url.pathname === '/' ||
+            url.pathname === '/pwa-launch' ||
+            url.pathname.startsWith('/auth/') ||
+            /^\/(uploads|gif-cache|gif-uploads|media-cache|chat-client\/emoji|emoji-packs|emoji-fallback|custom-emojis)\//.test(
+                url.pathname,
+            ))
+    )
+        return;
+    if (event.request.method !== 'GET' || event.request.headers.has('X-Yap-Chat-Media')) return;
     if (url.pathname.includes('_blazor')) return;
 
     // App-shell icons + notification sound: cache-first against the versioned app cache.
     const staticAssets = ['/icon.svg', '/icon-192.png', '/icon-512.png', '/notif.mp3'];
-    if (staticAssets.some(asset => url.pathname.endsWith(asset))) {
+    if (staticAssets.some((asset) => url.pathname.endsWith(asset))) {
         event.respondWith(cacheFirst(event.request, CACHE_NAME));
         return;
     }
@@ -59,10 +73,12 @@ self.addEventListener('fetch', (event) => {
     // short max-age handle freshness) and range requests (the Cache API can't serve partial
     // content for video/audio seeking; the HTTP immutable cache covers those instead).
     const mediaPrefixes = ['/uploads/', '/gif-cache/', '/media-cache/'];
-    if (url.origin === self.location.origin
-        && mediaPrefixes.some((p) => url.pathname.startsWith(p))
-        && !url.pathname.startsWith('/uploads/profiles/')
-        && !event.request.headers.has('range')) {
+    if (
+        url.origin === self.location.origin &&
+        mediaPrefixes.some((p) => url.pathname.startsWith(p)) &&
+        !url.pathname.startsWith('/uploads/profiles/') &&
+        !event.request.headers.has('range')
+    ) {
         event.respondWith(cacheFirst(event.request, MEDIA_CACHE));
         return;
     }
@@ -96,7 +112,7 @@ self.addEventListener('push', (event) => {
         badge: '/icon-192.png',
         tag: 'chat-message',
         url: '/',
-        unreadCount: 0
+        unreadCount: 0,
     };
 
     // Parse push payload
@@ -115,8 +131,9 @@ self.addEventListener('push', (event) => {
     // Update badge count. The server already excluded muted channels from this number.
     if ('setAppBadge' in self.navigator && data.unreadCount > 0) {
         promises.push(
-            self.navigator.setAppBadge(data.unreadCount)
-                .catch(err => console.error('[SW] Badge error:', err))
+            self.navigator
+                .setAppBadge(data.unreadCount)
+                .catch((err) => console.error('[SW] Badge error:', err)),
         );
     }
 
@@ -130,20 +147,29 @@ self.addEventListener('push', (event) => {
             tag: data.tag,
             renotify: true,
             requireInteraction: false,
-            data: { url: data.url }
-        })
+            data: { url: data.url },
+        }),
     );
 
     // Delivery receipt (best-effort): closes the gap between "push service accepted the send" and
     // "this device actually received it" — Settings shows the last confirmed delivery per device.
     promises.push(
-        self.registration.pushManager.getSubscription()
-            .then((sub) => sub && fetch('/api/push/delivered', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ endpoint: sub.endpoint, tag: data.tag, shown: true })
-            }))
-            .catch(() => { }) // a failed receipt must never affect the notification itself
+        self.registration.pushManager
+            .getSubscription()
+            .then(
+                (sub) =>
+                    sub &&
+                    fetch('/api/push/delivered', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            endpoint: sub.endpoint,
+                            tag: data.tag,
+                            shown: true,
+                        }),
+                    }),
+            )
+            .catch(() => {}), // a failed receipt must never affect the notification itself
     );
 
     event.waitUntil(Promise.all(promises));
@@ -156,25 +182,29 @@ self.addEventListener('notificationclick', (event) => {
     console.log('[SW] Notification clicked:', event);
     event.notification.close();
 
-    const urlToOpen = event.notification.data?.url || '/';
+    let urlToOpen = '/lobby';
+    try {
+        const destination = new URL(event.notification.data?.url || '/lobby', self.location.origin);
+        if (destination.origin === self.location.origin && isChatNavigation(destination.pathname))
+            urlToOpen = destination.pathname + destination.search;
+    } catch {}
 
     event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true })
-            .then((windowClients) => {
-                // Check if app is already open
-                for (const client of windowClients) {
-                    if (client.url.includes(self.location.origin) && 'focus' in client) {
-                        // Navigate existing window
-                        client.postMessage({
-                            type: 'NOTIFICATION_CLICK',
-                            url: urlToOpen
-                        });
-                        return client.focus();
-                    }
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+            // Check if app is already open
+            for (const client of windowClients) {
+                if (new URL(client.url).origin === self.location.origin && 'focus' in client) {
+                    // Navigate existing window
+                    client.postMessage({
+                        type: 'NOTIFICATION_CLICK',
+                        url: urlToOpen,
+                    });
+                    return client.focus();
                 }
-                // Open new window
-                return clients.openWindow(urlToOpen);
-            })
+            }
+            // Open new window
+            return clients.openWindow(urlToOpen);
+        }),
     );
 });
 
@@ -185,7 +215,7 @@ self.addEventListener('message', (event) => {
     console.log('[SW] Message received:', event.data);
 
     if (event.data?.type === 'SKIP_WAITING') {
-        self.skipWaiting();
+        event.waitUntil(self.skipWaiting());
     }
 
     if (event.data?.type === 'SET_BADGE') {
@@ -231,7 +261,7 @@ async function resubscribeToPush() {
 
         const subscription = await self.registration.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(publicKey)
+            applicationServerKey: urlBase64ToUint8Array(publicKey),
         });
 
         const sub = subscription.toJSON();
@@ -243,8 +273,8 @@ async function resubscribeToPush() {
             body: JSON.stringify({
                 endpoint: sub.endpoint,
                 p256dh: sub.keys?.p256dh,
-                auth: sub.keys?.auth
-            })
+                auth: sub.keys?.auth,
+            }),
         });
         console.log('[SW] resubscribe: server responded', resp.status);
     } catch (e) {
@@ -254,7 +284,7 @@ async function resubscribeToPush() {
 
 // Helper: Convert a base64url VAPID key to Uint8Array (mirrors urlBase64ToUint8Array in chat.js).
 function urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
     const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
     const rawData = atob(base64);
     const outputArray = new Uint8Array(rawData.length);

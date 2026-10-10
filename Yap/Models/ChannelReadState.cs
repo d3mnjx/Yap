@@ -27,6 +27,10 @@ public class ChannelReadState
     /// </summary>
     public int UnreadCount { get; set; }
 
+    // Monotonic checkpoints: offline reads may acknowledge only the received count they observed.
+    public long ReceivedCount { get; set; }
+    public long ReadThrough { get; set; }
+
     // Navigation properties
     public User User { get; set; } = null!;
     public Channel Channel { get; set; } = null!;

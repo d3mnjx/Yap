@@ -238,7 +238,8 @@
         // Auth + admin guard
         if (!UserState.IsLoggedIn || !ChatService.IsAdmin(UserId))
         {
-            Navigation.NavigateTo("/lobby");
+            // Chat routes are document endpoints outside the retained Blazor router.
+            Navigation.NavigateTo("/lobby", forceLoad: true);
             return;
         }
 
@@ -247,7 +248,8 @@
             channel = ChatService.GetChannel(ChannelId!.Value);
             if (channel == null || channel.IsDirectMessage)
             {
-                Navigation.NavigateTo("/lobby");
+                // Chat routes are document endpoints outside the retained Blazor router.
+                Navigation.NavigateTo("/lobby", forceLoad: true);
                 return;
             }
 
@@ -277,9 +279,11 @@
     private void GoBack()
     {
         if (isEditMode && channel != null)
-            Navigation.NavigateTo(channel.IsDefault ? "/lobby" : $"/room/{channel.Id}");
+            // Chat routes are document endpoints outside the retained Blazor router.
+            Navigation.NavigateTo(channel.IsDefault ? "/lobby" : $"/room/{channel.Id}", forceLoad: true);
         else
-            Navigation.NavigateTo("/lobby");
+            // Chat routes are document endpoints outside the retained Blazor router.
+            Navigation.NavigateTo("/lobby", forceLoad: true);
     }
 
     private async Task Save()
@@ -335,7 +339,8 @@
 
                 if (newChannel != null)
                 {
-                    Navigation.NavigateTo($"/room/{newChannel.Id}");
+                    // Chat routes are document endpoints outside the retained Blazor router.
+                    Navigation.NavigateTo($"/room/{newChannel.Id}", forceLoad: true);
                 }
                 else
                 {
@@ -366,7 +371,8 @@
         var success = await ChatService.DeleteRoomAsync(UserId, channel.Id);
         if (success)
         {
-            Navigation.NavigateTo("/lobby");
+            // Chat routes are document endpoints outside the retained Blazor router.
+            Navigation.NavigateTo("/lobby", forceLoad: true);
         }
         else
         {

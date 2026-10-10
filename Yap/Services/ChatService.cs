@@ -11,7 +11,7 @@ namespace Yap.Services;
 /// State is kept in-memory for fast access. When persistence is enabled, changes are
 /// written through to the database and loaded on startup.
 /// </summary>
-public class ChatService
+public partial class ChatService
 {
     private readonly ConcurrentDictionary<string, UserSession> _users = new();
     private readonly PushNotificationService _pushService;
@@ -79,6 +79,7 @@ public class ChatService
     // (same idiom as CircuitTracker.CircuitInfo).
     public record UserSession(Guid UserId, string Username, string SessionId, bool? IsMobile = null, bool PageVisible = true, DateTime LastActivity = default, string? ClientIp = null)
     {
+        public bool Connected { get; init; } = true; // Retained disconnected sessions still serve presence/reconnect recovery.
         public string? CircuitId { get; init; }       // joins this session to CircuitTracker's transport/RTT telemetry
         public string? ViewingChannel { get; init; }  // display label of the channel this session has open
         public DateTime CreatedAt { get; init; }
@@ -513,7 +514,7 @@ public class ChatService
 
     #region User Management
 
-    public Task AddUserAsync(string sessionId, Guid userId, string username, UserStatus status = UserStatus.Online, bool? isMobile = null, string? clientIp = null, string? circuitId = null)
+    public Task AddUserAsync(string sessionId, Guid userId, string username, UserStatus status = UserStatus.Online, bool? isMobile = null, string? clientIp = null, string? circuitId = null, bool pageVisible = true)
     {
         // Check if this is the first session for this user
         var existingSessions = _users.Values
@@ -521,7 +522,7 @@ public class ChatService
             .ToList();
         var isFirstSession = existingSessions.Count == 0;
 
-        _users[sessionId] = new UserSession(userId, username, sessionId, isMobile, LastActivity: DateTime.UtcNow, ClientIp: clientIp)
+        _users[sessionId] = new UserSession(userId, username, sessionId, isMobile, PageVisible: pageVisible, LastActivity: DateTime.UtcNow, ClientIp: clientIp)
         {
             CircuitId = circuitId,
             CreatedAt = DateTime.UtcNow,
@@ -857,7 +858,7 @@ public class ChatService
         _users.ContainsKey(sessionId);
 
     /// <summary>
-    /// Checks if any session for a user has the page visible.
+    /// Checks for any registered session, including disconnected recovery records.
     /// </summary>
     public bool HasActiveSession(string username)
     {
@@ -866,8 +867,19 @@ public class ChatService
     }
 
     /// <summary>
-    /// Gets all active sessions for a user.
+    /// Marks transport connectivity without deleting retained presence state.
     /// </summary>
+    public void SetSessionConnected(string sessionId, bool connected)
+    {
+        if (!_users.TryGetValue(sessionId, out var session) || session.Connected == connected) return;
+        _users[sessionId] = session with { Connected = connected };
+        OnUsersListChanged?.Invoke();
+    }
+
+    // Settings lists live connections, not the four-hour recovery records behind presence.
+    public List<UserSession> GetActiveSessionsForUser(string username) =>
+        GetSessionsForUser(username).Where(session => session.Connected).ToList();
+
     public List<UserSession> GetSessionsForUser(string username)
     {
         return _users.Values
@@ -949,31 +961,26 @@ public class ChatService
 
     public async Task SendMessageAsync(Guid channelId, Guid userId, string username, string content, List<string>? imageUrls = null, Guid? replyToMessageId = null, List<string>? videoUrls = null, List<GifAttachment>? gifAttachments = null)
     {
-        var totalSw = Stopwatch.StartNew();
-        if (!_channels.TryGetValue(channelId, out var channel))
-            return;
-
-        // Check write permission
-        if (!channel.CanWrite(userId, IsAdmin(userId)))
-            return;
-
+        if (!_channels.TryGetValue(channelId, out var channel) || !channel.CanAccess(userId)
+            || !channel.CanWrite(userId, IsAdmin(userId))) return;
         var message = new ChatMessage(channelId, userId, username, content, DateTime.UtcNow, imageUrls, replyToMessageId, videoUrls, gifAttachments);
+        await _persistence.PersistNewMessageAsync(message);
+        await PublishMessageAsync(channel, message);
+    }
 
-        // Bump GifEntry reference counts so eviction never reaps an entry that's still in chat history.
-        _gifService.IncrementReferences(gifAttachments);
-
+    private async Task PublishMessageAsync(Channel channel, ChatMessage message)
+    {
+        var totalSw = Stopwatch.StartNew();
+        var channelId = channel.Id;
+        var userId = message.UserId;
+        var username = message.Username;
+        var content = message.Content;
         lock (GetChannelLock(channelId))
         {
-            if (!_channelMessages.TryGetValue(channelId, out var messages))
-                return;
-
+            if (!_channelMessages.TryGetValue(channelId, out var messages) || messages.Any(m => m.Id == message.Id)) return;
             messages.Add(message);
         }
-
-        // Persist message (no SELECT needed - always new)
-        var persistSw = Stopwatch.StartNew();
-        await _persistence.PersistNewMessageAsync(message);
-        var persistMs = persistSw.ElapsedMilliseconds;
+        _gifService.IncrementReferences(message.GifAttachments);
 
         // Update unread counts in memory + DB (awaited — fast, no events)
         var unreadSw = Stopwatch.StartNew();
@@ -983,8 +990,8 @@ public class ChatService
         // Clear typing state in memory (fast, no event dispatch)
         var wasTyping = _channelTypingUsers.TryGetValue(channelId, out var typingUsers) && typingUsers.TryRemove(username, out _);
 
-        _logger.LogDebug("SendMessage by {User} to channel {ChannelId}: persist={PersistMs}ms unread={UnreadMs}ms ({AffectedUsers} users) callerTotal={TotalMs}ms media={HasMedia}",
-            username, channelId, persistMs, unreadMs, affectedUserIds.Count, totalSw.ElapsedMilliseconds, message.HasMedia);
+        _logger.LogDebug("PublishMessage by {User} to channel {ChannelId}: unread={UnreadMs}ms ({AffectedUsers} users) publishTotal={TotalMs}ms media={HasMedia}",
+            username, channelId, unreadMs, affectedUserIds.Count, totalSw.ElapsedMilliseconds, message.HasMedia);
 
         // Notify all subscribers
         if (wasTyping)
@@ -1442,55 +1449,8 @@ public class ChatService
     /// Source tags the trigger for the unread audit: "open" (navigation), "receive" (message
     /// arrived while viewing), "resume" (tab foregrounded), "dispose" (leaving the page).
     /// </summary>
-    public async Task MarkChannelAsReadAsync(Guid userId, Guid channelId, bool silent = false, string? callerSessionId = null, string source = "open")
-    {
-        var key = (userId, channelId);
-        var now = DateTime.UtcNow;
-        var hadUnread = false;
-        var previousCount = 0;
-
-        if (_readStates.TryGetValue(key, out var state))
-        {
-            hadUnread = state.UnreadCount > 0;
-            previousCount = state.UnreadCount;
-            state.LastReadAt = now;
-            state.UnreadCount = 0;
-        }
-        else
-        {
-            state = new ChannelReadState
-            {
-                UserId = userId,
-                ChannelId = channelId,
-                LastReadAt = now,
-                UnreadCount = 0
-            };
-            _readStates[key] = state;
-        }
-
-        await _persistence.PersistReadStateAsync(state);
-
-        // Audit cleared DM badges: which device did it, and was it a legitimate read (foreground,
-        // connected) or a ghost session eating the badge for the whole account.
-        if (hadUnread && _channels.TryGetValue(channelId, out var channel) && channel.IsDirectMessage)
-        {
-            UserSession? callerSession = null;
-            if (callerSessionId != null)
-                _users.TryGetValue(callerSessionId, out callerSession);
-            var username = callerSession?.Username
-                ?? _users.Values.FirstOrDefault(u => u.UserId == userId)?.Username
-                ?? "?";
-
-            _audit.RecordUnreadChange(username, DescribeChannel(channel), "clear", previousCount, source,
-                _audit.DescribeCallerSession(callerSession, GetUserStatus(username)));
-        }
-
-        // Notify if there were unread messages that are now cleared
-        if (hadUnread && !silent)
-        {
-            OnUnreadChanged?.Invoke(userId, channelId);
-        }
-    }
+    public Task MarkChannelAsReadAsync(Guid userId, Guid channelId, bool silent = false, string? callerSessionId = null, string source = "open")
+        => MarkObservedReadAsync(userId, channelId, null, silent, callerSessionId, source);
 
     /// <summary>
     /// Increments unread count for all participants except the sender (memory + DB only).
@@ -1531,42 +1491,24 @@ public class ChatService
 
         if (userIdsToIncrement.Count == 0) return userIdsToIncrement;
 
-        // Update in-memory state (fast)
-        foreach (var userId in userIdsToIncrement)
+        await readStateGate.WaitAsync();
+        try
         {
-            var key = (userId, channelId);
-            if (_readStates.TryGetValue(key, out var state))
+            var updated = userIdsToIncrement.Select(id =>
             {
+                var state = CopyReadState(id, channelId);
+                state.ReceivedCount++;
                 state.UnreadCount++;
-            }
-            else
-            {
-                _readStates[key] = new ChannelReadState
-                {
-                    UserId = userId,
-                    ChannelId = channelId,
-                    LastReadAt = DateTime.MinValue,
-                    UnreadCount = 1
-                };
-            }
+                return state;
+            }).ToArray();
+            await _persistence.PersistReadStatesAsync(updated);
+            foreach (var state in updated) _readStates[(state.UserId, channelId)] = state;
+            if (channel.IsDirectMessage)
+                foreach (var state in updated)
+                    _audit.RecordUnreadChange(_userService.GetById(state.UserId)?.Username ?? "?", DescribeChannel(channel), "+1",
+                        state.UnreadCount, $"msg from {_userService.GetById(senderUserId)?.Username}", "—");
         }
-
-        // Audit DM badge increments (rooms would drown the buffer, and rooms don't push anyway)
-        if (channel.IsDirectMessage && userIdsToIncrement.Count == 1)
-        {
-            var recipientId = userIdsToIncrement[0];
-            var recipientName = channel.Participant1Id == recipientId ? channel.Participant1 : channel.Participant2;
-            var senderName = channel.Participant1Id == senderUserId ? channel.Participant1 : channel.Participant2;
-            _audit.RecordUnreadChange(recipientName ?? "?", DescribeChannel(channel), "+1",
-                GetUnreadCount(recipientId, channelId), $"msg from {senderName}", "—");
-        }
-
-        // Single DB call for all users
-        var sw = Stopwatch.StartNew();
-        await _persistence.IncrementUnreadForUsersAsync(channelId, userIdsToIncrement);
-
-        _logger.LogDebug("IncrementUnreadCounts channel={ChannelId}: {UserCount} users, persist={ElapsedMs}ms",
-            channelId, userIdsToIncrement.Count, sw.ElapsedMilliseconds);
+        finally { readStateGate.Release(); }
 
         return userIdsToIncrement;
     }

@@ -464,3 +464,14 @@
 [data-theme="neon-glow"] .chat-container[data-context="dm"] {
     --canvas-pattern: var(--pattern-drops);
 }
+
+/* Text links need contrast against both the canvas and hovered message rows.
+   Keep focus/button accents unchanged: their palettes serve different surfaces. */
+[data-theme="nord"] { --link-color: #88c0d0; }
+[data-theme="ocean"] { --link-color: #67e8f9; }
+[data-theme="sunset"] { --link-color: #ffffff; }
+[data-theme="light"] { --link-color: #3552ce; }
+[data-theme="solarized-light"] { --link-color: #1c6397; }
+/* Tea House's artwork and day/night washes vary too much for one amber accent.
+   Use strong text on a small canvas-colored backing so artwork cannot erase a link. */
+[data-theme="teahouse"] { --link-color: var(--text-white); --link-background: var(--bg-primary); }

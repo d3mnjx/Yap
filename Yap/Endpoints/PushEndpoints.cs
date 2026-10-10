@@ -23,7 +23,7 @@ public static class PushEndpoints
         {
             var token = context.Request.Cookies[AuthMiddleware.CookieName];
             var user = !string.IsNullOrEmpty(token) ? userService.AuthenticateByToken(token) : null;
-            if (user == null)
+            if (user == null || (context.Request.Headers.TryGetValue("X-Yap-Chat-User", out var expectedUser) && expectedUser != user.Id.ToString()))
             {
                 logger.LogDebug("Push subscribe rejected: no valid auth cookie");
                 return Results.Unauthorized();
@@ -49,7 +49,7 @@ public static class PushEndpoints
         {
             var token = context.Request.Cookies[AuthMiddleware.CookieName];
             var user = !string.IsNullOrEmpty(token) ? userService.AuthenticateByToken(token) : null;
-            if (user == null)
+            if (user == null || (context.Request.Headers.TryGetValue("X-Yap-Chat-User", out var expectedUser) && expectedUser != user.Id.ToString()))
             {
                 logger.LogDebug("Push unsubscribe rejected: no valid auth cookie");
                 return Results.Unauthorized();

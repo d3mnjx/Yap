@@ -161,6 +161,12 @@ namespace Yap.Migrations
                     b.Property<DateTime>("LastReadAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<long>("ReadThrough")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("ReceivedCount")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("UnreadCount")
                         .HasColumnType("INTEGER");
 
@@ -194,6 +200,9 @@ namespace Yap.Migrations
 
                     b.Property<bool>("IsEdited")
                         .HasColumnType("INTEGER");
+
+                    b.Property<Guid?>("OperationId")
+                        .HasColumnType("TEXT");
 
                     b.Property<Guid?>("ReplyToMessageId")
                         .HasColumnType("TEXT");
@@ -462,6 +471,33 @@ namespace Yap.Migrations
                         .IsUnique();
 
                     b.ToTable("Reactions");
+                });
+
+            modelBuilder.Entity("Yap.Models.TextSendReceipt", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("OperationId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("AcceptedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ChannelId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ContentHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("MessageId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("UserId", "OperationId");
+
+                    b.ToTable("TextSendReceipts");
                 });
 
             modelBuilder.Entity("Yap.Models.User", b =>
@@ -774,6 +810,15 @@ namespace Yap.Migrations
                     b.Navigation("Message");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Yap.Models.TextSendReceipt", b =>
+                {
+                    b.HasOne("Yap.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Yap.Models.Channel", b =>

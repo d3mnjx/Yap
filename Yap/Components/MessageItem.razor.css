@@ -132,14 +132,18 @@
 
 /* Clickable action links in bot messages (e.g., PWA install) */
 .bot-action-link {
-    color: var(--accent-primary);
+    color: var(--link-color);
+    background: var(--link-background, transparent);
+    border: 0;
+    padding: 0;
+    font: inherit;
     text-decoration: underline;
     cursor: pointer;
     font-weight: 500;
 }
 
 .bot-action-link:hover {
-    color: var(--accent-hover);
+    text-decoration-thickness: 2px;
 }
 
 .message-time {
@@ -163,8 +167,10 @@
 }
 
 .message-content ::deep a.message-link {
-    color: var(--accent-focus);
-    text-decoration: none;
+    color: var(--link-color);
+    background: var(--link-background, transparent);
+    text-decoration: underline;
+    text-underline-offset: .15em;
 }
 
 .message-content ::deep a.message-link:hover {

@@ -1,0 +1,5 @@
+**/bin/
+**/obj/
+**/node_modules/
+Yap/wwwroot/chat-client/vendor/
+Yap/wwwroot/chat-client/emoji/

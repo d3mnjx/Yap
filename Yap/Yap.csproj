@@ -47,4 +47,20 @@
     </ItemGroup>
   </Target>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Components/Layout/ChatLayout.razor.css" />
+    <EmbeddedResource Include="Components/ChatHeader.razor.css" />
+    <EmbeddedResource Include="Components/ChatSidebar.razor.css" />
+    <EmbeddedResource Include="Components/Avatar.razor.css" />
+    <EmbeddedResource Include="Components/MessageItem.razor.css" />
+    <EmbeddedResource Include="Components/MessageInput.razor.css" />
+    <EmbeddedResource Include="Components/ImageGalleryModal.razor.css" />
+    <EmbeddedResource Include="Components/EmojiPicker.razor.css" />
+    <EmbeddedResource Include="Components/GifPicker.razor.css" />
+    <EmbeddedResource Include="Components/CombinedPicker.razor.css" />
+    <EmbeddedResource Include="Components/LinkPreviewCard.razor.css" />
+    <EmbeddedResource Include="Components/MediaPlayer.razor.css" />
+    <EmbeddedResource Include="Components/UserProfileCard.razor.css" />
+    <EmbeddedResource Include="Components/PushPermissionPrompt.razor.css" />
+  </ItemGroup>
 </Project>

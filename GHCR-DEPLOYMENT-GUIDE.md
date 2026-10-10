@@ -4,6 +4,8 @@ A reusable recipe for: **push to GitHub → GitHub Actions builds a Docker image
 
 No third-party registry, no paid CI, no SSH-from-CI. The server is the only thing that talks to GHCR.
 
+For an existing Yap instance, follow [Upgrading Yap to the offline client](#upgrading-yap-to-the-offline-client) before replacing its image. It covers persistent data, login sessions, proxy/cache configuration and rollback limits.
+
 ---
 
 ## What you get
@@ -246,6 +248,8 @@ For apps with WebSockets / SignalR / long-polling (Blazor Server, etc.), make su
 
 ## 7. One-line update on the server
 
+For Yap, complete the [backup and deployment checks](#upgrading-yap-to-the-offline-client) first. These generic scripts do not make a data backup; pin the candidate and retain the original image instead of pruning it during the rollout.
+
 Save your `docker run` command (from section 4) as a script — redeploy becomes a single command.
 
 **Linux** (`~/deploy.sh`, `chmod +x` once):
@@ -307,3 +311,60 @@ After that, the deploy loop is: **push → wait for the green check → `docker 
 - **Old container keeps running after `pull`** — `pull` only fetches the image. You must `up -d` (or `stop` + `run`) to actually restart with the new image.
 - **Disk fills up over time** — old images accumulate. Run `docker image prune -f` after deploys, or schedule it.
 - **Secrets in the image** — never `COPY` `appsettings.Production.json` or `.env` files containing secrets into the image. Mount them as volumes or pass via `environment:`.
+
+
+## Upgrading Yap to the offline client
+
+Use a pinned candidate image and retain the original image digest and persistent data. The offline client uses the same accounts, valid login cookies, public room/DM routes and online Settings/Admin pages. A successful online visit prepares offline storage; a browser that has never loaded the client cannot open its chat offline.
+
+### Persistence and client state
+
+Durable sends require SQLite persistence. Preserve the complete `Data` directory, its effective `appsettings.json`, and `wwwroot/uploads`. Startup applies the additive `DurableTextSends` and `ObservedReadCheckpoints` migrations: operation receipts/message IDs and read checkpoints initialized from existing unread counts. Do not run two application versions against the same SQLite/data directory. The v33 shell upgrades the existing `yap-chat-v1` IndexedDB database from schema 3 to 4 without discarding drafts/outbox/read checkpoints. Already-open v32 documents retain their legacy HTTP/hub protocol during activation; new clients request protocol 2. The older schema-3 client cannot reopen a schema-4 database: prefer a forward fix, and do not clear site data to work around a downgrade.
+
+Before stopping the original Blazor app, ask users to send or copy unfinished text and finish uploads. Its unsent draft lives in the old page/circuit and its reconnect handler can auto-reload; the replacement cannot recover it retroactively. The first offline release starts new browser storage and does not migrate prototype browser-only test queues. Subsequent releases should preserve the deployed chat namespace, drafts/outbox and receipt compatibility.
+
+### HTTPS, reverse proxies and caches
+
+Service workers require trusted HTTPS, except for loopback development. Yap accepts `X-Forwarded-Proto`, `X-Forwarded-Host` and `X-Forwarded-For` from any immediate proxy by default. Ordinary Caddy/Nginx and Docker deployments do not need a proxy address allowlist, and changing container addresses does not require an app configuration update. Forwarding restores the public URL for HTTPS handling and generated login links; only the nearest forwarded hop is processed.
+
+Chat writes require an account-bound antiforgery token. Chat API writes and hub requests reject `Sec-Fetch-Site: cross-site`, but accept missing browser metadata and do not compare the browser's Origin with the internal request URL. This intentionally favors compatibility with proxy URL rewriting and older clients; it is not strict same-origin enforcement.
+
+The permissive default also accepts forwarded headers supplied directly by a client. Deployers who want restricted trust can optionally configure proxy addresses or CIDR networks in the effective `Data/appsettings.json` or environment settings. A nonempty list enables restriction to the configured addresses/networks plus the framework's loopback defaults. Example only; substitute the real proxy address:
+
+```json
+"ReverseProxy": {
+  "KnownProxies": ["172.30.0.10"]
+}
+```
+
+`ReverseProxy:KnownNetworks` accepts CIDRs when a specific stable address is impractical. Leave both lists absent or empty to keep the permissive default. When opting into restriction, use valid IP addresses/CIDRs; malformed entries prevent startup.
+
+Preserve the public Host or supply `X-Forwarded-Host`, and forward the original public scheme in `X-Forwarded-Proto`. With multiple proxies, the nearest proxy must pass that public URL through instead of reporting its internal HTTP connection. Forward `/api/chat/*`, `/hubs/chat*` with WebSocket upgrades, `/api/tus*`, `/service-worker.js`, `/chat-client/*` and retained Blazor routes. A normal Caddy `reverse_proxy` preserves the Host.
+
+For Cloudflare or another CDN:
+
+- Leave authenticated HTML, `/api/*`, `/hubs/*`, `/auth/*`, `/manifest.webmanifest`, `/pwa-launch`, Settings/Admin and Blazor endpoints uncached.
+- Revalidate service-worker and client assets. Stable asset URLs must not retain an earlier deployment indefinitely; the worker owns the offline shell cache.
+- Keep app routes out of challenge rules that would replace JSON/JavaScript/WebSocket responses with an HTML challenge. Preserve the existing TLS policy.
+- During an initial rollout, use a hostname-scoped cache bypass or purge affected assets. Do not rely on a browser hard refresh to invalidate a CDN cache. Immutable media can retain its existing policy.
+
+### Deployment checks
+
+1. Record the image digests, volume mounts, effective configuration, public hostname and proxy peer. Verify persistence is enabled and the original image remains available.
+2. Stop Yap cleanly. Make a dated, private backup of all persistent mounts/configuration. Wait for process exit before copying files; a live SQLite main-file copy alone is unsafe. Use SQLite's backup API where appropriate and verify the backup can be read.
+3. Start one candidate container with the same data/uploads volumes and public origin. Inspect startup and migration logs. Deploy the full publish/image output, including compressed static assets.
+4. In an already authenticated browser, refresh and verify the same account/history, lobby and DM navigation, receiving from another account, text send, upload and Settings return. Repeated API/hub 403s or a send stuck pending are failed rollout checks.
+5. After successful synchronization, disconnect that browser, reload cached chat, save a draft, queue a message and reconnect. Confirm one accepted message. Check an ordinary browser and an existing installed app, without resetting permissions/subscriptions.
+6. Verify real proxy/CDN response headers, WebSocket and upload behavior, installed launch and notification delivery on target devices. Retain the backup and original image while checking the release.
+
+An automated same-origin rehearsal is available in [upgrade-rollout.cjs](tests/browser/upgrade-rollout.cjs); set its original/candidate package and certificate inputs explicitly as described in the [test guide](tests/browser/README.md). It exercises account/data preservation and short rollback/re-upgrade using disposable copies. It does not establish actual CDN policy, OS installation identity, device focus or external push delivery. Run it for the candidate being deployed rather than treating an earlier release's result as current validation.
+
+### Rollback limits
+
+Prepared chat routes use the cached shell immediately. To reach a rolled-back original app directly, navigate online to `/` (without a return URL), which remains network-first, or allow the independent worker update to activate before reloading. `/pwa-launch` also remains network-first for authentication handoff. Offline navigation may still use the cached client. The original UI cannot display or deliver the new client's IndexedDB outbox, and it does not maintain the new read counters or operation receipts. A short controlled rollback/re-upgrade is not a guarantee of safe prolonged writable downgrade. Prefer a forward fix after users resume activity.
+
+If checks fail **before new user activity**, stop the candidate, retain a copy of its state, and restore the original image and pre-upgrade data only after confirming that doing so discards no new messages/accounts. Keep asset revalidation in place and refresh online.
+
+If acknowledged messages or offline work already exist, preserve both server states and browser storage before choosing recovery. An old server backup may omit accepted messages/receipts, while unsent work exists only in browsers. Blindly restoring old data can lose messages or let later retries duplicate acceptance. Do not clear site data, discard receipts or prescribe reinstallation as a normal rollback procedure; reconcile data or repair forward.
+
+The [offline behavior guide](docs/offline-behavior.md) describes account expiry, queue semantics and durability limits. The [parity inventory](docs/feature-parity-inventory.md#remaining-verification) records remaining platform and feature coverage.

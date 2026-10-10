@@ -49,6 +49,8 @@ public class AuthMiddleware
                 // stay the only cookie writers on their own responses.
                 if (HttpMethods.IsGet(context.Request.Method)
                     && !context.Request.Path.StartsWithSegments("/auth")
+                    // The offline shell is anonymous cacheable HTML, never a cookie-refresh response.
+                    && !Yap.Offline.ChatRoutes.IsShell(context.Request.Path)
                     && context.Request.Headers.Accept.ToString().Contains("text/html"))
                 {
                     SetAuthCookie(context, token);

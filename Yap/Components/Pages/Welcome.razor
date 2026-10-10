@@ -65,7 +65,7 @@
         {
             string? lastRoute = null;
             try { lastRoute = await JS.InvokeAsync<string>("getLastPwaRoute"); } catch { }
-            Navigation.NavigateTo(SafeReturnUrl ?? lastRoute ?? "/lobby");
+            Navigation.NavigateTo(SafeReturnUrl ?? lastRoute ?? "/lobby", forceLoad: true);
             return;
         }
 

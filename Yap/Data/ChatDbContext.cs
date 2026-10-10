@@ -6,6 +6,7 @@ namespace Yap.Data;
 
 public class ChatDbContext : DbContext
 {
+    public DbSet<TextSendReceipt> TextSendReceipts { get; set; } = null!;
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<Channel> Channels { get; set; } = null!;
     public DbSet<ChatMessage> Messages { get; set; } = null!;
@@ -99,6 +100,13 @@ public class ChatDbContext : DbContext
 
             // Ignore computed property
             entity.Ignore(c => c.IsDirectMessage);
+        });
+
+        modelBuilder.Entity<TextSendReceipt>(entity =>
+        {
+            entity.HasKey(r => new { r.UserId, r.OperationId });
+            entity.Property(r => r.ContentHash).HasMaxLength(64);
+            entity.HasOne<User>().WithMany().HasForeignKey(r => r.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // ChatMessage configuration

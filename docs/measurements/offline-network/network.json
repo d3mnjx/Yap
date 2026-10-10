@@ -1,0 +1,2001 @@
+{
+  "capturedAt": "2026-10-09T22:13:38.713Z",
+  "node": "v22.22.1",
+  "packages": {
+    "reference": "0f11403184f10b03926ba0078e183acd8e734e01fa7c3d4a8b90bcd75ebc75a2",
+    "rewrite": "07856b4c42d6378c8adecf7e960d10d2cd5f6d84e33d0525ee05b89f84785e91"
+  },
+  "method": "Shared encrypted-byte proxy; HTTPS/WS and TLS handshakes equally shaped; excludes TCP handshake/loss",
+  "profiles": {
+    "local": {
+      "rtt": 0,
+      "down": "unlimited",
+      "up": "unlimited"
+    },
+    "latency900": {
+      "rtt": 900,
+      "down": "unlimited",
+      "up": "unlimited"
+    },
+    "slow900": {
+      "rtt": 900,
+      "down": 125000,
+      "up": 32000
+    }
+  },
+  "trials": 2,
+  "samples": 5,
+  "calibration": {
+    "local": [
+      {
+        "bytes": 64,
+        "ms": 10.188199999999995,
+        "expectedMs": 0
+      },
+      {
+        "bytes": 64,
+        "ms": 5.469499999999982,
+        "expectedMs": 0
+      },
+      {
+        "bytes": 64,
+        "ms": 3.948500000000024,
+        "expectedMs": 0
+      },
+      {
+        "bytes": 131072,
+        "ms": 8.295799999999986,
+        "expectedMs": 0
+      }
+    ],
+    "latency900": [
+      {
+        "bytes": 64,
+        "ms": 904.0520000000251,
+        "expectedMs": 900
+      },
+      {
+        "bytes": 64,
+        "ms": 906.1886999999988,
+        "expectedMs": 900
+      },
+      {
+        "bytes": 64,
+        "ms": 906.9827000000223,
+        "expectedMs": 900
+      },
+      {
+        "bytes": 131072,
+        "ms": 914.663899999985,
+        "expectedMs": 900
+      }
+    ],
+    "slow900": [
+      {
+        "bytes": 64,
+        "ms": 907.686699999962,
+        "expectedMs": 900.5745
+      },
+      {
+        "bytes": 64,
+        "ms": 906.6582000000635,
+        "expectedMs": 900.5745
+      },
+      {
+        "bytes": 64,
+        "ms": 908.5736000000034,
+        "expectedMs": 900.5745
+      },
+      {
+        "bytes": 131072,
+        "ms": 1967.1779000000097,
+        "expectedMs": 1948.7635
+      }
+    ]
+  },
+  "cases": [
+    {
+      "profile": "local",
+      "label": "reference",
+      "startup": [
+        {
+          "trial": 0,
+          "cache": "cold",
+          "readyMs": 703.9268000000001,
+          "atReady": {
+            "up": 9267,
+            "down": 667068
+          },
+          "after15s": {
+            "up": 10405,
+            "down": 1151018
+          },
+          "pageTraffic": {
+            "httpRequests": 21,
+            "http2Responses": 21,
+            "http11Responses": 0,
+            "compressedWsConnections": 1,
+            "wsUpFrames": 48,
+            "wsDownFrames": 50,
+            "wsUpPayload": 7747,
+            "wsDownPayload": 566206,
+            "sessionRequests": 0,
+            "bootstrapRequests": 0,
+            "messagePosts": 0
+          }
+        },
+        {
+          "trial": 0,
+          "cache": "warm",
+          "readyMs": 170.60620000000017,
+          "atReady": {
+            "up": 6225,
+            "down": 898436
+          },
+          "after15s": {
+            "up": 6954,
+            "down": 994194
+          },
+          "pageTraffic": {
+            "httpRequests": 21,
+            "http2Responses": 21,
+            "http11Responses": 0,
+            "compressedWsConnections": 1,
+            "wsUpFrames": 39,
+            "wsDownFrames": 38,
+            "wsUpPayload": 7746,
+            "wsDownPayload": 566209,
+            "sessionRequests": 0,
+            "bootstrapRequests": 0,
+            "messagePosts": 0
+          }
+        },
+        {
+          "trial": 1,
+          "cache": "cold",
+          "readyMs": 212.9759000000049,
+          "atReady": {
+            "up": 9284,
+            "down": 1057716
+          },
+          "after15s": {
+            "up": 10233,
+            "down": 1148914
+          },
+          "pageTraffic": {
+            "httpRequests": 21,
+            "http2Responses": 21,
+            "http11Responses": 0,
+            "compressedWsConnections": 1,
+            "wsUpFrames": 45,
+            "wsDownFrames": 46,
+            "wsUpPayload": 7747,
+            "wsDownPayload": 565571,
+            "sessionRequests": 0,
+            "bootstrapRequests": 0,
+            "messagePosts": 0
+          }
+        },
+        {
+          "trial": 1,
+          "cache": "warm",
+          "readyMs": 167.40359999999782,
+          "atReady": {
+            "up": 6661,
+            "down": 931934
+          },
+          "after15s": {
+            "up": 7117,
+            "down": 995297
+          },
+          "pageTraffic": {
+            "httpRequests": 21,
+            "http2Responses": 21,
+            "http11Responses": 0,
+            "compressedWsConnections": 1,
+            "wsUpFrames": 43,
+            "wsDownFrames": 44,
+            "wsUpPayload": 7746,
+            "wsDownPayload": 565570,
+            "sessionRequests": 0,
+            "bootstrapRequests": 0,
+            "messagePosts": 0
+          }
+        }
+      ],
+      "sends": [
+        {
+          "localVisibleMs": 1,
+          "ownAcceptedMs": 98,
+          "recipientMs": 70,
+          "up": 717,
+          "down": 3061,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 7,
+          "wsDownFrames": 9,
+          "wsUpPayload": 928,
+          "wsDownPayload": 11941,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "localVisibleMs": 1,
+          "ownAcceptedMs": 19,
+          "recipientMs": 15,
+          "up": 328,
+          "down": 1287,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 6,
+          "wsDownFrames": 5,
+          "wsUpPayload": 876,
+          "wsDownPayload": 12117,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "localVisibleMs": 0,
+          "ownAcceptedMs": 33,
+          "recipientMs": 28,
+          "up": 385,
+          "down": 1361,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 6,
+          "wsDownFrames": 7,
+          "wsUpPayload": 876,
+          "wsDownPayload": 12326,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "localVisibleMs": 1,
+          "ownAcceptedMs": 43,
+          "recipientMs": 30,
+          "up": 432,
+          "down": 1412,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 7,
+          "wsDownFrames": 8,
+          "wsUpPayload": 933,
+          "wsDownPayload": 12567,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "localVisibleMs": 1,
+          "ownAcceptedMs": 38,
+          "recipientMs": 19,
+          "up": 324,
+          "down": 1413,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 6,
+          "wsDownFrames": 6,
+          "wsUpPayload": 877,
+          "wsDownPayload": 12742,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        }
+      ],
+      "receives": [
+        {
+          "visibleMs": 37,
+          "up": 447,
+          "down": 3126,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 9,
+          "wsDownFrames": 9,
+          "wsUpPayload": 291,
+          "wsDownPayload": 15130,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 9,
+          "up": 406,
+          "down": 1738,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 9,
+          "wsDownFrames": 8,
+          "wsUpPayload": 291,
+          "wsDownPayload": 14516,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 11,
+          "up": 454,
+          "down": 1636,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 10,
+          "wsDownFrames": 10,
+          "wsUpPayload": 348,
+          "wsDownPayload": 14757,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 11,
+          "up": 435,
+          "down": 1692,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 8,
+          "wsDownFrames": 7,
+          "wsUpPayload": 291,
+          "wsDownPayload": 14932,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 9,
+          "up": 405,
+          "down": 1533,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 9,
+          "wsDownFrames": 7,
+          "wsUpPayload": 291,
+          "wsDownPayload": 15140,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        }
+      ],
+      "inactive": [
+        {
+          "visibleMs": 38,
+          "up": 183,
+          "down": 846,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 4,
+          "wsDownFrames": 4,
+          "wsUpPayload": 142,
+          "wsDownPayload": 2389,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        }
+      ],
+      "idle10s": {
+        "up": 50,
+        "down": 42,
+        "httpRequests": 0,
+        "http2Responses": 0,
+        "http11Responses": 0,
+        "compressedWsConnections": 0,
+        "wsUpFrames": 1,
+        "wsDownFrames": 1,
+        "wsUpPayload": 56,
+        "wsDownPayload": 32,
+        "sessionRequests": 0,
+        "bootstrapRequests": 0,
+        "messagePosts": 0
+      }
+    },
+    {
+      "profile": "local",
+      "label": "rewrite",
+      "startup": [
+        {
+          "trial": 0,
+          "cache": "cold",
+          "readyMs": 1084.4658999999956,
+          "atReady": {
+            "up": 10952,
+            "down": 3708839
+          },
+          "after15s": {
+            "up": 11595,
+            "down": 3776987
+          },
+          "pageTraffic": {
+            "httpRequests": 56,
+            "http2Responses": 56,
+            "http11Responses": 0,
+            "compressedWsConnections": 0,
+            "wsUpFrames": 5,
+            "wsDownFrames": 4,
+            "wsUpPayload": 684,
+            "wsDownPayload": 3715,
+            "sessionRequests": 0,
+            "bootstrapRequests": 1,
+            "messagePosts": 0
+          }
+        },
+        {
+          "trial": 0,
+          "cache": "warm",
+          "readyMs": 167.74499999999534,
+          "atReady": {
+            "up": 2214,
+            "down": 1035325
+          },
+          "after15s": {
+            "up": 2783,
+            "down": 1191431
+          },
+          "pageTraffic": {
+            "httpRequests": 51,
+            "http2Responses": 51,
+            "http11Responses": 0,
+            "compressedWsConnections": 0,
+            "wsUpFrames": 5,
+            "wsDownFrames": 3,
+            "wsUpPayload": 1214,
+            "wsDownPayload": 3705,
+            "sessionRequests": 0,
+            "bootstrapRequests": 1,
+            "messagePosts": 0
+          }
+        },
+        {
+          "trial": 1,
+          "cache": "cold",
+          "readyMs": 415.4029000000155,
+          "atReady": {
+            "up": 10743,
+            "down": 4051998
+          },
+          "after15s": {
+            "up": 11603,
+            "down": 4168652
+          },
+          "pageTraffic": {
+            "httpRequests": 56,
+            "http2Responses": 56,
+            "http11Responses": 0,
+            "compressedWsConnections": 0,
+            "wsUpFrames": 5,
+            "wsDownFrames": 3,
+            "wsUpPayload": 686,
+            "wsDownPayload": 3705,
+            "sessionRequests": 0,
+            "bootstrapRequests": 1,
+            "messagePosts": 0
+          }
+        },
+        {
+          "trial": 1,
+          "cache": "warm",
+          "readyMs": 295.4407999999821,
+          "atReady": {
+            "up": 2438,
+            "down": 2085421
+          },
+          "after15s": {
+            "up": 2934,
+            "down": 2148456
+          },
+          "pageTraffic": {
+            "httpRequests": 51,
+            "http2Responses": 51,
+            "http11Responses": 0,
+            "compressedWsConnections": 0,
+            "wsUpFrames": 5,
+            "wsDownFrames": 3,
+            "wsUpPayload": 1215,
+            "wsDownPayload": 3705,
+            "sessionRequests": 0,
+            "bootstrapRequests": 1,
+            "messagePosts": 0
+          }
+        }
+      ],
+      "sends": [
+        {
+          "localVisibleMs": 36,
+          "ownAcceptedMs": 290,
+          "recipientMs": 292,
+          "up": 1141,
+          "down": 3922,
+          "httpRequests": 3,
+          "http2Responses": 3,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 3,
+          "wsDownFrames": 2,
+          "wsUpPayload": 269,
+          "wsDownPayload": 1526,
+          "sessionRequests": 1,
+          "bootstrapRequests": 0,
+          "messagePosts": 1
+        },
+        {
+          "localVisibleMs": 8,
+          "ownAcceptedMs": 36,
+          "recipientMs": 54,
+          "up": 808,
+          "down": 3186,
+          "httpRequests": 1,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 2,
+          "wsDownFrames": 1,
+          "wsUpPayload": 175,
+          "wsDownPayload": 1515,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 1
+        },
+        {
+          "localVisibleMs": 5,
+          "ownAcceptedMs": 53,
+          "recipientMs": 48,
+          "up": 715,
+          "down": 3155,
+          "httpRequests": 1,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 2,
+          "wsDownFrames": 1,
+          "wsUpPayload": 175,
+          "wsDownPayload": 1515,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 1
+        },
+        {
+          "localVisibleMs": 4,
+          "ownAcceptedMs": 36,
+          "recipientMs": 45,
+          "up": 645,
+          "down": 3155,
+          "httpRequests": 1,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 2,
+          "wsDownFrames": 1,
+          "wsUpPayload": 175,
+          "wsDownPayload": 1515,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 1
+        },
+        {
+          "localVisibleMs": 5,
+          "ownAcceptedMs": 46,
+          "recipientMs": 63,
+          "up": 846,
+          "down": 3155,
+          "httpRequests": 1,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 3,
+          "wsDownFrames": 1,
+          "wsUpPayload": 269,
+          "wsDownPayload": 1515,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 1
+        }
+      ],
+      "receives": [
+        {
+          "visibleMs": 54,
+          "up": 171,
+          "down": 3304,
+          "httpRequests": 1,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 0,
+          "wsDownFrames": 2,
+          "wsUpPayload": 0,
+          "wsDownPayload": 2380,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 58,
+          "up": 329,
+          "down": 3348,
+          "httpRequests": 1,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 0,
+          "wsDownFrames": 3,
+          "wsUpPayload": 0,
+          "wsDownPayload": 2391,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 42,
+          "up": 321,
+          "down": 3335,
+          "httpRequests": 1,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 1,
+          "wsDownFrames": 2,
+          "wsUpPayload": 94,
+          "wsDownPayload": 2380,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 51,
+          "up": 238,
+          "down": 3335,
+          "httpRequests": 1,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 0,
+          "wsDownFrames": 2,
+          "wsUpPayload": 0,
+          "wsDownPayload": 2380,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 75,
+          "up": 168,
+          "down": 3307,
+          "httpRequests": 1,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 0,
+          "wsDownFrames": 2,
+          "wsUpPayload": 0,
+          "wsDownPayload": 2382,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        }
+      ],
+      "inactive": [
+        {
+          "visibleMs": 57,
+          "up": 0,
+          "down": 1548,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 0,
+          "wsDownFrames": 1,
+          "wsUpPayload": 0,
+          "wsDownPayload": 1513,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        }
+      ],
+      "idle10s": {
+        "up": 131,
+        "down": 0,
+        "httpRequests": 0,
+        "http2Responses": 0,
+        "http11Responses": 0,
+        "compressedWsConnections": 0,
+        "wsUpFrames": 1,
+        "wsDownFrames": 0,
+        "wsUpPayload": 94,
+        "wsDownPayload": 0,
+        "sessionRequests": 0,
+        "bootstrapRequests": 0,
+        "messagePosts": 0
+      }
+    },
+    {
+      "profile": "latency900",
+      "label": "rewrite",
+      "startup": [
+        {
+          "trial": 0,
+          "cache": "cold",
+          "readyMs": 4175.77350000001,
+          "atReady": {
+            "up": 5971,
+            "down": 667559
+          },
+          "after15s": {
+            "up": 12151,
+            "down": 4208522
+          },
+          "pageTraffic": {
+            "httpRequests": 57,
+            "http2Responses": 57,
+            "http11Responses": 0,
+            "compressedWsConnections": 0,
+            "wsUpFrames": 5,
+            "wsDownFrames": 3,
+            "wsUpPayload": 898,
+            "wsDownPayload": 3902,
+            "sessionRequests": 0,
+            "bootstrapRequests": 1,
+            "messagePosts": 0
+          }
+        },
+        {
+          "trial": 0,
+          "cache": "warm",
+          "readyMs": 1356.4119000000064,
+          "atReady": {
+            "up": 380,
+            "down": 7619
+          },
+          "after15s": {
+            "up": 3036,
+            "down": 1230748
+          },
+          "pageTraffic": {
+            "httpRequests": 52,
+            "http2Responses": 52,
+            "http11Responses": 0,
+            "compressedWsConnections": 0,
+            "wsUpFrames": 5,
+            "wsDownFrames": 4,
+            "wsUpPayload": 1216,
+            "wsDownPayload": 4086,
+            "sessionRequests": 0,
+            "bootstrapRequests": 1,
+            "messagePosts": 0
+          }
+        },
+        {
+          "trial": 1,
+          "cache": "cold",
+          "readyMs": 4239.372499999998,
+          "atReady": {
+            "up": 6037,
+            "down": 667591
+          },
+          "after15s": {
+            "up": 12176,
+            "down": 4208576
+          },
+          "pageTraffic": {
+            "httpRequests": 57,
+            "http2Responses": 57,
+            "http11Responses": 0,
+            "compressedWsConnections": 0,
+            "wsUpFrames": 5,
+            "wsDownFrames": 3,
+            "wsUpPayload": 894,
+            "wsDownPayload": 3896,
+            "sessionRequests": 0,
+            "bootstrapRequests": 1,
+            "messagePosts": 0
+          }
+        },
+        {
+          "trial": 1,
+          "cache": "warm",
+          "readyMs": 1353.036999999953,
+          "atReady": {
+            "up": 379,
+            "down": 7619
+          },
+          "after15s": {
+            "up": 3001,
+            "down": 1230651
+          },
+          "pageTraffic": {
+            "httpRequests": 52,
+            "http2Responses": 52,
+            "http11Responses": 0,
+            "compressedWsConnections": 0,
+            "wsUpFrames": 5,
+            "wsDownFrames": 3,
+            "wsUpPayload": 1216,
+            "wsDownPayload": 3896,
+            "sessionRequests": 0,
+            "bootstrapRequests": 1,
+            "messagePosts": 0
+          }
+        }
+      ],
+      "sends": [
+        {
+          "localVisibleMs": 29,
+          "ownAcceptedMs": 980,
+          "recipientMs": 544,
+          "up": 1150,
+          "down": 3944,
+          "httpRequests": 3,
+          "http2Responses": 3,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 3,
+          "wsDownFrames": 2,
+          "wsUpPayload": 269,
+          "wsDownPayload": 1552,
+          "sessionRequests": 1,
+          "bootstrapRequests": 0,
+          "messagePosts": 1
+        },
+        {
+          "localVisibleMs": 3,
+          "ownAcceptedMs": 928,
+          "recipientMs": 490,
+          "up": 819,
+          "down": 3207,
+          "httpRequests": 1,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 2,
+          "wsDownFrames": 1,
+          "wsUpPayload": 175,
+          "wsDownPayload": 1541,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 1
+        },
+        {
+          "localVisibleMs": 5,
+          "ownAcceptedMs": 929,
+          "recipientMs": 492,
+          "up": 725,
+          "down": 3207,
+          "httpRequests": 1,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 2,
+          "wsDownFrames": 1,
+          "wsUpPayload": 175,
+          "wsDownPayload": 1541,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 1
+        },
+        {
+          "localVisibleMs": 8,
+          "ownAcceptedMs": 927,
+          "recipientMs": 492,
+          "up": 786,
+          "down": 3207,
+          "httpRequests": 1,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 3,
+          "wsDownFrames": 1,
+          "wsUpPayload": 269,
+          "wsDownPayload": 1541,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 1
+        },
+        {
+          "localVisibleMs": 4,
+          "ownAcceptedMs": 928,
+          "recipientMs": 490,
+          "up": 725,
+          "down": 3251,
+          "httpRequests": 1,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 2,
+          "wsDownFrames": 2,
+          "wsUpPayload": 175,
+          "wsDownPayload": 1552,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 1
+        }
+      ],
+      "receives": [
+        {
+          "visibleMs": 491,
+          "up": 300,
+          "down": 3352,
+          "httpRequests": 1,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 1,
+          "wsDownFrames": 2,
+          "wsUpPayload": 92,
+          "wsDownPayload": 2417,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 502,
+          "up": 329,
+          "down": 3383,
+          "httpRequests": 1,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 0,
+          "wsDownFrames": 2,
+          "wsUpPayload": 0,
+          "wsDownPayload": 2417,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 490,
+          "up": 190,
+          "down": 3352,
+          "httpRequests": 2,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 0,
+          "wsDownFrames": 2,
+          "wsUpPayload": 0,
+          "wsDownPayload": 2417,
+          "sessionRequests": 1,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 496,
+          "up": 685,
+          "down": 4036,
+          "httpRequests": 1,
+          "http2Responses": 2,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 1,
+          "wsDownFrames": 2,
+          "wsUpPayload": 92,
+          "wsDownPayload": 2417,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 488,
+          "up": 168,
+          "down": 3399,
+          "httpRequests": 1,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 0,
+          "wsDownFrames": 3,
+          "wsUpPayload": 0,
+          "wsDownPayload": 2430,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        }
+      ],
+      "inactive": [
+        {
+          "visibleMs": 517,
+          "up": 129,
+          "down": 1573,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 1,
+          "wsDownFrames": 1,
+          "wsUpPayload": 92,
+          "wsDownPayload": 1538,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        }
+      ],
+      "idle10s": {
+        "up": 131,
+        "down": 0,
+        "httpRequests": 0,
+        "http2Responses": 0,
+        "http11Responses": 0,
+        "compressedWsConnections": 0,
+        "wsUpFrames": 1,
+        "wsDownFrames": 0,
+        "wsUpPayload": 94,
+        "wsDownPayload": 0,
+        "sessionRequests": 0,
+        "bootstrapRequests": 0,
+        "messagePosts": 0
+      }
+    },
+    {
+      "profile": "latency900",
+      "label": "reference",
+      "startup": [
+        {
+          "trial": 0,
+          "cache": "cold",
+          "readyMs": 14631.664999999979,
+          "atReady": {
+            "up": 9581,
+            "down": 727708
+          },
+          "after15s": {
+            "up": 10555,
+            "down": 1151951
+          },
+          "pageTraffic": {
+            "httpRequests": 21,
+            "http2Responses": 21,
+            "http11Responses": 0,
+            "compressedWsConnections": 1,
+            "wsUpFrames": 44,
+            "wsDownFrames": 45,
+            "wsUpPayload": 7753,
+            "wsDownPayload": 569651,
+            "sessionRequests": 0,
+            "bootstrapRequests": 0,
+            "messagePosts": 0
+          }
+        },
+        {
+          "trial": 0,
+          "cache": "warm",
+          "readyMs": 13697.561199999996,
+          "atReady": {
+            "up": 6420,
+            "down": 660141
+          },
+          "after15s": {
+            "up": 7322,
+            "down": 1084282
+          },
+          "pageTraffic": {
+            "httpRequests": 21,
+            "http2Responses": 21,
+            "http11Responses": 0,
+            "compressedWsConnections": 1,
+            "wsUpFrames": 46,
+            "wsDownFrames": 47,
+            "wsUpPayload": 7811,
+            "wsDownPayload": 568501,
+            "sessionRequests": 0,
+            "bootstrapRequests": 0,
+            "messagePosts": 0
+          }
+        },
+        {
+          "trial": 1,
+          "cache": "cold",
+          "readyMs": 14674.333800000022,
+          "atReady": {
+            "up": 9610,
+            "down": 726406
+          },
+          "after15s": {
+            "up": 10675,
+            "down": 1151361
+          },
+          "pageTraffic": {
+            "httpRequests": 21,
+            "http2Responses": 21,
+            "http11Responses": 0,
+            "compressedWsConnections": 1,
+            "wsUpFrames": 46,
+            "wsDownFrames": 44,
+            "wsUpPayload": 7857,
+            "wsDownPayload": 571666,
+            "sessionRequests": 0,
+            "bootstrapRequests": 0,
+            "messagePosts": 0
+          }
+        },
+        {
+          "trial": 1,
+          "cache": "warm",
+          "readyMs": 13735.130999999994,
+          "atReady": {
+            "up": 6381,
+            "down": 659989
+          },
+          "after15s": {
+            "up": 7324,
+            "down": 1084187
+          },
+          "pageTraffic": {
+            "httpRequests": 21,
+            "http2Responses": 21,
+            "http11Responses": 0,
+            "compressedWsConnections": 1,
+            "wsUpFrames": 46,
+            "wsDownFrames": 48,
+            "wsUpPayload": 7811,
+            "wsDownPayload": 568500,
+            "sessionRequests": 0,
+            "bootstrapRequests": 0,
+            "messagePosts": 0
+          }
+        }
+      ],
+      "sends": [
+        {
+          "localVisibleMs": 1,
+          "ownAcceptedMs": 937,
+          "recipientMs": 485,
+          "up": 667,
+          "down": 2743,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 6,
+          "wsDownFrames": 6,
+          "wsUpPayload": 882,
+          "wsDownPayload": 12760,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "localVisibleMs": 1,
+          "ownAcceptedMs": 915,
+          "recipientMs": 461,
+          "up": 373,
+          "down": 1701,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 7,
+          "wsDownFrames": 7,
+          "wsUpPayload": 944,
+          "wsDownPayload": 12137,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "localVisibleMs": 0,
+          "ownAcceptedMs": 913,
+          "recipientMs": 459,
+          "up": 382,
+          "down": 1587,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 6,
+          "wsDownFrames": 10,
+          "wsUpPayload": 886,
+          "wsDownPayload": 12382,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "localVisibleMs": 0,
+          "ownAcceptedMs": 916,
+          "recipientMs": 462,
+          "up": 390,
+          "down": 1467,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 6,
+          "wsDownFrames": 8,
+          "wsUpPayload": 886,
+          "wsDownPayload": 12554,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "localVisibleMs": 1,
+          "ownAcceptedMs": 912,
+          "recipientMs": 458,
+          "up": 361,
+          "down": 1581,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 7,
+          "wsDownFrames": 9,
+          "wsUpPayload": 945,
+          "wsDownPayload": 12795,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        }
+      ],
+      "receives": [
+        {
+          "visibleMs": 459,
+          "up": 479,
+          "down": 3162,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 9,
+          "wsDownFrames": 8,
+          "wsUpPayload": 291,
+          "wsDownPayload": 15527,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 457,
+          "up": 392,
+          "down": 1790,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 7,
+          "wsDownFrames": 7,
+          "wsUpPayload": 291,
+          "wsDownPayload": 14904,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 458,
+          "up": 456,
+          "down": 1739,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 10,
+          "wsDownFrames": 9,
+          "wsUpPayload": 350,
+          "wsDownPayload": 15142,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 459,
+          "up": 474,
+          "down": 1666,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 9,
+          "wsDownFrames": 8,
+          "wsUpPayload": 291,
+          "wsDownPayload": 15317,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 459,
+          "up": 405,
+          "down": 1757,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 10,
+          "wsDownFrames": 9,
+          "wsUpPayload": 350,
+          "wsDownPayload": 15525,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        }
+      ],
+      "inactive": [
+        {
+          "visibleMs": 477,
+          "up": 183,
+          "down": 955,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 4,
+          "wsDownFrames": 5,
+          "wsUpPayload": 142,
+          "wsDownPayload": 2762,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        }
+      ],
+      "idle10s": {
+        "up": 120,
+        "down": 78,
+        "httpRequests": 0,
+        "http2Responses": 0,
+        "http11Responses": 0,
+        "compressedWsConnections": 0,
+        "wsUpFrames": 1,
+        "wsDownFrames": 2,
+        "wsUpPayload": 58,
+        "wsDownPayload": 35,
+        "sessionRequests": 0,
+        "bootstrapRequests": 0,
+        "messagePosts": 0
+      }
+    },
+    {
+      "profile": "slow900",
+      "label": "reference",
+      "startup": [
+        {
+          "trial": 0,
+          "cache": "cold",
+          "readyMs": 18045.213499999954,
+          "atReady": {
+            "up": 9545,
+            "down": 728531
+          },
+          "after15s": {
+            "up": 10907,
+            "down": 1154500
+          },
+          "pageTraffic": {
+            "httpRequests": 21,
+            "http2Responses": 21,
+            "http11Responses": 0,
+            "compressedWsConnections": 1,
+            "wsUpFrames": 54,
+            "wsDownFrames": 56,
+            "wsUpPayload": 7808,
+            "wsDownPayload": 582161,
+            "sessionRequests": 0,
+            "bootstrapRequests": 0,
+            "messagePosts": 0
+          }
+        },
+        {
+          "trial": 0,
+          "cache": "warm",
+          "readyMs": 17856.74290000007,
+          "atReady": {
+            "up": 6040,
+            "down": 573185
+          },
+          "after15s": {
+            "up": 7024,
+            "down": 997488
+          },
+          "pageTraffic": {
+            "httpRequests": 21,
+            "http2Responses": 21,
+            "http11Responses": 0,
+            "compressedWsConnections": 1,
+            "wsUpFrames": 47,
+            "wsDownFrames": 49,
+            "wsUpPayload": 7808,
+            "wsDownPayload": 569827,
+            "sessionRequests": 0,
+            "bootstrapRequests": 0,
+            "messagePosts": 0
+          }
+        },
+        {
+          "trial": 1,
+          "cache": "cold",
+          "readyMs": 18084.500699999975,
+          "atReady": {
+            "up": 9641,
+            "down": 727985
+          },
+          "after15s": {
+            "up": 10621,
+            "down": 1152212
+          },
+          "pageTraffic": {
+            "httpRequests": 21,
+            "http2Responses": 21,
+            "http11Responses": 0,
+            "compressedWsConnections": 1,
+            "wsUpFrames": 46,
+            "wsDownFrames": 49,
+            "wsUpPayload": 7750,
+            "wsDownPayload": 569826,
+            "sessionRequests": 0,
+            "bootstrapRequests": 0,
+            "messagePosts": 0
+          }
+        },
+        {
+          "trial": 1,
+          "cache": "warm",
+          "readyMs": 17406.47199999995,
+          "atReady": {
+            "up": 6150,
+            "down": 573594
+          },
+          "after15s": {
+            "up": 7168,
+            "down": 997845
+          },
+          "pageTraffic": {
+            "httpRequests": 21,
+            "http2Responses": 21,
+            "http11Responses": 0,
+            "compressedWsConnections": 1,
+            "wsUpFrames": 48,
+            "wsDownFrames": 48,
+            "wsUpPayload": 7808,
+            "wsDownPayload": 569826,
+            "sessionRequests": 0,
+            "bootstrapRequests": 0,
+            "messagePosts": 0
+          }
+        }
+      ],
+      "sends": [
+        {
+          "localVisibleMs": 2,
+          "ownAcceptedMs": 958,
+          "recipientMs": 484,
+          "up": 668,
+          "down": 2707,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 6,
+          "wsDownFrames": 6,
+          "wsUpPayload": 876,
+          "wsDownPayload": 12739,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "localVisibleMs": 0,
+          "ownAcceptedMs": 929,
+          "recipientMs": 465,
+          "up": 374,
+          "down": 1659,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 7,
+          "wsDownFrames": 7,
+          "wsUpPayload": 938,
+          "wsDownPayload": 12125,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "localVisibleMs": 1,
+          "ownAcceptedMs": 927,
+          "recipientMs": 463,
+          "up": 389,
+          "down": 1531,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 6,
+          "wsDownFrames": 10,
+          "wsUpPayload": 880,
+          "wsDownPayload": 12370,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "localVisibleMs": 1,
+          "ownAcceptedMs": 931,
+          "recipientMs": 467,
+          "up": 383,
+          "down": 1542,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 6,
+          "wsDownFrames": 8,
+          "wsUpPayload": 880,
+          "wsDownPayload": 12542,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "localVisibleMs": 1,
+          "ownAcceptedMs": 930,
+          "recipientMs": 462,
+          "up": 360,
+          "down": 1531,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 7,
+          "wsDownFrames": 9,
+          "wsUpPayload": 939,
+          "wsDownPayload": 12783,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        }
+      ],
+      "receives": [
+        {
+          "visibleMs": 480,
+          "up": 479,
+          "down": 3326,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 9,
+          "wsDownFrames": 8,
+          "wsUpPayload": 291,
+          "wsDownPayload": 15863,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 470,
+          "up": 405,
+          "down": 1944,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 9,
+          "wsDownFrames": 10,
+          "wsUpPayload": 291,
+          "wsDownPayload": 15249,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 470,
+          "up": 492,
+          "down": 1742,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 10,
+          "wsDownFrames": 9,
+          "wsUpPayload": 350,
+          "wsDownPayload": 15487,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 475,
+          "up": 404,
+          "down": 1753,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 9,
+          "wsDownFrames": 8,
+          "wsUpPayload": 291,
+          "wsDownPayload": 15662,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 469,
+          "up": 476,
+          "down": 1799,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 10,
+          "wsDownFrames": 8,
+          "wsUpPayload": 350,
+          "wsDownPayload": 15870,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        }
+      ],
+      "inactive": [
+        {
+          "visibleMs": 476,
+          "up": 253,
+          "down": 1150,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 4,
+          "wsDownFrames": 4,
+          "wsUpPayload": 142,
+          "wsDownPayload": 3771,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        }
+      ],
+      "idle10s": {
+        "up": 118,
+        "down": 78,
+        "httpRequests": 0,
+        "http2Responses": 0,
+        "http11Responses": 0,
+        "compressedWsConnections": 0,
+        "wsUpFrames": 1,
+        "wsDownFrames": 2,
+        "wsUpPayload": 58,
+        "wsDownPayload": 35,
+        "sessionRequests": 0,
+        "bootstrapRequests": 0,
+        "messagePosts": 0
+      }
+    },
+    {
+      "profile": "slow900",
+      "label": "rewrite",
+      "startup": [
+        {
+          "trial": 0,
+          "cache": "cold",
+          "readyMs": 8917.738700000104,
+          "atReady": {
+            "up": 6066,
+            "down": 668361
+          },
+          "after15s": {
+            "up": 9654,
+            "down": 2299302
+          },
+          "pageTraffic": {
+            "httpRequests": 55,
+            "http2Responses": 49,
+            "http11Responses": 0,
+            "compressedWsConnections": 0,
+            "wsUpFrames": 5,
+            "wsDownFrames": 1,
+            "wsUpPayload": 793,
+            "wsDownPayload": 3,
+            "sessionRequests": 0,
+            "bootstrapRequests": 1,
+            "messagePosts": 0
+          }
+        },
+        {
+          "trial": 0,
+          "cache": "warm",
+          "readyMs": 1345.05130000005,
+          "atReady": {
+            "up": 377,
+            "down": 8342
+          },
+          "after15s": {
+            "up": 3036,
+            "down": 1193870
+          },
+          "pageTraffic": {
+            "httpRequests": 51,
+            "http2Responses": 50,
+            "http11Responses": 0,
+            "compressedWsConnections": 0,
+            "wsUpFrames": 5,
+            "wsDownFrames": 3,
+            "wsUpPayload": 1215,
+            "wsDownPayload": 4013,
+            "sessionRequests": 0,
+            "bootstrapRequests": 1,
+            "messagePosts": 0
+          }
+        },
+        {
+          "trial": 1,
+          "cache": "cold",
+          "readyMs": 8932.303199999966,
+          "atReady": {
+            "up": 5772,
+            "down": 668422
+          },
+          "after15s": {
+            "up": 9652,
+            "down": 2315935
+          },
+          "pageTraffic": {
+            "httpRequests": 55,
+            "http2Responses": 49,
+            "http11Responses": 0,
+            "compressedWsConnections": 0,
+            "wsUpFrames": 5,
+            "wsDownFrames": 1,
+            "wsUpPayload": 789,
+            "wsDownPayload": 3,
+            "sessionRequests": 0,
+            "bootstrapRequests": 1,
+            "messagePosts": 0
+          }
+        },
+        {
+          "trial": 1,
+          "cache": "warm",
+          "readyMs": 1412.0400000000373,
+          "atReady": {
+            "up": 377,
+            "down": 8342
+          },
+          "after15s": {
+            "up": 2932,
+            "down": 1193672
+          },
+          "pageTraffic": {
+            "httpRequests": 51,
+            "http2Responses": 50,
+            "http11Responses": 0,
+            "compressedWsConnections": 0,
+            "wsUpFrames": 5,
+            "wsDownFrames": 3,
+            "wsUpPayload": 1217,
+            "wsDownPayload": 4013,
+            "sessionRequests": 0,
+            "bootstrapRequests": 1,
+            "messagePosts": 0
+          }
+        }
+      ],
+      "sends": [
+        {
+          "localVisibleMs": 10,
+          "ownAcceptedMs": 969,
+          "recipientMs": 518,
+          "up": 1035,
+          "down": 3858,
+          "httpRequests": 3,
+          "http2Responses": 3,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 3,
+          "wsDownFrames": 1,
+          "wsUpPayload": 269,
+          "wsDownPayload": 1524,
+          "sessionRequests": 1,
+          "bootstrapRequests": 0,
+          "messagePosts": 1
+        },
+        {
+          "localVisibleMs": 6,
+          "ownAcceptedMs": 953,
+          "recipientMs": 504,
+          "up": 879,
+          "down": 3208,
+          "httpRequests": 1,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 2,
+          "wsDownFrames": 1,
+          "wsUpPayload": 175,
+          "wsDownPayload": 1526,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 1
+        },
+        {
+          "localVisibleMs": 5,
+          "ownAcceptedMs": 948,
+          "recipientMs": 500,
+          "up": 649,
+          "down": 3208,
+          "httpRequests": 1,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 2,
+          "wsDownFrames": 1,
+          "wsUpPayload": 175,
+          "wsDownPayload": 1526,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 1
+        },
+        {
+          "localVisibleMs": 4,
+          "ownAcceptedMs": 952,
+          "recipientMs": 498,
+          "up": 850,
+          "down": 3221,
+          "httpRequests": 1,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 3,
+          "wsDownFrames": 2,
+          "wsUpPayload": 269,
+          "wsDownPayload": 1537,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 1
+        },
+        {
+          "localVisibleMs": 5,
+          "ownAcceptedMs": 949,
+          "recipientMs": 502,
+          "up": 649,
+          "down": 3177,
+          "httpRequests": 1,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 2,
+          "wsDownFrames": 1,
+          "wsUpPayload": 175,
+          "wsDownPayload": 1526,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 1
+        }
+      ],
+      "receives": [
+        {
+          "visibleMs": 512,
+          "up": 372,
+          "down": 3325,
+          "httpRequests": 1,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 1,
+          "wsDownFrames": 2,
+          "wsUpPayload": 94,
+          "wsDownPayload": 2396,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 499,
+          "up": 259,
+          "down": 3356,
+          "httpRequests": 1,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 0,
+          "wsDownFrames": 2,
+          "wsUpPayload": 0,
+          "wsDownPayload": 2396,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 497,
+          "up": 260,
+          "down": 3369,
+          "httpRequests": 2,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 0,
+          "wsDownFrames": 3,
+          "wsUpPayload": 0,
+          "wsDownPayload": 2407,
+          "sessionRequests": 1,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 504,
+          "up": 615,
+          "down": 4008,
+          "httpRequests": 1,
+          "http2Responses": 2,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 1,
+          "wsDownFrames": 2,
+          "wsUpPayload": 94,
+          "wsDownPayload": 2395,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        },
+        {
+          "visibleMs": 504,
+          "up": 238,
+          "down": 3328,
+          "httpRequests": 1,
+          "http2Responses": 1,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 0,
+          "wsDownFrames": 2,
+          "wsUpPayload": 0,
+          "wsDownPayload": 2398,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        }
+      ],
+      "inactive": [
+        {
+          "visibleMs": 512,
+          "up": 201,
+          "down": 1603,
+          "httpRequests": 0,
+          "http2Responses": 0,
+          "http11Responses": 0,
+          "compressedWsConnections": 0,
+          "wsUpFrames": 1,
+          "wsDownFrames": 2,
+          "wsUpPayload": 94,
+          "wsDownPayload": 1535,
+          "sessionRequests": 0,
+          "bootstrapRequests": 0,
+          "messagePosts": 0
+        }
+      ],
+      "idle10s": {
+        "up": 201,
+        "down": 44,
+        "httpRequests": 0,
+        "http2Responses": 0,
+        "http11Responses": 0,
+        "compressedWsConnections": 0,
+        "wsUpFrames": 1,
+        "wsDownFrames": 1,
+        "wsUpPayload": 94,
+        "wsDownPayload": 11,
+        "sessionRequests": 0,
+        "bootstrapRequests": 0,
+        "messagePosts": 0
+      }
+    }
+  ],
+  "browser": "156.0.8078.4"
+}

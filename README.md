@@ -21,7 +21,7 @@ Access at `http://localhost:5221` - it's up to you how to make this accessible f
 
 - **No registration required** - Just log in with username, no passwords or social logins
 - **User profiles** - Set profile picture, display name, and bio; avatars shown in chat
-- **Database optional** - Everything can be ephemeral and live only in memory (wiped on app reset) or you can use SQLite for persistence
+- **Durable offline chat** - Cached conversations, local drafts and queued messages/actions survive disconnection and reload. SQLite persistence is required for durable sending.
 - **Customizable labels in config** - make it fun or serious
 - **Emoji support** - Beautiful Twemoji rendering 
 - **Custom emojis** - Drop image files into `Data/custom-emojis/` (data volume) folder and they become available for your users
@@ -39,6 +39,17 @@ Access at `http://localhost:5221` - it's up to you how to make this accessible f
 - **Social media previews/embeds** - Yap downloads that tiktok/youtube video so users dont need to go to these evil sites
 
 
+## Architecture and development
+
+Chat routes use a browser client with local storage and a service worker. ASP.NET remains authoritative for accounts, permissions and messages; Login, Settings and Admin continue to use Blazor. An authenticated online visit prepares cached reading and durable outgoing work for later disconnection.
+
+- [Offline behavior](docs/offline-behavior.md): cached reading, drafts, outgoing operations, account isolation and recovery limits.
+- [Architecture](docs/offline-client-architecture.md) and [interactive diagrams](docs/offline-architecture.html): module ownership, data flow and repository structure.
+- [Communication guide](docs/offline-communication.html): startup order, HTTP versus SignalR, message flow and retained Blazor interactivity, with diagrams and source excerpts.
+- [Feature reference](docs/feature-parity-inventory.md): the maintained list of Yap features, regression coverage and verification limits.
+- [Testing and formatting](tests/browser/README.md): pinned tools, isolated fixtures and suite prerequisites.
+- [Deployment and rollback](GHCR-DEPLOYMENT-GUIDE.md#upgrading-yap-to-the-offline-client): persistent data, proxy/cache configuration and safe upgrade checks.
+
 ## License
 
 YOU CAN USE THIS SOFTWARE "AS IS" (NO WARRANTY) IN ANY WAY YOU WANT, BUT BY DOING SO YOU ACKNOWLEDGE THAT:
@@ -48,4 +59,3 @@ Science is a force for human liberation and one of humanity's greatest invention
 Technology is the physical manifestation of our discoveries. By building better tools, we overcome limitations, reduce suffering, and create abundance.
 
 Free markets enable cooperation on an extraordinary scale. Through competition, exchange, and entrepreneurship, they reward useful ideas, spread innovation, and help lift people out of poverty.
-

@@ -4,6 +4,7 @@ public class ChatMessage
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid ChannelId { get; set; }
+    public Guid? OperationId { get; set; }
 
     /// <summary>
     /// The user who sent this message (foreign key to User).
