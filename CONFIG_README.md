@@ -25,10 +25,33 @@ only useful for keys that the `Data/` file leaves out (logging levels, for examp
 {
   "Logging": { ... },
   "AllowedHosts": "*",
+  "PublicOrigin": "",
   "Vapid": { "Subject": "mailto:...", "PublicKey": "...", "PrivateKey": "..." },
   "ChatSettings": { ... }
 }
 ```
+
+### PublicOrigin
+
+Optional absolute HTTP(S) origin, for example `"https://chat.example.com"` or
+`"https://chat.example.com:8443"`. Leave empty for automatic per-user addresses.
+Use it when a reverse proxy replaces the public Host with an internal hostname.
+A configured origin overrides all displayed, copied and bot-generated invite/login links.
+It must contain only scheme and host (an optional port and trailing slash are allowed),
+with no credentials, path, query or fragment. Invalid values fail startup.
+
+Without this setting, chat session/bootstrap and authenticated Blazor page loads remember
+scheme and host on that user's account, persisted alongside known IPs. Welcome DMs use
+the recipient's address. Admin replacement-link DMs use the recipient's address, then the
+issuing admin's recorded address, then a site-relative link if neither is known. Existing
+accounts start without an address until their next session. Settings and Admin display/copy
+links using the viewing circuit's base URI; paths are never included in the saved origin.
+
+Yap ignores `X-Forwarded-Host`. It accepts `X-Forwarded-Proto` and `X-Forwarded-For`
+from any immediate proxy by default, processing only the nearest hop (`ForwardLimit = 1`).
+This supports changing container/proxy addresses; optional `ReverseProxy:KnownProxies`
+and `ReverseProxy:KnownNetworks` restrict that trust. The nearest proxy must supply the
+original public scheme. See the [deployment guide](GHCR-DEPLOYMENT-GUIDE.md#https-reverse-proxies-and-caches).
 
 ### Vapid
 

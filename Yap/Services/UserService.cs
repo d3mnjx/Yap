@@ -732,6 +732,17 @@ public class UserService
     private static readonly TimeSpan KnownIpRefreshThrottle = TimeSpan.FromHours(1);
     private const int MaxKnownIps = 5;
 
+    /// <summary>Capture before presence connects: the delayed welcome DM runs outside a request.</summary>
+    public void RecordLoginOrigin(Guid userId, string origin)
+    {
+        var normalized = AccessLinkService.NormalizeOrigin(origin);
+        if (normalized == null || !_users.TryGetValue(userId, out var user) || user.LoginOrigin == normalized)
+            return;
+
+        user.LoginOrigin = normalized;
+        _dirtyEmojiUsers.TryAdd(userId, 0);
+    }
+
     private sealed record KnownIpEntry(string Ip, DateTime LastSeenUtc);
 
     /// <summary>
@@ -1026,7 +1037,8 @@ public class UserService
                         .SetProperty(u => u.RecentEmojis, user.RecentEmojis)
                         .SetProperty(u => u.EmojiCounts, user.EmojiCounts)
                         .SetProperty(u => u.RecentGifs, user.RecentGifs)
-                        .SetProperty(u => u.KnownIps, user.KnownIps));
+                        .SetProperty(u => u.KnownIps, user.KnownIps)
+                        .SetProperty(u => u.LoginOrigin, user.LoginOrigin));
             }
         }
         catch (Exception ex)

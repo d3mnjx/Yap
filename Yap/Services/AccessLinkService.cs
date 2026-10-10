@@ -37,15 +37,23 @@ public class AccessLinkService
 
     private readonly Queue<DateTime> _failures = new();
     private DateTime? _brakedUntil;
-    private volatile string? _publicOrigin;
+    private readonly string? _configuredOrigin;
 
     /// <summary>Fired once per trip with the failure count. Subscribed by SystemBotService.</summary>
     public event Action<int>? OnBrakeTripped;
 
-    public AccessLinkService(IServiceProvider serviceProvider, ILogger<AccessLinkService> logger)
+    public AccessLinkService(IServiceProvider serviceProvider, ILogger<AccessLinkService> logger, IConfiguration configuration)
     {
         _dbFactory = serviceProvider.GetService<IDbContextFactory<ChatDbContext>>();
         _logger = logger;
+        var configured = configuration["PublicOrigin"];
+        if (!string.IsNullOrWhiteSpace(configured))
+        {
+            _configuredOrigin = NormalizeOrigin(configured);
+            if (_configuredOrigin == null || !Uri.TryCreate(configured, UriKind.Absolute, out var uri)
+                || uri.AbsolutePath != "/" || uri.Query.Length != 0 || uri.Fragment.Length != 0)
+                throw new ArgumentException("PublicOrigin must be an absolute HTTP(S) origin with no path, query or fragment.");
+        }
     }
 
     private bool PersistenceEnabled => _dbFactory != null;
@@ -280,26 +288,23 @@ public class AccessLinkService
 
     #region Public URL
 
-    /// <summary>
-    /// Learns the site's public origin from real page loads (AuthMiddleware), so bot DMs can
-    /// carry a clickable absolute link without a config key. Honors X-Forwarded-Proto: the
-    /// app sits behind a TLS-terminating proxy, where Request.Scheme would say http.
-    /// </summary>
-    public void ObserveOrigin(HttpContext context)
+    /// <summary>Extract only an HTTP(S) origin, including a non-default port, from a viewer's URI.</summary>
+    public static string? NormalizeOrigin(string? value)
     {
-        // ForwardedHeaders middleware has already checked proxy trust. Reading the raw
-        // header here would let an untrusted caller override the validated public scheme.
-        var scheme = context.Request.Scheme;
-
-        var host = context.Request.Host;
-        if (!host.HasValue) return;
-
-        var origin = $"{scheme}://{host.Value}";
-        if (origin != _publicOrigin) _publicOrigin = origin;
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri)
+            || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+            || uri.UserInfo.Length != 0 || string.IsNullOrEmpty(uri.Host))
+            return null;
+        return uri.GetLeftPart(UriPartial.Authority);
     }
 
-    /// <summary>Absolute when the origin is known, else site-relative (still works as an href).</summary>
-    public string BuildUrl(string code) => $"{_publicOrigin}/invite/{code}";
+    /// <summary>
+    /// Configuration wins; callers supply the recipient's origin (bot DMs) or the circuit's
+    /// base URI (display/copy). Older recipients may fall back to the issuing admin's origin.
+    /// No remembered origin is shared between users; absent origins leave a relative link.
+    /// </summary>
+    public string BuildUrl(string code, string? origin = null, string? fallbackOrigin = null) =>
+        $"{_configuredOrigin ?? NormalizeOrigin(origin) ?? NormalizeOrigin(fallbackOrigin)}/invite/{code}";
 
     #endregion
 }

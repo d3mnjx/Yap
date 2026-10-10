@@ -153,6 +153,13 @@ public class User
     public string? KnownIps { get; set; }
 
     /// <summary>
+    /// Scheme and host from this user's most recent authenticated session, without a path.
+    /// Bot login links use the recipient's address, never a process-wide last visitor's address.
+    /// Null for older accounts until their next session; persisted with known IPs.
+    /// </summary>
+    public string? LoginOrigin { get; set; }
+
+    /// <summary>
     /// JSON-serialized List&lt;string&gt; of recently used emojis (most recent first, max 20).
     /// </summary>
     public string? RecentEmojis { get; set; }

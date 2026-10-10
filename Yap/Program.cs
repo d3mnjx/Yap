@@ -15,10 +15,13 @@ using Yap.Services.Gifs;
 var builder = WebApplication.CreateBuilder(args);
 
 // Deployments use different proxies and dynamic container addresses. Accept forwarded
-// public URLs by default; an explicit address/network list opts into restricted trust.
+// scheme/client IP by default; an explicit address/network list opts into restricted trust.
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
-    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
+    // Keep dynamic proxy chains working, but never let X-Forwarded-Host choose a login-link host.
+    // Only the nearest hop supplies scheme/IP; PublicOrigin handles proxies that hide the public Host.
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.ForwardLimit = 1;
     var proxies = builder.Configuration.GetSection("ReverseProxy:KnownProxies").Get<string[]>() ?? [];
     var networks = builder.Configuration.GetSection("ReverseProxy:KnownNetworks").Get<string[]>() ?? [];
     if (proxies.Length == 0 && networks.Length == 0)

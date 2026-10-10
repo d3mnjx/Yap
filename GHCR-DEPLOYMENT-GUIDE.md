@@ -325,7 +325,7 @@ Before stopping the original Blazor app, ask users to send or copy unfinished te
 
 ### HTTPS, reverse proxies and caches
 
-Service workers require trusted HTTPS, except for loopback development. Yap accepts `X-Forwarded-Proto`, `X-Forwarded-Host` and `X-Forwarded-For` from any immediate proxy by default. Ordinary Caddy/Nginx and Docker deployments do not need a proxy address allowlist, and changing container addresses does not require an app configuration update. Forwarding restores the public URL for HTTPS handling and generated login links; only the nearest forwarded hop is processed.
+Service workers require trusted HTTPS, except for loopback development. Yap accepts `X-Forwarded-Proto` and `X-Forwarded-For` from any immediate proxy by default. Ordinary Caddy/Nginx and Docker deployments do not need a proxy address allowlist, and changing container addresses does not require an app configuration update. Forwarding restores the public scheme and client IP; only the nearest forwarded hop is processed (`ForwardLimit = 1`). `X-Forwarded-Host` is ignored so it cannot replace the login-link host.
 
 Chat writes require an account-bound antiforgery token. Chat API writes and hub requests reject `Sec-Fetch-Site: cross-site`, but accept missing browser metadata and do not compare the browser's Origin with the internal request URL. This intentionally favors compatibility with proxy URL rewriting and older clients; it is not strict same-origin enforcement.
 
@@ -339,7 +339,9 @@ The permissive default also accepts forwarded headers supplied directly by a cli
 
 `ReverseProxy:KnownNetworks` accepts CIDRs when a specific stable address is impractical. Leave both lists absent or empty to keep the permissive default. When opting into restriction, use valid IP addresses/CIDRs; malformed entries prevent startup.
 
-Preserve the public Host or supply `X-Forwarded-Host`, and forward the original public scheme in `X-Forwarded-Proto`. With multiple proxies, the nearest proxy must pass that public URL through instead of reporting its internal HTTP connection. Forward `/api/chat/*`, `/hubs/chat*` with WebSocket upgrades, `/api/tus*`, `/service-worker.js`, `/chat-client/*` and retained Blazor routes. A normal Caddy `reverse_proxy` preserves the Host.
+Preserve the public Host, and forward the original public scheme in `X-Forwarded-Proto`. With multiple proxies, the nearest proxy must pass that public URL through instead of reporting its internal HTTP connection. Forward `/api/chat/*`, `/hubs/chat*` with WebSocket upgrades, `/api/tus*`, `/service-worker.js`, `/chat-client/*` and retained Blazor routes. A normal Caddy `reverse_proxy` preserves the Host.
+
+If the proxy hides the public Host, set the optional top-level `PublicOrigin` to an HTTP(S) origin such as `"https://chat.example.com"`; it overrides all invite/login-link origins. Otherwise bot links use per-user recorded origins: the recipient's for welcome DMs, the recipient's then issuing admin's for replacement DMs, and a site-relative link when neither is known. Settings/Admin use the viewing circuit's base URI. Origins contain no path. See [configuration](CONFIG_README.md#publicorigin).
 
 For Cloudflare or another CDN:
 

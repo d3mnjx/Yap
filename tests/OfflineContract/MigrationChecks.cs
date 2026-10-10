@@ -27,6 +27,9 @@ static class MigrationChecks
         if (migrated.Count != counts.Count || migrated.Any(s => s.UnreadCount != counts[(s.UserId, s.ChannelId)] || s.ReceivedCount != s.UnreadCount || s.ReadThrough != 0)
             || await db.Messages.CountAsync() != messages || await db.Users.CountAsync() != users)
             throw new Exception("Unread migration changed existing data");
+        if (await db.Users.AnyAsync(u => u.LoginOrigin != null))
+            throw new Exception("Origin migration must leave existing accounts without a guessed origin");
+        Console.WriteLine("PASS origin migration preserves accounts and leaves historical login origins null");
         Console.WriteLine("PASS migration preserves existing unread counts/messages/accounts and initializes checkpoints");
     }
 }

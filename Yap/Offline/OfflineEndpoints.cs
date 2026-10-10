@@ -90,9 +90,10 @@ public static class OfflineEndpoints
         api.MapGet("/bootstrap", (HttpContext http, string? path, Guid? channelId, string? epoch, string? revision, Guid? knownUser, UserService users, OfflineSnapshotService snapshots, OfflineSync sync) =>
         {
             var user = users.AuthenticateByToken(http.Request.Cookies[AuthMiddleware.CookieName]!)!;
+            var session = Session(http);
             return Modern(http) ? Results.Ok(new
             {
-                session = Session(http),
+                session,
                 update = sync.Bootstrap(user, path, channelId, epoch, revision, knownUser)
             })
                 : Results.Ok(snapshots.Snapshot(user));
@@ -261,7 +262,7 @@ public static class OfflineEndpoints
         var user = users.AuthenticateByToken(http.Request.Cookies[AuthMiddleware.CookieName]!)!;
         AuthMiddleware.SetAuthCookie(http, user.Token);
         users.RecordKnownIp(user.Id, IpHelper.GetClientIp(http));
-        services.GetRequiredService<AccessLinkService>().ObserveOrigin(http);
+        users.RecordLoginOrigin(user.Id, $"{http.Request.Scheme}://{http.Request.Host}");
         return new
         {
             userId = user.Id,

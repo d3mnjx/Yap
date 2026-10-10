@@ -1178,7 +1178,7 @@
     private void LoadLoginLink()
     {
         loginLink = UserState.UserId.HasValue ? AccessLinks.GetActiveForUser(UserState.UserId.Value) : null;
-        loginLinkUrl = loginLink == null ? "" : AccessLinks.BuildUrl(loginLink.Code);
+        loginLinkUrl = loginLink == null ? "" : AccessLinks.BuildUrl(loginLink.Code, Navigation.BaseUri);
         linkExpiryChoice = loginLink?.ExpiresAt == null ? "never" : "current";
     }
 

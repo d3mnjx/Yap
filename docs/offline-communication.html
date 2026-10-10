@@ -1849,8 +1849,10 @@ builder.Services.AddHostedService&lt;OfflineLiveCleanup&gt;();</code></pre>
                     </ul>
                 </details>
                 <div class="note">
-                    <strong>Current deployment behavior:</strong> forwarded public scheme/host/IP
+                    <strong>Current deployment behavior:</strong> forwarded public scheme/IP
                     are accepted without a proxy allowlist by default; an allowlist is optional.
+                    Forwarded Host is ignored. Optional <code>PublicOrigin</code> overrides
+                    per-user login-link origins.
                     Chat writes retain account-bound antiforgery. Browser-marked cross-site API
                     writes and hub requests are rejected, but missing metadata and public/internal
                     URL differences are tolerated. See the

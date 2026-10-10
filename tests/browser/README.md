@@ -27,6 +27,8 @@ ASPNETCORE_ENVIRONMENT=Development dotnet Yap.dll --urls http://127.0.0.1:7643
 
 Use test configuration with registration enabled and SQLite persistence for durable/restart scenarios; see [offline behavior](../../docs/offline-behavior.md). Do not copy production credentials or databases into a fixture.
 
+The server contract suite includes login-link origin isolation, migration/restart checks, and the real one-minute delayed welcome DM. It creates its own temporary app/database and does not need the browser fixture.
+
 The runner neither starts nor stops the fixture. Check `/login` before running. From another terminal in the repository:
 
 ```sh

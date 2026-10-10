@@ -597,7 +597,7 @@
                                 var l = link;
                                 <tr>
                                     <td class="link-cell">
-                                        <span class="link-code">@AccessLinks.BuildUrl(l.Code)</span>
+                                        <span class="link-code">@AccessLinks.BuildUrl(l.Code, Navigation.BaseUri)</span>
                                         @CopyButton(l)
                                     </td>
                                     <td>@(l.Note ?? "—")</td>
@@ -655,7 +655,7 @@
                                     <td class="link-cell">
                                         @if (l.AdminCanSeeCode)
                                         {
-                                            <span class="link-code">@AccessLinks.BuildUrl(l.Code)</span>
+                                            <span class="link-code">@AccessLinks.BuildUrl(l.Code, Navigation.BaseUri)</span>
                                             @CopyButton(l)
                                         }
                                         else
@@ -1930,7 +1930,7 @@
 
     private async Task CopyInviteLink(AccessLink link)
     {
-        await JS.InvokeVoidAsync("navigator.clipboard.writeText", AccessLinks.BuildUrl(link.Code));
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", AccessLinks.BuildUrl(link.Code, Navigation.BaseUri));
         copiedLinkId = link.Id;
         StateHasChanged();
         _ = Task.Delay(2000).ContinueWith(_ => InvokeAsync(() =>

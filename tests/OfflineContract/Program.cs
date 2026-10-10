@@ -304,6 +304,7 @@ try
             && (await Send(removable.Id, Guid.NewGuid(), "new send to deleted room")).StatusCode == HttpStatusCode.NotFound,
             "deleted-room snapshot, retained receipt and rejection of new sends");
         await PresenceChecks.Run(factory.Services, http, anti, alice, bob, carol, privateDm.Id, room.Id);
+        await OriginChecks.Run(factory.Services, http);
         await users.RotateTokenAsync(alice.Id);
         Check((await http.GetAsync("/api/chat/sync")).StatusCode == HttpStatusCode.Unauthorized, "token revocation enforced");
         token = alice.Token;
@@ -321,6 +322,9 @@ try
         });
         await UpgradeChecks.CheckForwarding(restarted.Services, restricted: true);
         var users = restarted.Services.GetRequiredService<UserService>();
+        Check(users.GetByUsername("originrecipient")?.LoginOrigin == "https://recipient.example.test:8443"
+            && users.GetByUsername("originlegacy")?.LoginOrigin == null,
+            "per-user login origin survives restart while older accounts retain nullable fallback");
         using var scope = restarted.Services.CreateScope();
         var snapshots = scope.ServiceProvider.GetRequiredService<OfflineSnapshotService>();
         var alice = users.AuthenticateByToken(token)!;
