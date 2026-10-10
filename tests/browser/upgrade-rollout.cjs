@@ -1,3 +1,5 @@
+const { poll } = require('./support/wait.cjs');
+const { fixturePage } = require('./support/authority.cjs');
 // A disposable same-origin deployment rehearsal. Never swaps the shared development/reference apps.
 const { chromium, firefox } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const fs = require('node:fs'),
@@ -176,7 +178,7 @@ function proxyHeaders(req) {
             type === chromium ? { args: ['--ignore-certificate-errors'] } : {},
         );
         const context = await browser.newContext({ ignoreHTTPSErrors: true }),
-            page = await context.newPage();
+            page = await fixturePage(context);
         const name = 'upgrade' + Date.now().toString(36);
         await page.goto(origin + '/login');
         await page.locator('.username-input').fill(name);
@@ -213,7 +215,7 @@ function proxyHeaders(req) {
         await page.goto(origin + '/lobby');
         await page.locator('.message-input:enabled').waitFor();
         const buddy = await browser.newContext({ ignoreHTTPSErrors: true }),
-            bp = await buddy.newPage();
+            bp = await fixturePage(buddy);
         await bp.goto(origin + '/login');
         await bp.locator('.username-input').fill(name + 'b');
         await bp.locator('.join-button').click();
@@ -224,7 +226,7 @@ function proxyHeaders(req) {
         await page.locator('.message-input').fill('Existing DM');
         await page.locator('.send-button').click();
         await page.getByText('Existing DM', { exact: true }).waitFor();
-        const sibling = await context.newPage();
+        const sibling = await fixturePage(context);
         await sibling.goto(origin + '/lobby');
         await sibling.locator('.message-input:enabled').waitFor();
         await sibling.locator('.message-input').fill('Unsent legacy draft');
@@ -359,8 +361,10 @@ function proxyHeaders(req) {
             'PASS new tus upload through HTTPS terminator and revalidating deployment assets',
         );
         await page.evaluate(() => navigator.serviceWorker.ready);
-        await page.waitForFunction(async () =>
-            (await caches.keys()).some((k) => k.startsWith('yap-chat-shell-')),
+        await poll(page, async () =>
+            (await caches.keys()).some((k) =>
+                k.startsWith(window.fixtureConstants.SHELL_CACHE_PREFIX),
+            ),
         );
         await context.setOffline(true);
         await page.reload();
@@ -387,7 +391,7 @@ function proxyHeaders(req) {
             'PASS stalled online navigation falls back to cached shell within bounded timeout',
         );
         const installed = await browser.newContext({ ignoreHTTPSErrors: true }),
-            ip = await installed.newPage();
+            ip = await fixturePage(installed);
         await ip.goto(origin + manifest.start_url);
         await ip.locator('#draft:enabled').waitFor();
         assert.equal(

@@ -1,3 +1,5 @@
+const { poll } = require('./support/wait.cjs');
+const { fixturePage } = require('./support/authority.cjs');
 // Reopen with aged local authentication metadata; standalone mode is a browser fixture,
 // not an assertion about iOS/Android suspension or storage retention.
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
@@ -21,7 +23,7 @@ if (
                 return result;
             };
         });
-        let page = await context.newPage();
+        let page = await fixturePage(context);
         await page.goto(origin + '/login');
         await page.locator('.username-input').fill('pwareturn' + Date.now().toString(36));
         await page.locator('.join-button').click();
@@ -34,7 +36,7 @@ if (
             async () => (await (await import('/chat-client/storage.js')).readState()).userId,
         );
         await page.locator('#draft').fill('Draft kept for four weeks');
-        await page.waitForFunction(async () => {
+        await poll(page, async () => {
             const s = await import('/chat-client/storage.js'),
                 state = await s.readState();
             return (
@@ -45,9 +47,12 @@ if (
         async function age() {
             await context.setOffline(true);
             await page.evaluate(async () => {
-                await navigator.locks.request('yap-chat-v1', async () => {
+                await navigator.locks.request(window.fixtureConstants.ACCOUNT_LOCK, async () => {
                     const db = await new Promise((resolve, reject) => {
-                        const r = indexedDB.open('yap-chat-v1', 4);
+                        const r = indexedDB.open(
+                            window.fixtureConstants.DB_NAME,
+                            window.fixtureConstants.DB_VERSION,
+                        );
                         r.onsuccess = () => resolve(r.result);
                         r.onerror = () => reject(r.error);
                     });
@@ -70,7 +75,7 @@ if (
         }
         await age();
         await context.setOffline(false);
-        page = await context.newPage();
+        page = await fixturePage(context);
         await page.goto(origin + '/pwa-launch');
         await page.waitForURL('**/lobby');
         await page.waitForFunction(() =>
@@ -105,7 +110,8 @@ if (
         await page.locator('#draft').fill(text);
         await page.locator('#send').click();
         await page.locator('#timeline .message-content').filter({ hasText: text }).waitFor();
-        await page.waitForFunction(
+        await poll(
+            page,
             async () => (await (await import('/chat-client/storage.js')).outbox()).length === 0,
         );
         assert.deepEqual(statuses, [403, 200]);
@@ -125,14 +131,14 @@ if (
                 (c) => c.charCodeAt(0),
             );
             await (
-                await caches.open('yap-chat-media-' + userId)
+                await caches.open(window.fixtureConstants.MEDIA_CACHE_PREFIX + userId)
             ).put(
                 '/uploads/pwa-age-fixture.png',
                 new Response(bytes, { headers: { 'Content-Type': 'image/png' } }),
             );
         }, user);
         await age();
-        page = await context.newPage();
+        page = await fixturePage(context);
         await page.goto(origin + '/lobby');
         await page.locator('#draft:not([disabled])').waitFor();
         await page.locator('#timeline .message-content').filter({ hasText: text }).waitFor();

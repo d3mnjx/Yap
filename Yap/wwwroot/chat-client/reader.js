@@ -1,6 +1,14 @@
 import * as storage from './storage.js';
 import { get, post } from './api.js';
-export function createReader({ identity, accepted, changed, eligible, authRequired, failed }) {
+export function createReader({
+    snapshot = () => null,
+    identity,
+    accepted,
+    changed,
+    eligible,
+    authRequired,
+    failed,
+}) {
     let running = false;
     async function flush() {
         const owner = identity();
@@ -12,7 +20,7 @@ export function createReader({ identity, accepted, changed, eligible, authRequir
                 { ifAvailable: true },
                 async (lock) => {
                     if (!lock) return;
-                    const markers = (await storage.reads()).slice(0, 100);
+                    const markers = (await storage.reads()).slice(0, snapshot()?.readBatch ?? 100);
                     if (!markers.length || identity()?.epoch !== owner.epoch) return;
                     const session = await get('session');
                     if (session.userId !== owner.userId) {

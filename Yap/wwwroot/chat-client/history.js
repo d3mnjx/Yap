@@ -27,8 +27,8 @@ export function createHistory({ identity, current, changed, notice }) {
                     ...p,
                     serverEpoch: p.serverEpoch || p.version?.split(':')[0] || latest.serverEpoch,
                     pendingVersion: undefined,
-                    messages: p.messages.slice(-500),
-                    hasMore: p.hasMore || p.messages.length > 500,
+                    messages: p.messages.slice(-(latest?.historyMaxMessages ?? 500)),
+                    hasMore: p.hasMore || p.messages.length > (latest?.historyMaxMessages ?? 500),
                 },
             ]),
         );
@@ -103,12 +103,14 @@ export function createHistory({ identity, current, changed, notice }) {
             const existing = pages[c.id],
                 all = merge(existing?.messages || [], c.messages);
             const before = (refreshPage ? c.messages : all)[0]?.timestamp;
-            const limit = refreshPage ? Math.max(existing?.messages.length || 0, 50) : 50;
+            const limit = refreshPage
+                ? Math.max(existing?.messages.length || 0, latest?.historyPageSize ?? 50)
+                : (latest?.historyPageSize ?? 50);
             const fetchPage = (count, before) =>
                 get(
                     `conversations/${c.id}/history?` +
                         new URLSearchParams({
-                            limit: String(Math.min(count, 500)),
+                            limit: String(Math.min(count, latest?.historyMaxMessages ?? 500)),
                             ...(before ? { before } : {}),
                         }),
                 );

@@ -1,3 +1,4 @@
+const { poll } = require('./support/wait.cjs');
 // Diagnostics with writes held open: UI feedback must not wait for a server response.
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const assert = require('node:assert/strict');
@@ -25,7 +26,8 @@ if (
         await page.waitForFunction(() =>
             document.querySelector('#connection')?.textContent.startsWith('Synced'),
         );
-        await page.waitForFunction(
+        await poll(
+            page,
             async () => !!(await (await import('/chat-client/storage.js')).metadata('catalog')),
         );
         const response = page.waitForResponse(

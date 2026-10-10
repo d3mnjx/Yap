@@ -1,3 +1,4 @@
+const { fixturePage } = require('./support/authority.cjs');
 // Synthetic account from text-sending.cjs; all new messages stay in isolated offline browser storage.
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const assert = require('node:assert/strict'),
@@ -17,7 +18,7 @@ const fixture = JSON.parse(fs.readFileSync(process.env.YAP_TEST_STATE, 'utf8'));
                 storageState: fixture.storageState,
                 viewport,
             });
-            const page = await context.newPage(),
+            const page = await fixturePage(context),
                 errors = [];
             page.on('pageerror', (e) => errors.push(e.message));
             await page.goto(origin + fixture.dmPath);
@@ -60,7 +61,7 @@ const fixture = JSON.parse(fs.readFileSync(process.env.YAP_TEST_STATE, 'utf8'));
             await page.evaluate(
                 () =>
                     new Promise((resolve, reject) => {
-                        const req = indexedDB.open('yap-chat-v1');
+                        const req = indexedDB.open(window.fixtureConstants.DB_NAME);
                         req.onerror = () => reject(req.error);
                         req.onsuccess = () => {
                             const db = req.result,
@@ -100,7 +101,7 @@ const fixture = JSON.parse(fs.readFileSync(process.env.YAP_TEST_STATE, 'utf8'));
             // An update in the same conversation must not pull a reader back down.
             await page.evaluate(() => {
                 document.querySelector('.messages').scrollTop = 0;
-                const channel = new BroadcastChannel('yap-chat-v1');
+                const channel = new BroadcastChannel(window.fixtureConstants.CHANGE_CHANNEL);
                 channel.postMessage('snapshot');
                 channel.close();
             });
@@ -138,11 +139,16 @@ const fixture = JSON.parse(fs.readFileSync(process.env.YAP_TEST_STATE, 'utf8'));
                                 reactions: [],
                             },
                         ];
-                        await store.commit(
-                            { ...state.snapshot, sequence: state.snapshot.sequence + 1 },
+                        await store.commitUpdate(
+                            window.fixtureUpdate({
+                                ...state.snapshot,
+                                sequence: state.snapshot.sequence + 1,
+                            }),
                             state,
                         );
-                        const changes = new BroadcastChannel('yap-chat-v1');
+                        const changes = new BroadcastChannel(
+                            window.fixtureConstants.CHANGE_CHANNEL,
+                        );
                         changes.postMessage('snapshot');
                         changes.close();
                     },

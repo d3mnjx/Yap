@@ -1,3 +1,4 @@
+const { fixturePage } = require('./support/authority.cjs');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright'),
     assert = require('node:assert/strict'),
     fs = require('node:fs'),
@@ -43,7 +44,7 @@ execFileSync('ffmpeg', [
     const browser = await chromium.launch();
     try {
         const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } }),
-            page = await context.newPage(),
+            page = await fixturePage(context),
             errors = [];
         page.on('pageerror', (e) => errors.push(e.message));
         const name = 'playback' + Date.now().toString(36);
@@ -83,7 +84,9 @@ execFileSync('ffmpeg', [
             async (fixtures) => {
                 const store = await import('/chat-client/storage.js'),
                     state = await store.readState(),
-                    cache = await caches.open('yap-chat-media-' + state.userId);
+                    cache = await caches.open(
+                        window.fixtureConstants.MEDIA_CACHE_PREFIX + state.userId,
+                    );
                 for (const f of fixtures)
                     await cache.put(
                         f.url,
@@ -146,8 +149,11 @@ execFileSync('ffmpeg', [
                     },
                 ],
             });
-            await store.commit({ ...state.snapshot, sequence: state.snapshot.sequence + 1 }, state);
-            const b = new BroadcastChannel('yap-chat-v1');
+            await store.commitUpdate(
+                window.fixtureUpdate({ ...state.snapshot, sequence: state.snapshot.sequence + 1 }),
+                state,
+            );
+            const b = new BroadcastChannel(window.fixtureConstants.CHANGE_CHANNEL);
             b.postMessage('snapshot');
             b.close();
         });

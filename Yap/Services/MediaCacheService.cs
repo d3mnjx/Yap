@@ -1,3 +1,4 @@
+using Yap.Offline;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Security.Cryptography;
@@ -48,10 +49,13 @@ public partial class MediaCacheService
     /// </summary>
     public Action<Guid, string, MediaCacheEntry>? OnMediaCached { get; set; }
 
+    private readonly OfflineChangeSignal _changes;
+
     public MediaCacheService(ILogger<MediaCacheService> logger, IWebHostEnvironment env, LinkPreviewSettingsService settings,
-        LinkPreviewService linkPreviewService, IHttpClientFactory httpClientFactory, VideoService videoService)
+        LinkPreviewService linkPreviewService, IHttpClientFactory httpClientFactory, VideoService videoService, OfflineChangeSignal changes)
     {
         _logger = logger;
+        _changes = changes;
         _env = env;
         _settings = settings;
         _linkPreviewService = linkPreviewService;
@@ -150,10 +154,11 @@ public partial class MediaCacheService
                 if (File.Exists(PosterPath(hash))) poster = PosterUrl(hash);
                 incomplete |= dims == null || poster == null;
             }
-            if (incomplete) QueueLazyDescribe(url, hash, diskFile, type);
 
             var entry = new MediaCacheEntry($"/media-cache/{hash}{ext}", type, 0, w, h, title, PosterUrl: poster);
             _cache[url] = entry;
+            // Publish the disk entry before starting a task that enriches that entry.
+            if (incomplete) QueueLazyDescribe(url, hash, diskFile, type);
             return entry;
         }
 
@@ -197,6 +202,7 @@ public partial class MediaCacheService
                 if (result != null)
                 {
                     _cache[url] = result;
+                    _changes.Touch(OfflineChangeKind.Media, url: url);
                     OnMediaCached?.Invoke(messageId, url, result);
                 }
                 else
@@ -683,7 +689,10 @@ public partial class MediaCacheService
                     : (0, 0, null);
 
                 if (_cache.TryGetValue(url, out var existing))
+                {
                     _cache[url] = existing with { Width = w, Height = h, PosterUrl = poster, Title = title ?? existing.Title };
+                    _changes.Touch(OfflineChangeKind.Media, url: url);
+                }
             }
             catch (Exception ex)
             {

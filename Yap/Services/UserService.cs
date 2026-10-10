@@ -1,3 +1,4 @@
+using Yap.Offline;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
@@ -31,9 +32,12 @@ public class UserService
     private readonly ConcurrentDictionary<Guid, byte> _dirtyEmojiUsers = new();
     private CancellationTokenSource? _flushCts;
 
-    public UserService(IServiceProvider serviceProvider, ILogger<UserService> logger)
+    private readonly OfflineChangeSignal _changes;
+
+    public UserService(IServiceProvider serviceProvider, ILogger<UserService> logger, OfflineChangeSignal changes)
     {
         _logger = logger;
+        _changes = changes;
         _dbFactory = serviceProvider.GetService<IDbContextFactory<ChatDbContext>>();
         _persistenceEnabled = _dbFactory != null;
 
@@ -275,17 +279,6 @@ public class UserService
     }
 
     /// <summary>
-    /// Gets the admin user ID.
-    /// </summary>
-    public Guid? GetAdminUserId()
-    {
-        lock (_adminLock)
-        {
-            return _adminUserId;
-        }
-    }
-
-    /// <summary>
     /// Checks if a user is the admin.
     /// </summary>
     public bool IsAdmin(Guid userId)
@@ -337,6 +330,7 @@ public class UserService
                     user.IsAdmin = false;
             }
         }
+        _changes.Touch(OfflineChangeKind.Profile, userId);
     }
 
     /// <summary>
@@ -378,6 +372,7 @@ public class UserService
                 _logger.LogError(ex, "Failed to delete user {UserId}", userId);
             }
         }
+        _changes.Touch(OfflineChangeKind.Profile, userId);
     }
 
     /// <summary>
@@ -393,6 +388,7 @@ public class UserService
         user.ProfilePictureUrl = profilePictureUrl;
         user.Bio = bio;
         user.Country = country;
+        _changes.Touch(OfflineChangeKind.Profile, userId);
         OnProfileChanged?.Invoke(userId, true);
 
         // Persist to database
@@ -428,6 +424,7 @@ public class UserService
         var expiry = muted ? until : null;
         user.NotifServerMuted = muted;
         user.NotifServerMuteUntil = expiry;
+        _changes.Touch(OfflineChangeKind.Preferences, userId);
         OnProfileChanged?.Invoke(userId, false);
 
         if (_persistenceEnabled)
@@ -457,6 +454,7 @@ public class UserService
             return;
 
         user.NotifDmMode = mode;
+        _changes.Touch(OfflineChangeKind.Preferences, userId);
         OnProfileChanged?.Invoke(userId, false);
 
         if (_persistenceEnabled)
@@ -484,6 +482,7 @@ public class UserService
             return;
 
         user.NotifRoomMode = mode;
+        _changes.Touch(OfflineChangeKind.Preferences, userId);
         OnProfileChanged?.Invoke(userId, false);
 
         if (_persistenceEnabled)
@@ -511,6 +510,7 @@ public class UserService
             return;
 
         user.NotifNewDmsMuted = muted;
+        _changes.Touch(OfflineChangeKind.Preferences, userId);
         OnProfileChanged?.Invoke(userId, false);
 
         if (_persistenceEnabled)
@@ -562,6 +562,7 @@ public class UserService
             return;
 
         user.Theme = themeId;
+        _changes.Touch(OfflineChangeKind.Preferences, userId);
         OnProfileChanged?.Invoke(userId, false);
 
         if (_persistenceEnabled)
@@ -594,6 +595,7 @@ public class UserService
             fontSize = null;
 
         user.FontSize = fontSize;
+        _changes.Touch(OfflineChangeKind.Preferences, userId);
         OnProfileChanged?.Invoke(userId, false);
 
         if (_persistenceEnabled)
@@ -625,6 +627,7 @@ public class UserService
         user.Locale = locale;
         if (dateFormat != null)
             user.DateFormat = dateFormat;
+        _changes.Touch(OfflineChangeKind.Preferences, userId);
         OnProfileChanged?.Invoke(userId, false);
 
         if (_persistenceEnabled)
@@ -722,14 +725,6 @@ public class UserService
     {
         var user = GetByUsername(username);
         return user?.Password != null;
-    }
-
-    /// <summary>
-    /// Gets the stored passphrase for a user (for display in Settings).
-    /// </summary>
-    public string? GetPassword(Guid userId)
-    {
-        return _users.TryGetValue(userId, out var user) ? user.Password : null;
     }
 
     #region Smart Login Known IPs
@@ -923,24 +918,6 @@ public class UserService
     }
 
     /// <summary>
-    /// Gets the emoji usage counts for a user (deserialized from in-memory User).
-    /// </summary>
-    public Dictionary<string, int> GetEmojiCounts(string username)
-    {
-        var user = GetByUsername(username);
-        if (user?.EmojiCounts == null) return new();
-
-        try
-        {
-            return System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, int>>(user.EmojiCounts) ?? new();
-        }
-        catch
-        {
-            return new();
-        }
-    }
-
-    /// <summary>
     /// Collapses a user's raw emoji usage counts to dense ranks (lowest count → 1, next
     /// distinct → 2, …), keeping the 40 highest-ranked. Only relative order matters for
     /// quick reactions, so this bounds the stored column and lets recent usage climb past
@@ -984,18 +961,6 @@ public class UserService
             return;
 
         user.RecentEmojis = System.Text.Json.JsonSerializer.Serialize(emojis);
-        _dirtyEmojiUsers.TryAdd(userId, 0);
-    }
-
-    /// <summary>
-    /// Updates the emoji usage counts for a user. In-memory only; DB write is batched.
-    /// </summary>
-    public void UpdateEmojiCounts(Guid userId, Dictionary<string, int> counts)
-    {
-        if (!_users.TryGetValue(userId, out var user))
-            return;
-
-        user.EmojiCounts = System.Text.Json.JsonSerializer.Serialize(counts);
         _dirtyEmojiUsers.TryAdd(userId, 0);
     }
 

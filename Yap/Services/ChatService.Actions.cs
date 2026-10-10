@@ -25,7 +25,7 @@ public partial class ChatService
         if (operationId == Guid.Empty || kind is not ("edit" or "delete" or "reaction"))
             throw new ChatSendException(400, "invalid_operation", "Invalid message operation.");
         if (kind == "edit" && (string.IsNullOrWhiteSpace(content) || content.Length > MaxTextLength))
-            throw new ChatSendException(400, "invalid_message", "Enter between 1 and 4000 characters.");
+            throw new ChatSendException(400, "invalid_message", $"Enter between 1 and {MaxTextLength} characters.");
         if (kind == "reaction" && (string.IsNullOrWhiteSpace(emoji) || emoji.Length > 100 || emoji.Any(char.IsControl)))
             throw new ChatSendException(400, "invalid_reaction", "Invalid reaction.");
         var hash = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(new
@@ -84,6 +84,11 @@ public partial class ChatService
                     }
                 }
             }
+            // The committed database row has now replaced memory; projection cannot see the old value.
+            _changes.Touch(channelId, messageId);
+            if (kind is "edit" or "delete")
+                foreach (var reply in GetMessages(channelId, int.MaxValue).Where(m => m.ReplyToMessageId == messageId))
+                    _changes.Touch(channelId, reply.Id);
             if (persisted == null)
             {
                 if (removed != null)

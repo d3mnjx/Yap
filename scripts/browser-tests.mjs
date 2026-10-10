@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { mkdir, mkdtemp } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -18,28 +18,11 @@ const standardSuites = [
     'local-http',
 ];
 // Special deployment/reference/fixture suites have their own prerequisites in tests/browser/README.md.
-const allowed = new Set([
-    ...standardSuites,
-    'composer-parity',
-    'emoji-parity',
-    'emoji-loading',
-    'emoji-cache',
-    'appearance',
-    'locale',
-    'restart-cache',
-    'gif-parity',
-    'action-parity',
-    'gallery-parity',
-    'media-playback',
-    'reported-regressions',
-    'interface-integration',
-    'account-integration',
-    'presence-unread',
-    'tab-notifications',
-    'queued-scroll',
-    'review-worker-upgrade',
-    'upgrade-rollout',
-]);
+const allowed = new Set(
+    (await readdir(path.join(repository, 'tests/browser')))
+        .filter((name) => name.endsWith('.cjs'))
+        .map((name) => name.slice(0, -4)),
+);
 const selected = process.argv.slice(2);
 const suites = selected.length ? selected : standardSuites;
 const origin = new URL(process.env.YAP_TEST_ORIGIN || 'http://127.0.0.1:7643');

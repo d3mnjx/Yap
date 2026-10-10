@@ -1,3 +1,4 @@
+const { poll } = require('./support/wait.cjs');
 // Dependency checks, not a latency benchmark: optional traffic is deliberately held open.
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const assert = require('node:assert/strict');
@@ -61,7 +62,8 @@ if (
         );
         await alice.locator('#send').click();
         assert.equal((await acceptance).status(), 200);
-        await alice.waitForFunction(
+        await poll(
+            alice,
             async () => (await (await import('/chat-client/storage.js')).outbox()).length === 0,
         );
         assert.equal(
@@ -77,14 +79,18 @@ if (
         await bob.locator('#draft:not([disabled])').waitFor();
         await bob.locator('#draft').fill('Inactive live arrival');
         await bob.locator('#send').click();
-        await alice.waitForFunction(async (name) => {
-            const state = await (await import('/chat-client/storage.js')).readState();
-            return state.snapshot.conversations.some(
-                (c) =>
-                    c.path === '/dm/' + name &&
-                    c.messages.some((m) => m.content === 'Inactive live arrival'),
-            );
-        }, names[1]);
+        await poll(
+            alice,
+            async (name) => {
+                const state = await (await import('/chat-client/storage.js')).readState();
+                return state.snapshot.conversations.some(
+                    (c) =>
+                        c.path === '/dm/' + name &&
+                        c.messages.some((m) => m.content === 'Inactive live arrival'),
+                );
+            },
+            names[1],
+        );
         assert.equal(new URL(alice.url()).pathname, '/lobby');
         console.log(
             'PASS new inactive DM arrives over SignalR without waiting for a background window',

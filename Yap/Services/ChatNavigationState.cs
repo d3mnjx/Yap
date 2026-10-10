@@ -59,24 +59,6 @@ public class ChatNavigationState
     /// </summary>
     public event Action? OnChange;
 
-    public void SetRoomContext(Guid roomId, string roomName, string headerTitle)
-    {
-        CurrentRoomId = roomId;
-        CurrentDmUser = null;
-        ShowBackButton = false;
-        Title = headerTitle;
-        NotifyStateChanged();
-    }
-
-    public void SetDmContext(string dmUser)
-    {
-        CurrentRoomId = null;
-        CurrentDmUser = dmUser;
-        ShowBackButton = false;
-        Title = $"@{dmUser}";
-        NotifyStateChanged();
-    }
-
     public void ToggleSidebar()
     {
         SidebarOpen = !SidebarOpen;

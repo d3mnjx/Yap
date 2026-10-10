@@ -21,7 +21,7 @@ static class SyncChecks
         Check(bootstrap.Conversations.Count(c => c.Window != null) == 1
             && bootstrap.Conversations.Single(c => c.Window != null).Id == channel.Id,
             "bootstrap contains only the active conversation window");
-        var before = snapshots.Snapshot(alice);
+        var before = snapshots.FullView(alice);
         // Flatten independent wire packets only for assertions; the browser receives their
         // original per-conversation sequences, never this combined diagnostic value.
         static async Task<ChatUpdate> Read(OfflineFanout.Subscription subscription, CancellationToken token)
@@ -42,7 +42,7 @@ static class SyncChecks
         await Read(subscription, timeout.Token);
         var operation = Guid.NewGuid();
         var receipt = await chat.SendTextAsync(alice, channel.Id, operation, "incremental contract");
-        var after = snapshots.Snapshot(alice);
+        var after = snapshots.FullView(alice);
         var delta = await Read(subscription, timeout.Token);
         Check(after.Conversations.Single(c => c.Id == channel.Id).HistoryVersion == before.Conversations.Single(c => c.Id == channel.Id).HistoryVersion,
             "new arrivals preserve older history authority");
@@ -51,8 +51,16 @@ static class SyncChecks
             "live send transmits one message and no repeated history windows");
         Check(delta.Authors.Length == 1 && delta.Conversations.Single(c => c.Messages.Length > 0).Messages[0].AuthorId == alice.Id,
             "message authors are sent once per packet");
-        await chat.DeleteMessageAsync(receipt.MessageId, channel.Id, alice.Username);
-        var deleted = snapshots.Snapshot(alice);
+        var history = await client.GetFromJsonAsync<JsonElement>($"/api/chat/conversations/{channel.Id}/history");
+        var historyMessage = history.GetProperty("messages").EnumerateArray().Single(m => m.GetProperty("id").GetGuid() == receipt.MessageId);
+        var windowJson = JsonSerializer.SerializeToElement(sync.Conversation(alice, channel.Id, full: true), new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        var windowMessage = windowJson.GetProperty("conversations")[0].GetProperty("messages").EnumerateArray().Single(m => m.GetProperty("id").GetGuid() == receipt.MessageId);
+        Check(historyMessage.EnumerateObject().Select(p => p.Name).Order().SequenceEqual(windowMessage.EnumerateObject().Select(p => p.Name).Order()),
+            "history and live windows serialize identical message fields");
+        Check(typeof(ReaderMessage).GetConstructors().All(c => c.GetParameters().All(p => !p.IsOptional)),
+            "every message constructor requires every field");
+        await chat.MutateMessageAsync(alice, channel.Id, receipt.MessageId, Guid.NewGuid(), "delete", null, null, false);
+        var deleted = snapshots.FullView(alice);
         Check(deleted.Conversations.Single(c => c.Id == channel.Id).HistoryVersion > after.Conversations.Single(c => c.Id == channel.Id).HistoryVersion,
             "deletion invalidates cached history even outside the recent window");
         var deletion = await Read(subscription, timeout.Token);

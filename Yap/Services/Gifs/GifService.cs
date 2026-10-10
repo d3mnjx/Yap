@@ -1,3 +1,4 @@
+using Yap.Offline;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -71,13 +72,15 @@ public partial class GifService
     public IGifSourceProvider Provider => _provider;
     public bool IsConfigured => _provider.IsConfigured;
 
+    private readonly OfflineChangeSignal _changes;
+
     public GifService(IServiceProvider serviceProvider,
         IHttpClientFactory httpClientFactory,
         IWebHostEnvironment env,
         IGifSourceProvider provider,
         GifFfmpegHelper ffmpeg,
         UserService userService,
-        ILogger<GifService> logger)
+        ILogger<GifService> logger, OfflineChangeSignal changes)
     {
         _httpClientFactory = httpClientFactory;
         _env = env;
@@ -85,6 +88,7 @@ public partial class GifService
         _ffmpeg = ffmpeg;
         _userService = userService;
         _logger = logger;
+        _changes = changes;
         _dbFactory = serviceProvider.GetService<IDbContextFactory<ChatDbContext>>();
 
         // BYOG quota: generous cap on a user's own custom-upload bytes (imports + uploads).
@@ -545,6 +549,7 @@ public partial class GifService
         // Consume the source file.
         TryDelete(sourceFilePath);
 
+        _changes.Touch(OfflineChangeKind.Gif, entry.Id);
         OnGifLibraryChanged?.Invoke(entry);
         return new GifAttachment(entry.Id, entry.Width, entry.Height);
     }
@@ -582,6 +587,7 @@ public partial class GifService
                 }
 
                 fixedCount++;
+                _changes.Touch(OfflineChangeKind.Gif, entry.Id);
                 OnGifEntryUpdated?.Invoke(entry.Id);
             }
             catch (Exception ex)
@@ -616,6 +622,7 @@ public partial class GifService
                         .ExecuteUpdateAsync(s => s.SetProperty(g => g.PreviewUrl, entry.PreviewUrl));
                 }
                 made++;
+                _changes.Touch(OfflineChangeKind.Gif, entry.Id);
                 OnGifEntryUpdated?.Invoke(entry.Id);
             }
             catch (Exception ex)
@@ -630,9 +637,6 @@ public partial class GifService
     #endregion
 
     #region Favorites
-
-    public async Task<bool> ToggleFavoriteAsync(Guid userId, Guid gifEntryId)
-        => await SetFavoriteAsync(userId, gifEntryId, favorite: !IsFavorite(userId, gifEntryId));
 
     /// <summary>
     /// Idempotent favorite add/remove. Adding an existing favorite is safe to repeat — pack
@@ -712,7 +716,10 @@ public partial class GifService
             QueueProviderTagEnrichment(entry);
 
         if (insert || delete || moveFolder)
+        {
+            _changes.Touch(OfflineChangeKind.Favorites, userId);
             OnFavoritesChanged?.Invoke(userId);
+        }
         return favorite;
     }
 
@@ -918,6 +925,7 @@ public partial class GifService
 
         await PersistNewEntryAsync(entry);
         IndexEntry(entry);
+        _changes.Touch(OfflineChangeKind.Gif, entry.Id);
         OnGifLibraryChanged?.Invoke(entry);
         return entry;
     }
@@ -1041,6 +1049,7 @@ public partial class GifService
 
         entry.TranscodeStatus |= GifTranscodeStatus.DoneGif;
         await PersistFormatsAsync(entry);
+        _changes.Touch(OfflineChangeKind.Gif, entry.Id);
         OnGifEntryUpdated?.Invoke(entry.Id);
     }
 

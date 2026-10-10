@@ -1,3 +1,5 @@
+const { poll } = require('./support/wait.cjs');
+const { fixturePage } = require('./support/authority.cjs');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const assert = require('node:assert/strict'),
     fs = require('node:fs');
@@ -15,7 +17,7 @@ fs.mkdirSync(out, { recursive: true });
                     ignoreHTTPSErrors: true,
                     viewport: { width: 1440, height: 1000 },
                 }),
-                page = await context.newPage(),
+                page = await fixturePage(context),
                 errors = [];
             page.on('pageerror', (e) => errors.push(e.message));
             await page.goto(origin + '/login');
@@ -142,15 +144,23 @@ fs.mkdirSync(out, { recursive: true });
                 const custom = picker.locator('.emoji-btn[data-emoji^=":"]').first(),
                     code = await custom.getAttribute('data-emoji');
                 await custom.scrollIntoViewIfNeeded();
-                await page.waitForFunction(async (code) => {
-                    const img = document.querySelector(`.emoji-btn[data-emoji="${code}"] img`),
-                        s = await (await import('/chat-client/storage.js')).readState();
-                    return (
-                        img?.complete &&
-                        img.naturalWidth > 0 &&
-                        !!(await (await caches.open('yap-chat-media-' + s.userId)).match(img.src))
-                    );
-                }, code);
+                await poll(
+                    page,
+                    async (code) => {
+                        const img = document.querySelector(`.emoji-btn[data-emoji="${code}"] img`),
+                            s = await (await import('/chat-client/storage.js')).readState();
+                        return (
+                            img?.complete &&
+                            img.naturalWidth > 0 &&
+                            !!(await (
+                                await caches.open(
+                                    window.fixtureConstants.MEDIA_CACHE_PREFIX + s.userId,
+                                )
+                            ).match(img.src))
+                        );
+                    },
+                    code,
+                );
                 await context.setOffline(true);
                 await page.reload();
                 await field.waitFor();

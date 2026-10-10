@@ -2,13 +2,14 @@
   "name": "yap-development-tools",
   "private": true,
   "scripts": {
-    "format": "node node_modules/prettier/bin/prettier.cjs --write \"Yap/wwwroot/chat-client/*.{js,css}\" Yap/wwwroot/service-worker.js Yap/wwwroot/chat-client/index.html \"tests/browser/**/*.cjs\" \"scripts/*.mjs\" --no-error-on-unmatched-pattern",
-    "format:check": "node node_modules/prettier/bin/prettier.cjs --check \"Yap/wwwroot/chat-client/*.{js,css}\" Yap/wwwroot/service-worker.js Yap/wwwroot/chat-client/index.html \"tests/browser/**/*.cjs\" \"scripts/*.mjs\" --no-error-on-unmatched-pattern",
+    "format": "node node_modules/prettier/bin/prettier.cjs --write \"Yap/wwwroot/chat-client/*.{js,css}\" Yap/wwwroot/service-worker*.js Yap/wwwroot/chat-client/index.html \"tests/browser/**/*.cjs\" \"scripts/*.mjs\" --no-error-on-unmatched-pattern",
+    "format:check": "node node_modules/prettier/bin/prettier.cjs --check \"Yap/wwwroot/chat-client/*.{js,css}\" Yap/wwwroot/service-worker*.js Yap/wwwroot/chat-client/index.html \"tests/browser/**/*.cjs\" \"scripts/*.mjs\" --no-error-on-unmatched-pattern",
     "test:browser": "node scripts/browser-tests.mjs",
     "test:contracts": "dotnet run --project tests/OfflineContract -c Release"
   },
   "devDependencies": {
     "playwright": "1.64.0",
     "prettier": "3.6.2"
-  }
+  },
+  "type": "module"
 }

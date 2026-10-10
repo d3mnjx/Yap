@@ -1,3 +1,4 @@
+const { readSnapshot } = require('./support/authority.cjs');
 // Use a fresh isolated server: its first permitted account becomes admin. Never target development data.
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright'),
     assert = require('node:assert/strict');
@@ -28,7 +29,7 @@ if (new URL(origin).hostname !== '127.0.0.1' || new URL(origin).port === '7543')
         }
         await login(page, name);
         assert(
-            (await (await admin.request.get(origin + '/api/chat/sync')).json()).isAdmin,
+            (await readSnapshot(admin.request, origin)).isAdmin,
             'This test requires a fresh server with no existing admin',
         );
         await login(reader, other);

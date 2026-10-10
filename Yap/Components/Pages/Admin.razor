@@ -817,28 +817,7 @@
                     </div>
                 </details>
 
-                <details class="howto-box">
-                    <summary>
-                        <span class="toggle-label">IPv4 beacon</span>
-                        @if (string.IsNullOrEmpty(ChatConfig.Ipv4BeaconUrl))
-                        {
-                            <span class="howto-status">off — dualstack clients show IPv6 only</span>
-                        }
-                        else
-                        {
-                            <span class="howto-status on">@ChatConfig.Ipv4BeaconUrl</span>
-                        }
-                    </summary>
-                    <div class="howto-body">
-                        <p>A dualstack client connects over IPv6, so its IPv4 never reaches the server. The beacon makes the browser send one background request to an IPv4-only hostname. That request reveals the client's IPv4, and the Diagnostics sessions table then shows both addresses.</p>
-                        <ol>
-                            <li>Add a DNS <strong>A record only</strong> (no AAAA) for <code>ip4.your-domain.com</code>. Make it DNS-only (grey cloud). Point it at this server.</li>
-                            <li>Give this server a trusted TLS certificate for that hostname, same as for the upload subdomain.</li>
-                            <li>Set <code>ChatSettings:Ipv4BeaconUrl</code> to <code>https://ip4.your-domain.com</code> and restart. In Docker, set the env var <code>ChatSettings__Ipv4BeaconUrl</code> instead.</li>
-                        </ol>
-                        <p>Leave the setting empty to disable. The value is display-only and never affects login decisions.</p>
-                    </div>
-                </details>
+
             </div>
 
             @if (pendingUsersList.Count > 0)
@@ -1255,10 +1234,7 @@
                                         <td>@s.Username</td>
                                         <td>
                                             @(s.IsMobile == true ? "📱" : "🖥️") @(s.ClientIp ?? "—")
-                                            @if (s.ClientIpv4 != null && s.ClientIpv4 != s.ClientIp)
-                                            {
-                                                <span style="color: var(--text-secondary);" title="IPv4 reported by the beacon — the circuit itself connected over IPv6">· v4 @s.ClientIpv4</span>
-                                            }
+
                                         </td>
                                         <td>@(circuit?.IsWebSocket switch { true => "WS", false => "⚠ Fallback", null => "—" })</td>
                                         <td>@(circuit == null ? "—" : circuit.IsConnected ? "✓" : $"✗ {FormatAgo(circuit.DisconnectedAt)}")</td>

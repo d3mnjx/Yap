@@ -19,5 +19,5 @@
 
 - Use isolated synthetic data for browser and server checks. Keep credentials and runtime data outside source/evidence.
 - Run relevant checks for a change and record remaining limitations honestly. Source inspection, screenshots and browser API fixtures do not establish full device/provider parity.
-- Keep vendor attribution/licenses intact. Shipped shell changes require updating `CHAT_SHELL` and its asset list; preserve deployed browser namespaces and persisted receipt compatibility.
+- Keep vendor attribution/licenses intact. The startup shell manifest hashes the deployed assets; publish the complete package, including compressed variants, and verify worker installation; preserve deployed browser namespaces and persisted receipt compatibility.
 - Preserve unrelated working-tree changes. Commit focused changes with relevant validation; push only when requested.

@@ -3,18 +3,8 @@ using Yap.Services;
 
 namespace Yap.Offline;
 
-/// <summary>A message on the wire; author profiles travel once per update, rather than once per message.</summary>
-public record SyncMessage(Guid Id, Guid? OperationId, Guid AuthorId, string Content, DateTime Timestamp,
-    bool IsEdited, Guid? ReplyToMessageId, ReaderImage[] Images, string[] Videos, int GifCount,
-    ReaderReaction[] Reactions, object[]? Gifs, LinkPreview[]? Previews, ReaderReply? Reply)
-{
-    public static SyncMessage From(ReaderMessage message) => new(message.Id, message.OperationId, message.Author.Id,
-        message.Content, message.Timestamp, message.IsEdited, message.ReplyToMessageId, message.Images,
-        message.Videos, message.GifCount, message.Reactions, message.Gifs, message.Previews, message.Reply);
-}
-
 /// <summary>Changes to one conversation. Window is present only for a complete recent-window replacement.</summary>
-public record ConversationUpdate(Guid Id, ReaderConversation State, SyncMessage[] Messages, Guid[] Removed,
+public record ConversationUpdate(Guid Id, ReaderConversation State, ReaderMessage[] Messages, Guid[] Removed,
     Guid[]? Window, string? BaseRevision, string Revision, bool Invalidate = false);
 
 /// <summary>Account-bound incremental authority shared by HTTP results and the live stream.</summary>
@@ -30,7 +20,7 @@ public sealed class OfflineSync(OfflineSnapshotService snapshots)
     {
         Messages = []
     },
-        value.Messages.Select(SyncMessage.From).ToArray(), [], value.Messages.Select(m => m.Id).ToArray(), null, Revision(value));
+        value.Messages, [], value.Messages.Select(m => m.Id).ToArray(), null, Revision(value));
 
     public ChatUpdate Bootstrap(User user, string? path, Guid? channelId = null, string? epoch = null, string? revision = null, Guid? knownUser = null)
     {
@@ -57,7 +47,7 @@ public sealed class OfflineSync(OfflineSnapshotService snapshots)
         var conversation = capture.Conversation;
         var messages = full ? conversation.Messages : capture.Message is { } message ? new[] { message } : [];
         var update = full ? Window(conversation) : new ConversationUpdate(id, conversation,
-            messages.Select(SyncMessage.From).ToArray(), messageId.HasValue && capture.Message == null ? [messageId.Value] : [],
+            messages, messageId.HasValue && capture.Message == null ? [messageId.Value] : [],
             null, null, Revision(conversation));
         return new(2, user.Id, capture.Epoch, capture.Sequence, null, [update], [], Authors(messages));
     }

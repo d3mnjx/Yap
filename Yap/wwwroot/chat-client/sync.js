@@ -145,7 +145,7 @@ export function mergeUpdate(previous, update) {
     }
     return {
         ...state,
-        protocol: 1,
+        protocol: 2,
         incremental: true,
         serverEpoch: update.serverEpoch,
         sequence: newServer ? sequence : Math.max(sequence, previous?.sequence || 0),

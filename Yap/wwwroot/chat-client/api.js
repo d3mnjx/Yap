@@ -11,6 +11,13 @@ export function beginForeground() {
         document.dispatchEvent(new CustomEvent('chat-foreground', { detail: foregroundRequests }));
     };
 }
+function updateRequired() {
+    document.dispatchEvent(new Event('chat-update-required'));
+    return new ApiError(426, {
+        code: 'update_required',
+        error: 'Client update required. Reload Yap to continue.',
+    });
+}
 export class ApiError extends Error {
     constructor(status, body) {
         super(body.error || `Server unavailable (${status})`);
@@ -43,9 +50,20 @@ async function read(path, { signal } = {}) {
             ? AbortSignal.any([signal, AbortSignal.timeout(10000)])
             : AbortSignal.timeout(10000),
     });
+    if (response.status === 426) throw updateRequired();
     if (response.status === 401) throw new Error('AUTH_REQUIRED');
     if (!response.ok) throw new ApiError(response.status, {});
-    return response.json();
+    const value = await response.json();
+    // History and individual targets use the same wire record as live updates.
+    if (value.authors && !value.protocol) {
+        const authors = new Map(value.authors.map((author) => [author.id, author]));
+        const hydrate = (message) => ({ ...message, author: authors.get(message.authorId) });
+        if (value.message) return hydrate(value.message);
+        if (value.conversation)
+            return { ...value.conversation, messages: value.conversation.messages.map(hydrate) };
+        if (value.messages) return { ...value, messages: value.messages.map(hydrate) };
+    }
+    return value;
 }
 export async function refreshSession() {
     if (!refreshing) {
@@ -90,6 +108,7 @@ export async function post(path, body, credentials, { signal } = {}) {
             });
             const result = await response.json().catch(() => ({}));
             if (response.ok) return result;
+            if (response.status === 426) throw updateRequired();
             if (result.code === 'account_changed') throw new Error('ACCOUNT_CHANGED');
             // A retry refreshes the token, never the operation's owner or payload. Concurrent
             // rejected writes share the refresh; an account switch must stop their retries.

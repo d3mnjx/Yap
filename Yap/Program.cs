@@ -198,6 +198,7 @@ builder.Services.AddSignalR();
 builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
 builder.Services.AddSingleton<OfflineSnapshotService>();
 builder.Services.AddSingleton<OfflineSync>();
+builder.Services.AddSingleton<ChatLimits>();
 builder.Services.AddSingleton<OfflineChangeSignal>();
 builder.Services.AddSingleton<OfflineFanout>();
 builder.Services.AddSingleton<OfflineLiveService>();
@@ -299,8 +300,8 @@ app.Use(async (context, next) =>
 {
     // These stable URLs change between releases. The worker owns offline caching; browser
     // and CDN caches must revalidate so an upgrade/rollback can replace that worker promptly.
-    if (context.Request.Path == "/service-worker.js" || context.Request.Path.StartsWithSegments("/chat-client"))
-        context.Response.OnStarting(() => { context.Response.Headers.CacheControl = "no-cache"; return Task.CompletedTask; });
+    if (context.Request.Path is var assetPath && (assetPath == "/service-worker.js" || assetPath == "/service-worker-module.js" || assetPath.StartsWithSegments("/chat-client")))
+        context.Response.OnStarting(() => { context.Response.Headers.CacheControl = context.Request.Path == "/chat-client/manifest.json" ? "no-store" : "no-cache"; return Task.CompletedTask; });
     await next(context);
 });
 
@@ -430,7 +431,7 @@ app.Use(async (context, next) =>
         if (ChatRoutes.IsApi(context.Request.Path) && HttpMethods.IsPost(context.Request.Method))
         {
             var sizeLimit = context.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpMaxRequestBodySizeFeature>();
-            if (sizeLimit is { IsReadOnly: false }) sizeLimit.MaxRequestBodySize = 64 * 1024;
+            if (sizeLimit is { IsReadOnly: false }) sizeLimit.MaxRequestBodySize = context.RequestServices.GetRequiredService<ChatLimits>().MaxPostBytes;
         }
     }
     if (ChatRoutes.IsHub(context.Request.Path))
@@ -479,7 +480,6 @@ app.MapPwaEndpoints();
 app.MapAdminEndpoints();
 app.MapDiagnosticsEndpoints();
 app.MapGifLibraryEndpoints();
-app.MapBeaconEndpoints();
 app.MapOfflineChat();
 
 app.Run();

@@ -692,6 +692,7 @@
                                     }
                                 </div>
                             }
+                            @* Browser cache prefixes are owned by wwwroot/chat-client/constants.js. *@
                             @if ((group.Name == "yap-media-v1" || group.Name.StartsWith("yap-chat-media-")) && group.Count > 0)
                             {
                                 <button class="remove-button" style="margin-top: 8px; padding: 0.25rem 0.625rem; font-size: 0.75rem;"
@@ -1904,6 +1905,7 @@
         await RefreshCacheReport();
     }
 
+    // Browser cache prefixes are owned by wwwroot/chat-client/constants.js.
     private static string FriendlyCacheName(string name) => name switch
     {
         _ when name.StartsWith("yap-chat-media-") => "Media — saved chat attachments",

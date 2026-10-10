@@ -1,3 +1,4 @@
+const { fixturePage } = require('./support/authority.cjs');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright'),
     assert = require('node:assert/strict'),
     fs = require('node:fs');
@@ -7,7 +8,7 @@ fs.mkdirSync(out, { recursive: true });
     const browser = await chromium.launch();
     try {
         const reference = await browser.newContext({ ignoreHTTPSErrors: true }),
-            original = await reference.newPage();
+            original = await fixturePage(reference);
         await original.goto('https://localhost:7443/login');
         await original.locator('.username-input').fill('linkref' + Date.now().toString(36));
         await original.locator('.join-button').click();
@@ -38,7 +39,7 @@ fs.mkdirSync(out, { recursive: true });
             'PASS frozen original message-link markup/color fixture (the rewrite previously omitted this class)',
         );
         const context = await browser.newContext({ viewport: { width: 1440, height: 900 } }),
-            page = await context.newPage();
+            page = await fixturePage(context);
         await page.goto('http://127.0.0.1:7643/login');
         await page.locator('.username-input').fill('contrast' + Date.now().toString(36));
         await page.locator('.join-button').click();
@@ -73,8 +74,11 @@ fs.mkdirSync(out, { recursive: true });
                     reactions: [],
                 },
             ];
-            await s.commit({ ...state.snapshot, sequence: state.snapshot.sequence + 1 }, state);
-            const b = new BroadcastChannel('yap-chat-v1');
+            await s.commitUpdate(
+                window.fixtureUpdate({ ...state.snapshot, sequence: state.snapshot.sequence + 1 }),
+                state,
+            );
+            const b = new BroadcastChannel(window.fixtureConstants.CHANGE_CHANNEL);
             b.postMessage('snapshot');
             b.close();
         });

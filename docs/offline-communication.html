@@ -1440,7 +1440,7 @@
                         <p>
                             The old <code>RoomChat.razor</code>, <code>DmChat.razor</code> and their
                             chat-only dependencies are removed. The browser client owns its static
-                            <code>component-styles.css</code>; Razor CSS files are no longer embedded
+                            <code>shared.css</code> and the client concern stylesheets; Razor CSS files are no longer embedded
                             or extracted at runtime.
                         </p>
                     </article>
@@ -1873,7 +1873,7 @@ builder.Services.AddHostedService&lt;OfflineLiveCleanup&gt;();</code></pre>
                     ><a href="feature-parity-inventory.md">Feature reference ↗</a>
                 </div>
                 <p>
-                    Source-based guide · 9 October 2026 · incremental protocol 2 · shell v36 /
+                    Source-based guide · 9 October 2026 · incremental protocol 2 · content-hashed shell /
                     schema 4. Diagrams describe application order, not a recorded packet capture.
                     Transport fallback depends on browser and deployment support.
                 </p>

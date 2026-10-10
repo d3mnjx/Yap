@@ -1,3 +1,6 @@
+const { poll } = require('./support/wait.cjs');
+const { fixturePage } = require('./support/authority.cjs');
+const { readSnapshot } = require('./support/authority.cjs');
 // Real UI regressions for reply ownership across asynchronous enqueue and navigation.
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const assert = require('node:assert/strict');
@@ -14,8 +17,8 @@ if (
     try {
         const context = await browser.newContext(),
             buddyContext = await browser.newContext();
-        const page = await context.newPage(),
-            buddy = await buddyContext.newPage();
+        const page = await fixturePage(context),
+            buddy = await fixturePage(buddyContext);
         const name = 'replyfix' + Date.now().toString(36),
             errors = [];
         page.on('pageerror', (error) => errors.push(error.message));
@@ -49,7 +52,7 @@ if (
         };
         const first = await send(dm.channelId, 'First saved reply');
         const second = await send(dm.channelId, 'Second saved reply');
-        const snapshot = await (await context.request.get(origin + '/api/chat/sync')).json();
+        const snapshot = await readSnapshot(context.request, origin);
         const lobbyId = snapshot.conversations.find((c) => c.isDefault).id;
         const lobbyTarget = await send(lobbyId, 'Lobby reply');
         const selectReply = (id) =>
@@ -66,7 +69,7 @@ if (
         const hold = async () => {
             await page.evaluate(() => {
                 window.reviewLockHeld = false;
-                navigator.locks.request('yap-chat-v1', async () => {
+                navigator.locks.request(window.fixtureConstants.ACCOUNT_LOCK, async () => {
                     window.reviewLockHeld = true;
                     await new Promise((resolve) => {
                         window.reviewRelease = resolve;
@@ -82,7 +85,8 @@ if (
                 buffer: Buffer.from('fixture'),
             });
         const waitJobs = (n) =>
-            page.waitForFunction(
+            poll(
+                page,
                 async (n) =>
                     (await (await import('/chat-client/storage.js')).outbox()).length === n,
                 n,
@@ -93,18 +97,23 @@ if (
             document.querySelector('#connection')?.textContent.startsWith('Synced'),
         );
         await selectReply(first);
-        await page.waitForFunction(async (id) => {
-            const reply = await (await import('/chat-client/storage.js')).replyDraft(id);
-            if (!reply) return false;
-            window.reviewOriginalReply = reply;
-            return true;
-        }, dm.channelId);
+        await poll(
+            page,
+            async (id) => {
+                const reply = await (await import('/chat-client/storage.js')).replyDraft(id);
+                if (!reply) return false;
+                window.reviewOriginalReply = reply;
+                return true;
+            },
+            dm.channelId,
+        );
         const originalDmReply = await page.evaluate(() => window.reviewOriginalReply);
         assert(originalDmReply?.draftId, 'Original DM reply must be saved before navigation');
         await page.locator('#back').click();
         await page.locator('#draft:not([disabled])').waitFor();
         await selectReply(lobbyTarget);
-        await page.waitForFunction(
+        await poll(
+            page,
             async (id) => !!(await (await import('/chat-client/storage.js')).replyDraft(id)),
             lobbyId,
         );
@@ -135,7 +144,8 @@ if (
             ['text', second],
         ]) {
             await selectReply(first);
-            await page.waitForFunction(
+            await poll(
+                page,
                 async ({ channel, message }) =>
                     (await (await import('/chat-client/storage.js')).replyDraft(channel))?.id ===
                     message,
@@ -145,7 +155,8 @@ if (
                 jobs = await count();
             if (kind === 'text') {
                 await page.locator('#draft').fill('Queued reply ' + randomUUID());
-                await page.waitForFunction(
+                await poll(
+                    page,
                     async (channel) =>
                         (await (await import('/chat-client/storage.js')).draft(channel)) ===
                         document.querySelector('#draft').value,
@@ -158,7 +169,8 @@ if (
             await selectReply(replacement);
             await page.evaluate(() => window.reviewRelease());
             await waitJobs(jobs + 1);
-            await page.waitForFunction(
+            await poll(
+                page,
                 async ({ channel, previous }) => {
                     const saved = await (
                         await import('/chat-client/storage.js')

@@ -1,3 +1,5 @@
+const { poll } = require('./support/wait.cjs');
+const { fixturePage } = require('./support/authority.cjs');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const assert = require('node:assert/strict'),
     fs = require('node:fs');
@@ -10,7 +12,7 @@ fs.mkdirSync(artifacts, { recursive: true });
     const browser = await chromium.launch();
     try {
         const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } }),
-            page = await context.newPage(),
+            page = await fixturePage(context),
             errors = [];
         page.on('pageerror', (e) => errors.push(e.message));
         await page.goto(origin + '/login');
@@ -22,7 +24,7 @@ fs.mkdirSync(artifacts, { recursive: true });
         );
         await page.evaluate(() => navigator.serviceWorker.ready);
         const other = await browser.newContext(),
-            buddy = await other.newPage(),
+            buddy = await fixturePage(other),
             name = 'mediafriend' + Date.now().toString(36);
         await buddy.goto(origin + '/login');
         await buddy.locator('.username-input').fill(name);
@@ -211,13 +213,18 @@ fs.mkdirSync(artifacts, { recursive: true });
             'PASS actual picker file chooser/upload overlay, send completion and automatic favorite',
         );
 
-        await page.waitForFunction(async () => {
+        await poll(page, async () => {
             const s = await (await import('/chat-client/storage.js')).readState();
             const url = s.snapshot.conversations
                 .find((c) => c.path === location.pathname)
                 .messages.flatMap((m) => m.gifs || [])
                 .at(-1)?.url;
-            return url && !!(await (await caches.open('yap-chat-media-' + s.userId)).match(url));
+            return (
+                url &&
+                !!(await (
+                    await caches.open(window.fixtureConstants.MEDIA_CACHE_PREFIX + s.userId)
+                ).match(url))
+            );
         });
         await context.setOffline(true);
         await page.reload();
@@ -262,8 +269,11 @@ fs.mkdirSync(artifacts, { recursive: true });
                     },
                 ],
             });
-            await store.commit({ ...state.snapshot, sequence: state.snapshot.sequence + 1 }, state);
-            const b = new BroadcastChannel('yap-chat-v1');
+            await store.commitUpdate(
+                window.fixtureUpdate({ ...state.snapshot, sequence: state.snapshot.sequence + 1 }),
+                state,
+            );
+            const b = new BroadcastChannel(window.fixtureConstants.CHANGE_CHANNEL);
             b.postMessage('snapshot');
             b.close();
         });

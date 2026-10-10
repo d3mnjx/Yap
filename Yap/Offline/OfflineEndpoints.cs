@@ -14,6 +14,13 @@ public static class OfflineEndpoints
 {
     public static void MapOfflineChat(this WebApplication app)
     {
+        // Compute once from the complete deployed package, never from personalized HTML.
+        var manifest = new ChatShellManifest(app.Environment);
+        app.MapGet("/chat-client/manifest.json", (HttpContext http) =>
+        {
+            http.Response.Headers.CacheControl = "no-store";
+            return Results.Ok(manifest);
+        });
         MapApi(app.MapGroup("/api/chat"));
         app.MapHub<OfflineHub>("/hubs/chat");
         foreach (var path in new[] { "/chat", "/lobby", "/room/{id:guid}", "/dm/{username}" })
@@ -45,6 +52,12 @@ public static class OfflineEndpoints
             var authenticated = users.AuthenticateByToken(token);
             if (authenticated == null)
                 return Results.Unauthorized();
+            if (context.HttpContext.Request.Headers.TryGetValue("X-Yap-Chat-Protocol", out var protocol) && protocol != "2")
+                return Results.Json(new
+                {
+                    code = "update_required",
+                    error = "Client update required. Reload Yap to continue."
+                }, statusCode: 426);
             if (context.HttpContext.Request.Headers.TryGetValue("X-Yap-Chat-User", out var expectedUser)
                 && expectedUser != authenticated.Id.ToString())
                 return Results.Json(new
@@ -177,7 +190,7 @@ public static class OfflineEndpoints
         // operation to assemble a batch. Each operation retains its own durable receipt.
         api.MapPost("/operations", async (QueuedOperation[] operations, HttpContext http, UserService users, ChatService chat, OfflineSync sync) =>
         {
-            if (operations.Length is < 1 or > 16)
+            if (operations.Length < 1 || operations.Length > http.RequestServices.GetRequiredService<ChatLimits>().MaxOperationsPerBatch)
                 return Results.BadRequest();
             var user = users.AuthenticateByToken(http.Request.Cookies[AuthMiddleware.CookieName]!)!;
             var results = new List<OperationResult>();
@@ -203,7 +216,7 @@ public static class OfflineEndpoints
         });
         api.MapPost("/reads", async (ReadCheckpoint[] checkpoints, HttpContext http, UserService users, ChatService chat, OfflineSync sync) =>
         {
-            if (checkpoints.Length > 100)
+            if (checkpoints.Length > http.RequestServices.GetRequiredService<ChatLimits>().ReadBatch)
                 return Results.BadRequest();
             var user = users.AuthenticateByToken(http.Request.Cookies[AuthMiddleware.CookieName]!)!;
             var updates = new List<ChatUpdate>();
@@ -229,18 +242,19 @@ public static class OfflineEndpoints
                 update = sync.Conversation(user, channel.Id, full: true)
             });
         });
-        api.MapGet("/sync", (HttpContext http, UserService users, OfflineSnapshotService snapshots) =>
-                Results.Ok(snapshots.Snapshot(users.AuthenticateByToken(http.Request.Cookies[AuthMiddleware.CookieName]!)!)));
         api.MapGet("/conversations/{id:guid}/history", (Guid id, DateTime? before, int? limit, HttpContext http, UserService users, ChatService chat, OfflineSnapshotService snapshots) =>
         {
             var user = users.AuthenticateByToken(http.Request.Cookies[AuthMiddleware.CookieName]!)!;
             var channel = chat.GetChannel(id);
             if (channel == null || !channel.CanAccess(user.Id))
                 return Results.NotFound();
-            var page = chat.GetMessagesPaginated(id, Math.Clamp(limit ?? 50, 1, 500), before, users.IsAdmin(user.Id), user.Id);
+            var limits = http.RequestServices.GetRequiredService<ChatLimits>();
+            var page = chat.GetMessagesPaginated(id, Math.Clamp(limit ?? limits.HistoryPageSize, 1, limits.HistoryMaxMessages), before, users.IsAdmin(user.Id), user.Id);
+            var messages = page.Messages.Select(m => snapshots.Message(m, user.Id)).ToArray();
             return Results.Ok(new
             {
-                messages = page.Messages.Select(m => snapshots.Message(m, user.Id)),
+                messages,
+                authors = messages.Select(m => m.Author).DistinctBy(a => a.Id),
                 page.HasMore
             });
         });
@@ -248,12 +262,23 @@ public static class OfflineEndpoints
         {
             var user = users.AuthenticateByToken(http.Request.Cookies[AuthMiddleware.CookieName]!)!;
             var message = chat.GetMessageById(id, messageId);
-            return message == null || !chat.CanReadMessage(user, message) ? Results.NotFound() : Results.Ok(snapshots.Message(message, user.Id));
+            if (message == null || !chat.CanReadMessage(user, message))
+                return Results.NotFound();
+            var projected = snapshots.Message(message, user.Id);
+            return Results.Ok(new
+            {
+                message = projected,
+                authors = new[] { projected.Author }
+            });
         });
         api.MapGet("/conversations/{id:guid}", (Guid id, HttpContext http, UserService users, OfflineSnapshotService snapshots) =>
         {
             var conversation = snapshots.Conversation(users.AuthenticateByToken(http.Request.Cookies[AuthMiddleware.CookieName]!)!, id);
-            return conversation == null ? Results.NotFound() : Results.Ok(conversation);
+            return conversation == null ? Results.NotFound() : Results.Ok(new
+            {
+                conversation,
+                authors = conversation.Messages.Select(m => m.Author).DistinctBy(a => a.Id)
+            });
         });
     }
 

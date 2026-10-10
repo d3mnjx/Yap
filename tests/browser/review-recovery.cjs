@@ -180,7 +180,12 @@ if (
         await page.waitForFunction(
             () => sent.includes(job.operationId) && sent.includes(next.operationId),
         );
-        await page.evaluate(() => sender.stop());
+        await page.evaluate(async () => {
+            sender.stop();
+            // The mock records a send before its IndexedDB acknowledgement finishes.
+            // Drain the old sender before the next scenario replaces its fetch stub.
+            await navigator.locks.request('yap-send-' + owner.userId, () => {});
+        });
         console.log(
             'PASS upload timeout releases lock and retry resumes the saved upload with the same operation ID',
         );
@@ -197,7 +202,12 @@ if (
         await page.waitForFunction(
             () => sent.includes(job.operationId) && sent.includes(next.operationId),
         );
-        await page.evaluate(() => sender.stop());
+        await page.evaluate(async () => {
+            sender.stop();
+            // The mock records a send before its IndexedDB acknowledgement finishes.
+            // Drain the old sender before the next scenario replaces its fetch stub.
+            await navigator.locks.request('yap-send-' + owner.userId, () => {});
+        });
         console.log('PASS sender shutdown aborts the active request and preserves resumable work');
 
         await context.setOffline(true);

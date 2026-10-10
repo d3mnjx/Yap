@@ -61,6 +61,7 @@
     <link rel="stylesheet" href="@Assets["themes.css"]" />
     @* Generated per-scene blocks for the Tea House theme; inert for every other theme. *@
     <link rel="stylesheet" href="@Assets["themes/teahouse.css"]" />
+    <link rel="stylesheet" href="/chat-client/shared.css" />
     <link rel="stylesheet" href="@Assets["Yap.styles.css"]" />
     @* crossorigin is required even same-origin: CSS font fetches use CORS mode, and a
        mismatched preload is silently wasted (double download). Italic is not preloaded — rare. *@
@@ -149,7 +150,7 @@
     <script>
         // Register service worker for PWA support
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js')
+            import('/chat-client/worker-updates.js').then(module => module.registerWorker())
                 .then(reg => console.log('[PWA] Service worker registered'))
                 .catch(err => console.warn('[PWA] Service worker registration failed:', err));
         }

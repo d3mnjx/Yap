@@ -73,26 +73,6 @@ public class VideoService
     public static bool IsVideoFile(string extension) => VideoExtensions.Contains(extension);
 
     /// <summary>
-    /// URL convention: /uploads/{guid}.mov → /uploads/{guid}_poster.webp
-    /// </summary>
-    public static string GetPosterUrl(string originalUrl)
-    {
-        var lastDot = originalUrl.LastIndexOf('.');
-        if (lastDot < 0) return originalUrl;
-        return $"{originalUrl[..lastDot]}_poster.webp";
-    }
-
-    /// <summary>
-    /// URL convention: /uploads/{guid}.mov → /uploads/{guid}.mp4
-    /// </summary>
-    public static string GetCompressedUrl(string originalUrl)
-    {
-        var lastDot = originalUrl.LastIndexOf('.');
-        if (lastDot < 0) return originalUrl;
-        return $"{originalUrl[..lastDot]}.mp4";
-    }
-
-    /// <summary>
     /// Extracts a poster frame from the video (~1s, blocking).
     /// Returns the poster file path, or null on failure.
     /// </summary>

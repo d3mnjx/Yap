@@ -1,3 +1,4 @@
+const { fixturePage } = require('./support/authority.cjs');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright'),
     assert = require('node:assert/strict');
 const origin = process.env.YAP_TEST_ORIGIN || 'http://127.0.0.1:7643',
@@ -6,7 +7,7 @@ const origin = process.env.YAP_TEST_ORIGIN || 'http://127.0.0.1:7643',
     const browser = await chromium.launch();
     try {
         const context = await browser.newContext({ viewport: { width: 1440, height: 900 } }),
-            page = await context.newPage(),
+            page = await fixturePage(context),
             errors = [];
         page.on('pageerror', (e) => errors.push(e.message));
         const username = 'report' + Date.now().toString(36);
@@ -34,7 +35,7 @@ const origin = process.env.YAP_TEST_ORIGIN || 'http://127.0.0.1:7643',
                     document.querySelector('#connection')?.textContent.startsWith('Synced'),
                 );
             }
-            const sibling = await context.newPage();
+            const sibling = await fixturePage(context);
             await sibling.goto(origin + '/lobby');
             await sibling.waitForFunction(() =>
                 document.querySelector('#connection')?.textContent.startsWith('Synced'),
@@ -134,8 +135,14 @@ const origin = process.env.YAP_TEST_ORIGIN || 'http://127.0.0.1:7643',
                 };
                 state.snapshot.conversations.push(dest);
                 await s.saveDraft(dest.id, 'Restored destination draft', state);
-                await s.commit({ ...state.snapshot, sequence: state.snapshot.sequence + 1 }, state);
-                const b = new BroadcastChannel('yap-chat-v1');
+                await s.commitUpdate(
+                    window.fixtureUpdate({
+                        ...state.snapshot,
+                        sequence: state.snapshot.sequence + 1,
+                    }),
+                    state,
+                );
+                const b = new BroadcastChannel(window.fixtureConstants.CHANGE_CHANNEL);
                 b.postMessage('snapshot');
                 b.close();
             }, username);
@@ -178,7 +185,7 @@ const origin = process.env.YAP_TEST_ORIGIN || 'http://127.0.0.1:7643',
                     '1',
                 );
                 await page.evaluate(() => {
-                    const b = new BroadcastChannel('yap-chat-v1');
+                    const b = new BroadcastChannel(window.fixtureConstants.CHANGE_CHANNEL);
                     b.postMessage('outbox');
                     b.close();
                 });
@@ -293,11 +300,14 @@ const origin = process.env.YAP_TEST_ORIGIN || 'http://127.0.0.1:7643',
                 await page.evaluate(async () => {
                     const s = await import('/chat-client/storage.js'),
                         state = await s.readState();
-                    await s.commit(
-                        { ...state.snapshot, sequence: state.snapshot.sequence + 1 },
+                    await s.commitUpdate(
+                        window.fixtureUpdate({
+                            ...state.snapshot,
+                            sequence: state.snapshot.sequence + 1,
+                        }),
                         state,
                     );
-                    const b = new BroadcastChannel('yap-chat-v1');
+                    const b = new BroadcastChannel(window.fixtureConstants.CHANGE_CHANNEL);
                     b.postMessage('snapshot');
                     b.close();
                 });

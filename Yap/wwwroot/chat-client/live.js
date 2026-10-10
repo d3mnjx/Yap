@@ -1,6 +1,6 @@
 import * as storage from './storage.js';
 const statuses = ['online', 'away', 'invisible'];
-export function createLive({ identity, current, changed, authRequired }) {
+export function createLive({ snapshot = () => null, identity, current, changed, authRequired }) {
     let connection = null,
         view = null,
         lastActivity = Date.now(),
@@ -36,7 +36,7 @@ export function createLive({ identity, current, changed, authRequired }) {
         );
     };
     const activity = () => {
-        const wasIdle = Date.now() - lastActivity >= 30000;
+        const wasIdle = Date.now() - lastActivity >= (snapshot()?.awayAfterMs ?? 30000);
         lastActivity = Date.now();
         if (wasIdle && connection) report();
     };
@@ -54,8 +54,12 @@ export function createLive({ identity, current, changed, authRequired }) {
             changed();
         }
         if (Date.now() - lastReport >= (document.hidden ? 60000 : 10000)) report();
-        if (typingChannel && Date.now() - typedAt >= 3000) stopTyping();
-        else if (typingChannel && Date.now() - lastTypingSent >= 1500) {
+        if (typingChannel && Date.now() - typedAt >= (snapshot()?.typingTimeoutMs ?? 3000))
+            stopTyping();
+        else if (
+            typingChannel &&
+            Date.now() - lastTypingSent >= (snapshot()?.typingTimeoutMs ?? 3000) / 2
+        ) {
             lastTypingSent = Date.now();
             invoke('Typing', typingChannel, true);
         }
@@ -94,7 +98,7 @@ export function createLive({ identity, current, changed, authRequired }) {
                         for (const name of data.removedUsers || []) people.delete(name);
                         for (const person of data.users || []) people.set(person.username, person);
                         view = { ...view, ...data, users: [...people.values()] };
-                        typingExpires = Date.now() + 3500;
+                        typingExpires = Date.now() + (snapshot()?.typingTimeoutMs ?? 3000) + 500;
                         if (data.chosenStatus && chosen !== data.chosenStatus) {
                             chosen = data.chosenStatus;
                             storage.chooseStatus(chosen, owner).catch(() => {});

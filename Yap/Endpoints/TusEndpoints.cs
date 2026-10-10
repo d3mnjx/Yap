@@ -110,6 +110,9 @@ public static class TusEndpoints
                     var extension = Path.GetExtension(originalFileName).ToLowerInvariant();
                     var kind = metadata.TryGetValue("kind", out var kindMeta)
                         ? kindMeta.GetString(System.Text.Encoding.UTF8) : null;
+                    if (kind != "gif-pack" && !eventContext.HttpContext.RequestServices.GetRequiredService<Yap.Offline.ChatLimits>()
+                        .AllowedExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase))
+                        throw new InvalidOperationException("This file extension is not allowed.");
                     // Library uploads (GifLibraryManager) carry a destination; chat uploads don't.
                     var target = metadata.TryGetValue("target", out var targetMeta)
                         ? targetMeta.GetString(System.Text.Encoding.UTF8) : null;

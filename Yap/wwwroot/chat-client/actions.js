@@ -17,6 +17,7 @@ const icons = {
     more: 'M6 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4z',
 };
 export function createActions({
+    snapshot = () => null,
     identity,
     current,
     render,
@@ -167,7 +168,7 @@ export function createActions({
             input = el('textarea', 'edit-input');
         input.value = message.content;
         input.rows = 1;
-        input.maxLength = 4000;
+        input.maxLength = snapshot()?.maxTextLength ?? 4000;
         input.setAttribute('aria-label', 'Edit message');
         box.append(input);
         const controls = el('div', 'edit-actions');

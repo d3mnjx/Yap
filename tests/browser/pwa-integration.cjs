@@ -1,3 +1,4 @@
+const { fixturePage } = require('./support/authority.cjs');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright'),
     assert = require('node:assert/strict');
 const origin = process.env.YAP_TEST_ORIGIN || 'http://127.0.0.1:7643';
@@ -81,7 +82,7 @@ if (!['localhost', '127.0.0.1'].includes(new URL(origin).hostname))
             return c;
         }
         const base = await context(),
-            page = await base.newPage(),
+            page = await fixturePage(base),
             name = 'pwa' + Date.now().toString(36);
         await page.goto(origin + '/login');
         await page.locator('.username-input').fill(name);
@@ -105,7 +106,7 @@ if (!['localhost', '127.0.0.1'].includes(new URL(origin).hostname))
         const userId = (await (await base.request.get(origin + '/api/chat/session')).json()).userId;
         // Real token redemption into an empty cookie jar (not a simulated cookie copy).
         const handoff = await context({ standalone: true, permission: 'denied' }),
-            launch = await handoff.newPage();
+            launch = await fixturePage(handoff);
         await launch.goto(origin + manifest.start_url);
         await launch.waitForURL('**/lobby');
         await launch.waitForFunction(() =>
@@ -143,14 +144,14 @@ if (!['localhost', '127.0.0.1'].includes(new URL(origin).hostname))
                 standalone: true,
                 permission: 'denied',
             }),
-            deniedPage = await denied.newPage();
+            deniedPage = await fixturePage(denied);
         await deniedPage.goto(origin + '/lobby');
         await deniedPage.waitForFunction(() =>
             document.querySelector('#connection')?.textContent.startsWith('Synced'),
         );
         assert.equal(await deniedPage.locator('.push-prompt-overlay').count(), 0);
         const prompts = await context({ storageState: state, standalone: true }),
-            p = await prompts.newPage();
+            p = await fixturePage(prompts);
         await p.goto(origin + '/lobby');
         await p.locator('.push-prompt-enable').waitFor();
         assert.equal(await p.evaluate(() => permissionRequests), 0);
@@ -166,7 +167,7 @@ if (!['localhost', '127.0.0.1'].includes(new URL(origin).hostname))
         await p.waitForFunction((before) => badges.length > before, beforePermission);
         // Refresh a granted subscription and replace an obsolete application server key.
         const repair = await context({ storageState: state, permission: 'granted', rotated: true }),
-            r = await repair.newPage();
+            r = await fixturePage(repair);
         const refreshed = r.waitForResponse(
             (x) => x.url().endsWith('/api/push/subscribe') && x.status() === 200,
         );
@@ -178,7 +179,7 @@ if (!['localhost', '127.0.0.1'].includes(new URL(origin).hostname))
             'PASS PWA-only explicit permission, denied silence, granted subscription repair and key rotation (browser API fixtures)',
         );
         const dismiss = await context({ storageState: state, standalone: true }),
-            d = await dismiss.newPage();
+            d = await fixturePage(dismiss);
         for (let i = 0; i < 3; i++) {
             await d.goto(origin + '/lobby');
             await d.locator('.push-prompt-later').click();
@@ -286,8 +287,11 @@ if (!['localhost', '127.0.0.1'].includes(new URL(origin).hostname))
                 videos: [],
                 reactions: [],
             });
-            await store.commit({ ...s.snapshot, sequence: s.snapshot.sequence + 1 }, s);
-            const b = new BroadcastChannel('yap-chat-v1');
+            await store.commitUpdate(
+                window.fixtureUpdate({ ...s.snapshot, sequence: s.snapshot.sequence + 1 }),
+                s,
+            );
+            const b = new BroadcastChannel(window.fixtureConstants.CHANGE_CHANNEL);
             b.postMessage('snapshot');
             b.close();
         });

@@ -171,12 +171,34 @@ export function createComposer({ identity, snapshot, selected, current, live, on
         const accepted = [],
             errors = [];
         for (const file of files) {
-            if (file.size > Math.min(uploadLimit(), gifUpload ? 50 * 1024 * 1024 : Infinity))
+            if (
+                file.size >
+                Math.min(
+                    snapshot()?.maxUploadBytes ?? uploadLimit(),
+                    gifUpload ? 50 * 1024 * 1024 : Infinity,
+                )
+            )
                 errors.push(`${file.name} exceeds the upload size limit.`);
-            else if (!/\.(png|jpe?g|gif|webp|mp4|webm|mov|mkv)$/i.test(file.name))
+            else if (
+                !(
+                    snapshot()?.allowedExtensions ?? [
+                        '.png',
+                        '.jpg',
+                        '.jpeg',
+                        '.gif',
+                        '.webp',
+                        '.mp4',
+                        '.webm',
+                        '.mov',
+                        '.mkv',
+                    ]
+                ).includes('.' + file.name.split('.').pop().toLowerCase())
+            )
                 errors.push(`${file.name} is not a supported image or video.`);
-            else if (accepted.length === 20)
-                errors.push(`${file.name}: select no more than 20 files at once.`);
+            else if (accepted.length >= (snapshot()?.maxFilesPerMessage ?? 20))
+                errors.push(
+                    `${file.name}: select no more than ${snapshot()?.maxFilesPerMessage ?? 20} files at once.`,
+                );
             else accepted.push(file);
         }
         if (accepted.length) {
@@ -192,7 +214,7 @@ export function createComposer({ identity, snapshot, selected, current, live, on
     $('#upload-button').onclick = () => {
         const input = $('#upload-files');
         input.dataset.gif = '';
-        input.accept = 'image/*,video/*';
+        input.accept = snapshot()?.allowedExtensions?.join(',') || 'image/*,video/*';
         input.multiple = true;
         input.click();
     };

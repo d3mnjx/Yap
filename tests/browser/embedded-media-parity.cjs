@@ -1,3 +1,4 @@
+const { readSnapshot } = require('./support/authority.cjs');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright'),
     assert = require('node:assert/strict'),
     fs = require('node:fs'),
@@ -96,9 +97,7 @@ fs.mkdirSync(out, { recursive: true });
                     });
                 }
                 if (label === 'rewrite') {
-                    const data = await (
-                            await context.request.get(origin + '/api/chat/sync')
-                        ).json(),
+                    const data = await readSnapshot(context.request, origin),
                         msg = data.conversations
                             .flatMap((c) => c.messages)
                             .find((m) => m.author.username === name && m.content === url),

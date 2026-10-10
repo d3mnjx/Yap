@@ -1,3 +1,4 @@
+const { poll } = require('./support/wait.cjs');
 // Loopback is a trustworthy browser context without TLS. No certificate bypass flags.
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const assert = require('node:assert/strict');
@@ -33,7 +34,7 @@ if (
             );
             assert.equal(await page.evaluate(() => isSecureContext), true);
             await page.locator('#draft').fill('local HTTP draft');
-            await page.waitForFunction(async () => {
+            await poll(page, async () => {
                 const store = await import('/chat-client/storage.js');
                 const { snapshot } = await store.readState();
                 const channel = snapshot.conversations.find((c) => c.path === location.pathname);
@@ -71,10 +72,11 @@ if (
                     const retired = await context.newPage();
                     await assert.rejects(
                         retired.goto(origin + path),
-                        /net::ERR_INTERNET_DISCONNECTED/,
+                        /net::ERR_(?:INTERNET_DISCONNECTED|FAILED)/,
                     );
                     // Navigation rejects before Chromium finishes its error document.
                     await retired.waitForLoadState('load');
+                    assert.equal(await retired.locator('#timeline').count(), 0);
                     await retired.close();
                 }
                 console.log(

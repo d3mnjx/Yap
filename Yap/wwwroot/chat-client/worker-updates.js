@@ -24,3 +24,43 @@ if ('serviceWorker' in navigator)
         .getRegistration()
         .then(watchWorkerUpdates)
         .catch(() => {});
+
+// A content-only release changes the registration URL even when worker source is identical.
+// Registration performs the browser's normal atomic install/activate lifecycle.
+let checking;
+export function registerWorker() {
+    return (checking ??= (async () => {
+        const existing = await navigator.serviceWorker.getRegistration('/');
+        await existing?.update().catch(() => {});
+        try {
+            const response = await fetch('/chat-client/manifest.json', {
+                cache: 'no-store',
+                signal: AbortSignal.timeout(10000),
+            });
+            if (!response.ok) throw new Error('Shell manifest unavailable');
+            const manifest = await response.json();
+            const registration = await navigator.serviceWorker.register(
+                '/service-worker-module.js?v=' + encodeURIComponent(manifest.version),
+                {
+                    type: 'module',
+                    updateViaCache: 'none',
+                    scope: '/',
+                },
+            );
+            watchWorkerUpdates(registration);
+            return registration;
+        } catch (error) {
+            if (!existing) throw error;
+            watchWorkerUpdates(existing);
+            return existing;
+        }
+    })().finally(() => {
+        checking = undefined;
+    }));
+}
+if ('serviceWorker' in navigator) {
+    registerWorker().catch(() => {});
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) registerWorker().catch(() => {});
+    });
+}

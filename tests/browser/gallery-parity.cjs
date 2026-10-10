@@ -1,3 +1,5 @@
+const { poll } = require('./support/wait.cjs');
+const { fixturePage } = require('./support/authority.cjs');
 const { chromium, firefox } = require(process.env.PLAYWRIGHT_MODULE || 'playwright'),
     assert = require('node:assert/strict'),
     fs = require('node:fs');
@@ -17,7 +19,7 @@ fs.mkdirSync(out, { recursive: true });
                     ignoreHTTPSErrors: true,
                     viewport: { width: 1280, height: 800 },
                 }),
-                page = await context.newPage(),
+                page = await fixturePage(context),
                 errors = [];
             page.on('pageerror', (e) => errors.push(e.message));
             const username = 'gallery' + Date.now().toString(36);
@@ -220,9 +222,11 @@ fs.mkdirSync(out, { recursive: true });
                 await page.evaluate(() => window.restoreCacheMatch());
             }
             if (label === 'rewrite') {
-                await page.waitForFunction(async () => {
+                await poll(page, async () => {
                     const s = await (await import('/chat-client/storage.js')).readState(),
-                        c = await caches.open('yap-chat-media-' + s.userId),
+                        c = await caches.open(
+                            window.fixtureConstants.MEDIA_CACHE_PREFIX + s.userId,
+                        ),
                         images = s.snapshot.conversations
                             .find((c) => c.isDefault)
                             .messages.filter((m) => m.author.id === s.userId)
@@ -247,7 +251,7 @@ fs.mkdirSync(out, { recursive: true });
                         ...(process.env.YAP_BROWSER === 'firefox' ? {} : { isMobile: true }),
                         hasTouch: true,
                     }),
-                    phone = await touch.newPage();
+                    phone = await fixturePage(touch);
                 phone.on('pageerror', (e) => errors.push(e.message));
                 await phone.goto(origin + '/lobby');
                 const image = phone

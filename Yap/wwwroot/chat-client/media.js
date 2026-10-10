@@ -1,9 +1,10 @@
+import { ACCOUNT_LOCK, MEDIA_CACHE_PREFIX } from './constants.js';
 import { readIdentity } from './storage.js';
 import { foregroundRequests } from './api.js';
 const MAX_BYTES = 32 * 1024 * 1024;
 const MAX_FILE = 4 * 1024 * 1024;
 const PREFETCH_BUDGET = 8 * 1024 * 1024;
-const cacheName = (userId) => `yap-chat-media-${userId}`;
+const cacheName = (userId) => MEDIA_CACHE_PREFIX + userId;
 const valid = (value) => {
     try {
         const url = new URL(value, location.origin);
@@ -178,7 +179,7 @@ async function download() {
                     );
                 }),
             );
-            await navigator.locks.request('yap-chat-v1', async () => {
+            await navigator.locks.request(ACCOUNT_LOCK, async () => {
                 if ((await readIdentity())?.epoch !== account.epoch) return;
                 let total = blob.size + sizes.reduce((a, b) => a + b, 0);
                 for (let i = 0; total > MAX_BYTES && i < keys.length; i++) {

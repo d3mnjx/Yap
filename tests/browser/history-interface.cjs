@@ -1,3 +1,5 @@
+const { poll } = require('./support/wait.cjs');
+const { fixturePage } = require('./support/authority.cjs');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright'),
     assert = require('node:assert/strict'),
     fs = require('node:fs');
@@ -10,7 +12,7 @@ fs.mkdirSync(artifacts, { recursive: true });
     const browser = await chromium.launch();
     try {
         const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } }),
-            page = await context.newPage(),
+            page = await fixturePage(context),
             errors = [];
         page.on('pageerror', (e) => errors.push(e.message));
         const name = 'history' + Date.now().toString(36);
@@ -22,7 +24,7 @@ fs.mkdirSync(artifacts, { recursive: true });
             document.querySelector('#connection')?.textContent.startsWith('Synced'),
         );
         const other = await browser.newContext(),
-            buddy = await other.newPage();
+            buddy = await fixturePage(other);
         await buddy.goto(origin + '/login');
         await buddy.locator('.username-input').fill(name + 'b');
         await buddy.locator('.join-button').click();
@@ -89,7 +91,7 @@ fs.mkdirSync(artifacts, { recursive: true });
         console.log(
             'PASS arrival preserves loaded history and window boundary without a history request',
         );
-        const sibling = await context.newPage();
+        const sibling = await fixturePage(context);
         await sibling.goto(origin + '/dm/' + name + 'b');
         await sibling.waitForFunction(() =>
             document.querySelector('#connection')?.textContent.startsWith('Synced'),
@@ -220,7 +222,8 @@ fs.mkdirSync(artifacts, { recursive: true });
         const changedVersion = (await inactiveDelete.json()).update.conversations.find(
             (c) => c.id === id,
         ).state.contentVersion;
-        await page.waitForFunction(
+        await poll(
+            page,
             async ({ id, changedVersion }) =>
                 (
                     await (await import('/chat-client/storage.js')).readState()
@@ -249,7 +252,7 @@ fs.mkdirSync(artifacts, { recursive: true });
         );
         // Clean storage verifies a reply jump can fetch a target that was never paged locally.
         const fresh = await browser.newContext({ storageState: await context.storageState() });
-        const jump = await fresh.newPage();
+        const jump = await fixturePage(fresh);
         await jump.goto(origin + '/dm/' + name + 'b');
         await jump.waitForFunction(() =>
             document.querySelector('#connection')?.textContent.startsWith('Synced'),
@@ -323,11 +326,16 @@ fs.mkdirSync(artifacts, { recursive: true });
             await page.evaluate(async (theme) => {
                 const store = await import('/chat-client/storage.js'),
                     s = await store.readState();
-                await store.commit(
-                    { ...s.snapshot, theme, fontSize: 20, sequence: s.snapshot.sequence + 1 },
+                await store.commitUpdate(
+                    window.fixtureUpdate({
+                        ...s.snapshot,
+                        theme,
+                        fontSize: 20,
+                        sequence: s.snapshot.sequence + 1,
+                    }),
                     s,
                 );
-                const b = new BroadcastChannel('yap-chat-v1');
+                const b = new BroadcastChannel(window.fixtureConstants.CHANGE_CHANNEL);
                 b.postMessage('snapshot');
                 b.close();
             }, theme);

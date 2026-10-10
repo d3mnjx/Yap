@@ -1,0 +1,525 @@
+/* Draft input, reply bar, upload controls and typing indicator. */
+/* MessageInput */
+/* Reply bar above message input */
+.reply-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
+    margin: 0 8px;
+    background: var(--bg-sidebar);
+    border-radius: 8px 8px 0 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+.reply-bar-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.reply-bar-close {
+    background: transparent;
+    border: none;
+    color: var(--text-placeholder);
+    cursor: pointer;
+    padding: 2px 6px;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+.reply-bar-close:hover {
+    color: var(--text-primary);
+}
+.message-input-container {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 0;
+    width: 100%;
+    padding: 4px 8px 16px;
+    background: var(--bg-input-band);
+    transition:
+        background-color 0.2s,
+        box-shadow 0.2s;
+    position: relative;
+}
+/* When reply bar is shown, connect input visually */
+.message-input-container.has-reply-bar {
+    padding-top: 0;
+}
+.message-input-container.has-reply-bar .input-box {
+    border-radius: 0 0 22px 22px;
+}
+/* The single rounded box (Discord-style): + upload on the left, textarea in the middle,
+   picker toggles on the right. The send button lives OUTSIDE it, as a container sibling. */
+.input-box {
+    flex: 1 1 0%;
+    min-width: 0;
+    display: flex;
+    align-items: flex-end;
+    background: var(--bg-input);
+    border-radius: 22px;
+}
+/* data-dragging is set by setupDropZone (chat.js) — drag visuals are fully client-side */
+.message-input-container[data-dragging] {
+    background: var(--bg-secondary);
+    box-shadow: inset 0 0 0 2px var(--accent-primary);
+}
+.message-input-container[data-dragging]::after {
+    content: 'Drop images here';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--accent-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    pointer-events: none;
+}
+/* Transparent inside the box — the .input-box paints the shared background. */
+.message-input {
+    flex: 1 1 0%;
+    min-width: 0;
+    padding: 0.6875rem 0.25rem;
+    border: none;
+    font-size: 1rem;
+    background: transparent;
+    color: var(--text-primary);
+    word-break: break-word;
+    overflow-wrap: break-word;
+    resize: none;
+    min-height: 44px;
+    max-height: 200px;
+    overflow-y: auto;
+    line-height: 1.375;
+    font-family: inherit;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-appearance: none;
+}
+.message-input::-webkit-scrollbar {
+    display: none;
+}
+.message-input:focus {
+    outline: none;
+}
+.message-input::placeholder {
+    color: var(--text-placeholder);
+}
+.send-button {
+    position: relative;
+    z-index: 1000; /* Above emoji-picker-backdrop (999) so send works with picker open */
+    flex: 0 0 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin-left: 8px;
+    padding: 0;
+    background: var(--accent-primary);
+    color: var(--text-white);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    overflow: hidden;
+    transition:
+        background-color 0.2s,
+        opacity 0.2s,
+        flex-basis 0.15s ease,
+        width 0.15s ease,
+        margin-left 0.15s ease,
+        transform 0.15s ease;
+}
+.send-button:hover:not(:disabled) {
+    background: var(--accent-hover);
+}
+/* The only accent glow in the chat loop. Deliberately not on message rows: a
+   box-shadow on every item in a scrolling list repaints each frame. */
+.send-button:not(:disabled):not(.disabled) {
+    box-shadow: var(--glow-accent);
+}
+.send-button:disabled,
+.send-button.disabled {
+    background: var(--bg-muted);
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+/* Client-side visibility, no circuit round trip: the button collapses away while the box
+   is empty AND no picker is open (:placeholder-shown reacts to the value itself;
+   data-picker is the client-owned picker state chat.js flips). It collapses instead of
+   display:none so the width animates AND the Enter handler's .click() keeps a live target. */
+.message-input-container:not([data-picker]):has(.message-input:placeholder-shown) .send-button {
+    flex-basis: 0;
+    width: 0;
+    margin-left: 0;
+    transform: scale(0);
+}
+/* Picker open over an empty box: the button is visible (a reassurance the user asked
+   for) but dimmed — there is nothing to send yet, and HandleSend still guards. */
+.message-input-container[data-picker]:has(.message-input:placeholder-shown) .send-button {
+    background: var(--bg-muted);
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+/* Image upload button */
+.image-upload-button {
+    flex: 0 0 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.5rem;
+    transition: color 0.2s;
+}
+.image-upload-button:hover {
+    color: var(--text-primary);
+}
+/* Toggle wrapper — holds the gif + emoji buttons together. position:relative anchors the
+   absolute-positioned picker containers above. */
+.emoji-toggle-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+.emoji-toggle-button {
+    flex: 0 0 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+}
+/* GIF toggle button — square 44×44 to match image-upload + emoji buttons. The "GIF" badge
+   sits centered inside (light pill on the dark button area), giving a square hit area while
+   keeping the recognizable Discord-style badge as the visual. */
+.gif-toggle-button {
+    flex: 0 0 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    padding: 0;
+    overflow: hidden;
+    transition:
+        flex-basis 0.15s ease,
+        width 0.15s ease,
+        transform 0.15s ease;
+}
+/* A GIF sends as its own message — it can't be inserted into a draft. While the user is
+   typing text, collapse the GIF button (Discord's gift/mic move); emoji stays, since
+   emojis DO insert into the draft. Pure sibling CSS off the textarea's value. */
+.message-input:not(:placeholder-shown) ~ .emoji-toggle-wrapper .gif-toggle-button {
+    flex-basis: 0;
+    width: 0;
+    transform: scale(0);
+}
+.gif-toggle-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background: var(--text-secondary);
+    color: var(--bg-darkest);
+    border-radius: 4px;
+    font-weight: 800;
+    font-size: 0.55rem;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    pointer-events: none;
+    transition: background-color 0.15s;
+}
+/* Active state rides on the container's data-picker attribute (client-owned, chat.js) */
+.gif-toggle-button:hover .gif-toggle-badge,
+.message-input-container[data-picker='gif'] .gif-toggle-button .gif-toggle-badge {
+    background: var(--text-primary);
+}
+/* Sprite icon: 960x192 source, 48px cells, displayed at 22px
+   Scale: 22/48 = 0.4583x -> sprite display size: 440px x 88px */
+.emoji-toggle-icon {
+    display: block;
+    width: 22px;
+    height: 22px;
+
+    /* Grey state: silhouette sprite as mask, filled with grey */
+    -webkit-mask-image: url(/emoji_selection_greys.png);
+    mask-image: url(/emoji_selection_greys.png);
+    -webkit-mask-size: 440px 88px;
+    mask-size: 440px 88px;
+    -webkit-mask-position: calc(var(--grey-col) * -22px) calc(var(--grey-row) * -22px);
+    mask-position: calc(var(--grey-col) * -22px) calc(var(--grey-row) * -22px);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    background-color: var(--text-secondary);
+
+    /* Preload color sprite to avoid flash on first hover */
+    background-image: url(/emoji_selection_color.png);
+    background-size: 0;
+}
+.emoji-toggle-button:hover .emoji-toggle-icon,
+.message-input-container[data-picker='emoji'] .emoji-toggle-button .emoji-toggle-icon {
+    /* Color state: remove mask, show color sprite */
+    -webkit-mask-image: none;
+    mask-image: none;
+    background-color: transparent;
+    background-image: url(/emoji_selection_color.png);
+    background-size: 440px 88px;
+    background-position: calc(var(--color-col) * -22px) calc(var(--color-row) * -22px);
+    background-repeat: no-repeat;
+}
+.message-input-container[data-picker='gif'] [data-picker-pane='gif'],
+.message-input-container[data-picker='emoji'] [data-picker-pane='emoji'] {
+    display: block;
+}
+/* While a picker is open (data-picker set by chat.js), lift the whole input box above the
+   picker backdrop (z-index 999) — like .send-button — so a single click reaches the
+   textarea, focusing it AND dismissing the picker in one gesture (the focusin handler in
+   chat.js clears data-picker). The textarea is transparent now, so lifting only it would
+   float bare text over the mobile backdrop; the box brings its background along. Scoped
+   to [data-picker] so the [data-dragging] "Drop images here" hint (container ::after)
+   stays above the box otherwise. */
+.message-input-container[data-picker] .input-box {
+    position: relative;
+    z-index: 1000;
+}
+/* The box is now a stacking context holding the backdrop (z 999) — the static textarea
+   would paint UNDER it. Lift the textarea within the box so one click still reaches it. */
+.message-input-container[data-picker] .message-input {
+    position: relative;
+    z-index: 1000;
+}
+/* Typing indicator styles */
+.typing-indicator-container {
+    height: 18px;
+    background: var(--bg-input-band);
+    overflow: hidden;
+}
+.typing-indicator {
+    height: 100%;
+    padding: 0 1rem;
+    display: flex;
+    align-items: flex-end;
+    font-size: 12px;
+    animation: fadeIn 0.2s ease;
+}
+.typing-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    animation: fadeIn 0.3s ease;
+}
+.typing-dots .dot {
+    width: 6px;
+    height: 6px;
+    background-color: var(--text-placeholder);
+    border-radius: 50%;
+    animation: discordBounce 1.4s infinite ease-in-out;
+}
+.typing-dots .dot:nth-child(1) {
+    animation-delay: -0.32s;
+}
+.typing-dots .dot:nth-child(2) {
+    animation-delay: -0.16s;
+}
+.typing-dots .dot:nth-child(3) {
+    animation-delay: 0s;
+}
+/* Upload progress bar */
+.upload-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    color: var(--accent-primary);
+}
+.upload-progress-track {
+    height: 4px;
+    background: var(--bg-muted);
+    border-radius: 2px;
+    overflow: hidden;
+    flex: 1;
+    min-width: 60px;
+}
+.upload-progress-fill {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--accent-primary);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+.upload-progress-text {
+    color: var(--accent-light, #b0b6fc);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+}
+@keyframes discordBounce {
+    0%,
+    60%,
+    100% {
+        transform: translateY(0);
+        opacity: 0.4;
+    }
+    30% {
+        transform: translateY(-6px);
+        opacity: 1;
+    }
+}
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+/* Mobile adjustments */
+@media (max-width: 600px) {
+    .message-input-container {
+        padding: 4px 8px 16px;
+        gap: 0;
+    }
+    .typing-indicator-container {
+        height: 18px;
+    }
+    .typing-indicator {
+        font-size: 12px;
+        padding: 0 0.5rem;
+    }
+    /* Pinned font-size prevents iOS zoom. The padding is pinned too: with a root
+       font-size other than 16px the rem padding goes fractional (0.6875rem @ 18px =
+       12.375px) while the 16px line stays 22px, so the text line sits on a half-pixel
+       and iOS WebKit paints a 1px "strike-through" row across it (dark under glyphs,
+       stale pixels after a delete). 11px + 22px + 11px also matches the 44px reset
+       height chat.js applies after a send. */
+    .message-input {
+        font-size: 16px;
+        padding: 11px 4px;
+    }
+    /* 40px buttons in the 44px-min box: 2px bottom margin keeps them optically centered
+       (the box is align-items: flex-end for multi-line growth). */
+    .image-upload-button {
+        flex: 0 0 40px;
+        width: 40px;
+        height: 40px;
+        margin-bottom: 2px;
+    }
+    .send-button {
+        flex: 0 0 40px;
+        width: 40px;
+        height: 40px;
+        margin-bottom: 2px;
+    }
+    .emoji-toggle-button {
+        flex: 0 0 40px;
+        width: 40px;
+        height: 40px;
+        margin-bottom: 2px;
+    }
+    /* On phone, GIFs and emoji share one button (the emoji icon) — the picker has tabs.
+       The + upload button stays visible while composing (Discord keeps it too); the old
+       data-composing hide is gone — the send button hiding while idle repays the space. */
+    .gif-toggle-button {
+        display: none;
+    }
+    /* Push input above the fixed emoji picker so it stays visible */
+    .message-input-container[data-picker='emoji'] {
+        margin-bottom: min(50vh, 400px);
+    }
+}
+/* Warning modal */
+.warning-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+.warning-modal {
+    position: relative;
+    background: var(--bg-sidebar);
+    border-radius: 8px;
+    padding: 1.5rem;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+.warning-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    color: var(--text-placeholder);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
+    transition: color 0.15s;
+}
+.warning-modal-close:hover {
+    color: var(--text-primary);
+}
+.warning-modal-title {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-white);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+.warning-modal-message {
+    margin: 0 0 1.25rem 0;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.4;
+}
+.warning-modal-button {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: var(--accent-primary);
+    color: var(--text-white);
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+.warning-modal-button:hover {
+    background: var(--accent-hover);
+}
+/* Read-only channel bar */
+.readonly-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    margin: 0 8px 16px;
+    background: var(--bg-input);
+    border-radius: 8px;
+    color: var(--text-placeholder);
+    font-size: 0.875rem;
+}
+.readonly-bar svg {
+    flex-shrink: 0;
+    opacity: 0.6;
+}

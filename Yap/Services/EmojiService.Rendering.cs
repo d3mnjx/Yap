@@ -11,9 +11,7 @@ namespace Yap.Services;
 /// Active emoji renderer (second partial of <see cref="EmojiService"/>). Emits emoji
 /// <c>&lt;img&gt;</c> tags for the set selected by <see cref="ActiveEmojiStyle"/> — Apple
 /// (emoji-datasource-apple PNGs) or Twemoji (SVGs) — with self-hosted overrides in
-/// <c>wwwroot/emoji-fallback/</c> taking priority in both modes. The standalone Twemoji methods in
-/// <c>EmojiService.cs</c> (<c>ConvertEmojisToTwemoji</c> / <c>ProcessMessageContent</c> /
-/// <c>GetPickerEmojiHtml</c>) retain the older rendering API.
+/// <c>wwwroot/emoji-fallback/</c> taking priority in both modes.
 ///
 /// Resolution order for each emoji:
 ///   1. self-hosted override  (wwwroot/emoji-fallback/{codepoint}.png) — for emoji missing or
@@ -59,7 +57,7 @@ public partial class EmojiService
     private HashSet<string>? _localOverrides;
     private readonly object _localOverridesLock = new();
 
-    /// <summary>Twin of <see cref="GetPickerEmojiHtml"/> for the emoji picker grid/sidebar.</summary>
+    /// <summary>Emoji artwork for retained Blazor controls.</summary>
     /// <remarks>No Twemoji <c>onerror</c> fallback: every picker emoji comes from the curated
     /// EmojiData set and is present in the chosen artwork set, so the fallback would only bloat ~1400
     /// cached cells. Cells are <c>loading="lazy"</c> — load-bearing for the mounted-hidden
@@ -153,54 +151,6 @@ public partial class EmojiService
         }
 
         return new MarkupString(result);
-    }
-
-    /// <summary>URL-aware wrapper around <see cref="ConvertEmojis"/>: makes links clickable, then
-    /// applies emoji conversion to the non-URL segments. Twin of <see cref="ProcessMessageContent"/>.</summary>
-    public MarkupString RenderMessageContent(string text)
-    {
-        if (string.IsNullOrEmpty(text))
-            return new MarkupString(text);
-
-        var urls = LinkPreviewService.ExtractUrls(text);
-        if (urls.Count == 0)
-            return ConvertEmojis(text);
-
-        var sb = new StringBuilder();
-        var remaining = text;
-
-        foreach (var url in urls)
-        {
-            var searchUrl = url;
-            var idx = remaining.IndexOf(searchUrl, StringComparison.Ordinal);
-
-            if (idx < 0 && searchUrl.StartsWith("https://"))
-            {
-                searchUrl = searchUrl["https://".Length..];
-                idx = remaining.IndexOf(searchUrl, StringComparison.Ordinal);
-            }
-
-            if (idx < 0) continue;
-
-            if (idx > 0)
-            {
-                var before = remaining[..idx];
-                sb.Append(ConvertEmojis(before).Value);
-            }
-
-            var encodedUrl = WebUtility.HtmlEncode(url);
-            var encodedDisplay = WebUtility.HtmlEncode(searchUrl);
-            sb.Append($"<a href=\"{encodedUrl}\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"message-link\">{encodedDisplay}</a>");
-
-            remaining = remaining[(idx + searchUrl.Length)..];
-        }
-
-        if (remaining.Length > 0)
-        {
-            sb.Append(ConvertEmojis(remaining).Value);
-        }
-
-        return new MarkupString(sb.ToString());
     }
 
     /// <summary>

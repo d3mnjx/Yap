@@ -18,7 +18,7 @@ public record LiveView(string Status, string ChosenStatus, int OnlineCount, Live
 /// Coordinates connection-owned presence, visibility and typing through the shared chat service;
 /// this transient state is never replayed from offline storage.
 /// </summary>
-public sealed class OfflineLiveService(ChatService chat, IDataProtectionProvider protection, UserService users)
+public sealed class OfflineLiveService(ChatService chat, IDataProtectionProvider protection, UserService users, ChatLimits limits)
 {
     private readonly ITimeLimitedDataProtector tickets = protection.CreateProtector("Yap.Chat.Live.v1").ToTimeLimitedDataProtector();
     private readonly SemaphoreSlim gate = new(1, 1);
@@ -119,7 +119,7 @@ public sealed class OfflineLiveService(ChatService chat, IDataProtectionProvider
             }
             sessions[connection] = session with
             {
-                TypingUntil = DateTime.UtcNow.AddSeconds(3)
+                TypingUntil = DateTime.UtcNow.AddMilliseconds(limits.TypingTimeoutMs)
             };
             await chat.StartTypingAsync(channelId, user.Username);
         }
@@ -223,7 +223,7 @@ public sealed class OfflineLiveService(ChatService chat, IDataProtectionProvider
                     await chat.RemoveUserAsync(Key(connection));
                     RestoreSiblingTyping(session.UserId);
                 }
-                else if (!session.AwayApplied && now - at >= TimeSpan.FromSeconds(30))
+                else if (!session.AwayApplied && now - at >= TimeSpan.FromMilliseconds(limits.AwayAfterMs))
                 {
                     await chat.TrySetAutoAwayAfterDisconnectAsync(Key(connection));
                     sessions[connection] = session with

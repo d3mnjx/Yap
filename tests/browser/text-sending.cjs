@@ -1,3 +1,6 @@
+const { poll } = require('./support/wait.cjs');
+const { readSnapshot } = require('./support/authority.cjs');
+const { fixturePage } = require('./support/authority.cjs');
 // Run only against an isolated local instance. Creates synthetic accounts through the actual UI.
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const assert = require('node:assert/strict'),
@@ -25,7 +28,7 @@ const suffix = Date.now().toString(36),
         const contexts = await Promise.all(
             names.map(() => browser.newContext({ viewport: { width: 1440, height: 1000 } })),
         );
-        pages = await Promise.all(contexts.map((c) => c.newPage()));
+        pages = await Promise.all(contexts.map((c) => fixturePage(c)));
         const [alice, bob] = pages;
         const errors = [];
         for (let i = 0; i < pages.length; i++) {
@@ -39,7 +42,7 @@ const suffix = Date.now().toString(36),
             );
             assert.equal(await pages[i].locator('script[src*="blazor"]').count(), 0);
         }
-        const bootstrap = await (await contexts[0].request.get(origin + '/api/chat/sync')).json();
+        const bootstrap = await readSnapshot(contexts[0].request, origin);
         const lobbyId = bootstrap.conversations.find((c) => c.isDefault).id;
         for (const route of ['/chat', '/room/' + lobbyId]) {
             await alice.goto(origin + route);
@@ -117,7 +120,7 @@ const suffix = Date.now().toString(36),
             .getAttribute('data-operation');
         assert.equal(await alice.locator('#draft').inputValue(), '');
         await alice.locator('#draft').fill('draft after queue');
-        await alice.waitForFunction(async () => {
+        await poll(alice, async () => {
             const store = await import('/chat-client/storage.js');
             const { snapshot } = await store.readState();
             const channel = snapshot.conversations.find((c) => c.path === location.pathname);
@@ -129,7 +132,7 @@ const suffix = Date.now().toString(36),
         await alice.reload();
         await alice.locator(`[data-operation="${operation}"]`).waitFor();
         assert.equal(await alice.locator('#draft').inputValue(), 'draft after queue');
-        const second = await contexts[0].newPage();
+        const second = await fixturePage(contexts[0]);
         await second.goto(origin + '/dm/' + names[1]);
         await second.locator(`[data-operation="${operation}"]`).waitFor();
         await contexts[0].setOffline(false);
@@ -171,7 +174,7 @@ const suffix = Date.now().toString(36),
                 throw new Error('Worker disabled for network fault injection');
             };
         });
-        const probe = await probeContext.newPage();
+        const probe = await fixturePage(probeContext);
         await probe.goto(origin + '/dm/' + names[1]);
         await probe.waitForFunction(() =>
             document.querySelector('#connection')?.textContent.startsWith('Synced'),
@@ -248,15 +251,15 @@ const suffix = Date.now().toString(36),
         await probe.evaluate(async (id) => {
             const store = await import('/chat-client/storage.js');
             const state = await store.readState();
-            await store.commit(
-                {
+            await store.commitUpdate(
+                window.fixtureUpdate({
                     ...state.snapshot,
                     sequence: state.snapshot.sequence + 1,
                     conversations: state.snapshot.conversations.filter((c) => c.id !== id),
-                },
+                }),
                 state,
             );
-            const channel = new BroadcastChannel('yap-chat-v1');
+            const channel = new BroadcastChannel(window.fixtureConstants.CHANGE_CHANNEL);
             channel.postMessage('snapshot');
             channel.close();
         }, dmId);
@@ -269,7 +272,7 @@ const suffix = Date.now().toString(36),
         console.log('PASS failed text remains accessible when its conversation disappears');
         await probeContext.close();
         await alice.locator('#draft').fill('settings roundtrip draft');
-        await alice.waitForFunction(async () => {
+        await poll(alice, async () => {
             const store = await import('/chat-client/storage.js');
             const { snapshot } = await store.readState();
             const channel = snapshot.conversations.find((c) => c.path === location.pathname);
@@ -294,7 +297,7 @@ const suffix = Date.now().toString(36),
         const upgrade = await browser.newContext({
             storageState: await contexts[0].storageState(),
         });
-        const up = await upgrade.newPage();
+        const up = await fixturePage(upgrade);
         await up.goto(origin + '/icon.svg');
         const seed = await alice.evaluate(async () =>
             (await import('/chat-client/storage.js')).readState(),
@@ -302,7 +305,7 @@ const suffix = Date.now().toString(36),
         await up.evaluate(
             async ({ seed, dmId }) =>
                 new Promise((resolve, reject) => {
-                    const req = indexedDB.open('yap-chat-v1', 1);
+                    const req = indexedDB.open(window.fixtureConstants.DB_NAME, 1);
                     req.onupgradeneeded = () => {
                         req.result.createObjectStore('state');
                         req.result.createObjectStore('drafts');
@@ -330,7 +333,9 @@ const suffix = Date.now().toString(36),
         assert.equal(
             await up.evaluate(
                 async () =>
-                    (await indexedDB.databases()).find((d) => d.name === 'yap-chat-v1').version,
+                    (await indexedDB.databases()).find(
+                        (d) => d.name === window.fixtureConstants.DB_NAME,
+                    ).version,
             ),
             4,
         );
@@ -343,9 +348,19 @@ const suffix = Date.now().toString(36),
         });
         await send(up, text('queued through worker update'));
         await up.locator('#pending [data-operation]').waitFor();
-        await up.evaluate(() =>
-            navigator.serviceWorker.register('/service-worker.js?phase2-update', { scope: '/' }),
-        );
+        await up.evaluate(async () => {
+            const manifest = await (
+                await fetch('/chat-client/manifest.json', { cache: 'no-store' })
+            ).json();
+            await navigator.serviceWorker.register(
+                '/service-worker-module.js?v=' + manifest.version + '&phase2-update',
+                {
+                    scope: '/',
+                    type: 'module',
+                    updateViaCache: 'none',
+                },
+            );
+        });
         await until(() =>
             up.evaluate(async () => {
                 const r = await navigator.serviceWorker.getRegistration('/');
@@ -373,7 +388,7 @@ const suffix = Date.now().toString(36),
         );
         // Real schema-2 database: retain the durable send outbox when adding observed-read checkpoints.
         const v2 = await browser.newContext({ storageState: await contexts[0].storageState() });
-        const v2page = await v2.newPage();
+        const v2page = await fixturePage(v2);
         await v2page.addInitScript(() => {
             const fetchOriginal = window.fetch;
             window.fetch = (url, options) =>
@@ -385,7 +400,7 @@ const suffix = Date.now().toString(36),
         await v2page.evaluate(
             async ({ seed, dmId }) =>
                 new Promise((resolve, reject) => {
-                    const req = indexedDB.open('yap-chat-v1', 2);
+                    const req = indexedDB.open(window.fixtureConstants.DB_NAME, 2);
                     req.onupgradeneeded = () => {
                         for (const name of ['state', 'drafts', 'outbox'])
                             req.result.createObjectStore(name);
@@ -432,7 +447,9 @@ const suffix = Date.now().toString(36),
         assert.equal(
             await v2page.evaluate(
                 async () =>
-                    (await indexedDB.databases()).find((d) => d.name === 'yap-chat-v1').version,
+                    (await indexedDB.databases()).find(
+                        (d) => d.name === window.fixtureConstants.DB_NAME,
+                    ).version,
             ),
             4,
         );
@@ -486,7 +503,7 @@ const suffix = Date.now().toString(36),
             hasTouch: true,
             viewport: { width: 390, height: 844 },
         });
-        const touchPage = await touch.newPage();
+        const touchPage = await fixturePage(touch);
         await touchPage.goto(origin + '/dm/' + names[1]);
         await touchPage.locator('#draft:not([disabled])').waitFor();
         await touchPage.locator('#draft').fill('touch keyboard');

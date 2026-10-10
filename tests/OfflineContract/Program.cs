@@ -89,15 +89,15 @@ try
         http.DefaultRequestHeaders.Add("Cookie", "yap_auth=" + token);
         for (var i = 0; i < 6; i++)
             await chat.SendMessageAsync(dm.Id, bob.Id, bob.Username, "message " + i);
-        var before = snapshots.Snapshot(alice);
+        var before = snapshots.FullView(alice);
         var window = before.Conversations.Single(c => c.Id == dm.Id);
         Check(window.Messages.Length == 3 && window.HasMore && window.Messages[0].Content == "message 3", "configured latest-X bound and ordering");
         editedId = window.Messages[1].Id;
         deletedId = window.Messages[2].Id;
-        await chat.EditMessageAsync(editedId, dm.Id, bob.Username, "edited");
-        await chat.DeleteMessageAsync(deletedId, dm.Id, bob.Username);
-        await chat.ToggleReactionAsync(editedId, dm.Id, alice.Id, alice.Username, "👍");
-        var after = snapshots.Snapshot(alice);
+        await chat.MutateMessageAsync(bob, dm.Id, editedId, Guid.NewGuid(), "edit", "edited", null, false);
+        await chat.MutateMessageAsync(bob, dm.Id, deletedId, Guid.NewGuid(), "delete", null, null, false);
+        await chat.MutateMessageAsync(alice, dm.Id, editedId, Guid.NewGuid(), "reaction", null, "👍", true);
+        var after = snapshots.FullView(alice);
         var changed = after.Conversations.Single(c => c.Id == dm.Id);
         Check(after.Revision != before.Revision && changed.Messages.All(m => m.Id != deletedId) && changed.Messages.Single(m => m.Id == editedId).Content == "edited" && changed.Messages.Single(m => m.Id == editedId).Reactions.Single().Users.Single() == alice.Username, "authoritative edit/delete/reaction replacement");
         // Change a room's permissions/history through shared admin operations, including since-signup visibility.
@@ -109,18 +109,18 @@ try
         Check(snapshots.Conversation(alice, room.Id) is { Messages.Length: 0, CanWrite: false, HistoryLimited: true }, "since-signup and write permissions enforced");
         Check(snapshots.Conversation(admin, room.Id)!.Messages.Length == 1, "admin history exception");
         var oldMessage = chat.GetMessages(dmId, 100).First();
-        var oldRevision = snapshots.Snapshot(alice).Revision;
-        await chat.EditMessageAsync(oldMessage.Id, dmId, bob.Username, "older changed");
-        Check(snapshots.Snapshot(alice).Revision != oldRevision, "older content mutation invalidates authorized conversation snapshot");
+        var oldRevision = snapshots.FullView(alice).Revision;
+        await chat.MutateMessageAsync(bob, dmId, oldMessage.Id, Guid.NewGuid(), "edit", "older changed", null, false);
+        Check(snapshots.FullView(alice).Revision != oldRevision, "older content mutation invalidates authorized conversation snapshot");
         var historyResult = await http.GetFromJsonAsync<JsonElement>($"/api/chat/conversations/{dmId}/history?limit=100");
         Check(historyResult.GetProperty("messages").EnumerateArray().Any(m => m.GetProperty("id").GetGuid() == oldMessage.Id && m.GetProperty("content").GetString() == "older changed"), "history endpoint includes current older content");
         var restrictedTarget = chat.GetMessages(room.Id, 100).First().Id;
         Check((await http.GetAsync($"/api/chat/conversations/{room.Id}/messages/{restrictedTarget}")).StatusCode == HttpStatusCode.NotFound, "reply lookup respects since-signup history restriction");
         alice.TimeZone = "UTC+1";
         alice.DateFormat = "dmy-12h-cs-CZ";
-        var dateResult = await http.GetFromJsonAsync<JsonElement>("/api/chat/sync");
-        Check(dateResult.GetProperty("dateSettings").GetProperty("dateSeparator").GetString() == "." && dateResult.GetProperty("dateSettings").GetProperty("offsetMinutes").GetInt32() == 60, "date DTO preserves configured separator and custom offset");
-        var response = await http.GetAsync("/api/chat/sync");
+        var dateResult = await http.GetFromJsonAsync<JsonElement>("/api/chat/bootstrap");
+        Check(dateResult.GetProperty("update").GetProperty("state").GetProperty("dateSettings").GetProperty("dateSeparator").GetString() == "." && dateResult.GetProperty("update").GetProperty("state").GetProperty("dateSettings").GetProperty("offsetMinutes").GetInt32() == 60, "date DTO preserves configured separator and custom offset");
+        var response = await http.GetAsync("/api/chat/bootstrap");
         var json = await response.Content.ReadAsStringAsync();
         Check(response.Headers.CacheControl?.NoStore == true && !json.Contains(token) && !json.Contains("password", StringComparison.OrdinalIgnoreCase), "safe DTOs and no-store API");
         var gifs = factory.Services.GetRequiredService<GifService>();
@@ -227,6 +227,8 @@ try
         http.DefaultRequestHeaders.Remove("Cookie");
         http.DefaultRequestHeaders.Add("Cookie", "yap_auth=" + token + "; " + antiCookie);
         await SyncChecks.Run(factory.Services, http, anti, alice, bob);
+        await ChangeChecks.Run(factory.Services, alice, bob);
+        await MaintenanceChecks.Run(factory.Services, http, alice);
         var bobUnread = chat.GetUnreadCount(bob.Id, dmId);
         var sends = await Task.WhenAll(Enumerable.Range(0, 8).Select(_ => Send(dmId, durableOperation, "durable once")));
         Check(sends.All(r => r.IsSuccessStatusCode), "concurrent retries accepted");
@@ -299,7 +301,7 @@ try
         await chat.MutateMessageAsync(alice, dmId, actionMessage.MessageId, Guid.NewGuid(), "delete", "", null, false);
         await chat.MutateMessageAsync(alice, dmId, actionMessage.MessageId, Guid.NewGuid(), "delete", "", null, false);
         await Denied(() => chat.MutateMessageAsync(alice, dmId, actionMessage.MessageId, Guid.NewGuid(), "edit", "resurrect", null, false), 404, "edit cannot resurrect deleted message; repeat delete succeeds");
-        await chat.DeleteMessageAsync(durableMessage, dmId, alice.Username);
+        await chat.MutateMessageAsync(alice, dmId, durableMessage, Guid.NewGuid(), "delete", null, null, false);
         Check((await Send(dmId, durableOperation, "durable once")).IsSuccessStatusCode
             && chat.GetMessageById(dmId, durableMessage) == null && !await db.Messages.AnyAsync(m => m.Id == durableMessage),
             "receipt replay after deletion does not resurrect the message");
@@ -307,7 +309,7 @@ try
         var removedOperation = Guid.NewGuid();
         Check((await Send(removable.Id, removedOperation, "accepted before room deletion")).IsSuccessStatusCode, "send accepted before room deletion");
         await chat.DeleteRoomAsync(admin.Id, removable.Id);
-        Check(!snapshots.Snapshot(alice).Conversations.Any(c => c.Id == removable.Id)
+        Check(!snapshots.FullView(alice).Conversations.Any(c => c.Id == removable.Id)
             && (await Send(removable.Id, removedOperation, "accepted before room deletion")).IsSuccessStatusCode
             && (await Send(removable.Id, Guid.NewGuid(), "new send to deleted room")).StatusCode == HttpStatusCode.NotFound,
             "deleted-room snapshot, retained receipt and rejection of new sends");
@@ -317,7 +319,7 @@ try
         await GifPagingChecks.Run(http, anti, chat, admin);
         await OriginChecks.Run(factory.Services, http);
         await users.RotateTokenAsync(alice.Id);
-        Check((await http.GetAsync("/api/chat/sync")).StatusCode == HttpStatusCode.Unauthorized, "token revocation enforced");
+        Check((await http.GetAsync("/api/chat/bootstrap")).StatusCode == HttpStatusCode.Unauthorized, "token revocation enforced");
         token = alice.Token;
     }
     // The restarted host also verifies deployers can opt back into restricted proxy trust.

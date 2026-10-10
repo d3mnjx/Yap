@@ -1,0 +1,905 @@
+/* Timeline rows, content, actions, reactions and editing. */
+/* Hide message action popups on mobile scroll/idle dismiss.
+   The slower transition applies only while this class is present, so the
+   fade-out is gentle but re-show (class removed) uses the snappy base 0.1s. */
+.messages.scroll-dismissing .message-actions {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity 0.3s ease;
+}
+/* System messages (for DM notice) */
+.system-message {
+    text-align: center;
+    margin: 0 !important;
+    padding: 0.0625rem 1rem !important;
+}
+.system-message .message-content {
+    display: inline-block;
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 0.8125rem;
+    padding: 0;
+    background: transparent;
+    line-height: 1.4;
+}
+/* MessageItem */
+/* Message group container - Discord-style with avatar on left */
+.message-group {
+    display: flex;
+    gap: 1rem;
+    padding: 0.125rem 1rem 0.125rem calc(1rem + 40px + 1rem); /* Always reserve avatar space on left */
+    position: relative;
+    min-width: 0;
+    max-width: 100%;
+}
+.message-group:hover:not(.system-message) {
+    background: var(--bg-hover);
+}
+/* Messages with header show avatar in the reserved space */
+.message-group.has-header {
+    padding-left: 1rem;
+    margin-top: 1.0625rem;
+    padding-top: 0.25rem;
+}
+/* Reply messages: flex-wrap so reply-preview takes its own row above avatar+body */
+.message-group.has-reply {
+    flex-wrap: wrap;
+    row-gap: 0;
+}
+/* Reply preview - full-width first row, indented to align with message text */
+.reply-preview {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    cursor: pointer;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    padding-left: calc(40px + 1rem); /* avatar + gap */
+    margin-bottom: 0.25rem;
+}
+.reply-preview:hover .reply-author {
+    text-decoration: underline;
+}
+.reply-author {
+    font-weight: 600;
+    color: var(--text-white);
+    flex-shrink: 0;
+}
+.reply-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+/*
+ * Connector: curves from reply-preview down to the main avatar.
+ *        ╭── [16px] @name  text
+ *        │
+ * [40px]  username  time
+ *
+ * Drawn on message-group (not a child) so it can't be clipped.
+ * Avatar z-index sits above the line so it appears to go behind the circle.
+ */
+.message-group.has-reply::before {
+    content: '';
+    position: absolute;
+    left: calc(1rem + 19px); /* avatar center, minus 1px to center 2px border */
+    top: calc(0.25rem + 7px); /* vertical center of 16px reply avatar */
+    width: calc(20px + 0.75rem); /* half avatar + most of gap */
+    height: calc(0.25rem + 32px); /* down to main avatar center */
+    border-left: 2px solid var(--bg-muted);
+    border-top: 2px solid var(--bg-muted);
+    border-top-left-radius: 6px;
+    z-index: 1;
+}
+/* Highlight animation for scroll-to-message */
+.message-group.highlight-message {
+    background: rgba(88, 101, 242, 0.12);
+    transition: background-color 1.5s ease;
+}
+/* Highlight the source message while composing a reply */
+.message-group.reply-target {
+    background: var(--accent-tint);
+}
+.message-group:first-child {
+    margin-top: 0;
+}
+/* Message body - contains meta and content */
+.message-body {
+    flex: 1;
+    min-width: 0;
+}
+/* Message meta (username + time) */
+.message-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-bottom: 0.125rem;
+}
+.message-username {
+    color: var(--text-white);
+    font-size: 1rem;
+    font-weight: 500;
+}
+/* Clickable action links in bot messages (e.g., PWA install) */
+.bot-action-link {
+    color: var(--link-color);
+    background: var(--link-background, transparent);
+    border: 0;
+    padding: 0;
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 500;
+}
+.bot-action-link:hover {
+    text-decoration-thickness: 2px;
+}
+.message-time {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 400;
+}
+/* Message content */
+.message-content {
+    color: var(--text-primary);
+    font-size: 1rem;
+    line-height: 1.375;
+    padding-left: 0;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap; /* Preserve newlines from multiline input */
+    margin: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+.message-content a.message-link {
+    color: var(--link-color);
+    background: var(--link-background, transparent);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+}
+.message-content a.message-link:hover {
+    text-decoration: underline;
+}
+/* System messages */
+.system-message {
+    display: block;
+    text-align: center;
+    margin: 0 !important;
+    padding: 0.0625rem 1rem !important;
+}
+.system-message .message-body {
+    display: inline-block;
+}
+/* Image gallery styles */
+/* Discord-style: rows of max 3, each row fills same width */
+.image-gallery {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 0.25rem;
+    border-radius: 8px;
+    overflow: hidden;
+    max-width: 400px; /* Consistent width for all image content */
+}
+/* Each row of images */
+.gallery-row {
+    display: flex;
+    gap: 4px;
+}
+/* Multi-image: square thumbnails that fill their container */
+.gallery-row .gallery-image {
+    width: 100%;
+    height: auto; /* Override HTML height attribute */
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 4px;
+    transition: opacity 0.15s;
+    display: block;
+}
+/* Single image: preserve aspect ratio, constrain size */
+/* Discord uses ~350px height for vertical images, ~400px width for horizontal */
+.gallery-single .gallery-image {
+    height: auto;
+    width: auto;
+    max-height: 350px;
+    max-width: 100%;
+    aspect-ratio: auto 4 / 3; /* Fallback ratio until image loads, then use intrinsic */
+    object-fit: contain;
+    background: var(--bg-sidebar);
+    border-radius: 4px;
+    transition: opacity 0.15s;
+    display: block;
+}
+/* GIF message styles */
+.gif-message-gallery {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 0.25rem;
+}
+.gif-message {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg-sidebar);
+}
+.gif-message video,
+.gif-message img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    /* contain (not cover) so a GIF never gets cropped if the reserved box ratio is ever off
+       (e.g. the rare upload we still couldn't measure) — it letterboxes against the bg instead. */
+    object-fit: contain;
+}
+/* Loading spinner: the .gif-message box reserves space via its inline aspect-ratio and shows
+   this spinner over the placeholder background until the media paints. chat.js adds .gif-loaded
+   on the <img> load / <video> canplay event (and on error, so a broken URL never spins forever).
+   The fade-in is delayed so fast/cached GIFs don't flash a spinner. */
+.gif-message::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 28px;
+    height: 28px;
+    margin: -14px 0 0 -14px;
+    border: 3px solid var(--bg-muted);
+    border-top-color: var(--text-secondary);
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0;
+    animation:
+        gif-spin 0.7s linear infinite,
+        gif-spinner-in 0.01s linear 0.25s forwards;
+}
+.gif-message.gif-loaded::after,
+.gif-message:has(.gif-message-missing)::after {
+    display: none;
+}
+@keyframes gif-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+@keyframes gif-spinner-in {
+    to {
+        opacity: 1;
+    }
+}
+.gif-message-missing {
+    padding: 1rem;
+    text-align: center;
+    color: var(--text-placeholder);
+    font-size: 0.875rem;
+}
+.gif-message-fav {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    opacity: 0;
+    cursor: pointer;
+    transition:
+        opacity 0.15s,
+        background-color 0.15s;
+    padding: 0;
+}
+.gif-message:hover .gif-message-fav {
+    opacity: 1;
+}
+.gif-message-fav.favorited {
+    opacity: 1;
+    color: #ffc107;
+}
+.gif-message-fav:hover {
+    background: rgba(0, 0, 0, 0.75);
+}
+.gif-message-uploader {
+    position: absolute;
+    bottom: 4px;
+    left: 6px;
+    font-size: 0.65rem;
+    color: white;
+    background: rgba(0, 0, 0, 0.55);
+    padding: 2px 6px;
+    border-radius: 3px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    pointer-events: none;
+}
+.gif-message:hover .gif-message-uploader {
+    opacity: 1;
+}
+/* Video gallery styles */
+.video-gallery {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 0.25rem;
+    max-width: 400px;
+}
+.video-container {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+}
+.video-player {
+    width: 100%;
+    height: auto;
+    max-height: 350px;
+    display: block;
+    object-fit: contain;
+    background: var(--bg-sidebar);
+}
+.video-play-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.3);
+    transition: background 0.2s;
+}
+.video-play-overlay:hover {
+    background: rgba(0, 0, 0, 0.15);
+}
+.play-icon {
+    width: 64px;
+    height: 64px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+/* Message actions popup - hidden by default, shown via CSS :hover */
+.message-actions {
+    position: absolute;
+    top: -16px;
+    right: 16px;
+    display: flex;
+    gap: 2px;
+    background: var(--bg-sidebar);
+    border-radius: 4px;
+    padding: 2px;
+    box-shadow:
+        0 0 0 1px rgba(4, 4, 5, 0.15),
+        0 4px 4px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    /* Hidden by default, smooth transition */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.1s ease;
+}
+/* Show on hover or when picker/menu is open - pure CSS, no server round-trip */
+.message-group:hover:not(.system-message) .message-actions,
+.message-group.picker-open .message-actions,
+.message-group.menu-open .message-actions {
+    opacity: 1;
+    pointer-events: auto;
+}
+/* Hide actions while the pointer is over the reply reference (sibling combinator),
+   so the reference stays readable/clickable under where the bar overlaps it. */
+.reply-preview:hover ~ .message-actions {
+    opacity: 0 !important;
+}
+/* Touch only: also make the hidden bar click-through, so sticky tap-:hover on the
+   reply-preview can't leave an invisible bar stealing the tap meant for it.
+   Deliberately NOT applied for mouse input: with hit-testing disabled, crossing the
+   ~1px strip of reply-preview that peeks below the bar latched it hidden — the cursor
+   then hovered the preview *through* the ghost bar and the bar never came back,
+   making Reply unreachable. With hit-testing kept, the bar re-appears the moment
+   the cursor enters its box (the bar, not the preview, becomes the hovered element). */
+@media (hover: none), (pointer: coarse) {
+    .reply-preview:hover ~ .message-actions {
+        pointer-events: none !important;
+    }
+}
+.action-btn {
+    background: transparent;
+    border: none;
+    padding: 6px 8px;
+    cursor: pointer;
+    border-radius: 3px;
+    font-size: 1rem;
+    line-height: 1;
+    transition:
+        background-color 0.1s,
+        transform 0.08s;
+}
+.action-btn:active {
+    transform: scale(0.9); /* instant press feedback — the toggle itself takes a round trip */
+}
+.action-btn:hover {
+    background: var(--bg-primary);
+}
+/* Divider between reactions and actions */
+.action-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--bg-muted);
+    margin: 0 4px;
+    align-self: center;
+}
+/* Grey icon buttons (picker, edit, more, reply) */
+.action-picker,
+.action-edit,
+.action-more,
+.action-reply {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+}
+.action-picker:hover,
+.action-edit:hover,
+.action-more:hover,
+.action-reply:hover {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+/* GIF favorite toggle in the bar — mobile-only (revealed in the mobile media query).
+   Desktop keeps the hover star on the GIF itself, where there's no bar collision. */
+.action-gif-fav {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+}
+.action-gif-fav.favorited {
+    color: #ffc107;
+}
+/* Keep hover state when picker or more-menu is open */
+.message-group.picker-open,
+.message-group.menu-open {
+    background: var(--bg-hover);
+}
+/* Reactions display */
+.reactions-display {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+.reaction-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--bg-sidebar);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 2px 8px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition:
+        background-color 0.1s,
+        border-color 0.1s,
+        transform 0.08s;
+}
+.reaction-pill:active {
+    transform: scale(0.9); /* instant press feedback — the toggle itself takes a round trip */
+}
+.reaction-pill:hover {
+    background: var(--bg-primary);
+    border-color: var(--bg-muted);
+}
+.reaction-pill.reacted {
+    background: rgba(88, 101, 242, 0.3);
+    border-color: var(--accent-primary);
+}
+.reaction-count {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+}
+.reaction-pill.reacted .reaction-count {
+    color: var(--accent-light);
+}
+/* Edit mode */
+.edit-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+/* The edit box is deliberately a small message input: same bg/radius/padding/autogrow,
+   so editing feels like composing. Styles duplicated (not shared) because CSS isolation
+   keeps MessageInput's scoped rules invisible here. */
+.edit-input {
+    width: 100%;
+    padding: 0.6875rem 1rem;
+    background: var(--bg-input);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-family: inherit;
+    line-height: 1.375;
+    resize: none;
+    min-height: 44px;
+    max-height: 200px;
+    overflow-y: auto;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    scrollbar-width: none;
+}
+.edit-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+.edit-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.edit-save,
+.edit-cancel {
+    padding: 6px 14px;
+    min-height: 36px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: background-color 0.1s;
+}
+/* Save is the primary action — accent like the send button, themed by every theme
+   (green stays reserved for status semantics, which themes never override). */
+.edit-save {
+    background: var(--accent-primary);
+    color: var(--text-white);
+}
+.edit-save:hover {
+    background: var(--accent-hover);
+}
+.edit-cancel {
+    background: var(--bg-muted);
+    color: var(--text-primary);
+}
+.edit-cancel:hover {
+    background: var(--bg-hover);
+}
+.edit-hint {
+    color: var(--text-placeholder);
+    font-size: 0.75rem;
+}
+/* Touch: no hardware keys — hide the hint, grow the tap targets */
+@media (hover: none), (pointer: coarse) {
+    .edit-hint {
+        display: none;
+    }
+    .edit-save,
+    .edit-cancel {
+        min-height: 40px;
+        padding: 8px 16px;
+    }
+}
+@media (max-width: 600px) {
+    .edit-input {
+        font-size: 16px; /* Prevents zoom on iOS (same convention as the send box) */
+    }
+}
+/* Edited indicator */
+.edited-indicator {
+    color: var(--text-placeholder);
+    font-size: 0.625rem;
+    margin-left: 4px;
+}
+/* ⋯ More overflow menu (copy / delete) */
+.more-menu-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 999;
+}
+.more-menu {
+    position: fixed;
+    z-index: 1000;
+    min-width: 190px;
+    padding: 6px;
+    background: var(--bg-sidebar);
+    border-radius: 8px;
+    box-shadow:
+        0 0 0 1px rgba(4, 4, 5, 0.15),
+        0 8px 16px rgba(0, 0, 0, 0.24);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    /* Revealed by positionDropdownFixed after placement (desktop);
+       the mobile bottom-sheet override makes it visible directly */
+    visibility: hidden;
+}
+.more-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 10px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition:
+        background-color 0.1s,
+        color 0.1s;
+}
+.more-menu-item:hover {
+    background: var(--bg-primary);
+}
+.more-menu-item svg {
+    flex-shrink: 0;
+}
+/* Delete stays visibly dangerous: red at rest, filled red on hover */
+.menu-item-danger {
+    color: var(--color-danger);
+}
+.menu-item-danger:hover {
+    background: var(--color-danger);
+    color: white;
+}
+/* Delete confirmation modal */
+.delete-confirm-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.65);
+    z-index: 1100; /* above pickers and the more-menu (999-1000) */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+.delete-confirm-dialog {
+    background: var(--bg-primary);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    width: min(440px, 100%);
+    padding: 1.25rem;
+}
+.delete-confirm-title {
+    margin: 0 0 0.5rem;
+    font-size: 1.125rem;
+    color: var(--text-white);
+}
+.delete-confirm-text {
+    margin: 0 0 0.75rem;
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+}
+/* Mini preview of the message being deleted */
+.delete-confirm-preview {
+    background: var(--bg-sidebar);
+    border-radius: 6px;
+    padding: 10px 12px;
+    box-shadow: 0 0 0 1px rgba(4, 4, 5, 0.15);
+}
+.preview-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+.preview-username {
+    color: var(--text-white);
+    font-size: 0.9375rem;
+}
+.preview-time {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+.preview-content {
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.preview-thumb {
+    display: block;
+    margin-top: 6px;
+    max-width: 120px;
+    max-height: 80px;
+    border-radius: 4px;
+    object-fit: cover;
+}
+.preview-attachment-label {
+    margin-top: 4px;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    font-style: italic;
+}
+.delete-confirm-tip {
+    margin-top: 0.75rem;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+.delete-confirm-tip kbd {
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: var(--bg-sidebar);
+    box-shadow: 0 0 0 1px rgba(4, 4, 5, 0.3);
+    font-family: inherit;
+    font-size: 0.6875rem;
+}
+.delete-confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 1rem;
+}
+.confirm-cancel,
+.confirm-delete {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition:
+        background-color 0.1s,
+        filter 0.1s;
+}
+.confirm-cancel {
+    background: transparent;
+    color: var(--text-primary);
+}
+.confirm-cancel:hover {
+    text-decoration: underline;
+}
+.confirm-delete {
+    background: var(--color-danger);
+    color: white;
+}
+.confirm-delete:hover {
+    filter: brightness(0.9);
+}
+/* Mobile adjustments */
+@media (max-width: 600px) {
+    .message-actions {
+        right: 8px;
+        top: -12px;
+    }
+    /* Larger touch targets — small icons + tight padding caused fat-finger mistaps */
+    .action-btn {
+        padding: 8px 9px;
+        font-size: 1rem;
+    }
+    /* GIF favoriting moves into the actions bar (the bar covers the GIF's corner
+       on narrow screens). The corner star stays as a favorited-only indicator:
+       inert so a tap near it can't race the bar, and never revealed while empty. */
+    .action-gif-fav {
+        display: flex;
+    }
+    .gif-message-fav {
+        pointer-events: none;
+    }
+    .gif-message:hover .gif-message-fav:not(.favorited) {
+        opacity: 0;
+    }
+    .message-group {
+        padding: 0.125rem 0.5rem 0.125rem calc(0.5rem + 40px + 0.75rem);
+        gap: 0.75rem;
+    }
+    .message-group.has-header {
+        padding-left: 0.5rem;
+    }
+    .reply-preview {
+        padding-left: calc(40px + 0.75rem);
+    }
+    .message-group.has-reply::before {
+        left: calc(0.5rem + 19px);
+        width: calc(20px + 0.5rem);
+    }
+    .reply-text {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        white-space: normal;
+    }
+    /* Mobile: full-width galleries with taller single images/videos */
+    .image-gallery,
+    .video-gallery {
+        max-width: 100%;
+    }
+    .gallery-single .gallery-image {
+        max-height: 450px;
+    }
+    /* More menu becomes a bottom sheet (JS positioning skips mobile) */
+    .more-menu {
+        visibility: visible;
+        top: auto;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        min-width: 0;
+        border-radius: 12px 12px 0 0;
+        padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+    }
+    .more-menu-item {
+        padding: 14px 12px;
+        font-size: 1rem;
+    }
+    .more-menu-backdrop {
+        background: rgba(0, 0, 0, 0.5);
+    }
+    /* Confirm modal: stacked full-width buttons, easy thumb reach */
+    .delete-confirm-tip {
+        display: none; /* no Shift key on phones */
+    }
+    .delete-confirm-actions {
+        flex-direction: column-reverse;
+    }
+    .confirm-cancel,
+    .confirm-delete {
+        width: 100%;
+        padding: 12px;
+        font-size: 1rem;
+    }
+    .confirm-cancel {
+        background: var(--bg-muted);
+    }
+    .confirm-cancel:hover {
+        text-decoration: none;
+    }
+}
+.pending-message .message-content {
+    opacity: 0.75;
+    white-space: pre-wrap;
+}
+.message-group.editing .message-actions {
+    display: none;
+}
+.message-group.touch-actions .message-actions {
+    opacity: 1;
+    pointer-events: auto;
+    display: flex;
+}
+.message-text .emoji {
+    width: 1.2em;
+    height: 1.2em;
+    vertical-align: -0.2em;
+    object-fit: contain;
+}
+.message-text.emoji-only .emoji {
+    width: 3em;
+    height: 3em;
+    vertical-align: -0.4em;
+}
+.reaction-pill .emoji {
+    width: 18px;
+    height: 18px;
+}
+.message-text.emoji-small .emoji {
+    width: 18px;
+    height: 18px;
+    vertical-align: -3px;
+}
+.user-name .message-text.emoji-small .emoji,
+.message-username .message-text .emoji {
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.15em;
+}
+#title .message-text .emoji,
+#status-username .message-text .emoji {
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.15em;
+}

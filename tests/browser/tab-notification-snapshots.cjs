@@ -1,3 +1,4 @@
+const { fixturePage } = require('./support/authority.cjs');
 // Exercise non-arrival snapshot updates that will also be used by later edit/reaction/history phases.
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const assert = require('node:assert/strict'),
@@ -10,14 +11,24 @@ if (!['localhost', '127.0.0.1'].includes(new URL(origin).hostname))
     try {
         const fixture = JSON.parse(fs.readFileSync(process.env.YAP_TEST_STATE, 'utf8'));
         const context = await browser.newContext({ storageState: fixture.storageState });
-        const page = await context.newPage();
+        const page = await fixturePage(context);
         await page.goto(origin + '/icon.svg');
         const result = await page.evaluate(async () => {
             const store = await import('/chat-client/storage.js'),
                 { createNotifications } = await import('/chat-client/notifications.js');
-            const data = await (await fetch('/api/chat/sync')).json(),
+            const data = await (async () => {
+                    const { update } = await (await fetch('/api/chat/bootstrap')).json();
+                    const { mergeUpdate } = await import('/chat-client/sync.js');
+                    let state = mergeUpdate(null, update);
+                    for (const c of update.conversations)
+                        state = mergeUpdate(
+                            state,
+                            await (await fetch('/api/chat/windows/' + c.id)).json(),
+                        );
+                    return state;
+                })(),
                 owner = await store.establish(data.user.id);
-            await store.commit(data, owner);
+            await store.commitUpdate(window.fixtureUpdate(data), owner);
             Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
             let calls = 0;
             HTMLMediaElement.prototype.play = function () {

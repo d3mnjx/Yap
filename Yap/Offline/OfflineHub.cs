@@ -11,7 +11,7 @@ namespace Yap.Offline;
 /// Connects authenticated browsers to incremental authority streams and transient presence/typing
 /// operations over SignalR.
 /// </summary>
-public sealed class OfflineHub(UserService users, OfflineSnapshotService snapshots, OfflineLiveService live, ChatConfigService branding, OfflineFanout fanout) : Hub
+public sealed class OfflineHub(UserService users, OfflineSnapshotService snapshots, OfflineLiveService live, ChatConfigService branding, OfflineFanout fanout, ChatService chat) : Hub
 {
     private User CurrentUser() => users.AuthenticateByToken(Context.GetHttpContext()?.Request.Cookies[AuthMiddleware.CookieName] ?? "")
         ?? throw new HubException("AUTH_REQUIRED");
@@ -128,23 +128,37 @@ public sealed class OfflineHub(UserService users, OfflineSnapshotService snapsho
                 throw new HubException("Change stream already active");
             Context.Items["changes-stream"] = true;
         }
+        void Kicked(string sessionId)
+        {
+            if (sessionId == "chat:" + Context.ConnectionId)
+                Context.Abort();
+        }
+        chat.OnSessionKicked += Kicked;
         try
         {
             using var subscription = fanout.Subscribe(CurrentUser(), known);
+            var nextDigest = DateTime.UtcNow.AddSeconds(10);
             while (!cancellationToken.IsCancellationRequested)
             {
+                if (DateTime.UtcNow >= nextDigest)
+                {
+                    await subscription.Digest();
+                    nextDigest = DateTime.UtcNow.AddSeconds(10);
+                }
                 var read = subscription.Read(cancellationToken);
                 // Revalidate idle sessions too; a revoked cookie must not leave a private stream alive.
-                while (await Task.WhenAny(read, Task.Delay(10000, cancellationToken)) != read)
+                while (await Task.WhenAny(read, Task.Delay(TimeSpan.FromMilliseconds(Math.Max(1, (nextDigest - DateTime.UtcNow).TotalMilliseconds)), cancellationToken)) != read)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
                     CurrentUser();
+                    await subscription.Digest();
+                    nextDigest = DateTime.UtcNow.AddSeconds(10);
                 }
                 CurrentUser();
                 foreach (var update in await read)
                     yield return update;
             }
         }
-        finally { lock (Context.Items) Context.Items.Remove("changes-stream"); }
+        finally { chat.OnSessionKicked -= Kicked; lock (Context.Items) Context.Items.Remove("changes-stream"); }
     }
 }

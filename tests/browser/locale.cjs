@@ -27,7 +27,17 @@ if (
                 document.querySelector('#connection')?.textContent.startsWith('Synced'),
             );
             const actual = await page.evaluate(async () => {
-                const s = await (await fetch('/api/chat/sync')).json();
+                const s = await (async () => {
+                    const { update } = await (await fetch('/api/chat/bootstrap')).json();
+                    const { mergeUpdate } = await import('/chat-client/sync.js');
+                    let state = mergeUpdate(null, update);
+                    for (const c of update.conversations)
+                        state = mergeUpdate(
+                            state,
+                            await (await fetch('/api/chat/windows/' + c.id)).json(),
+                        );
+                    return state;
+                })();
                 const { timestamp } = await import('/chat-client/dates.js');
                 return {
                     zone: s.timeZone,

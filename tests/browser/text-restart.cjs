@@ -1,3 +1,4 @@
+const { poll } = require('./support/wait.cjs');
 // Starts/stops only its own isolated server. Requires the synthetic state from text-sending.cjs.
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const { spawn } = require('node:child_process'),
@@ -80,7 +81,7 @@ function launch() {
         await page.locator('#draft').fill('queued during restart');
         await page.locator('#send').click();
         await page.locator('#draft').fill('draft survives restart');
-        await page.waitForFunction(async () => {
+        await poll(page, async () => {
             const store = await import('/chat-client/storage.js');
             const { snapshot } = await store.readState();
             const channel = snapshot.conversations.find((c) => c.path === location.pathname);

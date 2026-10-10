@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using System.Collections.Concurrent;
 using Yap.Helpers;
 using Yap.Models;
@@ -27,8 +28,11 @@ public record ReaderReaction(string Emoji, string[] Users);
 /// Client-facing message content, media and reactions, including the operation ID used to reconcile
 /// accepted sends.
 /// </summary>
-public record ReaderMessage(Guid Id, Guid? OperationId, ReaderUser Author, string Content, DateTime Timestamp,
-    bool IsEdited, Guid? ReplyToMessageId, ReaderImage[] Images, string[] Videos, int GifCount, ReaderReaction[] Reactions, object[]? Gifs = null, LinkPreview[]? Previews = null, ReaderReply? Reply = null);
+public record ReaderMessage(Guid Id, Guid? OperationId, [property: JsonIgnore] ReaderUser Author, string Content, DateTime Timestamp,
+    bool IsEdited, Guid? ReplyToMessageId, ReaderImage[] Images, string[] Videos, int GifCount, ReaderReaction[] Reactions, object[]? Gifs, LinkPreview[]? Previews, ReaderReply? Reply)
+{
+    public Guid AuthorId => Author.Id;
+}
 /// <summary>
 /// An authorized recent message window with navigation, permission, history and observed-read
 /// metadata.
@@ -41,13 +45,15 @@ public record ReaderConversation(Guid Id, string Kind, string Name, string? Desc
 /// </summary>
 public record ReaderSnapshot(int Protocol, string Revision, string ServerEpoch, long Sequence, ReaderUser User, bool IsAdmin, string Theme,
     int? FontSize, string? TimeZone, string? DateFormat, string ProjectName, int RecentMessageLimit,
-    bool CanSend, int MaxTextLength, ReaderUser[] People, ReaderConversation[] Conversations, object? DateSettings = null);
+    bool CanSend, int MaxTextLength, ReaderUser[] People, ReaderConversation[] Conversations, int MaxOperationsPerBatch, int MaxBatchBytes,
+    int MaxFilesPerMessage, string[] AllowedExtensions, long MaxUploadBytes, int HistoryPageSize,
+    int HistoryMaxMessages, int ReadBatch, int TypingTimeoutMs, int AwayAfterMs, object? DateSettings = null);
 
 /// <summary>
 /// Projects authorized chat state into bounded, credential-free snapshots with content revisions
 /// and ordering for browser reconciliation.
 /// </summary>
-public sealed class OfflineSnapshotService(ChatService chat, UserService users, IConfiguration config, ChatConfigService branding, SystemBotService bots, NotificationSettingsService notifications, GifService gifs, LinkPreviewService previews, LinkPreviewSettingsService previewSettings, MediaCacheService media, IWebHostEnvironment env, OfflineChangeSignal changes)
+public sealed class OfflineSnapshotService(ChatService chat, UserService users, IConfiguration config, ChatConfigService branding, SystemBotService bots, NotificationSettingsService notifications, GifService gifs, LinkPreviewService previews, LinkPreviewSettingsService previewSettings, MediaCacheService media, IWebHostEnvironment env, OfflineChangeSignal changes, ChatLimits limits)
 {
     private readonly ConcurrentDictionary<Guid, ReaderUser> summaries = new();
     public void InvalidateUser(Guid id) => summaries.TryRemove(id, out _);
@@ -153,19 +159,6 @@ public sealed class OfflineSnapshotService(ChatService chat, UserService users, 
             }).OfType<LinkPreview>().ToArray(), reply);
     }
 
-    // Diagnostic full view; never used by the live stream or a write acknowledgement.
-    public ReaderSnapshot Snapshot(User user)
-    {
-        var header = Header(user);
-        var conversations = Channels(user).Select(c => Conversation(user, c.Id)).OfType<ReaderConversation>().ToArray();
-        return header with
-        {
-            Sequence = Stamp(),
-            Conversations = conversations,
-            Revision = string.Join(";", conversations.Select(c => $"{c.Id}:{c.ContentVersion}"))
-        };
-    }
-
     public (string Epoch, long Sequence, ReaderConversation? Conversation, ReaderMessage? Message) Capture(User user, Guid id, Guid? messageId, bool full = false)
     {
         lock (chat.GetChannelLock(id))
@@ -230,6 +223,6 @@ public sealed class OfflineSnapshotService(ChatService chat, UserService users, 
         var limit = Math.Min(RecentLimit, Math.Max(1, 20000 / Math.Max(1, channels.Length)));
         return new ReaderSnapshot(2, "", Epoch, 0, Summary(user), users.IsAdmin(user.Id), user.Theme ?? "discord-dark",
             user.FontSize, user.TimeZone, user.DateFormat, branding.ProjectName, limit,
-            chat.DurableSendingEnabled, ChatService.MaxTextLength, users.GetAllUsers().Where(u => u.Id == user.Id || chat.HasActiveSession(u.Username) || channels.Any(c => c.IsDirectMessage && c.CanAccess(u.Id))).OrderBy(u => u.Username).Select(Summary).ToArray(), [], DateSettings(user));
+            chat.DurableSendingEnabled, limits.MaxTextLength, users.GetAllUsers().Where(u => u.Id == user.Id || chat.HasActiveSession(u.Username) || channels.Any(c => c.IsDirectMessage && c.CanAccess(u.Id))).OrderBy(u => u.Username).Select(Summary).ToArray(), [], limits.MaxOperationsPerBatch, limits.MaxBatchBytes, limits.MaxFilesPerMessage, limits.AllowedExtensions, limits.MaxUploadBytes, limits.HistoryPageSize, limits.HistoryMaxMessages, limits.ReadBatch, limits.TypingTimeoutMs, limits.AwayAfterMs, DateSettings(user));
     }
 }

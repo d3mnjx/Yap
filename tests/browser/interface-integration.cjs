@@ -1,3 +1,5 @@
+const { poll } = require('./support/wait.cjs');
+const { fixturePage } = require('./support/authority.cjs');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright'),
     assert = require('node:assert/strict'),
     fs = require('node:fs');
@@ -8,7 +10,7 @@ fs.mkdirSync(out, { recursive: true });
     const browser = await chromium.launch();
     try {
         const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } }),
-            page = await context.newPage(),
+            page = await fixturePage(context),
             errors = [];
         page.on('pageerror', (e) => errors.push(e.message));
         const name = 'interface' + Date.now().toString(36);
@@ -35,7 +37,7 @@ fs.mkdirSync(out, { recursive: true });
             'Write something here',
         );
         await page.locator('#draft').fill('Settings preserves this draft');
-        await page.waitForFunction(async () => {
+        await poll(page, async () => {
             const s = await import('/chat-client/storage.js'),
                 state = await s.readState();
             return (
@@ -58,7 +60,9 @@ fs.mkdirSync(out, { recursive: true });
                 state = await s.readState(),
                 id = state.snapshot.conversations.find((c) => c.isDefault).id;
             const item = await s.enqueue(id, 'Cache-clear queue fixture', state);
-            const cache = await caches.open('yap-chat-media-' + state.userId);
+            const cache = await caches.open(
+                window.fixtureConstants.MEDIA_CACHE_PREFIX + state.userId,
+            );
             await cache.put('/uploads/cache-clear-fixture.png', new Response('fixture'));
             return item.operationId;
         });
@@ -70,8 +74,12 @@ fs.mkdirSync(out, { recursive: true });
             }),
         });
         await cache.getByRole('button', { name: 'Clear this cache' }).click();
-        await page.waitForFunction(
-            async () => !(await caches.keys()).some((k) => k.startsWith('yap-chat-media-')),
+        await poll(
+            page,
+            async () =>
+                !(await caches.keys()).some((k) =>
+                    k.startsWith(window.fixtureConstants.MEDIA_CACHE_PREFIX),
+                ),
         );
         assert(
             await page.evaluate(
@@ -114,8 +122,11 @@ fs.mkdirSync(out, { recursive: true });
             const c = state.snapshot.conversations.find((c) => c.isDefault);
             c.hasMore = false;
             c.historyLimited = true;
-            await s.commit({ ...state.snapshot, sequence: state.snapshot.sequence + 1 }, state);
-            const b = new BroadcastChannel('yap-chat-v1');
+            await s.commitUpdate(
+                window.fixtureUpdate({ ...state.snapshot, sequence: state.snapshot.sequence + 1 }),
+                state,
+            );
+            const b = new BroadcastChannel(window.fixtureConstants.CHANGE_CHANNEL);
             b.postMessage('snapshot');
             b.close();
         });
@@ -131,8 +142,11 @@ fs.mkdirSync(out, { recursive: true });
             const c = state.snapshot.conversations.find((c) => c.isDefault);
             c.historyLimited = false;
             c.description = 'First line\nSecond line';
-            await s.commit({ ...state.snapshot, sequence: state.snapshot.sequence + 1 }, state);
-            const b = new BroadcastChannel('yap-chat-v1');
+            await s.commitUpdate(
+                window.fixtureUpdate({ ...state.snapshot, sequence: state.snapshot.sequence + 1 }),
+                state,
+            );
+            const b = new BroadcastChannel(window.fixtureConstants.CHANGE_CHANNEL);
             b.postMessage('snapshot');
             b.close();
         });
@@ -198,7 +212,7 @@ fs.mkdirSync(out, { recursive: true });
         await page.keyboard.press('Escape');
         await page.locator('.sidebar-backdrop').click({ position: { x: 5, y: 100 } });
         await page.locator('#draft').fill('Recovery preserves draft');
-        await page.waitForFunction(async () => {
+        await poll(page, async () => {
             const s = await import('/chat-client/storage.js'),
                 state = await s.readState();
             return (

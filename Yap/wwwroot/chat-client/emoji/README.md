@@ -19,10 +19,10 @@ from the repository root:
 
     dotnet run --project scripts/EmojiCatalog
 
-Commit catalog.js and bump CHAT_SHELL with the asset change. This maintenance
+Commit catalog.js with the asset change; the startup manifest derives the new shell hash. This maintenance
 command is not required for ordinary builds or deployment. To update Twemoji,
 replace only *.svg with assets/svg/*.svg from the chosen pinned source archive,
 update this version attribution and CHAT_EMOJI_CACHE in worker.js, and preserve
 the upstream licenses. Only a changed artwork pin replaces the SVG cache; ordinary
-CHAT_SHELL bumps retain it. Cache misses after a pin change bypass the HTTP cache
+Ordinary shell updates retain it. Cache misses after a pin change bypass the HTTP cache
 so old responses at the same image paths cannot override the new artwork.

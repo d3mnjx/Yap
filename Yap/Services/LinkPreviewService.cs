@@ -1,3 +1,4 @@
+using Yap.Offline;
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Net;
@@ -34,10 +35,13 @@ public partial class LinkPreviewService
     /// </summary>
     public Action<Guid, string, LinkPreview>? OnPreviewFetched { get; set; }
 
-    public LinkPreviewService(IHttpClientFactory httpClientFactory, ILogger<LinkPreviewService> logger, IWebHostEnvironment env)
+    private readonly OfflineChangeSignal _changes;
+
+    public LinkPreviewService(IHttpClientFactory httpClientFactory, ILogger<LinkPreviewService> logger, IWebHostEnvironment env, OfflineChangeSignal changes)
     {
         _httpClientFactory = httpClientFactory;
         _logger = logger;
+        _changes = changes;
         _cacheDirectory = Path.Combine(env.ContentRootPath, "Data", "link-previews");
     }
 
@@ -164,6 +168,7 @@ public partial class LinkPreviewService
             }
             // Every waiting message needs its own targeted delta, including duplicate URLs
             // in different conversations. Never hold the fetch lock while publishing.
+            _changes.Touch(OfflineChangeKind.Media, url: url);
             foreach (var id in messages)
                 OnPreviewFetched?.Invoke(id, url, preview);
         });

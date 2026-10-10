@@ -96,7 +96,7 @@ public static class OfflineContent
                 messagePlaceholders = config.GetSection("ChatSettings:FunnyTexts:MessagePlaceholders").Get<string[]>() ?? ["Type a message..."]
             },
             uploadEndpoint = config["ChatSettings:UploadUrl"] ?? "/api/tus",
-            maxUploadBytes = (long)config.GetValue("ChatSettings:MaxUploadSizeMB", 100) * 1024 * 1024
+            maxUploadBytes = http.RequestServices.GetRequiredService<ChatLimits>().MaxUploadBytes
         });
     }
 
@@ -206,7 +206,7 @@ public static class OfflineContent
     public record ProviderRequest(string SourceId, string? Query, string? Cursor);
     public static async Task<(List<string>? Images, List<string>? Videos, List<GifAttachment>? Gifs)> ResolveMedia(HttpContext http, User user, string[]? uploads, Guid? gifId)
     {
-        if ((uploads?.Length ?? 0) > 20)
+        if ((uploads?.Length ?? 0) > http.RequestServices.GetRequiredService<ChatLimits>().MaxFilesPerMessage)
             throw new ChatSendException(400, "invalid_media", "Too many attachments.");
         List<string> images = new(), videos = new();
         List<GifAttachment> attachments = new();

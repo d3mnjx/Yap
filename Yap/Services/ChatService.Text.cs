@@ -13,7 +13,7 @@ public sealed class ChatSendException(int status, string code, string message) :
 public partial class ChatService
 {
     public bool DurableSendingEnabled => _persistence.IsEnabled;
-    public const int MaxTextLength = 4000;
+    public int MaxTextLength => _limits.MaxTextLength;
 
     public async Task<TextSendReceipt> SendTextAsync(User user, Guid channelId, Guid operationId, string? content, Guid? replyToMessageId = null, List<string>? images = null, List<string>? videos = null, List<GifAttachment>? gifs = null,
         string? mediaIdentity = null, Func<Task<(List<string>? Images, List<string>? Videos, List<GifAttachment>? Gifs)>>? resolveMedia = null)
@@ -140,6 +140,7 @@ public partial class ChatService
                 _channels[channel.Id] = channel;
                 _channelMessages[channel.Id] = new();
                 _channelTypingUsers[channel.Id] = new();
+                _changes.Touch(channel.Id);
                 OnChannelCreated?.Invoke(channel);
             }
             return channel;

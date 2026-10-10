@@ -4,7 +4,14 @@ import { get, post, beginForeground, ApiError } from './api.js';
 
 // One coordinator per account across tabs. Conversations progress independently;
 // operations within one conversation stay ordered. Only one upload runs at a time.
-export function createSender({ identity, accepted, changed, authRequired, failed }) {
+export function createSender({
+    snapshot = () => null,
+    identity,
+    accepted,
+    changed,
+    authRequired,
+    failed,
+}) {
     let running = false,
         timer,
         stopped = false,
@@ -156,13 +163,15 @@ export function createSender({ identity, accepted, changed, authRequired, failed
                                 continue;
                             const items = [candidates[0]];
                             if (!uploading)
-                                for (const item of candidates.slice(1, 16)) {
+                                for (const item of candidates.slice(
+                                    1,
+                                    snapshot()?.maxOperationsPerBatch ?? 16,
+                                )) {
                                     if (
                                         media(item) ||
                                         new TextEncoder().encode(
                                             JSON.stringify([...items, item].map(payload)),
-                                        ).byteLength >
-                                            48 * 1024
+                                        ).byteLength > (snapshot()?.maxBatchBytes ?? 48 * 1024)
                                     )
                                         break;
                                     items.push(item);

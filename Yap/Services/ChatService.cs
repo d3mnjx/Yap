@@ -1,3 +1,4 @@
+using Yap.Offline;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using Yap.Models;
@@ -29,7 +30,7 @@ public partial class ChatService
     private readonly ConcurrentDictionary<Guid, Channel> _channels = new();
     private readonly ConcurrentDictionary<Guid, List<ChatMessage>> _channelMessages = new();
     private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<string, DateTime>> _channelTypingUsers = new();
-    private readonly ConcurrentDictionary<Guid, object> _channelLocks = new();
+    private readonly OfflineChangeSignal _changes;
 
     // Unread tracking: (UserId, ChannelId) -> ChannelReadState
     private readonly ConcurrentDictionary<(Guid UserId, Guid ChannelId), ChannelReadState> _readStates = new();
@@ -84,14 +85,17 @@ public partial class ChatService
         public string? ViewingChannel { get; init; }  // display label of the channel this session has open
         public DateTime CreatedAt { get; init; }
         public DateTime LastReportAt { get; init; }   // last client-state heartbeat — stale means frozen/disconnected/legacy client
-        public string? ClientIpv4 { get; init; }      // IPv4 seen by the opt-in beacon (dualstack clients connect over IPv6, so ClientIp alone hides their v4)
     }
+
+    private readonly Yap.Offline.ChatLimits _limits;
 
     public ChatService(PushNotificationService pushService, ChatPersistenceService persistence, UserService userService,
         LinkPreviewService linkPreviewService, LinkPreviewSettingsService linkPreviewSettings,
         MediaCacheService mediaCacheService, GifService gifService, NotificationAudit audit,
-        NotificationSettingsService notifications, ILogger<ChatService> logger)
+        NotificationSettingsService notifications, ILogger<ChatService> logger, Yap.Offline.ChatLimits limits, OfflineChangeSignal changes)
     {
+        _changes = changes;
+        _limits = limits;
         _pushService = pushService;
         _audit = audit;
         _notifications = notifications;
@@ -266,7 +270,7 @@ public partial class ChatService
     /// This allows concurrent operations on different channels.
     /// </summary>
     internal object GetChannelLock(Guid channelId) =>
-        _channelLocks.GetOrAdd(channelId, _ => new object());
+        _changes.ChannelLock(channelId);
 
     public List<Channel> GetRooms() =>
         _channels.Values
@@ -315,6 +319,7 @@ public partial class ChatService
 
         _logger.LogDebug("CreateRoom '{RoomName}' by {User}: persist={ElapsedMs}ms", roomName, adminUsername, sw.ElapsedMilliseconds);
 
+        _changes.Touch(channel.Id);
         OnChannelCreated?.Invoke(channel);
 
         return channel;
@@ -335,7 +340,6 @@ public partial class ChatService
         _channels.TryRemove(channelId, out _);
         _channelMessages.TryRemove(channelId, out _);
         _channelTypingUsers.TryRemove(channelId, out _);
-        _channelLocks.TryRemove(channelId, out _);
         _notifications.ClearOverridesForChannel(channelId);
 
         // Delete from database
@@ -344,6 +348,7 @@ public partial class ChatService
 
         _logger.LogDebug("DeleteRoom '{RoomName}' channel={ChannelId}: persist={ElapsedMs}ms", channel.Name, channelId, sw.ElapsedMilliseconds);
 
+        _changes.Touch(channelId);
         OnChannelDeleted?.Invoke(channelId);
 
         return true;
@@ -387,6 +392,7 @@ public partial class ChatService
         _logger.LogDebug("UpdateChannel '{ChannelName}' channel={ChannelId}: persist={ElapsedMs}ms",
             channel.Name, channelId, sw.ElapsedMilliseconds);
 
+        _changes.Touch(channel.Id);
         OnChannelUpdated?.Invoke(channel);
         return null;
     }
@@ -420,19 +426,9 @@ public partial class ChatService
         _logger.LogDebug("ReorderChannel '{ChannelName}' {Direction}: persist={ElapsedMs}ms",
             currentChannel.Name, moveUp ? "up" : "down", sw.ElapsedMilliseconds);
 
+        _changes.Touch(currentChannel.Id);
         OnChannelUpdated?.Invoke(currentChannel);
         return true;
-    }
-
-    /// <summary>
-    /// Checks if a user can write messages in a channel.
-    /// </summary>
-    public bool CanUserWrite(Guid channelId, Guid userId)
-    {
-        if (!_channels.TryGetValue(channelId, out var channel))
-            return false;
-
-        return channel.CanWrite(userId, IsAdmin(userId));
     }
 
     /// <summary>
@@ -545,6 +541,7 @@ public partial class ChatService
         {
             OnUserChanged?.Invoke(username, true);
         }
+        _changes.Touch(OfflineChangeKind.People);
         OnUsersListChanged?.Invoke();
 
         return Task.CompletedTask;
@@ -578,6 +575,7 @@ public partial class ChatService
             session.Username, oldStatus, status, autoAwayPreviousStatus.HasValue);
 
         OnUserStatusChanged?.Invoke(session.Username, status);
+        _changes.Touch(OfflineChangeKind.People);
         OnUsersListChanged?.Invoke();
 
         return Task.CompletedTask;
@@ -620,6 +618,7 @@ public partial class ChatService
         _logger.LogDebug("Auto-away restored: {User} -> {Status}", session.Username, restoreTo);
 
         OnUserStatusChanged?.Invoke(session.Username, restoreTo);
+        _changes.Touch(OfflineChangeKind.People);
         OnUsersListChanged?.Invoke();
 
         return restoreTo;
@@ -745,55 +744,6 @@ public partial class ChatService
     }
 
     /// <summary>
-    /// Clears the viewing label only if it still matches — a disposing page must not wipe the
-    /// label the NEXT page already set on this session.
-    /// </summary>
-    public void ClearSessionViewing(string sessionId, string label)
-    {
-        if (_users.TryGetValue(sessionId, out var session) && session.ViewingChannel == label)
-            _users[sessionId] = session with { ViewingChannel = null };
-    }
-
-    // IPv4-beacon nonces: the beacon URL is unauthenticated and shows up in proxy logs,
-    // so it carries a single-use random value instead of the real sessionId. Minted per
-    // chat page load, redeemed once by BeaconEndpoints, expired entries pruned on mint.
-    private readonly ConcurrentDictionary<string, (string SessionId, DateTime CreatedAt)> _beaconNonces = new();
-    private static readonly TimeSpan BeaconNonceTtl = TimeSpan.FromMinutes(5);
-
-    /// <summary>
-    /// Mints a single-use nonce the IPv4 beacon fetch will carry instead of a sessionId.
-    /// </summary>
-    public string CreateBeaconNonce(string sessionId)
-    {
-        // Prune here instead of on a timer — mints are rare (one per chat page load),
-        // and each one sweeps the handful of entries a redeem or expiry left behind.
-        foreach (var (key, entry) in _beaconNonces)
-        {
-            if (DateTime.UtcNow - entry.CreatedAt > BeaconNonceTtl)
-                _beaconNonces.TryRemove(key, out _);
-        }
-
-        var nonce = Guid.NewGuid().ToString("N");
-        _beaconNonces[nonce] = (sessionId, DateTime.UtcNow);
-        return nonce;
-    }
-
-    /// <summary>
-    /// Records the IPv4 the opt-in beacon observed, redeeming its nonce (see BeaconEndpoints).
-    /// Single-use: a replayed or expired nonce is a no-op. Display-only either way — this
-    /// value must NEVER feed smart login, KnownIps, or any auth decision.
-    /// </summary>
-    public void RecordBeaconIpv4(string nonce, string ipv4)
-    {
-        if (_beaconNonces.TryRemove(nonce, out var entry)
-            && DateTime.UtcNow - entry.CreatedAt <= BeaconNonceTtl
-            && _users.TryGetValue(entry.SessionId, out var session))
-        {
-            _users[entry.SessionId] = session with { ClientIpv4 = ipv4 };
-        }
-    }
-
-    /// <summary>
     /// All live sessions across all users — the admin diagnostics "session truth table".
     /// </summary>
     public List<UserSession> GetAllSessions() => _users.Values.ToList();
@@ -822,6 +772,7 @@ public partial class ChatService
                 _statusBeforeAutoAway.TryRemove(session.Username, out _);
                 OnUserChanged?.Invoke(session.Username, false);
             }
+            _changes.Touch(OfflineChangeKind.People);
             OnUsersListChanged?.Invoke();
         }
 
@@ -875,6 +826,7 @@ public partial class ChatService
     {
         if (!_users.TryGetValue(sessionId, out var session) || session.Connected == connected) return;
         _users[sessionId] = session with { Connected = connected };
+        _changes.Touch(OfflineChangeKind.People);
         OnUsersListChanged?.Invoke();
     }
 
@@ -951,6 +903,7 @@ public partial class ChatService
                 OnSessionKicked?.Invoke(session.SessionId);
             }
 
+            _changes.Touch(OfflineChangeKind.People);
             OnUsersListChanged?.Invoke();
         }
 
@@ -1010,6 +963,7 @@ public partial class ChatService
         if (wasTyping)
             NotifySubscribers(OnTypingUsersChanged, channelId);
 
+        _changes.Touch(message.ChannelId, message.Id, history: false);
         NotifySubscribers(OnMessageReceived, message);
         NotifyUnreadChanged(channelId, affectedUserIds);
 
@@ -1161,7 +1115,7 @@ public partial class ChatService
 
         // Incremental subscribers need every inserted record; one final pulse no longer
         // causes a full snapshot rebuild. Their bounded queues coalesce this burst.
-        foreach (var message in testMessages) OnMessageReceived?.Invoke(message);
+        foreach (var message in testMessages) { _changes.Touch(message.ChannelId, message.Id, history: false); OnMessageReceived?.Invoke(message); }
 
         return count;
     }
@@ -1308,117 +1262,6 @@ public partial class ChatService
         }
     }
 
-    public async Task<bool> EditMessageAsync(Guid messageId, Guid channelId, string username, string newContent)
-    {
-        var sw = Stopwatch.StartNew();
-        if (!_channelMessages.TryGetValue(channelId, out var messages))
-            return false;
-
-        ChatMessage? message;
-        lock (GetChannelLock(channelId))
-        {
-            message = messages.FirstOrDefault(m => m.Id == messageId);
-        }
-
-        if (message == null || message.Username != username)
-            return false;
-
-        if (message.HasMedia)
-            return false; // Can't edit media messages
-
-        message.Content = newContent;
-        message.IsEdited = true;
-
-        // Persist the edit (single UPDATE, no SELECT)
-        await _persistence.PersistMessageEditAsync(messageId, newContent);
-
-        _logger.LogDebug("EditMessage {MessageId} by {User}: persist={ElapsedMs}ms", messageId, username, sw.ElapsedMilliseconds);
-
-        OnMessageUpdated?.Invoke(message);
-
-        return true;
-    }
-
-    public async Task<bool> DeleteMessageAsync(Guid messageId, Guid channelId, string username)
-    {
-        var sw = Stopwatch.StartNew();
-        if (!_channelMessages.TryGetValue(channelId, out var messages))
-            return false;
-
-        ChatMessage? message;
-        lock (GetChannelLock(channelId))
-        {
-            message = messages.FirstOrDefault(m => m.Id == messageId);
-            if (message == null || message.Username != username)
-                return false;
-
-            messages.Remove(message);
-        }
-
-        // Release GifEntry reference counts (eviction may now consider these entries).
-        _gifService.DecrementReferences(message.GifAttachments);
-
-        // Delete from database
-        await _persistence.DeleteMessageAsync(messageId);
-
-        _logger.LogDebug("DeleteMessage {MessageId} by {User}: persist={ElapsedMs}ms", messageId, username, sw.ElapsedMilliseconds);
-
-        OnMessageDeleted?.Invoke(messageId, channelId);
-
-        return true;
-    }
-
-    public async Task ToggleReactionAsync(Guid messageId, Guid channelId, Guid userId, string username, string emoji)
-    {
-        var sw = Stopwatch.StartNew();
-        if (!_channelMessages.TryGetValue(channelId, out var messages))
-            return;
-
-        ChatMessage? message;
-        lock (GetChannelLock(channelId))
-        {
-            message = messages.FirstOrDefault(m => m.Id == messageId);
-        }
-
-        if (message == null)
-            return;
-
-        bool added;
-        lock (message.Reactions)
-        {
-            var existingReaction = message.Reactions.FirstOrDefault(r =>
-                r.Emoji == emoji && r.UserId == userId);
-
-            if (existingReaction != null)
-            {
-                message.Reactions.Remove(existingReaction);
-                added = false;
-            }
-            else
-            {
-                message.Reactions.Add(new Reaction
-                {
-                    MessageId = messageId,
-                    UserId = userId,
-                    Username = username,
-                    Emoji = emoji
-                });
-                added = true;
-            }
-        }
-
-        // Persist reaction change
-        if (added)
-            await _persistence.AddReactionAsync(messageId, userId, username, emoji);
-        else
-            await _persistence.RemoveReactionAsync(messageId, userId, emoji);
-
-        _logger.LogDebug("ToggleReaction {Emoji} on {MessageId} by {User}: action={Action} persist={ElapsedMs}ms",
-            emoji, messageId, username, added ? "add" : "remove", sw.ElapsedMilliseconds);
-
-        OnReactionChanged?.Invoke(message);
-    }
-
     /// <summary>
     /// The user's most-used reaction emojis for the quick-reaction bar. Reads full
     /// reaction history from the DB when persistence is on; otherwise counts reactions
@@ -1467,15 +1310,6 @@ public partial class ChatService
         }
         return 0;
     }
-
-    /// <summary>
-    /// Marks a channel as read for a user (resets unread count to 0).
-    /// Use silent: true when called from event handlers to avoid nested event cascades.
-    /// Source tags the trigger for the unread audit: "open" (navigation), "receive" (message
-    /// arrived while viewing), "resume" (tab foregrounded), "dispose" (leaving the page).
-    /// </summary>
-    public Task MarkChannelAsReadAsync(Guid userId, Guid channelId, bool silent = false, string? callerSessionId = null, string source = "open")
-        => MarkObservedReadAsync(userId, channelId, null, silent, callerSessionId, source);
 
     /// <summary>
     /// Increments unread count for all participants except the sender (memory + DB only).
@@ -1571,6 +1405,7 @@ public partial class ChatService
     {
         foreach (var userId in userIds)
         {
+            _changes.Touch(OfflineChangeKind.Unread, userId, channelId);
             if (OnUnreadChanged is { } handlers)
                 foreach (Action<Guid, Guid> handler in handlers.GetInvocationList())
                     RunNotification(() => handler(userId, channelId));
@@ -1682,7 +1517,7 @@ public partial class ChatService
 
         foreach (var kvp in snapshot)
         {
-            if ((now - kvp.Value).TotalSeconds > 3)
+            if ((now - kvp.Value).TotalMilliseconds > _limits.TypingTimeoutMs)
                 stale.Add(kvp.Key);
             else
                 active.Add(kvp.Key);

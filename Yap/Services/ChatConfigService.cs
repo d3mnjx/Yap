@@ -13,7 +13,6 @@ public class ChatConfigService
     public string RoomName => _configuration["ChatSettings:RoomName"] ?? "lobby";
     public bool WelcomePageEnabled => _configuration.GetValue<bool>("ChatSettings:WelcomePageEnabled", true);
     public string UploadUrl => _configuration["ChatSettings:UploadUrl"] ?? "";
-    public string Ipv4BeaconUrl => _configuration["ChatSettings:Ipv4BeaconUrl"] ?? "";
     public int MaxUploadSizeMB => _configuration.GetValue<int>("ChatSettings:MaxUploadSizeMB", 100);
     public int GifPackMaxSizeMB => _configuration.GetValue<int>("ChatSettings:GifSettings:MaxPackSizeMB", 1024);
 
@@ -30,23 +29,6 @@ public class ChatConfigService
 
     public string GetRandomUsernamePlaceholder()
         => GetRandomText("UsernamePlaceholders", "Enter your username");
-
-    public string GetRandomMessagePlaceholder()
-        => GetRandomText("MessagePlaceholders", "Type a message...");
-
-    public string GetRandomConnectionStatus(bool connected)
-    {
-        var key = connected ? "ConnectionStatuses:Connected" : "ConnectionStatuses:Disconnected";
-        var fallback = connected ? "Connected" : "Disconnected";
-        return GetRandomText(key, fallback);
-    }
-
-    public string GetRandomSystemMessage(string username, bool joined)
-    {
-        var key = joined ? "SystemMessages:UserJoined" : "SystemMessages:UserLeft";
-        var fallback = joined ? "{0} joined the chat" : "{0} left the chat";
-        return GetRandomText(key, fallback, username);
-    }
 
     public string GetRandomTypingIndicator(List<string> typingUsers, string currentUser)
     {

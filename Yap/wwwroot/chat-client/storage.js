@@ -1,7 +1,12 @@
 import { mergeUpdate } from './sync.js';
-// The database, account lock and cross-tab channel share one stable namespace.
-const DB = 'yap-chat-v1';
-const changes = new BroadcastChannel(DB);
+import {
+    ACCOUNT_LOCK,
+    CHANGE_CHANNEL,
+    DB_STORES,
+    MEDIA_CACHE_PREFIX,
+    openDatabase,
+} from './constants.js';
+const changes = new BroadcastChannel(CHANGE_CHANNEL);
 export const notify = (type) => changes.postMessage(type);
 export const onExternalChange = (handler) => {
     const listener = (event) => handler(event.data);
@@ -15,25 +20,19 @@ const request = (req) =>
     });
 let opened;
 function open() {
-    return (opened ??= new Promise((resolve, reject) => {
-        const req = indexedDB.open(DB, 4);
-        req.onupgradeneeded = () => {
-            for (const name of ['state', 'drafts', 'outbox', 'reads', 'conversations'])
-                if (!req.result.objectStoreNames.contains(name)) req.result.createObjectStore(name);
-        };
-        req.onblocked = () =>
-            reject(
-                new Error('Close older Yap tabs, then reload to finish updating offline storage.'),
-            );
-        req.onsuccess = () => {
-            req.result.onversionchange = () => {
-                req.result.close();
+    return (opened ??= openDatabase()
+        .then((db) => {
+            db.onversionchange = () => {
+                db.close();
+                opened = undefined;
                 notify('upgrade');
             };
-            resolve(req.result);
-        };
-        req.onerror = () => reject(req.error);
-    }));
+            return db;
+        })
+        .catch((error) => {
+            opened = undefined;
+            throw error;
+        }));
 }
 async function transaction(stores, mode, action) {
     const db = await open();
@@ -55,7 +54,7 @@ async function transaction(stores, mode, action) {
         throw error;
     }
 }
-const locked = (action) => navigator.locks.request(DB, action);
+const locked = (action) => navigator.locks.request(ACCOUNT_LOCK, action);
 export const readIdentity = () =>
     transaction(['state'], 'readonly', (tx) => request(tx.objectStore('state').get('active')));
 export async function readState() {
@@ -108,54 +107,6 @@ export async function lockAccount() {
         }),
     );
     notify('locked');
-}
-/**
- * Commit is the only authoritative snapshot write. An acknowledgement may remove
- * its outgoing job even when a newer stream snapshot has already won ordering.
- * @param {import('./contracts.js').ChatSnapshot} snapshot
- * @param {import('./contracts.js').AccountIdentity} identity
- * @param {string|null} acknowledgedOperation
- */
-export async function commit(snapshot, identity, acknowledgedOperation = null) {
-    const committed = await locked(() =>
-        transaction(['state', 'outbox', 'reads'], 'readwrite', async (tx) => {
-            const active = await owner(tx, identity);
-            if (active.userId !== snapshot.user.id) throw new Error('ACCOUNT_CHANGED');
-            // An HTTP acknowledgement is still valid if a newer stream snapshot arrived first.
-            if (acknowledgedOperation) tx.objectStore('outbox').delete(acknowledgedOperation);
-            const retiredEpochs = active.retiredEpochs ?? [];
-            if (retiredEpochs.includes(snapshot.serverEpoch)) return false;
-            if (
-                active.snapshot?.serverEpoch === snapshot.serverEpoch &&
-                active.snapshot.sequence >= snapshot.sequence
-            )
-                return false;
-            if (active.snapshot && active.snapshot.serverEpoch !== snapshot.serverEpoch)
-                retiredEpochs.push(active.snapshot.serverEpoch);
-            for (const conversation of snapshot.conversations)
-                for (const message of conversation.messages)
-                    if (message.author.id === identity.userId && message.operationId)
-                        tx.objectStore('outbox').delete(message.operationId);
-            for (const conversation of snapshot.conversations) {
-                const seen = await request(tx.objectStore('reads').get(conversation.id));
-                if (seen && conversation.readThrough >= seen.through)
-                    tx.objectStore('reads').delete(conversation.id);
-            }
-            tx.objectStore('state').put(
-                {
-                    ...active,
-                    snapshot,
-                    splitConversations: false,
-                    retiredEpochs,
-                    authenticatedAt: Date.now(),
-                },
-                'active',
-            );
-            return true;
-        }),
-    );
-    notify('snapshot');
-    return committed;
 }
 /** Commit partial authority and its receipt atomically; persist only affected conversations. */
 export async function commitUpdate(update, identity, acknowledgedOperation = null) {
@@ -241,33 +192,26 @@ export async function enqueue(channelId, content, identity, extra = {}, reply = 
         error: null,
     };
     await locked(() =>
-        transaction(
-            ['state', 'drafts', 'outbox', 'reads', 'conversations'],
-            'readwrite',
-            async (tx) => {
-                const active = await owner(tx, identity);
-                item.conversationName =
-                    (active.splitConversations
-                        ? await request(tx.objectStore('conversations').get(channelId))
-                        : active.snapshot?.conversations.find((c) => c.id === channelId)
-                    )?.name || 'Unavailable conversation';
-                tx.objectStore('outbox').put(item, item.operationId);
-                // Do not erase text typed while the send transaction was waiting for its lock.
-                if (
-                    !extra.kind &&
-                    (await request(tx.objectStore('drafts').get(channelId))) === content
-                )
-                    tx.objectStore('drafts').delete(channelId);
-                // Reply selection can change while enqueue waits for the lock. Clear only the
-                // selection captured by this send, atomically with saving its outgoing message.
-                if (!extra.kind && reply !== undefined) {
-                    const key = 'reply:' + channelId;
-                    const saved = await request(tx.objectStore('drafts').get(key));
-                    if (saved?.id === reply?.id && saved?.draftId === reply?.draftId)
-                        tx.objectStore('drafts').delete(key);
-                }
-            },
-        ),
+        transaction(DB_STORES, 'readwrite', async (tx) => {
+            const active = await owner(tx, identity);
+            item.conversationName =
+                (active.splitConversations
+                    ? await request(tx.objectStore('conversations').get(channelId))
+                    : active.snapshot?.conversations.find((c) => c.id === channelId)
+                )?.name || 'Unavailable conversation';
+            tx.objectStore('outbox').put(item, item.operationId);
+            // Do not erase text typed while the send transaction was waiting for its lock.
+            if (!extra.kind && (await request(tx.objectStore('drafts').get(channelId))) === content)
+                tx.objectStore('drafts').delete(channelId);
+            // Reply selection can change while enqueue waits for the lock. Clear only the
+            // selection captured by this send, atomically with saving its outgoing message.
+            if (!extra.kind && reply !== undefined) {
+                const key = 'reply:' + channelId;
+                const saved = await request(tx.objectStore('drafts').get(key));
+                if (saved?.id === reply?.id && saved?.draftId === reply?.draftId)
+                    tx.objectStore('drafts').delete(key);
+            }
+        }),
     );
     notify('outbox');
     return item;
@@ -289,16 +233,11 @@ export async function setDelivery(operationId, status, error, identity) {
     notify('outbox');
 }
 async function eraseUnlocked() {
-    await transaction(
-        ['state', 'drafts', 'outbox', 'reads', 'conversations'],
-        'readwrite',
-        (tx) => {
-            for (const store of ['state', 'drafts', 'outbox', 'reads', 'conversations'])
-                tx.objectStore(store).clear();
-        },
-    );
+    await transaction(DB_STORES, 'readwrite', (tx) => {
+        for (const store of DB_STORES) tx.objectStore(store).clear();
+    });
     for (const key of await caches.keys())
-        if (key.startsWith('yap-chat-media-')) await caches.delete(key);
+        if (key.startsWith(MEDIA_CACHE_PREFIX)) await caches.delete(key);
 }
 export const forget = () =>
     locked(async () => {

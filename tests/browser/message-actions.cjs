@@ -1,3 +1,4 @@
+const { poll } = require('./support/wait.cjs');
 // Synthetic users on the isolated test app. The reference pass uses its separate database.
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const assert = require('node:assert/strict'),
@@ -83,16 +84,15 @@ fs.mkdirSync(output, { recursive: true });
                     ?.querySelector('.reaction-pill'),
         );
         if (!reference) {
-            await page.waitForFunction(
+            await poll(
+                page,
                 async () => (await (await import('/chat-client/storage.js')).outbox()).length === 0,
             );
             await page.waitForTimeout(250);
         }
         await action('Edited target', 'More');
         await page.getByRole('button', { name: 'Copy Text', exact: true }).click();
-        await page.waitForFunction(
-            async () => (await navigator.clipboard.readText()) === 'Edited target',
-        );
+        await poll(page, async () => (await navigator.clipboard.readText()) === 'Edited target');
         await action('Edited target', 'More');
         await page.getByRole('button', { name: 'Delete Message', exact: true }).click();
         await page.locator('.confirm-cancel').click();
@@ -105,7 +105,8 @@ fs.mkdirSync(output, { recursive: true });
         );
         if (!reference) {
             await send('Edit cancellation target');
-            await page.waitForFunction(
+            await poll(
+                page,
                 async () => (await (await import('/chat-client/storage.js')).outbox()).length === 0,
             );
             // A sibling client can accept an edit while this tab keeps its local editor open.
@@ -124,7 +125,8 @@ fs.mkdirSync(output, { recursive: true });
                         await api.get('session'),
                     );
                 }, accepted);
-                await page.waitForFunction(
+                await poll(
+                    page,
                     async (content) =>
                         (
                             await (await import('/chat-client/storage.js')).readState()
@@ -148,7 +150,8 @@ fs.mkdirSync(output, { recursive: true });
                 await action(accepted, 'Edit');
                 await page.locator('.edit-input').fill('Edit cancellation target');
                 await page.locator('.edit-save').click();
-                await page.waitForFunction(
+                await poll(
+                    page,
                     async () =>
                         (await (await import('/chat-client/storage.js')).outbox()).length === 0,
                 );
@@ -166,7 +169,7 @@ fs.mkdirSync(output, { recursive: true });
             await row('Offline edited').locator('.reaction-pill').waitFor();
             await action('Offline edited', 'Reply');
             await draft.fill('Offline reply draft');
-            await page.waitForFunction(async () => {
+            await poll(page, async () => {
                 const s = await import('/chat-client/storage.js'),
                     a = await s.readState(),
                     c = a.snapshot.conversations.find((c) => c.path === location.pathname);
@@ -201,7 +204,8 @@ fs.mkdirSync(output, { recursive: true });
             await row('Offline edited').locator('.reaction-pill').waitFor();
             // The last queued mutation may still await its HTTP receipt after pending text
             // disappears. Wait for durable reconciliation, not just its optimistic DOM state.
-            await page.waitForFunction(
+            await poll(
+                page,
                 async () => (await (await import('/chat-client/storage.js')).outbox()).length === 0,
             );
             console.log(

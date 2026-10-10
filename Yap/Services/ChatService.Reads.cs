@@ -61,6 +61,9 @@ public partial class ChatService
         }
         finally { readStateGate.Release(); }
         if (changed && !silent)
+        {
+            _changes.Touch(Yap.Offline.OfflineChangeKind.Unread, userId, channelId);
             OnUnreadChanged?.Invoke(userId, channelId);
+        }
     }
 }

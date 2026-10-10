@@ -1,3 +1,4 @@
+const { readSnapshot } = require('./support/authority.cjs');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const assert = require('node:assert/strict'),
     fs = require('node:fs');
@@ -83,10 +84,10 @@ async function until(check) {
         );
         await bob.goto(origin + '/dm/' + names[0]);
         await bob.waitForFunction(() => !document.querySelector('[data-status="online"]').disabled);
-        const data = await (await contexts[0].request.get(origin + '/api/chat/sync')).json();
+        const data = await readSnapshot(contexts[0].request, origin);
         const dm = data.conversations.find((c) => c.path === '/dm/' + names[1]);
         const unread = async () => {
-            const s = await (await contexts[0].request.get(origin + '/api/chat/sync')).json();
+            const s = await readSnapshot(contexts[0].request, origin);
             return s.conversations.find((c) => c.id === dm.id).unread;
         };
         const send = async (text) => {

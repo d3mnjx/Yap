@@ -1,3 +1,4 @@
+/* Browser shell navigation, connection and delivery presentation. */
 /* The prototype consumes the original component styles, with only shell adaptations here. */
 [hidden] {
     display: none !important;
@@ -29,15 +30,6 @@
 #history-note {
     white-space: pre-line;
 }
-.gallery-item {
-    border: 0;
-    background: transparent;
-    padding: 0;
-}
-.modal-stage p {
-    margin: auto;
-    color: white;
-}
 .chat-attachment-note {
     color: var(--text-muted);
     font-size: 0.875rem;
@@ -52,7 +44,6 @@
         white-space: nowrap;
     }
 }
-
 @media (max-width: 600px) {
     #connection {
         font-size: 0;
@@ -63,7 +54,6 @@
         font-size: 0.7rem;
     }
 }
-
 #pending {
     display: contents;
 }
@@ -89,39 +79,10 @@
     padding: 3px 8px;
     cursor: pointer;
 }
-.pending-message .message-content {
-    opacity: 0.75;
-    white-space: pre-wrap;
-}
 .reply-preview {
     background: transparent;
     border: 0;
     text-align: left;
-}
-
-.message-group.editing .message-actions {
-    display: none;
-}
-.message-group.touch-actions .message-actions {
-    opacity: 1;
-    pointer-events: auto;
-    display: flex;
-}
-
-.message-text .emoji {
-    width: 1.2em;
-    height: 1.2em;
-    vertical-align: -0.2em;
-    object-fit: contain;
-}
-.message-text.emoji-only .emoji {
-    width: 3em;
-    height: 3em;
-    vertical-align: -0.4em;
-}
-.reaction-pill .emoji {
-    width: 18px;
-    height: 18px;
 }
 .gif-card-select {
     padding: 0;
@@ -152,30 +113,12 @@
     outline: 2px dashed var(--text-primary);
     outline-offset: -4px;
 }
-
-.message-text.emoji-small .emoji {
-    width: 18px;
-    height: 18px;
-    vertical-align: -3px;
-}
-
 .history-load-button {
     border: 0;
     background: transparent;
     color: var(--text-secondary);
     padding: 12px;
     cursor: pointer;
-}
-.avatar {
-    overflow: hidden;
-}
-.avatar-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
 }
 .profile-info-btn {
     display: none;
@@ -185,53 +128,12 @@
         display: flex;
     }
 }
-.user-name .message-text.emoji-small .emoji,
-.message-username .message-text .emoji {
-    width: 1em;
-    height: 1em;
-    vertical-align: -0.15em;
-}
-
-.avatar {
-    position: relative;
-}
-/* Reaction popups live outside the message flow so desktop clipping cannot bury them. */
-.client-reaction-picker {
-    z-index: 1001;
-}
-.client-reaction-picker .emoji-picker {
-    max-width: calc(100vw - 8px);
-}
-.emoji-sidebar .category-btn img {
-    width: 18px;
-    height: 18px;
-    object-fit: contain;
-}
-@media (max-width: 600px) {
-    .client-reaction-picker .emoji-picker {
-        max-width: 100%;
-    }
-}
-
-#title .message-text .emoji,
-#status-username .message-text .emoji {
-    width: 1em;
-    height: 1em;
-    vertical-align: -0.15em;
-}
-
-/* Category jumps own the scroll offset; lazy section layout must not anchor it to an old row. */
-.emoji-content {
-    overflow-anchor: none;
-}
-
 .video-play-overlay {
     border: 0;
     padding: 0;
     width: 100%;
     cursor: pointer;
 }
-
 #recovery {
     height: auto;
     flex: none;

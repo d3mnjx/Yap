@@ -87,6 +87,16 @@
  * @property {Conversation[]} conversations
  * @property {ChatUser[]} people
  * @property {boolean} canSend
+ * @property {number} maxOperationsPerBatch
+ * @property {number} maxBatchBytes UTF-8 request body budget derived from the server POST limit.
+ * @property {number} maxFilesPerMessage
+ * @property {string[]} allowedExtensions
+ * @property {number} maxUploadBytes
+ * @property {number} historyPageSize
+ * @property {number} historyMaxMessages
+ * @property {number} readBatch
+ * @property {number} typingTimeoutMs
+ * @property {number} awayAfterMs
  * @property {number} maxTextLength
  * @property {boolean} isAdmin
  * @property {string} theme

@@ -1,3 +1,4 @@
+const { poll } = require('./support/wait.cjs');
 // Serve previous/candidate static packages on one disposable origin; APIs use the isolated fixture.
 const { chromium, firefox } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const fs = require('node:fs'),
@@ -10,15 +11,11 @@ if (!oldPackage || !newPackage)
     throw new Error(
         'Set YAP_PREVIOUS_PACKAGE and YAP_REWRITE_PACKAGE to compatible chat releases.',
     );
-function shellCache(packagePath) {
-    const worker = fs.readFileSync(path.join(packagePath, 'wwwroot/chat-client/worker.js'), 'utf8');
-    const cache = /const CHAT_SHELL = ['"]([^'"]+)['"]/.exec(worker)?.[1];
-    assert(cache, `Missing shell cache name in ${packagePath}`);
-    return cache;
-}
-const previousCache = shellCache(oldPackage);
-const candidateCache = shellCache(newPackage);
-assert.notEqual(previousCache, candidateCache, 'An upgrade requires different shell versions');
+const { manifest } = require('./support/manifest.cjs');
+const manifests = new Map(
+    [oldPackage, newPackage].map((p) => [p, manifest(path.join(p, 'wwwroot'))]),
+);
+let previousCache, candidateCache;
 const backend = new URL(process.env.YAP_TEST_ORIGIN || 'http://127.0.0.1:7643');
 if (backend.hostname !== '127.0.0.1' || backend.port === '7543')
     throw new Error('Isolated localhost fixture required');
@@ -29,6 +26,11 @@ let packagePath = oldPackage,
     browser;
 const proxy = http.createServer((req, res) => {
     const pathname = new URL(req.url, origin).pathname;
+    if (pathname === '/chat-client/manifest.json') {
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+        res.end(JSON.stringify(manifests.get(packagePath)));
+        return;
+    }
     if (holdWrites && req.method === 'POST' && pathname.endsWith('/messages')) {
         res.writeHead(503, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Held by upgrade fixture' }));
@@ -113,6 +115,12 @@ proxy.on('upgrade', (req, socket, head) => {
 
 (async () => {
     try {
+        const { SHELL_CACHE_PREFIX } = await import(
+            path.resolve(__dirname, '../../Yap/wwwroot/chat-client/constants.js')
+        );
+        previousCache = SHELL_CACHE_PREFIX + manifests.get(oldPackage).version;
+        candidateCache = SHELL_CACHE_PREFIX + manifests.get(newPackage).version;
+        assert.notEqual(previousCache, candidateCache, 'An upgrade requires changed assets');
         for (const dir of [oldPackage, newPackage])
             assert(fs.existsSync(path.join(dir, 'wwwroot/chat-client/worker.js')));
         await new Promise((resolve, reject) => {
@@ -133,14 +141,18 @@ proxy.on('upgrade', (req, socket, head) => {
             () =>
                 document.querySelector('#connection')?.textContent === 'Synced · available offline',
         );
-        assert((await page.evaluate(() => caches.keys())).includes(previousCache));
+        previousCache = (await page.evaluate(() => caches.keys())).find((name) =>
+            name.startsWith(SHELL_CACHE_PREFIX),
+        );
+        assert(previousCache, 'Incumbent shell is installed');
+        assert.notEqual(previousCache, candidateCache);
         await context.setOffline(true);
         const text = 'Queued across shell update ' + Date.now();
         await page.locator('#draft').fill(text);
         await page.locator('#send').click();
         await page.locator('#pending [data-operation]').waitFor();
         await page.locator('#draft').fill('Unsent draft survives shell update');
-        await page.waitForFunction(async () => {
+        await poll(page, async () => {
             const store = await import('/chat-client/storage.js'),
                 state = await store.readState();
             return (
@@ -154,7 +166,8 @@ proxy.on('upgrade', (req, socket, head) => {
         await context.setOffline(false);
         await page.reload();
         // Fresh HTML loads the watcher even while the incumbent worker serves the old app.
-        await page.waitForFunction(
+        await poll(
+            page,
             async ({ previousCache, candidateCache }) => {
                 const names = await caches.keys();
                 return names.includes(candidateCache) && !names.includes(previousCache);
@@ -176,7 +189,8 @@ proxy.on('upgrade', (req, socket, head) => {
         );
         holdWrites = false;
         await page.locator('#timeline .message-text').filter({ hasText: text }).waitFor();
-        await page.waitForFunction(
+        await poll(
+            page,
             async () => (await (await import('/chat-client/storage.js')).outbox()).length === 0,
         );
         assert.equal(

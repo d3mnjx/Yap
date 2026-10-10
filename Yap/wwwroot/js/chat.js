@@ -7,18 +7,6 @@ window.getClientLocaleInfo = () => ({
     locale: navigator.language
 });
 
-// IPv4 beacon (opt-in via ChatSettings:Ipv4BeaconUrl): one fire-and-forget GET at an
-// A-record-only hostname. DNS forces this request over IPv4, letting the server record
-// the v4 address of a client whose circuit arrived over IPv6. no-cors: we only need the
-// request to ARRIVE — the (opaque) response is irrelevant, so no CORS setup needed.
-// The nonce is a single-use server-minted value, not the sessionId (it ends up in logs).
-window.fireIpv4Beacon = (origin, nonce) => {
-    try {
-        fetch(`${origin.replace(/\/+$/, '')}/api/ipv4-beacon?n=${encodeURIComponent(nonce)}`,
-            { mode: 'no-cors', cache: 'no-store' }).catch(() => { });
-    } catch { /* best-effort — an ad-blocker or offline state must never break chat */ }
-};
-
 // Welcome page: attach click handler to #yap-enter element
 // Supports optional .welcome-bg transition (grayscale → color) before navigating
 window.setupWelcomePage = (dotNetRef) => {

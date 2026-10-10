@@ -27,11 +27,6 @@ public sealed class OfflineFanout : IDisposable
         this.notifications = notifications;
         this.gifs = gifs;
         changes.Changed += Changed;
-        chat.OnUnreadChanged += Unread;
-        chat.OnUsersListChanged += People;
-        users.OnProfileChanged += Profile;
-        notifications.OnChanged += Unread;
-        gifs.OnFavoritesChanged += Favorites;
     }
 
     public Subscription Subscribe(User user, IReadOnlyDictionary<Guid, string> known, int capacity = 128)
@@ -70,7 +65,44 @@ public sealed class OfflineFanout : IDisposable
         }
     }
 
-    private void Changed(Guid id, Guid? messageId, bool removed, long before, long after, long sequence)
+    private void Changed(OfflineChange change)
+    {
+        switch (change.Kind)
+        {
+            case OfflineChangeKind.Content:
+                Changed(change.Id, change.RelatedId, change.Before, change.After, change.Sequence);
+                break;
+            case OfflineChangeKind.Unread:
+                Unread(change.Id, change.RelatedId!.Value);
+                break;
+            case OfflineChangeKind.Profile:
+                Profile(change.Id, true);
+                break;
+            case OfflineChangeKind.Preferences:
+                Profile(change.Id, false);
+                break;
+            case OfflineChangeKind.People:
+                People();
+                break;
+            case OfflineChangeKind.Favorites:
+                Favorites(change.Id);
+                break;
+            case OfflineChangeKind.Media:
+            case OfflineChangeKind.Gif:
+                foreach (var channel in chat.GetRooms().Concat(chat.GetAllDMChannels()))
+                    foreach (var message in chat.GetMessages(channel.Id, int.MaxValue).Where(m => change.Kind == OfflineChangeKind.Gif
+                        ? m.GifAttachments.Any(g => g.GifEntryId == change.Id)
+                        : change.Url != null && LinkPreviewService.ExtractUrls(m.Content).Contains(change.Url)))
+                        changes.Touch(channel.Id, message.Id);
+                break;
+            case OfflineChangeKind.Settings:
+                foreach (var channel in chat.GetRooms().Concat(chat.GetAllDMChannels()))
+                    changes.Touch(channel.Id);
+                break;
+        }
+    }
+
+    private void Changed(Guid id, Guid? messageId, long before, long after, long sequence)
     {
         // Called inside the channel lock. Re-read current memory: a delayed legacy event must
         // never project its stale object over a more recently accepted edit or deletion.
@@ -113,7 +145,7 @@ public sealed class OfflineFanout : IDisposable
             // exposing its id; the authorized window endpoint decides what can remain.
             var invalidate = !visible && metadata.HistoryLimited;
             subscription.Enqueue(new(2, user.Id, changes.Epoch, sequence, null,
-                [new(id, metadata, value == null ? [] : [SyncMessage.From(value)],
+                [new(id, metadata, value == null ? [] : [value],
                     message == null && !invalidate ? [messageId.Value] : [], null,
                     before.ToString(System.Globalization.CultureInfo.InvariantCulture), after.ToString(System.Globalization.CultureInfo.InvariantCulture), invalidate)],
                 [], value == null ? [] : [value.Author]));
@@ -155,7 +187,7 @@ public sealed class OfflineFanout : IDisposable
                 if (messages.Length == 0)
                     continue;
                 var update = new ChatUpdate(2, userId, changes.Epoch, changes.Stamp(), null,
-                    [new(id, metadata, messages.Select(SyncMessage.From).ToArray(), [], null, null, OfflineSync.Revision(metadata))],
+                    [new(id, metadata, messages, [], null, null, OfflineSync.Revision(metadata))],
                     [], messages.Select(m => m.Author).DistinctBy(a => a.Id).ToArray());
                 foreach (var subscription in account.Values.Where(s => s.Channels.ContainsKey(id)))
                     subscription.Enqueue(update);
@@ -172,8 +204,8 @@ public sealed class OfflineFanout : IDisposable
             // Profiles are embedded in cached message DTOs. A rare profile edit must also
             // invalidate those windows; this work never runs on the message arrival path.
             foreach (var channel in chat.GetRooms().Concat(chat.GetAllDMChannels()))
-                if (channel.IsDirectMessage && channel.CanAccess(userId) || chat.GetMessages(channel.Id, int.MaxValue).Any(m => m.UserId == userId))
-                    changes.Refresh(channel.Id);
+                if (channel.CanAccess(userId) || chat.GetMessages(channel.Id, int.MaxValue).Any(m => m.UserId == userId))
+                    changes.Touch(channel.Id);
         }
         else if (accounts.TryGetValue(userId, out var account))
         {
@@ -199,6 +231,26 @@ public sealed class OfflineFanout : IDisposable
         }
     }
 
+    private async Task Digest(Subscription subscription)
+    {
+        await notifications.ClearExpiredServerMuteAsync(subscription.User);
+        var allowed = snapshots.Channels(subscription.User).Select(c => c.Id).ToHashSet();
+        foreach (var id in subscription.Channels.Keys.Except(allowed))
+            subscription.Enqueue(new(2, subscription.User.Id, changes.Epoch, changes.Stamp(), null, [], [id], []));
+        foreach (var id in allowed)
+        {
+            lock (chat.GetChannelLock(id))
+            {
+                subscription.Channels[id] = 0;
+                channels.GetOrAdd(id, _ => new())[subscription.Id] = subscription;
+                var metadata = snapshots.Metadata(subscription.User, id);
+                if (metadata != null)
+                    subscription.Enqueue(new(2, subscription.User.Id, changes.Epoch, changes.Stamp(), null,
+                        [new(id, metadata, [], [], null, null, OfflineSync.Revision(metadata), true)], [], []));
+            }
+        }
+    }
+
     private void Remove(Subscription subscription)
     {
         connections.TryRemove(subscription.Id, out _);
@@ -212,11 +264,6 @@ public sealed class OfflineFanout : IDisposable
     public void Dispose()
     {
         changes.Changed -= Changed;
-        chat.OnUnreadChanged -= Unread;
-        chat.OnUsersListChanged -= People;
-        users.OnProfileChanged -= Profile;
-        notifications.OnChanged -= Unread;
-        gifs.OnFavoritesChanged -= Favorites;
         foreach (var subscription in connections.Values)
             subscription.Dispose();
     }
@@ -252,6 +299,7 @@ public sealed class OfflineFanout : IDisposable
                 ready.Writer.TryWrite(true);
             }
         }
+        public Task Digest() => owner.Digest(this);
         public async Task<ChatUpdate[]> Read(CancellationToken cancellationToken)
         {
             await ready.Reader.ReadAsync(cancellationToken);

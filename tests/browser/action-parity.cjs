@@ -1,3 +1,4 @@
+const { poll } = require('./support/wait.cjs');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright'),
     assert = require('node:assert/strict');
 (async () => {
@@ -24,7 +25,8 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright'),
             })
             .last();
         await row.waitFor();
-        await page.waitForFunction(
+        await poll(
+            page,
             async () => (await (await import('/chat-client/storage.js')).outbox()).length === 0,
         );
         const firstButtons = await row

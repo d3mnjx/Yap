@@ -91,6 +91,16 @@ public class ChatPersistenceService
 
     #region Message Operations
 
+    // Copy persisted scalar/media fields once; navigation properties belong to the new context.
+    private static ChatMessage DetachedMessage(ChatMessage message) => new(
+        message.ChannelId, message.UserId, message.Username, message.Content, message.Timestamp,
+        message.ImageUrls.ToList(), message.ReplyToMessageId, message.VideoUrls.ToList(), message.GifAttachments.ToList())
+    {
+        Id = message.Id,
+        OperationId = message.OperationId,
+        IsEdited = message.IsEdited
+    };
+
     public async Task PersistNewMessageAsync(ChatMessage message)
     {
         if (!IsEnabled) return;
@@ -99,23 +109,7 @@ public class ChatPersistenceService
         {
             await using var db = await _dbFactory!.CreateDbContextAsync();
 
-            // Create a detached copy to avoid navigation property issues
-            var newMessage = new ChatMessage(
-                message.ChannelId,
-                message.UserId,
-                message.Username,
-                message.Content,
-                message.Timestamp,
-                message.ImageUrls.ToList(),
-                message.ReplyToMessageId,
-                message.VideoUrls.ToList(),
-                message.GifAttachments.ToList()
-            )
-            {
-                Id = message.Id,
-                OperationId = message.OperationId,
-                IsEdited = message.IsEdited
-            };
+            var newMessage = DetachedMessage(message);
 
             db.Messages.Add(newMessage);
             await db.SaveChangesAsync();
@@ -144,8 +138,7 @@ public class ChatPersistenceService
         if (!IsEnabled) throw new InvalidOperationException("Durable sends require persistence.");
         await using var db = await _dbFactory!.CreateDbContextAsync();
         await using var transaction = await db.Database.BeginTransactionAsync();
-        db.Messages.Add(new ChatMessage(message.ChannelId, message.UserId, message.Username, message.Content, message.Timestamp, message.ImageUrls, message.ReplyToMessageId, message.VideoUrls, message.GifAttachments)
-        { Id = message.Id, OperationId = message.OperationId, ReplyToMessageId = message.ReplyToMessageId });
+        db.Messages.Add(DetachedMessage(message));
         db.TextSendReceipts.Add(receipt);
         // A receipt promises both the message and recipient checkpoints. An unread write
         // failure must roll back acceptance so retry can safely complete all three.
@@ -197,13 +190,7 @@ public class ChatPersistenceService
         {
             await using var db = await _dbFactory!.CreateDbContextAsync();
 
-            var detached = messages.Select(m => new ChatMessage(
-                m.ChannelId, m.UserId, m.Username, m.Content, m.Timestamp, m.ImageUrls.ToList(),
-                m.ReplyToMessageId, m.VideoUrls.ToList(), m.GifAttachments.ToList())
-            {
-                Id = m.Id,
-                IsEdited = m.IsEdited
-            });
+            var detached = messages.Select(DetachedMessage);
 
             db.Messages.AddRange(detached);
             await db.SaveChangesAsync();
@@ -214,93 +201,9 @@ public class ChatPersistenceService
         }
     }
 
-    public async Task PersistMessageEditAsync(Guid messageId, string newContent)
-    {
-        if (!IsEnabled) return;
-
-        try
-        {
-            await using var db = await _dbFactory!.CreateDbContextAsync();
-
-            await db.Messages
-                .Where(m => m.Id == messageId)
-                .ExecuteUpdateAsync(m => m
-                    .SetProperty(x => x.Content, newContent)
-                    .SetProperty(x => x.IsEdited, true));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to persist message edit {MessageId}", messageId);
-        }
-    }
-
-    public async Task DeleteMessageAsync(Guid messageId)
-    {
-        if (!IsEnabled) return;
-
-        try
-        {
-            await using var db = await _dbFactory!.CreateDbContextAsync();
-            await db.Messages.Where(m => m.Id == messageId).ExecuteDeleteAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to delete message {MessageId}", messageId);
-        }
-    }
-
     #endregion
 
     #region Reaction Operations
-
-    public async Task AddReactionAsync(Guid messageId, Guid userId, string username, string emoji)
-    {
-        if (!IsEnabled) return;
-
-        try
-        {
-            await using var db = await _dbFactory!.CreateDbContextAsync();
-
-            // Check if reaction already exists
-            var exists = await db.Reactions.AnyAsync(r =>
-                r.MessageId == messageId &&
-                r.Emoji == emoji &&
-                r.UserId == userId);
-
-            if (!exists)
-            {
-                db.Reactions.Add(new Reaction
-                {
-                    MessageId = messageId,
-                    UserId = userId,
-                    Username = username,
-                    Emoji = emoji
-                });
-                await db.SaveChangesAsync();
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to add reaction to message {MessageId}", messageId);
-        }
-    }
-
-    public async Task RemoveReactionAsync(Guid messageId, Guid userId, string emoji)
-    {
-        if (!IsEnabled) return;
-
-        try
-        {
-            await using var db = await _dbFactory!.CreateDbContextAsync();
-            await db.Reactions
-                .Where(r => r.MessageId == messageId && r.Emoji == emoji && r.UserId == userId)
-                .ExecuteDeleteAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to remove reaction from message {MessageId}", messageId);
-        }
-    }
 
     /// <summary>
     /// The emojis this user reacts with most, straight from reaction history.

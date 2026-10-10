@@ -1,6 +1,6 @@
 import { timestamp } from './dates.js';
 import { createScroll } from './scroll.js';
-import { watchWorkerUpdates } from './worker-updates.js';
+import { watchWorkerUpdates, registerWorker } from './worker-updates.js';
 import { createMessages, avatar, needsMessageHeader } from './messages.js';
 import { createComposer } from './composer.js';
 import { createPwa } from './pwa.js';
@@ -38,6 +38,7 @@ let renderGeneration = 0;
 let hubConnection;
 let reconnectTimer;
 let connecting = false;
+let updateRequired = false;
 // Serialize HTTP acknowledgements and stream snapshots through the same commit path.
 let snapshotQueue = Promise.resolve();
 let pendingOperations = [];
@@ -51,6 +52,7 @@ function connectionLabel(text) {
     if (/Offline|Disconnected/.test(text)) return 'Offline';
     if (text.includes('failed')) return 'Sync failed';
     if (text.startsWith('Sign')) return 'Sign in';
+    if (text === 'Update required') return text;
     return 'Syncing';
 }
 function status(text) {
@@ -71,6 +73,17 @@ function notice(text, login = false) {
         n.append(a);
     }
 }
+document.addEventListener('chat-update-required', () => {
+    updateRequired = true;
+    stopConnection();
+    status('Update required');
+    notice(
+        'Client update required. Reload Yap to continue. Your saved drafts and outgoing messages are retained.',
+    );
+    const reload = element('button', '', 'Reload');
+    reload.onclick = () => location.reload();
+    $('#notice').append(reload);
+});
 function clearUI() {
     scrolling.reset();
     $('#recovery').hidden = true;
@@ -120,6 +133,7 @@ const windows = createWindows({
     accepted: (data) => acceptSnapshot(data, connectionGeneration),
 });
 const sender = createSender({
+    snapshot: () => snapshot,
     identity: () => identity,
     accepted: async (data, operationId, owner) => {
         if (identity?.epoch !== owner.epoch) return;
@@ -133,6 +147,7 @@ const sender = createSender({
 const currentConversation = () =>
     snapshot?.conversations.find((c) => c.id === selectedConversationId);
 const actions = createActions({
+    snapshot: () => snapshot,
     identity: () => identity,
     current: currentConversation,
     render,
@@ -163,6 +178,7 @@ const notifications = createNotifications({
     current: currentConversation,
 });
 const live = createLive({
+    snapshot: () => snapshot,
     identity: () => identity,
     current: currentConversation,
     changed: () => {
@@ -175,6 +191,7 @@ const live = createLive({
     authRequired: () => loseAccount(),
 });
 const reader = createReader({
+    snapshot: () => snapshot,
     identity: () => identity,
     accepted: (data) => acceptSnapshot(data, connectionGeneration),
     changed: async () => {
@@ -731,7 +748,8 @@ function acceptSnapshot(
         .then(async () => {
             if (attemptGeneration !== connectionGeneration) return;
             const old = snapshot;
-            if (data.protocol === 2) {
+            if (data.protocol !== 2) throw new Error('Client update required');
+            {
                 const committed = await storage.commitUpdate(data, identity, acknowledgedOperation);
                 if (attemptGeneration !== connectionGeneration) return;
                 // Shared storage can already contain another tab's later delta. Advance this
@@ -744,22 +762,13 @@ function acceptSnapshot(
                         return prior?.sync && prior.sync.version === c.sync?.version ? prior : c;
                     });
                 }
-            } else {
-                if (data.protocol !== 1) throw new Error('Client update required');
-                if (data.user.id !== identity?.userId) throw new Error('ACCOUNT_CHANGED');
-                const committed = await storage.commit(data, identity, acknowledgedOperation);
-                snapshot = committed ? data : (await storage.readState())?.snapshot;
             }
             if (attemptGeneration !== connectionGeneration || !snapshot) return;
-            if (data.protocol !== 2 || data.state)
-                window.yapAppearance.apply({ ...snapshot, userId: snapshot.user.id });
-            await chatHistory
-                .reconcile(snapshot, data.protocol === 2 ? data : undefined)
-                .catch(() => {});
+            if (data.state) window.yapAppearance.apply({ ...snapshot, userId: snapshot.user.id });
+            await chatHistory.reconcile(snapshot, data).catch(() => {});
             await notifications.observe(snapshot, notificationOptions);
             if (attemptGeneration !== connectionGeneration) return;
             const affectsCurrent =
-                data.protocol !== 2 ||
                 data.state ||
                 acknowledgedOperation ||
                 data.conversations.some(
@@ -790,6 +799,7 @@ function acceptSnapshot(
 }
 function scheduleReconnect() {
     clearTimeout(reconnectTimer);
+    if (updateRequired) return;
     reconnectTimer = setTimeout(() => connectChat(), 3000);
 }
 async function bootstrapChat(cached = snapshot) {
@@ -812,6 +822,7 @@ async function bootstrapChat(cached = snapshot) {
     return get('bootstrap?' + query);
 }
 async function connectChat(bootstrap = null) {
+    if (updateRequired) return;
     if (connecting) return;
     connecting = true;
     const attemptGeneration = ++connectionGeneration;
@@ -946,8 +957,7 @@ async function boot() {
                     status('Synced · available offline');
             });
             navigator.serviceWorker.addEventListener('controllerchange', checkWorker);
-            navigator.serviceWorker
-                .register('/service-worker.js', { updateViaCache: 'none' })
+            registerWorker()
                 .then((registration) => {
                     watchWorkerUpdates(registration);
                     checkWorker();
@@ -974,6 +984,7 @@ async function boot() {
             useSession(bootstrap.session);
             identity = await storage.establish(bootstrap.session.userId);
         } catch (error) {
+            if (error.status === 426) return;
             if (error.message === 'AUTH_REQUIRED') {
                 await loseAccount();
                 return;

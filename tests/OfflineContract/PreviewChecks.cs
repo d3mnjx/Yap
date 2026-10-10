@@ -13,7 +13,7 @@ static class PreviewChecks
         var handler = new PreviewHandler();
         var factory = new PreviewFactory(handler);
         var env = services.GetRequiredService<IWebHostEnvironment>();
-        LinkPreviewService Create() => new(factory, NullLogger<LinkPreviewService>.Instance, env);
+        LinkPreviewService Create() => new(factory, NullLogger<LinkPreviewService>.Instance, env, services.GetRequiredService<OfflineChangeSignal>());
         var previews = Create();
         var snapshots = ActivatorUtilities.CreateInstance<OfflineSnapshotService>(services, previews);
         // Public literal address passes the production SSRF guard; the handler never uses network.
