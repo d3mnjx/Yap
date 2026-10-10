@@ -13,6 +13,9 @@ namespace Yap.Offline;
 /// </summary>
 public static class OfflineContent
 {
+    // Klipy cursors are page numbers, so lookup must use the same page size as browsing.
+    private const int ProviderPageSize = 30;
+
     // Every route is registered on OfflineEndpoints' authenticated/antiforgery-filtered group.
     private static User CurrentUser(HttpContext http) => http.RequestServices
         .GetRequiredService<UserService>()
@@ -147,7 +150,7 @@ public static class OfflineContent
         {
             try
             {
-                remote = mode == "trending" ? await gifs.GetTrendingAsync(cursor, 30, http.RequestAborted) : await gifs.SearchProviderAsync(query, cursor, 30, http.RequestAborted);
+                remote = mode == "trending" ? await gifs.GetTrendingAsync(cursor, ProviderPageSize, http.RequestAborted) : await gifs.SearchProviderAsync(query, cursor, ProviderPageSize, http.RequestAborted);
             }
             catch
             {
@@ -172,7 +175,7 @@ public static class OfflineContent
         GifService gifs)
     {
         // Re-fetch from the configured provider; never let an arbitrary client URL enter server downloads.
-        var page = string.IsNullOrEmpty(request.Query) ? await gifs.GetTrendingAsync(request.Cursor, 50, http.RequestAborted) : await gifs.SearchProviderAsync(request.Query, request.Cursor, 50, http.RequestAborted);
+        var page = string.IsNullOrEmpty(request.Query) ? await gifs.GetTrendingAsync(request.Cursor, ProviderPageSize, http.RequestAborted) : await gifs.SearchProviderAsync(request.Query, request.Cursor, ProviderPageSize, http.RequestAborted);
         var item = page.Items.FirstOrDefault(i => i.SourceId == request.SourceId);
         if (item == null)
             return Results.NotFound(new

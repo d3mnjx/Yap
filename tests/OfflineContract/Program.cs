@@ -25,7 +25,8 @@ var config = new Dictionary<string, string?>
     ["ChatSettings:Ipv4BeaconUrl"] = "",
     ["Vapid:PublicKey"] = "",
     ["Vapid:PrivateKey"] = "",
-    ["OfflineChat:RecentMessageLimit"] = "3"
+    ["OfflineChat:RecentMessageLimit"] = "3",
+    ["ChatSettings:GifSettings:Klipy:ApiKey"] = "synthetic-paging-fixture"
 };
 File.WriteAllText(Path.Combine(root, "appsettings.json"), JsonSerializer.Serialize(config));
 File.WriteAllText(Path.Combine(root, "Data", "appsettings.json"), JsonSerializer.Serialize(config));
@@ -35,6 +36,7 @@ WebApplicationFactory<OfflineHub> Factory() => new WebApplicationFactory<Offline
     builder.UseContentRoot(root).UseWebRoot(Path.Combine(root, "wwwroot"));
     builder.ConfigureAppConfiguration((_, c) => c.AddInMemoryCollection(config));
     builder.ConfigureLogging(l => l.ClearProviders());
+    builder.ConfigureServices(s => s.AddHttpClient("Klipy").ConfigurePrimaryHttpMessageHandler(() => new GifPagingChecks.Handler()));
 });
 Guid dmId, deletedId, editedId;
 string token;
@@ -305,6 +307,7 @@ try
             && (await Send(removable.Id, Guid.NewGuid(), "new send to deleted room")).StatusCode == HttpStatusCode.NotFound,
             "deleted-room snapshot, retained receipt and rejection of new sends");
         await PresenceChecks.Run(factory.Services, http, anti, alice, bob, carol, privateDm.Id, room.Id);
+        await GifPagingChecks.Run(http, anti, chat, admin);
         await OriginChecks.Run(factory.Services, http);
         await users.RotateTokenAsync(alice.Id);
         Check((await http.GetAsync("/api/chat/sync")).StatusCode == HttpStatusCode.Unauthorized, "token revocation enforced");
