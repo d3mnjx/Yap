@@ -10,7 +10,7 @@ import { createProfiles } from './profiles.js';
 import { chatLabel, loadContent, richText, showEmoji, quickReactions } from './content.js';
 import { favorite } from './gifs.js';
 import { createActions, applyMutations } from './actions.js';
-import { get, post, useSession, refreshSession, forgetSession } from './api.js';
+import { get, post, useSession, refreshSession, forgetSession, leavePresence } from './api.js';
 import { createSender } from './sender.js';
 import { createLive } from './live.js';
 import { createReader } from './reader.js';
@@ -34,6 +34,10 @@ let selectedConversationId;
 // These generations belong to this page, not the server or the persisted account.
 // A reconnect invalidates old network callbacks; a render invalidates old DOM work.
 let connectionGeneration = 0;
+let pageSuspended = false;
+// SignalR clears connectionId on socket loss, which can happen before pagehide. Keep the
+// last established ID so unload can also close its retained disconnected presence.
+let presenceConnectionId = null;
 let renderGeneration = 0;
 let hubConnection;
 let reconnectTimer;
@@ -823,8 +827,7 @@ async function bootstrapChat(cached = snapshot) {
     return get('bootstrap?' + query);
 }
 async function connectChat(bootstrap = null) {
-    if (updateRequired) return;
-    if (connecting) return;
+    if (updateRequired || connecting || pageSuspended) return;
     connecting = true;
     const attemptGeneration = ++connectionGeneration;
     try {
@@ -881,6 +884,7 @@ async function connectChat(bootstrap = null) {
             await hubConnection.stop();
             return;
         }
+        presenceConnectionId = hubConnection.connectionId;
         await storage.saveMetadata('hasWayBack', session.hasWayBack, identity);
         await live.attach(hubConnection, session.liveTicket);
         pwa.start(session);
@@ -1083,6 +1087,18 @@ storage.onExternalChange(async (event) => {
                 sender.flush();
             });
     }
+});
+// pagehide also covers document navigation and back/forward caching. Stop all connection
+// callbacks before suspension; pageshow must build a fresh session after restoration.
+window.addEventListener('pagehide', () => {
+    pageSuspended = true;
+    leavePresence(presenceConnectionId);
+    stopConnection();
+});
+window.addEventListener('pageshow', () => {
+    if (!pageSuspended) return;
+    pageSuspended = false;
+    if (identity && navigator.onLine) connectChat();
 });
 window.addEventListener('online', () => {
     if (identity) connectChat();

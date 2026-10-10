@@ -45,6 +45,8 @@ public static class OfflineEndpoints
         await http.Response.WriteAsync(html);
     }
 
+    public sealed record LeavePresence(string ConnectionId);
+
     private static void MapApi(RouteGroupBuilder api)
     {
         api.AddEndpointFilter(async (context, next) =>
@@ -141,6 +143,13 @@ public static class OfflineEndpoints
                 await users.UpdateLocaleAsync(user.Id, user.TimeZone ?? request.TimeZone,
                     locale, user.DateFormat ?? $"{LocaleResolver.GuessDateOrderFromLocale(locale)}-{clock}");
             return Results.Ok(sync.Bootstrap(user, request.Path, request.ChannelId));
+        });
+        api.MapPost("/presence/leave", async (LeavePresence request, HttpContext http, UserService users, OfflineLiveService live) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.ConnectionId) || request.ConnectionId.Length > 128)
+                return Results.BadRequest();
+            await live.Close(request.ConnectionId, users.AuthenticateByToken(http.Request.Cookies[AuthMiddleware.CookieName]!)!);
+            return Results.NoContent();
         });
         api.MapGet("/session", (HttpContext http) => Results.Ok(Session(http)));
         api.MapGet("/bootstrap", (HttpContext http, string? path, Guid? channelId, string? epoch, string? revision, Guid? knownUser, UserService users, OfflineSnapshotService snapshots, OfflineSync sync) =>

@@ -124,3 +124,19 @@ export async function post(path, body, credentials, { signal } = {}) {
         finish();
     }
 }
+
+// Unload cannot wait for token refresh or retry. Use this document's current account-bound
+// credentials; the server's disconnect timeout remains the fallback if delivery fails.
+export function leavePresence(connectionId) {
+    if (!connectionId || !session) return;
+    fetch('/api/chat/presence/leave', {
+        method: 'POST',
+        keepalive: true,
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': session.csrfToken,
+            'X-Yap-Chat-User': session.userId,
+        },
+        body: JSON.stringify({ connectionId }),
+    }).catch(() => {});
+}

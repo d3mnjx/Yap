@@ -7,14 +7,12 @@ namespace Yap.Services;
 
 /// <summary>
 /// Handles circuit lifecycle events: diagnostics labeling, status save/restore around reconnects,
-/// and the disconnect-grace auto-away. Idle-based auto-away lives in ChatService, driven by the
-/// client-state heartbeat (chat.js probe → ReportClientStateAsync) — NOT by circuit traffic,
+/// and connection reports to ChatService, which owns disconnect timing and idle auto-away. The
+/// client-state heartbeat (chat.js probe → ReportClientStateAsync) drives idle status, not circuit traffic,
 /// which the probe itself would keep "active" forever.
 /// </summary>
-public sealed class ChatCircuitHandler : CircuitHandler, IDisposable
+public sealed class ChatCircuitHandler : CircuitHandler
 {
-    private static readonly TimeSpan DisconnectGracePeriod = TimeSpan.FromSeconds(30);
-
     // Inbound activities slower than this get reported to CircuitTracker and logged.
     private const double SlowInboundEventMs = 100;
 
@@ -27,10 +25,6 @@ public sealed class ChatCircuitHandler : CircuitHandler, IDisposable
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<ChatCircuitHandler> _logger;
 
-    // Disconnect grace: when the connection drops, wait briefly for a reconnect; if none arrives,
-    // ChatService decides whether the user goes Away. CTS + Task.Delay avoids the threading
-    // issues of System.Timers.Timer (which fires on the ThreadPool).
-    private CancellationTokenSource? _disconnectGraceCts;
     private UserStatus? _statusBeforeDisconnect;
     private string? _circuitId;
     private string? _clientIp;
@@ -79,8 +73,7 @@ public sealed class ChatCircuitHandler : CircuitHandler, IDisposable
     public override async Task OnConnectionUpAsync(Circuit circuit, CancellationToken cancellationToken)
     {
         _circuitTracker.OnConnectionUp(circuit.Id);
-        if (_userState.SessionId is { } connectedSession) _chatService.SetSessionConnected(connectedSession, true);
-        CancelDisconnectGraceTimer();
+        if (_userState.SessionId is { } connectedSession) await _chatService.ConnectionUp(connectedSession);
 
         // Re-label on every connection-up: the username can hydrate after circuit open, and a
         // reconnect may arrive on a different transport than the original connection.
@@ -137,19 +130,11 @@ public sealed class ChatCircuitHandler : CircuitHandler, IDisposable
     {
         _circuitTracker.OnConnectionDown(circuit.Id);
 
-        // If the user doesn't reconnect within the grace period, ChatService decides whether they
-        // go Away. This avoids the bug where users stay green for hours after disconnecting.
-        StartDisconnectGraceTimer();
-
         // Save status for potential restore on reconnect.
         // Don't change user status here — circuit close handles cleanup via RemoveUserAsync.
         if (!string.IsNullOrEmpty(_userState.SessionId) && !string.IsNullOrEmpty(_userState.Username))
         {
-            // A disconnected circuit can't be "foreground" — clear this session's page-visibility so a
-            // dropped/closed device stops suppressing push to the user's other devices (e.g. phone).
-            // Otherwise PageVisible stays true for the whole disconnected-circuit retention window (~4h).
-            _chatService.SetPageVisibility(_userState.SessionId, false);
-            _chatService.SetSessionConnected(_userState.SessionId, false);
+            await _chatService.ConnectionDown(_userState.SessionId);
 
             // If the user is auto-Away right now, save the CHOSEN status underneath instead —
             // restoring the auto-Away itself on reconnect would re-apply it as a manual status
@@ -177,12 +162,11 @@ public sealed class ChatCircuitHandler : CircuitHandler, IDisposable
     public override async Task OnCircuitClosedAsync(Circuit circuit, CancellationToken cancellationToken)
     {
         _circuitTracker.OnCircuitClosed(circuit.Id);
-        CancelDisconnectGraceTimer();
 
         if (!string.IsNullOrEmpty(_userState.SessionId) && !string.IsNullOrEmpty(_userState.Username))
         {
             // Remove this session from ChatService
-            await _chatService.RemoveUserAsync(_userState.SessionId);
+            await _chatService.ConnectionDown(_userState.SessionId, closed: true);
 
             // If no other sessions remain, user status was already cleaned up by RemoveUserAsync.
             // If other sessions exist, status is preserved.
@@ -220,44 +204,4 @@ public sealed class ChatCircuitHandler : CircuitHandler, IDisposable
         };
     }
 
-    private void StartDisconnectGraceTimer()
-    {
-        _disconnectGraceCts?.Cancel();
-        _disconnectGraceCts?.Dispose();
-        _disconnectGraceCts = new CancellationTokenSource();
-        _ = DisconnectGraceAsync(_disconnectGraceCts.Token);
-    }
-
-    private void CancelDisconnectGraceTimer()
-    {
-        _disconnectGraceCts?.Cancel();
-        _disconnectGraceCts?.Dispose();
-        _disconnectGraceCts = null;
-    }
-
-    /// <summary>
-    /// Waits out the grace period after a connection drop; if the circuit hasn't reconnected
-    /// (which cancels this), asks ChatService to flip the user Away unless one of their other
-    /// devices is a live foreground client. UserState.Status syncs via ChatHeader's status event.
-    /// </summary>
-    private async Task DisconnectGraceAsync(CancellationToken token)
-    {
-        try
-        {
-            await Task.Delay(DisconnectGracePeriod, token);
-
-            if (!string.IsNullOrEmpty(_userState.SessionId))
-                await _chatService.TrySetAutoAwayAfterDisconnectAsync(_userState.SessionId);
-        }
-        catch (OperationCanceledException)
-        {
-            // Reconnected or circuit closed, ignore
-        }
-    }
-
-    public void Dispose()
-    {
-        _disconnectGraceCts?.Cancel();
-        _disconnectGraceCts?.Dispose();
-    }
 }

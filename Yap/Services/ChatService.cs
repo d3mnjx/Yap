@@ -25,6 +25,8 @@ public partial class ChatService
     private readonly NotificationAudit _audit;
     private readonly NotificationSettingsService _notifications;
     private readonly ILogger<ChatService> _logger;
+    private readonly TimeProvider _connectionClock;
+    private readonly PresenceOptions _presenceOptions;
 
     // Channels (rooms and DMs)
     private readonly ConcurrentDictionary<Guid, Channel> _channels = new();
@@ -92,7 +94,7 @@ public partial class ChatService
     public ChatService(PushNotificationService pushService, ChatPersistenceService persistence, UserService userService,
         LinkPreviewService linkPreviewService, LinkPreviewSettingsService linkPreviewSettings,
         MediaCacheService mediaCacheService, GifService gifService, NotificationAudit audit,
-        NotificationSettingsService notifications, ILogger<ChatService> logger, Yap.Offline.ChatLimits limits, OfflineChangeSignal changes)
+        NotificationSettingsService notifications, ILogger<ChatService> logger, Yap.Offline.ChatLimits limits, OfflineChangeSignal changes, TimeProvider connectionClock, PresenceOptions presenceOptions)
     {
         _changes = changes;
         _limits = limits;
@@ -106,6 +108,8 @@ public partial class ChatService
         _mediaCacheService = mediaCacheService;
         _gifService = gifService;
         _logger = logger;
+        _connectionClock = connectionClock;
+        _presenceOptions = presenceOptions;
 
         // Wire link preview callback
         _linkPreviewService.OnPreviewFetched = (msgId, url, preview) => OnLinkPreviewReady?.Invoke(msgId);
@@ -514,37 +518,41 @@ public partial class ChatService
 
     public Task AddUserAsync(string sessionId, Guid userId, string username, UserStatus status = UserStatus.Online, bool? isMobile = null, string? clientIp = null, string? circuitId = null, bool pageVisible = true)
     {
-        // Check if this is the first session for this user
-        var existingSessions = _users.Values
-            .Where(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-        var isFirstSession = existingSessions.Count == 0;
-
-        _users[sessionId] = new UserSession(userId, username, sessionId, isMobile, PageVisible: pageVisible, LastActivity: DateTime.UtcNow, ClientIp: clientIp)
+        lock (_connectionGate)
         {
-            CircuitId = circuitId,
-            CreatedAt = DateTime.UtcNow,
-            LastReportAt = DateTime.UtcNow
-        };
+            CancelDisconnect(sessionId);
+            // Check if this is the first session for this user
+            var existingSessions = _users.Values
+                .Where(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            var isFirstSession = existingSessions.Count == 0;
 
-        // Set status: only if first session (don't override active status from other devices)
-        if (isFirstSession)
-        {
-            _userStatuses[username] = status;
+            _users[sessionId] = new UserSession(userId, username, sessionId, isMobile, PageVisible: pageVisible, LastActivity: DateTime.UtcNow, ClientIp: clientIp)
+            {
+                CircuitId = circuitId,
+                CreatedAt = DateTime.UtcNow,
+                LastReportAt = DateTime.UtcNow
+            };
+
+            // Set status: only if first session (don't override active status from other devices)
+            if (isFirstSession)
+            {
+                _userStatuses[username] = status;
+            }
+
+            _logger.LogDebug("AddUser {User} session={SessionId} status={Status} isFirst={IsFirst} totalSessions={TotalSessions}",
+                username, sessionId, status, isFirstSession, _users.Count);
+
+            // Only fire user-joined if this is the first session
+            if (isFirstSession)
+            {
+                OnUserChanged?.Invoke(username, true);
+            }
+            _changes.Touch(OfflineChangeKind.People);
+            OnUsersListChanged?.Invoke();
+
+            return Task.CompletedTask;
         }
-
-        _logger.LogDebug("AddUser {User} session={SessionId} status={Status} isFirst={IsFirst} totalSessions={TotalSessions}",
-            username, sessionId, status, isFirstSession, _users.Count);
-
-        // Only fire user-joined if this is the first session
-        if (isFirstSession)
-        {
-            OnUserChanged?.Invoke(username, true);
-        }
-        _changes.Touch(OfflineChangeKind.People);
-        OnUsersListChanged?.Invoke();
-
-        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -554,8 +562,14 @@ public partial class ChatService
     /// </summary>
     public Task SetUserStatusAsync(string sessionId, UserStatus status, UserStatus? autoAwayPreviousStatus = null)
     {
+        lock (_connectionGate) SetUserStatus(sessionId, status, autoAwayPreviousStatus);
+        return Task.CompletedTask;
+    }
+
+    private void SetUserStatus(string sessionId, UserStatus status, UserStatus? autoAwayPreviousStatus = null)
+    {
         if (!_users.TryGetValue(sessionId, out var session))
-            return Task.CompletedTask;
+            return;
 
         var oldStatus = _userStatuses.GetValueOrDefault(session.Username, UserStatus.Online);
         _userStatuses[session.Username] = status;
@@ -577,8 +591,6 @@ public partial class ChatService
         OnUserStatusChanged?.Invoke(session.Username, status);
         _changes.Touch(OfflineChangeKind.People);
         OnUsersListChanged?.Invoke();
-
-        return Task.CompletedTask;
     }
 
     public UserStatus? GetUserStatus(string username)
@@ -607,21 +619,24 @@ public partial class ChatService
     /// </summary>
     public UserStatus? TryRestoreFromAutoAway(string sessionId)
     {
-        if (!_users.TryGetValue(sessionId, out var session))
-            return null;
+        lock (_connectionGate)
+        {
+            if (!_users.TryGetValue(sessionId, out var session))
+                return null;
 
-        if (!_statusBeforeAutoAway.TryRemove(session.Username, out var restoreTo))
-            return null;
+            if (!_statusBeforeAutoAway.TryRemove(session.Username, out var restoreTo))
+                return null;
 
-        _userStatuses[session.Username] = restoreTo;
+            _userStatuses[session.Username] = restoreTo;
 
-        _logger.LogDebug("Auto-away restored: {User} -> {Status}", session.Username, restoreTo);
+            _logger.LogDebug("Auto-away restored: {User} -> {Status}", session.Username, restoreTo);
 
-        OnUserStatusChanged?.Invoke(session.Username, restoreTo);
-        _changes.Touch(OfflineChangeKind.People);
-        OnUsersListChanged?.Invoke();
+            OnUserStatusChanged?.Invoke(session.Username, restoreTo);
+            _changes.Touch(OfflineChangeKind.People);
+            OnUsersListChanged?.Invoke();
 
-        return restoreTo;
+            return restoreTo;
+        }
     }
 
     // Auto-away: a user goes Away when every session stops showing signs of life (rules below).
@@ -640,28 +655,32 @@ public partial class ChatService
     /// replaces inferring activity from circuit traffic, which the probe itself used to pollute
     /// (a visible idle tab reset the idle timer every 10s and could never go Away).
     /// </summary>
-    public async Task ReportClientStateAsync(string sessionId, bool visible, double idleSeconds)
+    public Task ReportClientStateAsync(string sessionId, bool visible, double idleSeconds)
     {
-        if (!double.IsFinite(idleSeconds)) return;                 // client input is untrusted
-        idleSeconds = Math.Clamp(idleSeconds, 0, 86400);
-
-        if (!_users.TryGetValue(sessionId, out var session)) return;
-
-        var now = DateTime.UtcNow;
-        _users[sessionId] = session with
+        lock (_connectionGate)
         {
-            PageVisible = visible,
-            LastActivity = now.AddSeconds(-idleSeconds),
-            LastReportAt = now
-        };
+            if (!double.IsFinite(idleSeconds)) return Task.CompletedTask;                 // client input is untrusted
+            idleSeconds = Math.Clamp(idleSeconds, 0, 86400);
 
-        if (idleSeconds < 30)
-        {
-            TryRestoreFromAutoAway(sessionId);
-        }
-        else if (idleSeconds >= AutoAwayIdleThreshold.TotalSeconds)
-        {
-            await TrySetAutoAwayIfAllIdleAsync(sessionId);
+            if (!_users.TryGetValue(sessionId, out var session)) return Task.CompletedTask;
+
+            var now = DateTime.UtcNow;
+            _users[sessionId] = session with
+            {
+                PageVisible = visible,
+                LastActivity = now.AddSeconds(-idleSeconds),
+                LastReportAt = now
+            };
+
+            if (idleSeconds < 30)
+            {
+                TryRestoreFromAutoAway(sessionId);
+            }
+            else if (idleSeconds >= AutoAwayIdleThreshold.TotalSeconds)
+            {
+                return TrySetAutoAwayIfAllIdleAsync(sessionId);
+            }
+            return Task.CompletedTask;
         }
     }
 
@@ -671,26 +690,36 @@ public partial class ChatService
     /// </summary>
     public Task TrySetAutoAwayIfAllIdleAsync(string sessionId)
     {
-        var now = DateTime.UtcNow;
-        return TrySetAutoAwayCoreAsync(sessionId, sessions => sessions.All(u =>
-            now - u.LastReportAt > HeartbeatStaleAfter ||
-            now - u.LastActivity >= AutoAwayIdleThreshold));
+        lock (_connectionGate)
+        {
+            var now = DateTime.UtcNow;
+            TrySetAutoAwayCore(sessionId, sessions => sessions.All(u =>
+                now - u.LastReportAt > HeartbeatStaleAfter ||
+                now - u.LastActivity >= AutoAwayIdleThreshold));
+            return Task.CompletedTask;
+        }
     }
 
     /// <summary>
-    /// Disconnect-driven auto-away (circuit grace timer): Away unless another device is a live
+    /// Disconnect-driven auto-away (shared lifecycle timer): Away unless another device is a live
     /// foreground client RIGHT NOW (visible + recently heartbeating). Input-idle alone doesn't
     /// keep the user Online here — but a visible, heartbeating tab does, even if its user is just
     /// reading. Prevents the phone-locks → attended-desktop-flaps-to-Away regression.
     /// </summary>
     public Task TrySetAutoAwayAfterDisconnectAsync(string sessionId)
     {
+        lock (_connectionGate) TrySetAutoAwayAfterDisconnect(sessionId);
+        return Task.CompletedTask;
+    }
+
+    private void TrySetAutoAwayAfterDisconnect(string sessionId)
+    {
         var now = DateTime.UtcNow;
-        return TrySetAutoAwayCoreAsync(sessionId, sessions => !sessions.Any(u =>
+        TrySetAutoAwayCore(sessionId, sessions => !sessions.Any(u =>
             u.PageVisible && now - u.LastReportAt <= ForegroundReportWindow));
     }
 
-    private async Task TrySetAutoAwayCoreAsync(string sessionId, Func<List<UserSession>, bool> shouldGoAway)
+    private void TrySetAutoAwayCore(string sessionId, Func<List<UserSession>, bool> shouldGoAway)
     {
         if (!_users.TryGetValue(sessionId, out var session)) return;
 
@@ -708,13 +737,16 @@ public partial class ChatService
         }
 
         _logger.LogDebug("Auto-away: no session for {Username} shows signs of life, setting Away", session.Username);
-        await SetUserStatusAsync(sessionId, UserStatus.Away, autoAwayPreviousStatus: currentStatus ?? UserStatus.Online);
+        SetUserStatus(sessionId, UserStatus.Away, autoAwayPreviousStatus: currentStatus ?? UserStatus.Online);
     }
 
     public void SetPageVisibility(string sessionId, bool visible)
     {
-        if (_users.TryGetValue(sessionId, out var session))
-            _users[sessionId] = session with { PageVisible = visible };
+        lock (_connectionGate)
+        {
+            if (_users.TryGetValue(sessionId, out var session))
+                _users[sessionId] = session with { PageVisible = visible };
+        }
     }
 
     public bool IsPageVisible(string username)
@@ -739,8 +771,11 @@ public partial class ChatService
     /// </summary>
     public void SetSessionViewing(string sessionId, string? label)
     {
-        if (_users.TryGetValue(sessionId, out var session))
-            _users[sessionId] = session with { ViewingChannel = label };
+        lock (_connectionGate)
+        {
+            if (_users.TryGetValue(sessionId, out var session))
+                _users[sessionId] = session with { ViewingChannel = label };
+        }
     }
 
     /// <summary>
@@ -750,14 +785,15 @@ public partial class ChatService
 
     public Task RemoveUserAsync(string circuitId)
     {
+        lock (_connectionGate) RemoveUser(circuitId);
+        return Task.CompletedTask;
+    }
+
+    private void RemoveUser(string circuitId)
+    {
+        CancelDisconnect(circuitId);
         if (_users.TryRemove(circuitId, out var session))
         {
-            // Remove from all typing indicators
-            foreach (var typingUsers in _channelTypingUsers.Values)
-            {
-                typingUsers.TryRemove(session.Username, out _);
-            }
-
             // Check if other sessions remain for this user
             var hasOtherSessions = _users.Values
                 .Any(u => u.Username.Equals(session.Username, StringComparison.OrdinalIgnoreCase));
@@ -768,6 +804,8 @@ public partial class ChatService
             // Only fire user-left and clean up status if no other sessions remain
             if (!hasOtherSessions)
             {
+                foreach (var typingUsers in _channelTypingUsers.Values)
+                    typingUsers.TryRemove(session.Username, out _);
                 _userStatuses.TryRemove(session.Username, out _);
                 _statusBeforeAutoAway.TryRemove(session.Username, out _);
                 OnUserChanged?.Invoke(session.Username, false);
@@ -776,7 +814,6 @@ public partial class ChatService
             OnUsersListChanged?.Invoke();
         }
 
-        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -824,13 +861,16 @@ public partial class ChatService
     /// </summary>
     public void SetSessionConnected(string sessionId, bool connected)
     {
-        if (!_users.TryGetValue(sessionId, out var session) || session.Connected == connected) return;
-        _users[sessionId] = session with { Connected = connected };
-        _changes.Touch(OfflineChangeKind.People);
-        OnUsersListChanged?.Invoke();
+        lock (_connectionGate)
+        {
+            if (!_users.TryGetValue(sessionId, out var session) || session.Connected == connected) return;
+            _users[sessionId] = session with { Connected = connected };
+            _changes.Touch(OfflineChangeKind.People);
+            OnUsersListChanged?.Invoke();
+        }
     }
 
-    // Settings lists live connections, not the four-hour recovery records behind presence.
+    // Settings lists live connections, not retained disconnected presence.
     public List<UserSession> GetActiveSessionsForUser(string username) =>
         GetSessionsForUser(username).Where(session => session.Connected).ToList();
 
@@ -875,39 +915,43 @@ public partial class ChatService
     /// </summary>
     public Task RemoveAllSessionsExcept(string username, string keepSessionId)
     {
-        var sessionsToRemove = _users.Values
-            .Where(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase)
-                        && u.SessionId != keepSessionId)
-            .ToList();
-
-        foreach (var session in sessionsToRemove)
+        lock (_connectionGate)
         {
-            if (_users.TryRemove(session.SessionId, out _))
-            {
-                // Remove from typing indicators
-                foreach (var typingUsers in _channelTypingUsers.Values)
-                {
-                    typingUsers.TryRemove(session.Username, out _);
-                }
-            }
-        }
+            var sessionsToRemove = _users.Values
+                .Where(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase)
+                            && u.SessionId != keepSessionId)
+                .ToList();
 
-        if (sessionsToRemove.Count > 0)
-        {
-            _logger.LogInformation("RemoveAllSessionsExcept: removed {Count} sessions for {User}, kept {KeptSession}",
-                sessionsToRemove.Count, username, keepSessionId);
-
-            // Notify each kicked session so their circuit can force-navigate to login
             foreach (var session in sessionsToRemove)
             {
-                OnSessionKicked?.Invoke(session.SessionId);
+                CancelDisconnect(session.SessionId);
+                if (_users.TryRemove(session.SessionId, out _))
+                {
+                    // Remove from typing indicators
+                    foreach (var typingUsers in _channelTypingUsers.Values)
+                    {
+                        typingUsers.TryRemove(session.Username, out _);
+                    }
+                }
             }
 
-            _changes.Touch(OfflineChangeKind.People);
-            OnUsersListChanged?.Invoke();
-        }
+            if (sessionsToRemove.Count > 0)
+            {
+                _logger.LogInformation("RemoveAllSessionsExcept: removed {Count} sessions for {User}, kept {KeptSession}",
+                    sessionsToRemove.Count, username, keepSessionId);
 
-        return Task.CompletedTask;
+                // Notify each kicked session so their circuit can force-navigate to login
+                foreach (var session in sessionsToRemove)
+                {
+                    OnSessionKicked?.Invoke(session.SessionId);
+                }
+
+                _changes.Touch(OfflineChangeKind.People);
+                OnUsersListChanged?.Invoke();
+            }
+
+            return Task.CompletedTask;
+        }
     }
 
     #endregion

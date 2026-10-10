@@ -35,7 +35,11 @@ WebApplicationFactory<OfflineHub> Factory() => new WebApplicationFactory<Offline
     builder.UseContentRoot(root).UseWebRoot(Path.Combine(root, "wwwroot"));
     builder.ConfigureAppConfiguration((_, c) => c.AddInMemoryCollection(config));
     builder.ConfigureLogging(l => l.ClearProviders());
-    builder.ConfigureServices(s => s.AddHttpClient("Klipy").ConfigurePrimaryHttpMessageHandler(() => new GifPagingChecks.Handler()));
+    builder.ConfigureServices(s =>
+    {
+        s.AddSingleton<TimeProvider>(new Microsoft.Extensions.Time.Testing.FakeTimeProvider(DateTimeOffset.UtcNow));
+        s.AddHttpClient("Klipy").ConfigurePrimaryHttpMessageHandler(() => new GifPagingChecks.Handler());
+    });
 });
 Guid dmId, deletedId, editedId;
 string token;
@@ -313,6 +317,7 @@ try
             && (await Send(removable.Id, Guid.NewGuid(), "new send to deleted room")).StatusCode == HttpStatusCode.NotFound,
             "deleted-room snapshot, retained receipt and rejection of new sends");
         await PresenceChecks.Run(factory.Services, http, anti, alice, bob, carol, privateDm.Id, room.Id);
+        await ConnectionChecks.Run(factory.Services, http, anti, alice, bob);
         await DeliveryChecks.Run(factory.Services, alice);
         await LocaleChecks.Run(http, anti, alice);
         await FollowupChecks.Run(factory.Services, http, anti, alice);

@@ -24,10 +24,9 @@ public sealed class OfflineLiveService(ChatService chat, IDataProtectionProvider
     private readonly SemaphoreSlim gate = new(1, 1);
     private readonly ConcurrentDictionary<string, Session> sessions = new();
     /// <summary>
-    /// Tracks one connection's owner, selected conversation, typing expiry and disconnect
-    /// lifecycle.
+    /// Tracks one connected transport's owner, selected conversation and typing expiry.
     /// </summary>
-    private record Session(Guid UserId, string Username, Guid? Channel = null, DateTime TypingUntil = default, DateTime? DisconnectedAt = null, bool AwayApplied = false);
+    private record Session(Guid UserId, string Username, Guid? Channel = null, DateTime TypingUntil = default);
     private static string Key(string connection) => "chat:" + connection;
     public string Ticket(User user) => tickets.Protect(user.Id.ToString(), TimeSpan.FromMinutes(2));
 
@@ -42,21 +41,19 @@ public sealed class OfflineLiveService(ChatService chat, IDataProtectionProvider
                 return;
             sessions[connection] = new(user.Id, user.Username);
             await chat.AddUserAsync(Key(connection), user.Id, user.Username, chosen, mobile, clientIp: clientIp, pageVisible: visible);
+            await chat.ConnectionUp(Key(connection));
             await chat.ReportClientStateAsync(Key(connection), visible, idleSeconds);
             // A fresh connection replaces retained disconnected sessions for this account.
             // Add first so their removal cannot reset a manually chosen status.
-            foreach (var old in sessions.Where(pair => pair.Key != connection && pair.Value.UserId == user.Id && pair.Value.DisconnectedAt != null).ToArray())
-            {
-                sessions.TryRemove(old.Key, out _);
-                await chat.RemoveUserAsync(Key(old.Key));
-                RestoreSiblingTyping(user.Id);
-            }
+            foreach (var old in chat.GetSessionsForUser(user.Username)
+                .Where(s => !s.Connected && s.SessionId.StartsWith("chat:", StringComparison.Ordinal)))
+                await chat.ConnectionDown(old.SessionId, closed: true);
         }
         finally { gate.Release(); }
     }
     private Session Require(string connection, User user)
     {
-        if (!sessions.TryGetValue(connection, out var session) || session.UserId != user.Id || session.DisconnectedAt != null || !chat.HasSession(Key(connection)))
+        if (!sessions.TryGetValue(connection, out var session) || session.UserId != user.Id || !chat.HasSession(Key(connection)))
             throw new InvalidOperationException("Live session unavailable");
         return session;
     }
@@ -158,7 +155,7 @@ public sealed class OfflineLiveService(ChatService chat, IDataProtectionProvider
         var currentPeople = chat.GetAllUsersWithStatus().OrderBy(p => p.Username).Select(p => new LivePerson(p.Username, p.Status.ToString().ToLowerInvariant())).ToArray();
         if (!people.SequenceEqual(currentPeople))
             people = currentPeople;
-        var typing = sessions.Values.Where(s => s.DisconnectedAt == null && s.Channel.HasValue)
+        var typing = sessions.Values.Where(s => s.Channel.HasValue)
             .Select(s => s.Channel!.Value).Distinct().ToDictionary(id => id, id => chat.GetTypingUsers(id).Order().ToArray());
         foreach (var pair in listeners)
         {
@@ -191,66 +188,52 @@ public sealed class OfflineLiveService(ChatService chat, IDataProtectionProvider
         await gate.WaitAsync();
         try
         {
-            if (!sessions.TryGetValue(connection, out var session) || session.DisconnectedAt != null)
+            if (!sessions.TryGetValue(connection, out var session))
                 return;
-            reports.TryRemove(connection, out _);
             await Stop(connection, session);
-            sessions[connection] = sessions[connection] with
-            {
-                DisconnectedAt = DateTime.UtcNow
-            };
-            chat.SetPageVisibility(Key(connection), false);
-            chat.SetSessionConnected(Key(connection), false);
-            chat.SetSessionViewing(Key(connection), null);
+            sessions.TryRemove(connection, out _);
+            reports.TryRemove(connection, out _);
+            await chat.ConnectionDown(Key(connection));
         }
         finally { gate.Release(); }
     }
 
-    // Match the original circuit's 30-second auto-away grace and four-hour warm retention.
-    // The clock parameter also permits deterministic lifecycle checks without hours of sleeping.
-    public async Task Sweep(DateTime now)
+    public async Task Close(string connection, User user)
     {
         await gate.WaitAsync();
         try
         {
-            foreach (var (connection, session) in sessions.ToArray())
-            {
-                if (session.DisconnectedAt is not { } at)
-                    continue;
-                if (now - at >= TimeSpan.FromHours(4))
-                {
-                    sessions.TryRemove(connection, out _);
-                    await chat.RemoveUserAsync(Key(connection));
-                    RestoreSiblingTyping(session.UserId);
-                }
-                else if (!session.AwayApplied && now - at >= TimeSpan.FromMilliseconds(limits.AwayAfterMs))
-                {
-                    await chat.TrySetAutoAwayAfterDisconnectAsync(Key(connection));
-                    sessions[connection] = session with
-                    {
-                        AwayApplied = true
-                    };
-                }
-            }
+            // The cookie/CSRF account must own this exact connection. A late unload from an
+            // old tab must never close its replacement or a sibling, even after socket loss.
+            var owned = chat.GetSessionsForUser(user.Username).Any(s => s.SessionId == Key(connection) && s.UserId == user.Id);
+            if (!owned)
+                return;
+            if (sessions.TryGetValue(connection, out var session))
+                await Stop(connection, session);
+            sessions.TryRemove(connection, out _);
+            reports.TryRemove(connection, out _);
+            if (listeners.TryRemove(connection, out var listener))
+                listener.Writer.TryComplete();
+            lastViews.TryRemove(connection, out _);
+            await chat.ConnectionDown(Key(connection), closed: true);
+            RestoreSiblingTyping(user.Id);
         }
         finally { gate.Release(); }
     }
     private void RestoreSiblingTyping(Guid userId)
     {
-        foreach (var other in sessions.Values.Where(s => s.UserId == userId && s.DisconnectedAt == null && s.Channel != null && s.TypingUntil > DateTime.UtcNow))
+        foreach (var other in sessions.Values.Where(s => s.UserId == userId && s.Channel != null && s.TypingUntil > DateTime.UtcNow))
             _ = chat.StartTypingAsync(other.Channel!.Value, other.Username);
     }
 }
 
 /// <summary>
-/// Sweeps disconnected live sessions in the background to apply the shared auto-away grace and
-/// retention rules.
+/// Publishes changed presence/typing projections. Disconnect timing belongs to ChatService.
 /// </summary>
 public sealed class OfflineLiveCleanup(OfflineLiveService live, ILogger<OfflineLiveCleanup> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var lastSweep = DateTime.MinValue;
         using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(100));
         try
         {
@@ -258,11 +241,6 @@ public sealed class OfflineLiveCleanup(OfflineLiveService live, ILogger<OfflineL
                 try
                 {
                     live.Tick();
-                    if (DateTime.UtcNow - lastSweep >= TimeSpan.FromSeconds(1))
-                    {
-                        lastSweep = DateTime.UtcNow;
-                        await live.Sweep(lastSweep);
-                    }
                 }
                 catch (Exception error) { logger.LogError(error, "Live session cleanup failed"); }
         }

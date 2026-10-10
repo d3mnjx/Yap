@@ -82,16 +82,18 @@ if (File.Exists(dataConfigPath))
 //    via Blazor.resumeCircuit() (default: 2 hours)
 // =============================================================================
 
+var presenceOptions = builder.Configuration.GetSection("Presence").Get<PresenceOptions>() ?? new();
+presenceOptions.Validate();
+builder.Services.AddSingleton(presenceOptions);
+builder.Services.AddSingleton(TimeProvider.System);
+
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents(options =>
     {
-        // Keep disconnected circuits alive for 4 hours instead of 3 minutes.
-        // This allows seamless reconnection if user returns within 4 hours
-        // (e.g., laptop sleep, switching apps on phone).
-        // Tradeoff: Each retained circuit uses server memory.
-        options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromHours(4);
-        //for debugging evictions, set a short time:
-        //options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromSeconds(10);
+        // Keep component state warm for reconnects (e.g. laptop sleep/app switching).
+        // Presence uses the same configured circuit retention; hub sessions have no state
+        // to resume and use their own, shorter retention.
+        options.DisconnectedCircuitRetentionPeriod = presenceOptions.CircuitRetention;
 
         // Maximum number of disconnected circuits to retain (default: 100).
         // Increase this if you expect many concurrent users going idle.

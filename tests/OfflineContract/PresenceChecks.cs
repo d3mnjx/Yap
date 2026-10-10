@@ -18,6 +18,7 @@ static class PresenceChecks
     public static async Task Run(IServiceProvider services, HttpClient http, string csrf, User alice, User bob, User carol, Guid privateDm, Guid readOnlyRoom)
     {
         var chat = services.GetRequiredService<ChatService>();
+        var clock = (Microsoft.Extensions.Time.Testing.FakeTimeProvider)services.GetRequiredService<TimeProvider>();
         var live = services.GetRequiredService<OfflineLiveService>();
         await live.Join("alice1", alice, live.Ticket(alice), UserStatus.Online, true, false, 0);
         await live.Join("alice2", alice, live.Ticket(alice), UserStatus.Invisible, false, true, 0);
@@ -85,13 +86,13 @@ static class PresenceChecks
         Check(chat.GetActiveSessionsForUser(alice.Username).Count == 0, "fully disconnected account has no displayed active sessions");
         Check(chat.HasActiveSession(alice.Username) && !chat.IsPageVisible(alice.Username) && chat.GetUserStatus(alice.Username) == UserStatus.Online,
             "disconnect clears visibility immediately while preserving original grace");
-        await live.Sweep(DateTime.UtcNow.AddSeconds(31));
+        clock.Advance(TimeSpan.FromSeconds(31));
         Check(chat.GetUserStatus(alice.Username) == UserStatus.Away && chat.IsAutoAway(alice.Username), "disconnected last session becomes auto-Away after original 30-second grace");
         await live.Join("alice3", alice, live.Ticket(alice), UserStatus.Online, true, false, 0);
         Check(chat.GetUserStatus(alice.Username) == UserStatus.Online && !chat.HasSession("chat:alice2"), "reconnect restores auto-away and replaces retained sessions");
         await live.Leave("alice3");
-        await live.Sweep(DateTime.UtcNow.AddHours(4).AddSeconds(1));
-        Check(!chat.HasActiveSession(alice.Username), "original four-hour retention expires without ghost presence");
+        clock.Advance(TimeSpan.FromMinutes(5));
+        Check(!chat.HasActiveSession(alice.Username), "five-minute hub retention expires without ghost presence");
 
         var users = services.GetRequiredService<UserService>();
         var admin = users.GetAllUsers().First(u => u.IsAdmin);
@@ -103,7 +104,7 @@ static class PresenceChecks
             "room unread includes live muted users and offline subscribers, excludes offline muted users");
         Check(chat.IsChannelMuted(alice.Id, room.Id) && !chat.IsChannelMuted(bob.Id, room.Id), "room mute policy is preserved");
         await live.Leave("room-alice");
-        await live.Sweep(DateTime.UtcNow.AddHours(4).AddSeconds(1));
+        clock.Advance(TimeSpan.FromMinutes(5));
         await chat.SendMessageAsync(room.Id, admin.Id, admin.Username, "room while offline");
         Check(chat.GetUnreadCount(alice.Id, room.Id) == 1 && chat.GetUnreadCount(bob.Id, room.Id) == 2, "disconnected muted room does not accumulate new unread");
         await users.SetRoomNotificationModeAsync(bob.Id, NotificationMode.MuteAll);
