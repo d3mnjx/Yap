@@ -760,7 +760,7 @@ function acceptSnapshot(
         .then(async () => {
             if (attemptGeneration !== connectionGeneration) return;
             const old = snapshot;
-            if (data.protocol !== 2) throw new Error('Client update required');
+            if (data.protocol !== PROTOCOL) throw new Error('Client update required');
             {
                 const committed = await storage.commitUpdate(data, identity, acknowledgedOperation);
                 if (attemptGeneration !== connectionGeneration) return;
@@ -812,7 +812,7 @@ function acceptSnapshot(
 function scheduleReconnect() {
     clearTimeout(reconnectTimer);
     if (updateRequired) return;
-    reconnectTimer = setTimeout(() => connectChat(), 3000);
+    reconnectTimer = setTimeout(() => connectChat(), 2500 + Math.random() * 1000);
 }
 async function bootstrapChat(cached = snapshot) {
     const path = location.pathname;
@@ -996,12 +996,13 @@ async function boot() {
                 })
                 .catch((error) => {
                     workerWarning =
-                        'Chat can open, but offline reload is unavailable. This browser needs a trusted connection to enable it.';
+                        'Offline reload and push require a browser with module service workers (Chrome/Edge 91+, Firefox 114+, Safari 15+) and trusted HTTPS or localhost. Update your browser if needed.';
+                    notice('');
                     console.warn(error);
                 });
         } catch (error) {
             workerWarning =
-                'Chat can open, but offline reload is unavailable. This browser needs a trusted connection to enable it.';
+                'Offline reload and push require a browser with module service workers (Chrome/Edge 91+, Firefox 114+, Safari 15+) and trusted HTTPS or localhost. Update your browser if needed.';
             if (['localhost', '127.0.0.1', '[::1]'].includes(location.hostname))
                 workerWarning += ` For local testing, open http://localhost${location.port ? ':' + location.port : ''}/lobby.`;
             console.warn('Offline worker registration failed:', error);

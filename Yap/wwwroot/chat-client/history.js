@@ -246,6 +246,14 @@ export function createHistory({ identity, current, changed, notice }) {
             latest = snapshot;
             pages = (await storage.metadata('history')) || {};
             for (const [id, page] of Object.entries(pages)) {
+                // A previous shell could save the new wire record without hydrating its
+                // author. Discard only broken server cache pages; drafts/outbox are separate.
+                if (
+                    [...(page.messages || []), ...(page.targets || [])].some((m) => !m.author?.id)
+                ) {
+                    delete pages[id];
+                    continue;
+                }
                 // Upgrade old cache records without taking away offline reading. The next
                 // online baseline revalidates them, even if its content version is unchanged.
                 if (page.version === undefined && authorized(id)) {

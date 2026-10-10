@@ -623,6 +623,8 @@ public class UserService
         if (!_users.TryGetValue(userId, out var user))
             return;
 
+        // A retained circuit may predate first-connect detection in another tab.
+        locale ??= user.Locale;
         user.TimeZone = timeZone;
         user.Locale = locale;
         if (dateFormat != null)

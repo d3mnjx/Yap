@@ -673,7 +673,7 @@
                     {
                         <div class="cache-group">
                             <div class="cache-group-header">
-                                <span class="cache-group-name">@FriendlyCacheName(group.Name)</span>
+                                <span class="cache-group-name">@group.Label</span>
                                 <span class="cache-group-meta">@group.Count · @FormatBytes(group.TotalBytes)</span>
                             </div>
                             @if (group.Entries.Count == 0)
@@ -693,7 +693,7 @@
                                 </div>
                             }
                             @* Browser cache prefixes are owned by wwwroot/chat-client/constants.js. *@
-                            @if ((group.Name == "yap-media-v1" || group.Name.StartsWith("yap-chat-media-")) && group.Count > 0)
+                            @if (group.Clearable && group.Count > 0)
                             {
                                 <button class="remove-button" style="margin-top: 8px; padding: 0.25rem 0.625rem; font-size: 0.75rem;"
                                         @onclick="() => ClearCache(group.Name)" title="Delete this cache to watch it re-populate">
@@ -1905,23 +1905,13 @@
         await RefreshCacheReport();
     }
 
-    // Browser cache prefixes are owned by wwwroot/chat-client/constants.js.
-    private static string FriendlyCacheName(string name) => name switch
-    {
-        _ when name.StartsWith("yap-chat-media-") => "Media — saved chat attachments",
-        _ when name.StartsWith("yap-chat-shell-") => "Chat app — offline interface",
-        "yap-media-v1" => "Media — uploads, GIFs, cached video",
-        "yap-v2" => "App shell — icons, sound",
-        _ => name
-    };
-
     private static string FormatBytes(long bytes) => bytes < 1024 ? $"{bytes} B"
         : bytes < 1024 * 1024 ? $"{bytes / 1024.0:0.#} KB"
         : bytes < 1024L * 1024 * 1024 ? $"{bytes / (1024.0 * 1024):0.#} MB"
         : $"{bytes / (1024.0 * 1024 * 1024):0.##} GB";
 
     public record CacheReport(bool Supported, long? Usage, long? Quota, long TotalBytes, int TotalCount, List<CacheGroup> Caches);
-    public record CacheGroup(string Name, int Count, long TotalBytes, List<CacheEntry> Entries);
+    public record CacheGroup(string Name, string Label, bool Clearable, int Count, long TotalBytes, List<CacheEntry> Entries);
     public record CacheEntry(string Url, string Name, long Bytes, string Type);
 
     public async ValueTask DisposeAsync()

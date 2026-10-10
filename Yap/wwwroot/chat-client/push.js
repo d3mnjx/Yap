@@ -1,7 +1,4 @@
 // Compatible with both the module worker and the one-time classic upgrade bridge.
-function isChatNavigation(path) {
-    return /^\/(?:chat|lobby)\/?$/.test(path) || /^\/(?:room|dm)\/[^/]+\/?$/.test(path);
-}
 // Push delivery shares the root module worker with the offline shell.
 // ==========================================
 // Push Notification Handler
@@ -89,7 +86,10 @@ self.addEventListener('notificationclick', (event) => {
     let urlToOpen = '/lobby';
     try {
         const destination = new URL(event.notification.data?.url || '/lobby', self.location.origin);
-        if (destination.origin === self.location.origin && isChatNavigation(destination.pathname))
+        if (
+            destination.origin === self.location.origin &&
+            globalThis.yapWorkerCommon.isChatNavigation(destination.pathname)
+        )
             urlToOpen = destination.pathname + destination.search;
     } catch {}
 
@@ -165,7 +165,7 @@ async function resubscribeToPush() {
 
         const subscription = await self.registration.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(publicKey),
+            applicationServerKey: globalThis.yapWorkerCommon.urlBase64ToUint8Array(publicKey),
         });
 
         const sub = subscription.toJSON();
@@ -184,16 +184,4 @@ async function resubscribeToPush() {
     } catch (e) {
         console.error('[SW] resubscribe failed:', e);
     }
-}
-
-// Helper: Convert a base64url VAPID key to Uint8Array (mirrors urlBase64ToUint8Array in chat.js).
-function urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-    const rawData = atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-    for (let i = 0; i < rawData.length; ++i) {
-        outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
 }

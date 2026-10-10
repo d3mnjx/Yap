@@ -207,7 +207,7 @@ public sealed class OfflineSnapshotService(ChatService chat, UserService users, 
         return new
         {
             zone = id,
-            offsetMinutes = zone.BaseUtcOffset.TotalMinutes,
+            offsetMinutes = zone.GetUtcOffset(DateTime.UtcNow).TotalMinutes,
             format.Time,
             format.DateInYear,
             format.FullDate,
@@ -222,7 +222,7 @@ public sealed class OfflineSnapshotService(ChatService chat, UserService users, 
     {
         var channels = Channels(user);
         var limit = Math.Min(RecentLimit, Math.Max(1, 20000 / Math.Max(1, channels.Length)));
-        return new ReaderSnapshot(2, "", Epoch, 0, Summary(user), users.IsAdmin(user.Id), user.Theme ?? "discord-dark",
+        return new ReaderSnapshot(ChatProtocol.Number, "", Epoch, 0, Summary(user), users.IsAdmin(user.Id), user.Theme ?? "discord-dark",
             user.FontSize, user.TimeZone, user.DateFormat, branding.ProjectName, limit,
             true, limits.MaxTextLength, users.GetAllUsers().Where(u => u.Id == user.Id || chat.HasActiveSession(u.Username) || channels.Any(c => c.IsDirectMessage && c.CanAccess(u.Id))).OrderBy(u => u.Username).Select(Summary).ToArray(), [], limits.MaxOperationsPerBatch, limits.MaxBatchBytes, limits.MaxFilesPerMessage, limits.AllowedExtensions, limits.MaxUploadBytes, limits.HistoryPageSize, limits.HistoryMaxMessages, limits.ReadBatch, limits.TypingTimeoutMs, limits.AwayAfterMs, DateSettings(user));
     }

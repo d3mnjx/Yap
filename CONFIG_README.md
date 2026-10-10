@@ -101,7 +101,7 @@ as JSON files in `Data/`:
 | `Data/link-preview-settings.json` | Link preview behavior |
 | `Data/push-subscriptions.json` | Push subscriptions when storage is `"Json"` |
 
-Branding overrides go in `Data/branding/` (manifest, icons). The custom welcome page is
+Branding overrides go in `Data/branding/` (manifest, icons). Restart after changing shell assets so the content-hashed offline manifest matches the served files; publish matching compressed variants too. The custom welcome page is
 `Data/welcome/welcome.html`.
 
 ## FunnyTexts

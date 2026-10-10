@@ -1,3 +1,4 @@
+import { PROTOCOL } from './constants.js';
 // Wire updates are partial authority. Ordering belongs to each record/conversation,
 // not one global snapshot cursor: a newer room update cannot swallow an older DM update.
 export function mergeUpdate(previous, update) {
@@ -145,7 +146,7 @@ export function mergeUpdate(previous, update) {
     }
     return {
         ...state,
-        protocol: 2,
+        protocol: PROTOCOL,
         incremental: true,
         serverEpoch: update.serverEpoch,
         sequence: newServer ? sequence : Math.max(sequence, previous?.sequence || 0),

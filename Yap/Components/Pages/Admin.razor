@@ -28,7 +28,7 @@
 <div class="admin-page">
     <nav class="admin-sidebar">
         <div class="admin-sidebar-header">
-            <button class="back-button" @onclick="GoBack" title="Go back">
+            <button class="admin-back-button" @onclick="GoBack" title="Go back">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
                 </svg>
@@ -190,11 +190,11 @@
                                             ProfilePictureUrl="@user.ProfilePictureUrl"
                                             Size="AvatarSize.Small" />
                                     <div class="user-info">
-                                        <span class="user-name">
+                                        <span class="admin-user-name">
                                             @user.EffectiveDisplayName
                                             @if (user.IsAdmin)
                                             {
-                                                <span class="admin-badge" title="Admin">&#x1F451;</span>
+                                                <span class="admin-admin-badge" title="Admin">&#x1F451;</span>
                                             }
                                         </span>
                                         @if (user.DisplayName != null)
@@ -205,7 +205,7 @@
                                 </td>
                                 <td>
                                     <span class="status-pill @statusClass">
-                                        <span class="status-dot"></span>
+                                        <span class="admin-status-dot"></span>
                                         @statusLabel
                                     </span>
                                 </td>
@@ -648,7 +648,7 @@
                                     <td>@(owner?.Username ?? "(deleted)")</td>
                                     <td>
                                         <span class="status-pill @(l.IsActive ? "online" : "offline")">
-                                            <span class="status-dot"></span>
+                                            <span class="admin-status-dot"></span>
                                             @LinkStatus(l)
                                         </span>
                                     </td>
@@ -923,7 +923,7 @@
                 <div class="media-stat-card">
                     <span class="media-stat-label">FFmpeg</span>
                     <span class="media-stat-value">
-                        <span class="status-dot @(VideoService.IsAvailable ? "status-online" : "status-offline")"></span>
+                        <span class="admin-status-dot @(VideoService.IsAvailable ? "status-online" : "status-offline")"></span>
                         @(VideoService.IsAvailable ? "Available" : "Unavailable")
                     </span>
                 </div>
@@ -1018,7 +1018,7 @@
                 <div class="media-stat-card">
                     <span class="media-stat-label">FFmpeg</span>
                     <span class="media-stat-value">
-                        <span class="status-dot @(VideoService.IsAvailable ? "status-online" : "status-offline")"></span>
+                        <span class="admin-status-dot @(VideoService.IsAvailable ? "status-online" : "status-offline")"></span>
                         @(VideoService.IsAvailable ? "Available" : "Unavailable")
                     </span>
                 </div>

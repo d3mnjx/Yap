@@ -5,13 +5,17 @@ time of day, the pattern layer, Terminal and Neon Glow, the relaxed status rule 
 `solarized-light` joined the lineup on 2026-08-27. The doc was written as a plan before any code
 existed and is kept as the record of why the system is shaped the way it is. Where a section says
 "we would" or "today", read it as of August 2026; the **DONE** markers and the dated notes say what
-actually happened. Code comments in `ChatLayout.razor.css`, `app.css` and
+actually happened. Code comments in `wwwroot/chat-client/shared.css`, `app.css` and
 `themes/teahouse/gen_theme_css.py` point here. Audience: future maintainers (you and Claude).
 
 **Still open:** the Meomi credit in Settings (see Decisions) is not done. Only a comment in
 `teahouse.css` carries it.
 
-## TL;DR
+## Current implementation
+
+Browser chat uses the concern stylesheets listed in [CSS ownership](../css_architecture.md); retained Blazor pages share `chat-client/shared.css`. `js/appearance.js` owns scene selection, appearance restoration and browser theme-color for both shells. The static shell inventory is computed at startup; changing branded/theme assets requires a restart and complete compressed assets. The sections below retain the original design reasoning; removed scoped chat files are now represented by the shared stylesheet.
+
+## Overview
 
 Today a theme is *a bag of CSS variables*. Themes 2.0 keeps that — and adds **one painted layer
 behind everything**, driven by three independent HTML attributes that compose in CSS:
@@ -44,7 +48,7 @@ Patterns (piece 4.5) turned out to belong with 3, not with 1 — see [Seamless p
 The system was small and good, and 2.0 did not damage it. Numbers below are from before the
 work; as of 2026-10 `ThemeRegistry` has 11 themes (`discord-dark`, `midnight`, `nord`, `ocean`,
 `sunset`, `aurora`, `terminal`, `neon-glow`, `teahouse`, `daylight`, `solarized-light`),
-`themes.css` is 464 lines, and `applyTheme` sits near line 1588 of `chat.js`.
+`themes.css` is 464 lines, and appearance state and scene selection live in `wwwroot/js/appearance.js`.
 
 - `Services/ThemeRegistry.cs` — 7 `ThemeDefinition` records: `Id`, `Name`, `PreviewBg`,
   `PreviewAccent`, `HasGradient`. Metadata only; **no colors live in C#**.
@@ -72,7 +76,7 @@ work; as of 2026-10 `ThemeRegistry` has 11 themes (`discord-dark`, `midnight`, `
 It looks like it could: `--bg-primary` already accepts a full CSS `background` value — `ocean` and
 `sunset` put `linear-gradient(...)` in it today. But that variable is doing **two different jobs**:
 
-1. the **page canvas** — `.chat-container`, `.messages-container` (`ChatLayout.razor.css:6,30`)
+1. the **page canvas** — `.chat-container`, `.messages-container` (`wwwroot/chat-client/shared.css`)
 2. an **opaque fill for small elements** — message hover states (`MessageItem.razor.css:476, 503,
    568, 732, 765`), the input box (`MessageInput.razor.css:41, 352`), the scrollbar thumb border
    (`ChatLayout.razor.css:72`), an Admin panel surface.
@@ -633,7 +637,7 @@ the generator must resolve a missing layer via `ENV_OF` **only as a fallback**, 
 
 - `app.css` `:root` — the five `--scene-*` variables and `--canvas-scrim`, all `none`.
 - `ChatLayout.razor` — `.theme-scene` and `.theme-scrim`, two empty divs.
-- `ChatLayout.razor.css` — one element carrying **five comma-matched backgrounds** rather than five
+- `wwwroot/chat-client/shared.css` — one element carrying **five comma-matched backgrounds** rather than five
   divs, listed top-first (the reverse of the source paint order), following `preview.html`'s DOM
   stacking: footer, footertile, header, headertile, canvastile.
 

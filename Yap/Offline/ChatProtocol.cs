@@ -2,7 +2,8 @@ namespace Yap.Offline;
 
 public static class ChatProtocol
 {
-    public const string Version = "2";
+    public const int Number = 3;
+    public const string Version = "3";
     public const string Header = "X-Yap-Chat-Protocol";
     public static bool Accepts(HttpRequest request, bool hub = false)
         => (!request.Headers.TryGetValue(Header, out var header) || header == Version)

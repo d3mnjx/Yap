@@ -1,7 +1,7 @@
-// Synthetic snapshots use the same protocol-2 storage path as real authority.
+// Synthetic snapshots use the same protocol-3 storage path as real authority.
 function updateFromSnapshot(snapshot) {
     return {
-        protocol: 2,
+        protocol: 3,
         userId: snapshot.user.id,
         serverEpoch: snapshot.serverEpoch,
         sequence: snapshot.sequence,

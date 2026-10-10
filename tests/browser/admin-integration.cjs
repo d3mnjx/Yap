@@ -90,7 +90,7 @@ if (new URL(origin).hostname !== '127.0.0.1' || new URL(origin).port === '7543')
             await page.getByRole('button', { name: 'Delete Channel', exact: true }).count(),
             0,
         );
-        await page.locator('.settings-header .back-button').click();
+        await page.locator('.settings-header .channelsettings-back-button').click();
         await page.waitForURL('**/lobby');
         await page.locator('#draft:not([disabled])').waitFor();
         console.log(
@@ -102,7 +102,7 @@ if (new URL(origin).hostname !== '127.0.0.1' || new URL(origin).port === '7543')
         await page.waitForURL('**/dm/' + other);
         await page.locator('#draft:not([disabled])').waitFor();
         await page.goto(origin + '/admin');
-        await page.locator('.admin-sidebar-header .back-button').click();
+        await page.locator('.admin-sidebar-header .admin-back-button').click();
         await page.waitForURL('**/lobby');
         await page.locator('#draft:not([disabled])').waitFor();
         await reader.goto(origin + '/admin');

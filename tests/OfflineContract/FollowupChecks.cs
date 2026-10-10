@@ -64,8 +64,8 @@ static class FollowupChecks
             Check(shell.Contains($"data-appearance-user=\"{user.Id}\"") && shell.Contains("class=\"fixture\""),
                 "authenticated shell injects account appearance independently of html tag layout");
             await File.WriteAllTextAsync(shellPath, "<html lang=\"en\"><body>Missing placeholder</body></html>");
-            Check((await http.GetAsync("/lobby")).StatusCode == HttpStatusCode.InternalServerError,
-                "missing appearance placeholder fails loudly instead of serving a flashing shell");
+            Check((await http.GetStringAsync("/lobby")).Contains("data-appearance-user="),
+                "running shell remains the startup-validated release until restart");
         }
         finally
         {

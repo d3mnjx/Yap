@@ -35,7 +35,7 @@ public sealed class OfflineSync(OfflineSnapshotService snapshots)
             : new ConversationUpdate(c.Id, c, [], [], null, null, Revision(c), true)).ToArray();
         // Stamp before header construction; each channel window has its own consistent capture.
         var sequence = capture.Sequence != 0 ? capture.Sequence : snapshots.Stamp();
-        return new(2, user.Id, snapshots.Epoch, sequence, snapshots.Header(user), conversations, [],
+        return new(ChatProtocol.Number, user.Id, snapshots.Epoch, sequence, snapshots.Header(user), conversations, [],
             Authors(capture.Conversation?.Messages ?? []), null, true);
     }
 
@@ -43,12 +43,12 @@ public sealed class OfflineSync(OfflineSnapshotService snapshots)
     {
         var capture = snapshots.Capture(user, id, messageId, full);
         if (capture.Conversation == null)
-            return new(2, user.Id, capture.Epoch, capture.Sequence, null, [], [id], []);
+            return new(ChatProtocol.Number, user.Id, capture.Epoch, capture.Sequence, null, [], [id], []);
         var conversation = capture.Conversation;
         var messages = full ? conversation.Messages : capture.Message is { } message ? new[] { message } : [];
         var update = full ? Window(conversation) : new ConversationUpdate(id, conversation,
             messages, messageId.HasValue && capture.Message == null ? [messageId.Value] : [],
             null, null, Revision(conversation));
-        return new(2, user.Id, capture.Epoch, capture.Sequence, null, [update], [], Authors(messages));
+        return new(ChatProtocol.Number, user.Id, capture.Epoch, capture.Sequence, null, [update], [], Authors(messages));
     }
 }

@@ -204,7 +204,7 @@ builder.Services.AddSingleton<ChatLimits>();
 builder.Services.AddSingleton<OfflineChangeSignal>();
 builder.Services.AddSingleton<OfflineFanout>();
 builder.Services.AddSingleton<OfflineLiveService>();
-builder.Services.AddHostedService<OfflineLiveCleanup>();
+builder.Services.AddHostedService<OfflinePresenceTicker>();
 builder.Services.AddSingleton<SystemBotService>();
 builder.Services.AddSingleton<RegistrationGateService>();
 builder.Services.AddSingleton<ChatConfigService>();

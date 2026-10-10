@@ -1,3 +1,4 @@
+using Yap.Offline;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,7 +33,7 @@ static class OriginChecks
             request.Headers.Add("X-Forwarded-Host", "poison.example.test");
             request.Headers.Add("X-Forwarded-Proto", "https");
             if (modern)
-                request.Headers.Add("X-Yap-Chat-Protocol", "2");
+                request.Headers.Add(ChatProtocol.Header, ChatProtocol.Version);
             using var response = await client.SendAsync(request);
             response.EnsureSuccessStatusCode();
         }
@@ -72,6 +73,7 @@ static class OriginChecks
         try
         {
             await chat.AddUserAsync("origin-welcome-session", recipient.Id, recipient.Username);
+            ((Microsoft.Extensions.Time.Testing.FakeTimeProvider)services.GetRequiredService<TimeProvider>()).Advance(services.GetRequiredService<PresenceOptions>().DisconnectGrace);
             // Exercise the real event handler and its one-minute delay, with an intervening hostile session.
             await Visit(attacker, "/api/chat/session", "attacker.example.test");
             Console.WriteLine("WAIT real delayed welcome DM (one minute)");

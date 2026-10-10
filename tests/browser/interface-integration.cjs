@@ -55,9 +55,23 @@ fs.mkdirSync(out, { recursive: true });
         await page.locator('#display-name').fill('Interface Person');
         await page.locator('#bio').fill('A tested profile');
         await page.locator('#country').fill('Prague');
-        await page.locator('.save-status.saved').filter({ hasText: 'Saved' }).first().waitFor();
+        // A previous field's Saved label can still be visible while the last debounce is
+        // pending. Check the server's accepted profile, not that stale presentation.
+        await poll(page, async () => {
+            const response = await fetch('/api/chat/bootstrap');
+            const { update } = await response.json();
+            return (
+                update.state.user.displayName === 'Interface Person' &&
+                update.state.user.bio === 'A tested profile' &&
+                update.state.user.country === 'Prague'
+            );
+        });
         await page.getByRole('button', { name: 'Nord', exact: true }).click();
         await page.locator('.font-size-option').filter({ hasText: '20px' }).click();
+        await poll(page, async () => {
+            const { update } = await (await fetch('/api/chat/bootstrap')).json();
+            return update.state.theme === 'nord' && update.state.fontSize === 20;
+        });
         // The retained Settings page inspects Cache Storage only; queued writes and drafts live in IndexedDB.
         const queued = await page.evaluate(async () => {
             const s = await import('/chat-client/storage.js'),

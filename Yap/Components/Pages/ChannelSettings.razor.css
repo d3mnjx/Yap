@@ -20,7 +20,7 @@
     margin: 0;
 }
 
-.back-button {
+.channelsettings-back-button {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -34,7 +34,7 @@
     transition: background-color 0.15s, color 0.15s;
 }
 
-.back-button:hover {
+.channelsettings-back-button:hover {
     background: var(--bg-hover);
     color: var(--text-white);
 }

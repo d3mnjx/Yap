@@ -11,7 +11,9 @@ function manifest(root, read = (url) => fs.readFileSync(path.join(root, url))) {
         .map((name) => '/' + name.replaceAll(path.sep, '/'))
         .filter(
             (url) =>
-                !/\.(br|gz)$/.test(url) &&
+                !/\.(br|gz|md)$/.test(url) &&
+                !url.includes('/sample/') &&
+                !url.includes('/aardvark-') &&
                 !/^\/chat-client\/emoji\/.*\.svg$/.test(url) &&
                 (/^\/(chat-client|fonts|themes|images)\//.test(url) ||
                     /^\/(app\.css|themes\.css|notif\.mp3|js\/appearance\.js|service-worker(?:-module)?\.js|icon(?:-192|-512)?\.(?:svg|png)|emoji_selection_(?:greys|color)\.png)$/.test(
@@ -19,7 +21,20 @@ function manifest(root, read = (url) => fs.readFileSync(path.join(root, url))) {
                     )),
         )
         .sort()
-        .map((url) => ({ url, hash: hash(read(url)) }));
-    return { version: hash(assets.map((a) => a.url + ':' + a.hash).join('\n')), assets };
+        .map((url) => ({
+            url,
+            hash: hash(read(url)),
+            install:
+                (!/^\/(themes|images)\//.test(url) || url.endsWith('.css')) &&
+                !url.startsWith('/chat-client/vendor/add-to-homescreen-3.5/assets/img/'),
+        }));
+    return {
+        version: hash(
+            assets
+                .map((a) => a.url + ':' + a.hash + ':' + (a.install ? 'True' : 'False'))
+                .join('\n'),
+        ),
+        assets,
+    };
 }
 module.exports = { manifest };

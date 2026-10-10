@@ -1,4 +1,4 @@
-export const PROTOCOL = 2;
+export const PROTOCOL = 3;
 // Persisted browser namespaces are compatibility contracts, independent of shell releases.
 export const DB_NAME = 'yap-chat-v1';
 export const DB_VERSION = 4;
@@ -28,3 +28,5 @@ export function openDatabase() {
         };
     });
 }
+
+export const EMOJI_CACHE = 'yap-chat-emoji-17.0.3';

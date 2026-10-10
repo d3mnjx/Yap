@@ -25,7 +25,7 @@ const path = require('node:path');
         ...extra,
     });
     const update = (sequence, conversations, extra = {}) => ({
-        protocol: 2,
+        protocol: 3,
         userId: 'alice',
         serverEpoch: 'server1',
         sequence,

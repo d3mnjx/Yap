@@ -16,7 +16,7 @@ static class SyncChecks
         var chat = services.GetRequiredService<ChatService>();
         var channel = chat.GetOrCreateDMChannel(alice.Id, alice.Username, bob.Id, bob.Username);
         var bootstrap = sync.Bootstrap(alice, "/dm/" + bob.Username);
-        Check(bootstrap.Reset && bootstrap.Protocol == 2 && bootstrap.State!.Conversations.Length == 0,
+        Check(bootstrap.Reset && bootstrap.Protocol == ChatProtocol.Number && bootstrap.State!.Conversations.Length == 0,
             "bootstrap separates summaries from recent windows");
         Check(bootstrap.Conversations.Count(c => c.Window != null) == 1
             && bootstrap.Conversations.Single(c => c.Window != null).Id == channel.Id,
@@ -144,7 +144,7 @@ static class SyncChecks
         {
             using var request = new HttpRequestMessage(HttpMethod.Post, "/api/chat/" + path) { Content = JsonContent.Create(value) };
             request.Headers.Add("X-CSRF-TOKEN", csrf);
-            request.Headers.Add("X-Yap-Chat-Protocol", "2");
+            request.Headers.Add(ChatProtocol.Header, ChatProtocol.Version);
             request.Headers.Add("X-Yap-Chat-User", expectedUser ?? alice.Id.ToString());
             return await client.SendAsync(request);
         }
@@ -173,7 +173,7 @@ static class SyncChecks
             using var accepted = await Post("operations", batch);
             var body = await accepted.Content.ReadFromJsonAsync<JsonElement>();
             Check(accepted.IsSuccessStatusCode && body.GetProperty("results").GetArrayLength() == 2
-                && body.GetProperty("results").EnumerateArray().All(r => r.GetProperty("update").GetProperty("protocol").GetInt32() == 2),
+                && body.GetProperty("results").EnumerateArray().All(r => r.GetProperty("update").GetProperty("protocol").GetInt32() == ChatProtocol.Number),
                 "batch returns independent compact receipts, including replay");
         }
         Check(chat.GetMessages(channel.Id, 100).Count(m => batch.Any(o => o.operationId == m.OperationId)) == 2,

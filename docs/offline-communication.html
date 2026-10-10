@@ -1568,7 +1568,7 @@
                                 >
                             </li>
                             <li>
-                                <a href="../Yap/Offline/OfflineChangeSignal.cs"
+                                <a href="../Yap/Services/OfflineChangeSignal.cs"
                                     >OfflineChangeSignal.cs</a
                                 ><span
                                     >Shared event ordering and content counters; OfflineFanout routes
@@ -1749,7 +1749,7 @@ builder.Services.AddSingleton&lt;OfflineSync&gt;();
 builder.Services.AddSingleton&lt;OfflineChangeSignal&gt;();
 builder.Services.AddSingleton&lt;OfflineFanout&gt;();
 builder.Services.AddSingleton&lt;OfflineLiveService&gt;();
-builder.Services.AddHostedService&lt;OfflineLiveCleanup&gt;();</code></pre>
+builder.Services.AddHostedService&lt;OfflinePresenceTicker&gt;();</code></pre>
                     <p>
                         Earlier in <code>Program.cs</code>,
                         <code>AddRazorComponents().AddInteractiveServerComponents(...)</code>

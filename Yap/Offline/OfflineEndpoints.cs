@@ -21,11 +21,16 @@ public static class OfflineEndpoints
             http.Response.Headers.CacheControl = "no-store";
             return Results.Ok(manifest);
         });
+        // Fail a broken release before accepting requests, rather than on every chat load.
+        var shellHtml = File.ReadAllText(Path.Combine(app.Environment.WebRootPath, "chat-client", "index.html"));
+        var appearanceToken = new System.Text.RegularExpressions.Regex(@"\bdata-appearance(?=\s|>)");
+        if (appearanceToken.Matches(shellHtml).Count != 1)
+            throw new InvalidOperationException("Chat shell must contain exactly one data-appearance placeholder.");
         MapApi(app.MapGroup("/api/chat"));
         app.MapHub<OfflineHub>("/hubs/chat");
         foreach (var path in new[] { "/", "/chat", "/lobby", "/room/{id:guid}", "/dm/{username}" })
         {
-            var endpoint = app.MapGet(path, ServeShell);
+            var endpoint = app.MapGet(path, (HttpContext http, UserStateService user) => ServeShell(http, user, shellHtml, appearanceToken));
             if (path == "/")
                 endpoint.WithOrder(-1).WithMetadata(new ChatRootPolicy());
         }
@@ -33,15 +38,11 @@ public static class OfflineEndpoints
 
     // Only the neutral file is worker-cacheable. Online HTML carries current account
     // preferences before CSS; the blocking script mirrors them for cached navigation.
-    public static async Task ServeShell(HttpContext http, IWebHostEnvironment env, UserStateService user)
+    private static async Task ServeShell(HttpContext http, UserStateService user, string html, System.Text.RegularExpressions.Regex appearanceToken)
     {
-        var html = await File.ReadAllTextAsync(Path.Combine(env.WebRootPath, "chat-client", "index.html"));
         var theme = System.Net.WebUtility.HtmlEncode(user.Theme ?? "discord-dark");
         var size = user.FontSize is >= Yap.Models.User.MinFontSize and <= Yap.Models.User.MaxFontSize
             ? $"font-size: {user.FontSize}px" : "";
-        var appearanceToken = new System.Text.RegularExpressions.Regex(@"\bdata-appearance(?=\s|>)");
-        if (appearanceToken.Matches(html).Count != 1)
-            throw new InvalidOperationException("Chat shell is missing its data-appearance placeholder.");
         html = appearanceToken.Replace(html, _ =>
             $"data-theme=\"{theme}\" style=\"{size}\" data-appearance-user=\"{user.UserId}\"");
         http.Response.ContentType = "text/html; charset=utf-8";

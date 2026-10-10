@@ -49,7 +49,9 @@ if (
                         'offline reload unavailable',
                     ),
                 );
-                assert((await page.locator('#notice').innerText()).includes('trusted connection'));
+                assert(
+                    (await page.locator('#notice').innerText()).includes('module service workers'),
+                );
                 assert.equal((await page.locator('#rooms a').count()) > 0, true);
                 console.log(
                     'PASS worker rejection preserves authenticated chat, drafts and a visible offline limitation',

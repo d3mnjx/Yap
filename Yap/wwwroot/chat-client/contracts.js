@@ -77,7 +77,7 @@
  */
 
 /**
- * Hydrated local view. Protocol-2 ChatUpdates merge into this shape; sequence ordering applies per record/conversation, not as one global rejection cursor.
+ * Hydrated local view. Protocol-3 ChatUpdates merge into this shape; sequence ordering applies per record/conversation, not as one global rejection cursor.
  * @typedef {object} ChatSnapshot
  * @property {number} protocol
  * @property {string} revision

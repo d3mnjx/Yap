@@ -14,7 +14,7 @@ export function createWindows({ identity, snapshot, current, accepted }) {
         const next = current()?.id;
         if (selected !== next && active && active.id !== next) active.controller.abort();
         selected = next;
-        timer = setTimeout(fill, 100);
+        timer = setTimeout(fill, 50 + Math.random() * 100);
     }
     async function fill() {
         if (active || foregroundRequests || !navigator.onLine || !identity()) return;

@@ -83,13 +83,13 @@ static class DesignChecks
             using var invalid = await http.GetAsync("/api/chat/session");
             Check(invalid.Headers.GetValues("Set-Cookie").Any(c => c.StartsWith("yap_auth=")), "invalid renewal marker cannot suppress legacy-cookie upgrade");
             using var mismatch = new HttpRequestMessage(HttpMethod.Post, "/hubs/chat/negotiate?negotiateVersion=1");
-            mismatch.Headers.Add(ChatProtocol.Header, "1");
+            mismatch.Headers.Add(ChatProtocol.Header, "2");
             Check((int)(await http.SendAsync(mismatch)).StatusCode == 426, "hub negotiation rejects mismatched protocol header with 426");
-            using var query = new HttpRequestMessage(HttpMethod.Post, "/hubs/chat/negotiate?negotiateVersion=1&protocol=1");
+            using var query = new HttpRequestMessage(HttpMethod.Post, "/hubs/chat/negotiate?negotiateVersion=1&protocol=2");
             Check((int)(await http.SendAsync(query)).StatusCode == 426, "hub transports reject mismatched browser protocol query with 426");
             var hub = ActivatorUtilities.CreateInstance<OfflineHub>(services);
             var caller = new Caller();
-            caller.Http.Request.QueryString = new QueryString("?protocol=1");
+            caller.Http.Request.QueryString = new QueryString("?protocol=2");
             hub.Context = caller;
             var denied = false;
             try

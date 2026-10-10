@@ -22,7 +22,8 @@ static async Task Run(bool persistent)
     Console.WriteLine("MODE " + (persistent ? "SQLite" : "memory"));
     // Real application services/database; a separate temporary content root, never developer/reference data.
     var root = Path.Combine(Path.GetTempPath(), "yap-offline-contract-" + Guid.NewGuid());
-    Directory.CreateDirectory(Path.Combine(root, "wwwroot"));
+    Directory.CreateDirectory(Path.Combine(root, "wwwroot", "chat-client"));
+    File.WriteAllText(Path.Combine(root, "wwwroot", "chat-client", "index.html"), "<html class=\"fixture\" data-appearance><body>design-shell-fixture</body></html>");
     Directory.CreateDirectory(Path.Combine(root, "Data"));
     var config = new Dictionary<string, string?>
     {
@@ -394,6 +395,19 @@ static async Task Run(bool persistent)
                 var receipt = await chat.SendTextAsync(fresh, chat.GetLobbyId(), durableOperation, "new process send");
                 Check(chat.GetMessageById(chat.GetLobbyId(), receipt.MessageId)?.Content == "new process send",
                     "memory restart accepts operations in the new account and conversation");
+            }
+        }
+        File.WriteAllText(Path.Combine(root, "wwwroot", "chat-client", "index.html"), "<html></html>");
+        using (var broken = Factory())
+        {
+            try
+            {
+                broken.CreateClient();
+                throw new Exception("invalid shell started");
+            }
+            catch (InvalidOperationException error) when (error.Message.Contains("data-appearance"))
+            {
+                Check(true, "missing shell placeholder fails application startup");
             }
         }
         if (persistent)

@@ -15,7 +15,7 @@ function read(url) {
     const bytes = fs.readFileSync(path.join(root, url));
     if (url === '/chat-client/chat.css' && phase)
         return Buffer.concat([bytes, Buffer.from('\n/* CSS-only release ' + phase + ' */')]);
-    if (url === '/chat-client/worker.js' && phase === 2)
+    if (url === '/chat-client/constants.js' && phase === 2)
         return Buffer.from(
             bytes.toString().replace('yap-chat-emoji-17.0.3', 'yap-chat-emoji-next-fixture'),
         );

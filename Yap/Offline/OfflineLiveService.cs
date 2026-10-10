@@ -230,7 +230,7 @@ public sealed class OfflineLiveService(ChatService chat, IDataProtectionProvider
 /// <summary>
 /// Publishes changed presence/typing projections. Disconnect timing belongs to ChatService.
 /// </summary>
-public sealed class OfflineLiveCleanup(OfflineLiveService live, ILogger<OfflineLiveCleanup> logger) : BackgroundService
+public sealed class OfflinePresenceTicker(OfflineLiveService live, ILogger<OfflinePresenceTicker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -242,7 +242,7 @@ public sealed class OfflineLiveCleanup(OfflineLiveService live, ILogger<OfflineL
                 {
                     live.Tick();
                 }
-                catch (Exception error) { logger.LogError(error, "Live session cleanup failed"); }
+                catch (Exception error) { logger.LogError(error, "Presence publication failed"); }
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { }
     }

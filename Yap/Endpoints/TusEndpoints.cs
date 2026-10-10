@@ -53,6 +53,12 @@ public static class TusEndpoints
                         ? m.GetString(System.Text.Encoding.UTF8) : null;
 
                     var kind = Meta("kind");
+                    if (kind != "gif-pack" && !eventContext.HttpContext.RequestServices.GetRequiredService<Yap.Offline.ChatLimits>()
+                        .AllowedExtensions.Contains(Path.GetExtension(Meta("filename") ?? ""), StringComparer.OrdinalIgnoreCase))
+                    {
+                        eventContext.FailRequest("This file extension is not allowed.");
+                        return Task.CompletedTask;
+                    }
                     var target = Meta("target");
                     if (kind is not ("gif" or "gif-pack") && target == null)
                         return Task.CompletedTask; // plain chat upload

@@ -1,7 +1,7 @@
-importScripts('/chat-client/push.js');
+importScripts('/chat-client/worker-common.js', '/chat-client/push.js');
 // Compatibility bridge for an already-installed classic worker. New documents register
 // service-worker-module.js directly. Stage a complete anonymous shell before replacing
-// the incumbent, then reload controlled chat pages so they can register the module worker.
+// the incumbent, then let the next user navigation register the module worker.
 const MANIFEST = '/chat-client/manifest.json';
 let installed;
 self.addEventListener('install', (event) => {
@@ -12,7 +12,7 @@ self.addEventListener('install', (event) => {
             const manifest = await response.json();
             // This temporary cache uses the endpoint URL; the module owns the stable namespace.
             const cache = await caches.open(MANIFEST);
-            const queue = [...manifest.assets];
+            const queue = manifest.assets.filter((asset) => asset.install !== false);
             const results = await Promise.allSettled(
                 Array.from({ length: 6 }, async () => {
                     while (queue.length) {
@@ -47,19 +47,10 @@ self.addEventListener('install', (event) => {
         })(),
     );
 });
-self.addEventListener('activate', (event) => {
-    event.waitUntil(
-        (async () => {
-            await self.clients.claim();
-            for (const client of await self.clients.matchAll({ type: 'window' })) {
-                const url = new URL(client.url);
-                // Fetches from the replacement page wait for activation to finish. Awaiting
-                // navigate here would make activation wait on its own fetch handler.
-                if (isChatNavigation(url.pathname)) client.navigate(client.url).catch(() => {});
-            }
-        })(),
-    );
-});
+// Claim without navigating open documents: an old Blazor composer/upload may still
+// contain work that has not reached durable browser storage. The next user navigation
+// enters the new shell; deployment guidance asks users to finish/copy old drafts first.
+self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
 self.addEventListener('fetch', (event) => {
     if (
         event.request.method !== 'GET' ||
@@ -75,10 +66,23 @@ self.addEventListener('fetch', (event) => {
             if (installed) {
                 const cache = await caches.open(MANIFEST);
                 const url = new URL(event.request.url);
-                if (event.request.mode === 'navigate' && isChatNavigation(url.pathname))
-                    return (await cache.match('/chat-client/index.html')) || fetch(event.request);
-                if (installed.assets.some((asset) => asset.url === url.pathname))
-                    return (await cache.match(url.pathname)) || fetch(event.request);
+                if (
+                    event.request.mode === 'navigate' &&
+                    globalThis.yapWorkerCommon.isChatNavigation(url.pathname)
+                ) {
+                    try {
+                        return await fetch(event.request);
+                    } catch {
+                        return (await cache.match('/chat-client/index.html')) || Response.error();
+                    }
+                }
+                if (installed.assets.some((asset) => asset.url === url.pathname)) {
+                    try {
+                        return await fetch(event.request);
+                    } catch {
+                        return (await cache.match(url.pathname)) || Response.error();
+                    }
+                }
             }
             return fetch(event.request);
         })(),

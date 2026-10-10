@@ -1,9 +1,11 @@
+import './worker-common.js';
 import {
     ACCOUNT_LOCK,
     CHANGE_CHANNEL,
     DB_STORES,
     MEDIA_CACHE_PREFIX,
     SHELL_CACHE_PREFIX,
+    EMOJI_CACHE,
     openDatabase,
 } from './constants.js';
 // Loaded by the single root worker. Never cache personalized HTML, API responses or auth redirects.
@@ -26,7 +28,7 @@ async function shellCache() {
     return caches.open(SHELL_CACHE_PREFIX + (await manifest()).version);
 }
 // Pinned, unmodified artwork outlives shell releases. Change this only with Twemoji.
-const CHAT_EMOJI_CACHE = 'yap-chat-emoji-17.0.3';
+const CHAT_EMOJI_CACHE = EMOJI_CACHE;
 const CHAT_EMOJI_DEFAULTS = [
     '/chat-client/emoji/2764.svg',
     '/chat-client/emoji/1f602.svg',
@@ -34,9 +36,6 @@ const CHAT_EMOJI_DEFAULTS = [
 ];
 const isTwemoji = (path) => /^\/chat-client\/emoji\/[0-9a-f-]+\.svg$/.test(path);
 const emojiCache = (path) => (isTwemoji(path) ? caches.open(CHAT_EMOJI_CACHE) : shellCache());
-export function isChatNavigation(path) {
-    return /^\/(?:chat|lobby)\/?$/.test(path) || /^\/(?:room|dm)\/[^/]+\/?$/.test(path);
-}
 self.addEventListener('install', (event) => {
     event.waitUntil(
         (async () => {
@@ -53,7 +52,7 @@ self.addEventListener('install', (event) => {
                 bridge = null;
             try {
                 // Verify decoded bytes: mixed/stale compressed deployment files must not install.
-                const queue = [...next.assets];
+                const queue = next.assets.filter((asset) => asset.install !== false);
                 const downloads = await Promise.allSettled(
                     Array.from({ length: 6 }, async () => {
                         while (queue.length) {
@@ -146,6 +145,8 @@ self.addEventListener('activate', (event) => {
                 keys
                     .filter(
                         (key) =>
+                            key === 'yap-v2' ||
+                            key === 'yap-media-v1' ||
                             (key.startsWith(SHELL_CACHE_PREFIX) && key !== shell) ||
                             (key.startsWith('yap-chat-emoji-') && key !== CHAT_EMOJI_CACHE),
                     )
@@ -164,7 +165,6 @@ self.addEventListener('message', (event) => {
                 event.source?.postMessage({ type: 'CHAT_OFFLINE_READY', version: value.version }),
             ),
         );
-    if (event.data?.type === 'SKIP_WAITING') event.waitUntil(self.skipWaiting());
 });
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
@@ -176,15 +176,27 @@ self.addEventListener('fetch', (event) => {
         return;
     }
     if (event.request.method !== 'GET' || event.request.headers.has('X-Yap-Chat-Media')) return;
+    // API/hub/auth and retained pages must never depend on an offline shell cache.
+    if (
+        event.request.mode !== 'navigate' &&
+        !/^\/(chat-client|fonts|themes|images|uploads|gif-cache|gif-uploads|media-cache|emoji-packs|emoji-fallback|custom-emojis)\//.test(
+            url.pathname,
+        ) &&
+        !/^\/(app\.css|themes\.css|notif\.mp3|js\/appearance\.js|service-worker[^/]*\.js|icon[^/]*|emoji_selection[^/]*)$/.test(
+            url.pathname,
+        )
+    )
+        return;
+    if (/^\/(api|hubs|_blazor|auth)(?:\/|$)/.test(url.pathname)) return;
     event.respondWith(
         (async () => {
             if (
                 event.request.mode === 'navigate' &&
-                (isChatNavigation(url.pathname) ||
+                (globalThis.yapWorkerCommon.isChatNavigation(url.pathname) ||
                     url.pathname === '/' ||
                     url.pathname === '/pwa-launch')
             ) {
-                if (isChatNavigation(url.pathname))
+                if (globalThis.yapWorkerCommon.isChatNavigation(url.pathname))
                     return (
                         (await (await shellCache()).match('/chat-client/index.html')) ||
                         fetch(event.request)
@@ -208,8 +220,27 @@ self.addEventListener('fetch', (event) => {
             const current = await manifest();
             // Only startup-inventoried anonymous files may enter the shell. API/auth/personalized
             // responses never become cacheable merely because their URL looks like an asset.
-            if (current.assets.some((asset) => asset.url === url.pathname))
-                return (await (await shellCache()).match(url.pathname)) || fetch(event.request);
+            const asset = current.assets.find((asset) => asset.url === url.pathname);
+            if (asset) {
+                const cache = await shellCache();
+                const saved = await cache.match(url.pathname);
+                if (saved) return saved;
+                const response = await fetch(event.request);
+                if (response.ok && asset.install === false) {
+                    const hash = [
+                        ...new Uint8Array(
+                            await crypto.subtle.digest(
+                                'SHA-256',
+                                await response.clone().arrayBuffer(),
+                            ),
+                        ),
+                    ]
+                        .map((b) => b.toString(16).padStart(2, '0'))
+                        .join('');
+                    if (hash === asset.hash) await cache.put(url.pathname, response.clone());
+                }
+                return response;
+            }
             if (
                 /^\/(chat-client\/emoji|emoji-packs|emoji-fallback|custom-emojis)\//.test(
                     url.pathname,
@@ -225,7 +256,7 @@ self.addEventListener('fetch', (event) => {
                 return response;
             }
             return fetch(event.request);
-        })(),
+        })().catch(() => fetch(event.request)),
     );
 });
 async function clearChatData(remove) {

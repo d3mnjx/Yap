@@ -6,7 +6,7 @@ namespace Yap.Offline;
 /// <summary>One startup inventory of anonymous shell files, shared by installation and fetch policy.</summary>
 public sealed class ChatShellManifest
 {
-    public record Asset(string Url, string Hash);
+    public record Asset(string Url, string Hash, bool Install);
     public string Version
     {
         get;
@@ -30,16 +30,21 @@ public sealed class ChatShellManifest
             .Select(path => (Path: path, Url: "/" + Path.GetRelativePath(root, path).Replace('\\', '/')))
             .Where(file => IsShellAsset(file.Url))
             .OrderBy(file => file.Url, StringComparer.Ordinal)
-            .Select(file => new Asset(file.Url, Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(ServedFile(file.Url, file.Path))))))
+            .Select(file => new Asset(file.Url, Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(ServedFile(file.Url, file.Path)))), IsInstallAsset(file.Url)))
             .ToArray() : [];
         Version = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(
-            string.Join("\n", Assets.Select(asset => asset.Url + ":" + asset.Hash)))));
+            string.Join("\n", Assets.Select(asset => asset.Url + ":" + asset.Hash + ":" + asset.Install)))));
     }
+
+    private static bool IsInstallAsset(string path) =>
+        (!path.StartsWith("/themes/", StringComparison.Ordinal) || path.EndsWith(".css")) &&
+        !path.StartsWith("/images/", StringComparison.Ordinal) &&
+        !path.StartsWith("/chat-client/vendor/add-to-homescreen-3.5/assets/img/", StringComparison.Ordinal);
 
     private static bool IsShellAsset(string path)
     {
         // Precompressed siblings are transport variants, not distinct browser resources.
-        if (path.EndsWith(".br") || path.EndsWith(".gz"))
+        if (path.EndsWith(".br") || path.EndsWith(".gz") || path.EndsWith(".md") || path.Contains("/sample/") || path.Contains("/aardvark-"))
             return false;
         if (path.StartsWith("/chat-client/", StringComparison.Ordinal))
             return !(path.StartsWith("/chat-client/emoji/", StringComparison.Ordinal) && path.EndsWith(".svg"));

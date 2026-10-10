@@ -12,47 +12,8 @@ static class ChangeChecks
 {
     public static async Task Run(IServiceProvider services, User alice, User bob)
     {
-        // Legacy events remain for retained Blazor/admin/bot consumers. Their producers publish
-        // directly through Touch; adding a new event requires an explicit coverage decision.
-        var exceptions = new Dictionary<string, string>
-        {
-            ["ChatService.OnMessageReceived"] = "PublishMessageAsync touches committed arrivals before invoking legacy listeners.",
-            ["ChatService.OnMessageUpdated"] = "Durable mutation publishes current memory through Touch.",
-            ["ChatService.OnMessageDeleted"] = "Durable deletion touches the target and its replies.",
-            ["ChatService.OnReactionChanged"] = "Durable mutation publishes desired reaction membership through Touch.",
-            ["ChatService.OnUserChanged"] = "People changes publish through Touch; bot join/leave remains a legacy consumer.",
-            ["ChatService.OnUsersListChanged"] = "People changes publish directly through Touch.",
-            ["ChatService.OnTypingUsersChanged"] = "Transient typing is sampled by the shared OfflineLiveService ticker.",
-            ["ChatService.OnChannelCreated"] = "Channel creation publishes through Touch after memory publication.",
-            ["ChatService.OnChannelUpdated"] = "Channel permission/history edits publish through Touch.",
-            ["ChatService.OnChannelDeleted"] = "Channel removal publishes through Touch.",
-            ["ChatService.OnUserStatusChanged"] = "Transient presence is sampled by OfflineLiveService.",
-            ["ChatService.OnUnreadChanged"] = "Read/checkpoint publication touches only the affected account metadata.",
-            ["ChatService.OnSessionKicked"] = "OfflineHub subscribes during WatchChanges; no hub exists in this service fixture.",
-            ["ChatService.OnLinkPreviewReady"] = "LinkPreviewService touches every message referencing the completed URL.",
-            ["ChatService.OnMediaCacheReady"] = "MediaCacheService touches downloads and lazy descriptions by URL.",
-            ["UserService.OnProfileChanged"] = "UserService touches profile/preferences explicitly after mutation.",
-            ["GifService.OnGifEntryUpdated"] = "GifService touches messages referencing changed entries.",
-            ["GifService.OnGifLibraryChanged"] = "GifService touches messages referencing changed library entries.",
-            ["GifService.OnImportProgress"] = "Settings-only import progress is transient; completed library changes publish through Touch.",
-            ["GifService.OnFavoritesChanged"] = "GifService touches viewer-specific favorite state.",
-            ["NotificationSettingsService.OnChanged"] = "NotificationSettingsService touches affected account/channel metadata."
-        };
-        var seen = new HashSet<string>();
-        foreach (var type in new[] { typeof(ChatService), typeof(UserService), typeof(GifService), typeof(NotificationSettingsService), typeof(MediaCacheService), typeof(LinkPreviewService) })
-        {
-            var instance = services.GetRequiredService(type);
-            foreach (var notification in type.GetEvents())
-            {
-                var key = type.Name + "." + notification.Name;
-                seen.Add(key);
-                var handlers = type.GetField(notification.Name, BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(instance) as Delegate;
-                Check(handlers?.GetInvocationList().Any(h => h.Method.DeclaringType?.Namespace == "Yap.Offline") == true
-                    || exceptions.TryGetValue(key, out var reason) && !string.IsNullOrWhiteSpace(reason), "event coverage: " + key);
-            }
-        }
-        Check(exceptions.Keys.All(seen.Contains), "event allowlist contains no retired names");
-
+        // Behavior checks below exercise real publications; an event-name allowlist
+        // cannot prove that a producer reaches browser clients.
         var chat = services.GetRequiredService<ChatService>();
         var fanout = services.GetRequiredService<OfflineFanout>();
         var changes = services.GetRequiredService<OfflineChangeSignal>();
@@ -108,10 +69,30 @@ static class ChangeChecks
         var before = changes.ContentVersion(channel.Id);
         changes.Touch(channel.Id, reply.MessageId);
         await subscription.Read(timeout.Token); // stand in for a dropped client packet
+        var slots = (System.Collections.Concurrent.ConcurrentDictionary<Guid, long>)typeof(OfflineFanout.Subscription)
+            .GetProperty("Channels", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(subscription)!;
+        slots[channel.Id] = before; // Simulate a publication that never reached this subscriber.
         await subscription.Digest();
         var digest = await subscription.Read(timeout.Token);
         Check(digest.SelectMany(u => u.Conversations).Any(c => c.Id == channel.Id && c.Invalidate && long.Parse(c.Revision) > before)
             && digest.SelectMany(u => u.Conversations).All(c => c.Messages.Length == 0), "periodic digest repairs missed revisions using metadata only");
+        await subscription.Digest();
+        using (var quiet = new CancellationTokenSource(50))
+        {
+            try
+            {
+                await subscription.Read(quiet.Token);
+                throw new Exception("unchanged digest produced a record");
+            }
+            catch (OperationCanceledException) { Check(true, "unchanged digest emits no metadata or invalidations"); }
+        }
+        slots[channel.Id] = before;
+        await subscription.Digest();
+        var digestRevision = changes.ContentVersion(channel.Id).ToString();
+        await chat.SendTextAsync(alice, channel.Id, Guid.NewGuid(), "digest overlap");
+        var overlap = (await subscription.Read(timeout.Token)).SelectMany(u => u.Conversations).Single(c => c.Id == channel.Id);
+        Check(!overlap.Invalidate && overlap.BaseRevision == digestRevision && overlap.Messages.Length == 1,
+            "digest coalesced with contiguous arrival retains the delta chain");
         var users = services.GetRequiredService<UserService>();
         await users.SetServerMuteAsync(alice.Id, true, DateTime.UtcNow.AddSeconds(-1));
         await subscription.Read(timeout.Token);

@@ -23,7 +23,7 @@
     margin: 0;
 }
 
-.back-button {
+.settings-back-button {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -37,7 +37,7 @@
     transition: background-color 0.15s, color 0.15s;
 }
 
-.back-button:hover {
+.settings-back-button:hover {
     background: var(--bg-hover);
     color: var(--text-white);
 }

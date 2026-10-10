@@ -13,7 +13,7 @@ static class MaintenanceChecks
     public static async Task Run(IServiceProvider services, HttpClient http, User user)
     {
         using var mismatch = new HttpRequestMessage(HttpMethod.Get, "/api/chat/bootstrap");
-        mismatch.Headers.Add("X-Yap-Chat-Protocol", "1");
+        mismatch.Headers.Add("X-Yap-Chat-Protocol", "2");
         Check((await http.SendAsync(mismatch)).StatusCode == HttpStatusCode.UpgradeRequired, "unsupported protocol is rejected with 426");
         Check((await http.GetAsync("/api/chat/sync")).StatusCode == HttpStatusCode.NotFound, "diagnostic sync route is retired");
         var config = services.GetRequiredService<IConfiguration>();
@@ -43,6 +43,14 @@ static class MaintenanceChecks
                 && header.GetProperty("readBatch").GetInt32() == 5 && header.GetProperty("typingTimeoutMs").GetInt32() == 2000
                 && header.GetProperty("awayAfterMs").GetInt32() == 15000 && header.GetProperty("allowedExtensions")[0].GetString() == ".png",
                 "bootstrap limits follow server configuration and derive batch headroom");
+            var uploadDirectory = Path.Combine(services.GetRequiredService<IWebHostEnvironment>().WebRootPath, "uploads", "tus-temp");
+            var beforeFiles = Directory.GetFiles(uploadDirectory).Length;
+            using var upload = new HttpRequestMessage(HttpMethod.Post, "/api/tus");
+            upload.Headers.Add("Tus-Resumable", "1.0.0");
+            upload.Headers.Add("Upload-Length", "1000000");
+            upload.Headers.Add("Upload-Metadata", "filename " + Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("blocked.exe")));
+            Check((await http.SendAsync(upload)).StatusCode == HttpStatusCode.BadRequest && Directory.GetFiles(uploadDirectory).Length == beforeFiles,
+                "disallowed upload extension is rejected before creating a temporary upload");
             var chat = services.GetRequiredService<ChatService>();
             var lobby = chat.GetRooms().Single(c => c.IsDefault);
             try
@@ -60,7 +68,12 @@ static class MaintenanceChecks
         File.WriteAllText(Path.Combine(directory, "fixture.css"), "body {color:red}");
         File.WriteAllText(Path.Combine(directory, "emoji", "fixture.svg"), "<svg/>");
         File.WriteAllText(Path.Combine(directory, "fixture.css.br"), "transport variant");
+        Directory.CreateDirectory(Path.Combine(env.WebRootPath, "themes"));
+        File.WriteAllText(Path.Combine(env.WebRootPath, "themes", "scene.png"), "optional scene");
+        File.WriteAllText(Path.Combine(directory, "README.md"), "documentation");
         var first = new ChatShellManifest(env);
+        Check(first.Assets.Single(a => a.Url == "/themes/scene.png").Install == false && first.Assets.All(a => !a.Url.EndsWith(".md")),
+            "optional artwork is inventoried for on-use caching and documentation is excluded");
         File.AppendAllText(Path.Combine(directory, "fixture.css"), " ");
         var next = new ChatShellManifest(env);
         Check(first.Version != next.Version && first.Assets.Any(a => a.Url.EndsWith("fixture.css"))

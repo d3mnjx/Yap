@@ -50,7 +50,7 @@ export function registerWorker() {
             watchWorkerUpdates(registration);
             return registration;
         } catch (error) {
-            if (!existing) throw error;
+            if (!existing?.active?.scriptURL.includes('/service-worker-module.js')) throw error;
             watchWorkerUpdates(existing);
             return existing;
         }

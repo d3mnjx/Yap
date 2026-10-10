@@ -54,7 +54,8 @@ static class ConnectionChecks
         Check(chat.GetUserStatus(alice.Username) == UserStatus.Away, "circuit drop applies auto-away at configured grace");
         clock.Advance(policy.CircuitRetention - policy.DisconnectGrace);
         Check(!chat.HasSession(state.SessionId), "circuit drop removes presence at configured retention");
-        await chat.AddUserAsync(state.SessionId, alice.Id, alice.Username, circuitId: circuit.Id);
+        await handler.OnConnectionUpAsync(circuit, default);
+        Check(chat.HasSession(state.SessionId) && !chat.IsPageVisible(alice.Username), "warm circuit recreates expired presence without asserting visibility");
         await handler.OnCircuitClosedAsync(circuit, default);
         Check(!chat.HasSession(state.SessionId), "circuit explicit close removes presence immediately");
 
@@ -117,6 +118,57 @@ static class ConnectionChecks
         await live.Close("hub-dropped", alice);
         await live.Close("hub-foreground", alice);
         await live.Close("bob-close", bob);
+        clock.Advance(policy.DisconnectGrace);
+        var joined = 0;
+        var left = 0;
+        var callbacksUnderLock = false;
+        var gate = typeof(ChatService).GetField("_connectionGate", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(chat)!;
+        void Changed(string name, bool up)
+        {
+            callbacksUnderLock |= Monitor.IsEntered(gate);
+            if (name != alice.Username)
+                return;
+            if (up)
+                joined++;
+            else
+                left++;
+        }
+        void People() => callbacksUnderLock |= Monitor.IsEntered(gate);
+        chat.OnUserChanged += Changed;
+        chat.OnUsersListChanged += People;
+        try
+        {
+            await Join("review-join");
+            Check(joined == 0, "first join notification waits for grace");
+            clock.Advance(policy.DisconnectGrace);
+            Check(joined == 1, "stable first join announces once");
+            for (var i = 0; i < 3; i++)
+            {
+                await live.Close("review-join", alice);
+                Check(!chat.HasActiveSession(alice.Username), "close removes presence before notification grace");
+                clock.Advance(policy.DisconnectGrace - TimeSpan.FromMilliseconds(1));
+                await Join("review-join");
+            }
+            clock.Advance(policy.DisconnectGrace);
+            Check(joined == 1 && left == 0, "reload and Settings returns cancel join/leave noise");
+            await live.Close("review-join", alice);
+            clock.Advance(policy.DisconnectGrace);
+            Check(left == 1, "sustained absence emits one leave");
+            await Join("review-join");
+            clock.Advance(policy.DisconnectGrace);
+            Check(joined == 2, "return after sustained absence emits a fresh join");
+            await chat.ConnectionDown("chat:review-join");
+            clock.Advance(policy.DisconnectGrace);
+            Check(left == 2 && chat.HasSession("chat:review-join"), "disconnect announcements use grace independently of retained session lifetime");
+            await Join("review-return");
+            clock.Advance(policy.DisconnectGrace);
+            Check(joined == 3, "return while a disconnected session is retained announces after sustained absence");
+            await live.Close("review-return", alice);
+            clock.Advance(policy.HubRetention + policy.DisconnectGrace);
+            Check(!callbacksUnderLock, "lifecycle and timer notifications run outside the connection gate");
+        }
+        finally { chat.OnUserChanged -= Changed; chat.OnUsersListChanged -= People; }
+
     }
 
     private static Circuit CircuitWithId(string id)

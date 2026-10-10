@@ -1,3 +1,4 @@
+import { MEDIA_CACHE_PREFIX, SHELL_CACHE_PREFIX, EMOJI_CACHE } from '/chat-client/constants.js';
 // Debug helpers for the "Local Cache (PWA)" settings section.
 // Reads the browser's Cache Storage directly — the same store the service worker
 // (service-worker.js) writes to — so the listing is genuine client-side proof of local caching.
@@ -47,7 +48,11 @@ export async function getCacheStorageReport() {
             groupBytes += bytes;
         }
         entries.sort((a, b) => b.bytes - a.bytes); // largest first
-        groups.push({ name, count: entries.length, totalBytes: groupBytes, entries });
+        const clearable = name.startsWith(MEDIA_CACHE_PREFIX);
+        const label = clearable ? 'Media — saved chat attachments'
+            : name.startsWith(SHELL_CACHE_PREFIX) ? 'Chat app — offline interface'
+            : name === EMOJI_CACHE ? 'Emoji — downloaded artwork' : name;
+        groups.push({ name, label, clearable, count: entries.length, totalBytes: groupBytes, entries });
         totalBytes += groupBytes;
         totalCount += entries.length;
     }

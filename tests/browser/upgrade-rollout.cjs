@@ -110,8 +110,8 @@ function proxyHeaders(req) {
             async (req, res) => {
                 if (
                     holdInstall &&
-                    req.url ===
-                        '/chat-client/vendor/add-to-homescreen-3.5/assets/img/sample/aardvark-homepage.png'
+                    req.headers['sec-fetch-dest'] !== 'script' &&
+                    req.url === '/chat-client/constants.js'
                 ) {
                     installRequested = true;
                     await installGate;
@@ -179,6 +179,14 @@ function proxyHeaders(req) {
         );
         const context = await browser.newContext({ ignoreHTTPSErrors: true }),
             page = await fixturePage(context);
+        // The original shell used a CDN global. Supply the pinned test dependency so
+        // provider outages cannot silently disable the baseline upload control.
+        await context.route('**/npm/tus-js-client@*/dist/tus.min.js', (route) =>
+            route.fulfill({
+                contentType: 'text/javascript',
+                path: path.resolve(__dirname, '../../node_modules/tus-js-client/dist/tus.min.js'),
+            }),
+        );
         const name = 'upgrade' + Date.now().toString(36);
         await page.goto(origin + '/login');
         await page.locator('.username-input').fill(name);
@@ -271,6 +279,8 @@ function proxyHeaders(req) {
         await page.waitForFunction(() =>
             document.querySelector('#connection')?.textContent.startsWith('Synced'),
         );
+        const installDeadline = Date.now() + 15000;
+        while (!installRequested && Date.now() < installDeadline) await delay(50);
         assert(installRequested, 'Fixture must hold the new worker installation');
         assert(
             !(await page.locator('#connection').innerText()).includes('available offline'),
@@ -366,6 +376,19 @@ function proxyHeaders(req) {
                 k.startsWith(window.fixtureConstants.SHELL_CACHE_PREFIX),
             ),
         );
+        // Firefox's Playwright routing layer bypasses normal offline navigation handling.
+        // The original tus dependency is loaded; remove that fixture before testing workers.
+        await context.unroute('**/npm/tus-js-client@*/dist/tus.min.js');
+        // ready/cache existence can still describe the bridge during a registration race.
+        // Offline navigation requires this document to be controlled by the module worker.
+        await page.waitForFunction(
+            () =>
+                navigator.serviceWorker.controller?.scriptURL.includes(
+                    '/service-worker-module.js',
+                ) &&
+                document.querySelector('#connection')?.textContent === 'Synced · available offline',
+        );
+        console.log('PASS module worker controls the document before offline navigation');
         await context.setOffline(true);
         await page.reload();
         await page.getByText('Existing DM', { exact: true }).waitFor();
@@ -410,14 +433,14 @@ function proxyHeaders(req) {
         await stop();
         await start(old);
         await context.setOffline(false);
-        await page.reload();
+        await page.goto(origin + '/');
         await page.locator('.message-input:enabled').waitFor({ timeout: 15000 });
         assert.equal(
             await page.locator('#draft').count(),
             0,
-            'One online refresh must leave the cached rewrite after rollback',
+            'Online root navigation must leave the cached rewrite after rollback',
         );
-        console.log('PASS original rollback on same database/cookie and one refresh');
+        console.log('PASS original rollback on same database/cookie through online root');
         // Returning to the candidate must preserve its existing browser storage too.
         await stop();
         await start(next);
@@ -431,6 +454,8 @@ function proxyHeaders(req) {
         await page.waitForFunction(() =>
             document.querySelector('#connection')?.textContent.startsWith('Synced'),
         );
+        // Root is the rollback escape route; select the original DM again after re-upgrade.
+        await page.goto(origin + '/dm/' + name + 'b');
         await page.getByText('First message after upgrade', { exact: true }).waitFor();
         await sibling.reload();
         await sibling.waitForFunction(
@@ -454,9 +479,11 @@ function proxyHeaders(req) {
         console.log('PASS ' + type.name() + ' ' + browser.version());
     } finally {
         releaseInstall();
+        // Close proxy sockets before browser shutdown: a stalled navigation otherwise
+        // leaves Chromium waiting on a connection the fixture owns.
+        for (const s of sockets) s.destroy();
         await browser?.close();
         await stop();
-        for (const s of sockets) s.destroy();
         await new Promise((r) => (proxy ? proxy.close(r) : r()));
         console.log('Private rehearsal state: ' + root);
     }

@@ -239,7 +239,12 @@ if (
             window.store = store;
             window.owner = await store.readState();
             const { createHistory } = await import('/chat-client/history.js');
-            const old = { id: 'old', timestamp: '2026-01-01T00:00:00Z', content: 'removed' };
+            const old = {
+                id: 'old',
+                timestamp: '2026-01-01T00:00:00Z',
+                content: 'removed',
+                author: { id: 'fixture' },
+            };
             const recent = { id: 'recent', timestamp: '2026-02-01T00:00:00Z', content: 'current' };
             window.a = { id: 'a', contentVersion: 1, messages: [recent], hasMore: true };
             window.b = { id: 'b', contentVersion: 1, messages: [], hasMore: false };
@@ -247,7 +252,15 @@ if (
             window.snapshot = { serverEpoch: 'server', conversations: [a, b] };
             await store.saveMetadata(
                 'history',
-                { a: { messages: [old], targets: [], hasMore: false, version: 'server:1' } },
+                {
+                    a: { messages: [old], targets: [], hasMore: false, version: 'server:1' },
+                    b: {
+                        messages: [{ id: 'broken', authorId: 'fixture' }],
+                        targets: [],
+                        hasMore: false,
+                        version: 'server:1',
+                    },
+                },
                 owner,
             );
             window.requests = 0;
@@ -262,6 +275,8 @@ if (
                 notice: () => {},
             });
             await historyCache.restore(snapshot);
+            if (historyCache.view(b).messages.some((m) => m.id === 'broken'))
+                throw new Error('Author-less history survived protocol upgrade');
             if (!historyCache.view(a).messages.some((m) => m.id === 'old'))
                 throw new Error('Offline baseline cache was lost');
             a = { ...a, contentVersion: 2 };

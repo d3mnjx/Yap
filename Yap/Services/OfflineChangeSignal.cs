@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace Yap.Offline;
+namespace Yap.Services;
 
 public enum OfflineChangeKind
 {
