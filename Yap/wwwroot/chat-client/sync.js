@@ -12,8 +12,16 @@ export function mergeUpdate(previous, update) {
             newServer
                 ? {
                       ...c,
-                      messages: [],
-                      sync: { loaded: false, metadata: 0, records: {}, removed: {}, window: 0 },
+                      // Process counters restart, cached content does not. Keep it readable
+                      // until a complete window validates it; it cannot acknowledge reads.
+                      sync: {
+                          loaded: false,
+                          stale: true,
+                          metadata: 0,
+                          records: {},
+                          removed: {},
+                          window: 0,
+                      },
                   }
                 : c,
         ]),
@@ -61,8 +69,12 @@ export function mergeUpdate(previous, update) {
             (patch.window ||
                 (patch.baseRevision && sync.loaded && sync.revision === patch.baseRevision));
         if (patch.invalidate && sync.revision !== patch.revision && sequence >= sync.window) {
-            for (const [id] of messages)
-                if ((sync.records[id] || 0) <= sequence) messages.delete(id);
+            // Restart recovery preserves unrestricted cached windows. Access removals
+            // still delete the conversation, and restricted histories clear immediately.
+            const retain = sync.stale && !c.historyLimited;
+            if (!retain)
+                for (const [id] of messages)
+                    if ((sync.records[id] || 0) <= sequence) messages.delete(id);
             sync.loaded = false;
             sync.revision = undefined;
             sync.window = sequence;
@@ -76,6 +88,7 @@ export function mergeUpdate(previous, update) {
                 }
             sync.window = sequence;
             sync.loaded = true;
+            sync.stale = false;
             sync.revision = patch.revision;
             c.hasMore = patch.state.hasMore;
         } else if (patch.baseRevision) {

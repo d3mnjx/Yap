@@ -57,7 +57,7 @@ An authenticated `/` without a return URL serves the chat shell directly. One `/
 | Guard | Lifetime | What it prevents |
 | --- | --- | --- |
 | Account `epoch` | Persisted local account lease; replaced after purge/account replacement | An old asynchronous action writing into another account's storage. Capture the owner before awaiting and validate it inside the transaction. |
-| Snapshot `serverEpoch` + `sequence` | Server process and its increasing capture sequence, applied per conversation and record | Older responses or sibling tabs replacing newer authority. Retired server epochs are remembered; this is not a durable delta cursor. |
+| Snapshot `serverEpoch` + `sequence` | Server process and its increasing capture sequence, applied per conversation and record | Older responses or sibling tabs replacing newer authority. Retired server epochs are remembered; a new epoch resets ordering guards while retaining unrestricted recent messages until window revalidation. These stale windows cannot acknowledge reads. This is not a durable delta cursor. |
 | `connectionGeneration` | Current page connection attempt | Callbacks from a stopped connection changing the new session. Increment before stopping, because stopping can itself invoke callbacks. |
 | `renderGeneration` | Current page render | An earlier IndexedDB read or draft restoration overwriting a newer navigation/render. |
 
@@ -81,7 +81,7 @@ Durable sends commit the message, receipt and recipient unread checkpoints in on
 
 ## Shell changes and validation
 
-Bump `CHAT_SHELL` in `worker.js` whenever shipped shell assets change; add new runtime modules to its asset list. Current shell is **v39**, IndexedDB schema **4**. Activation removes old shell caches while retaining IndexedDB, account media and the separate `yap-chat-emoji-17.0.3` artwork cache. Only a Twemoji pin change replaces the artwork cache; custom packs/overrides and catalog metadata retain shell-scoped caching. The initial move preserves pinned SVGs already cached by v35. `worker-updates.js` is loaded independently by HTML so an incumbent worker serving an older app can still activate its replacement. APIs, authentication responses and personalized HTML must never enter the static shell cache.
+Bump `CHAT_SHELL` in `worker.js` whenever shipped shell assets change; add new runtime modules to its asset list. Current shell is **v40**, IndexedDB schema **4**. Activation removes old shell caches while retaining IndexedDB, account media and the separate `yap-chat-emoji-17.0.3` artwork cache. Only a Twemoji pin change replaces the artwork cache; custom packs/overrides and catalog metadata retain shell-scoped caching. The initial move preserves pinned SVGs already cached by v35. `worker-updates.js` is loaded independently by HTML so an incumbent worker serving an older app can still activate its replacement. APIs, authentication responses and personalized HTML must never enter the static shell cache.
 
 Deploy complete publish output, including compressed assets, while preserving private Data/configuration/uploads. Follow the [deployment and rollback guide](../GHCR-DEPLOYMENT-GUIDE.md#upgrading-yap-to-the-offline-client). The database/account lock/channel use `yap-chat-v1`; caches use `yap-chat-shell-*`, `yap-chat-media-*` and `yap-chat-emoji-*`. DOM events use `chat-*`; worker constants use `CHAT_*`. Keep deployed namespaces stable. The first release starts fresh browser storage; pre-release prototype queues have no migration path. Server accounts/messages remain independent.
 

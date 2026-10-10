@@ -44,7 +44,8 @@ export function createWindows({ identity, snapshot, current, accepted }) {
         } finally {
             if (active === job) active = null;
             clearTimeout(timer);
-            timer = setTimeout(fill, 250);
+            // Yield to foreground work without adding a fixed gap per conversation.
+            timer = setTimeout(fill, 0);
         }
     }
     document.addEventListener('chat-foreground', (event) => {

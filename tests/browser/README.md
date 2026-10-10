@@ -44,6 +44,8 @@ The default suites run sequentially and stop on the first failure. `YAP_TEST_ART
 | Suites | Purpose / prerequisites |
 | --- | --- |
 | **Default:** `sync-protocol`, `communication`, `review-recovery`, `review-composer`, `text-sending`, `history-interface`, `rich-content`, `message-actions`, `pwa-integration`, `local-http` | Protocol ordering, cached credentials, blocked catalog/window independence, one-POST writes, durable sends, upload cancellation/timeouts and independent-conversation progress, history and reply races, offline media/actions, PWA and worker failure. Use the isolated origin; create their own synthetic accounts. |
+| `locale` | Browser timezone/locale detection with US and Czech contexts, clock formatting and saved reload. Uses the isolated origin. |
+| `restart-cache` | Requires `YAP_TEST_PACKAGE` (complete publish output). Copies it into a private fixture, owns port 8055, restarts the real server, blocks recovery, checks offline navigation and later deletion reconciliation. |
 | `appearance` | Theme/font/scene before app modules, Settings return with older cached preferences and neutral offline shell. Uses the isolated origin. |
 | `emoji-cache` | Real root/client workers on a disposable static origin; v35 SVG migration, direct/warmed cache entries, no SVG requests across a shell-only upgrade, offline reuse, separate custom caching, and replacement on a changed artwork pin. No app fixture needed; `YAP_BROWSER=firefox` also supported. |
 | `emoji-loading` | First-use emoji selection with artwork/catalog unavailable; late custom catalog and quick reactions repair retained rows/pickers; cached preferences, direct SVG decode, compound emoji, offline reload and native fallback. Uses the isolated origin with synthetic accounts. |

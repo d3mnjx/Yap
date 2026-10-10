@@ -100,6 +100,62 @@ const path = require('node:path');
         ['fresh'],
     );
     console.log('PASS server restart establishes new ordering');
+    // Other cached conversations stay readable even if recovery is interrupted.
+    let cached = mergeUpdate(
+        null,
+        update(
+            90,
+            [
+                patch('a', [message('active')], { window: ['active'] }),
+                patch('b', [message('cached')], { window: ['cached'] }),
+                patch('restricted', [message('secret')], { window: ['secret'] }),
+                patch('revoked', [message('removed')], { window: ['removed'] }),
+            ],
+            { state: { user: author, people: [author] }, reset: true },
+        ),
+    );
+    cached = mergeUpdate(
+        cached,
+        update(
+            1,
+            [
+                patch('a', [message('active')], { window: ['active'] }),
+                patch('b', [], { invalidate: true }),
+                patch('restricted', [], {
+                    invalidate: true,
+                    state: { id: 'restricted', historyLimited: true },
+                }),
+            ],
+            { serverEpoch: 'server2', reset: true, state: { user: author, people: [author] } },
+        ),
+    );
+    assert.equal(cached.conversations.find((c) => c.id === 'b').messages[0].id, 'cached');
+    assert.equal(cached.conversations.find((c) => c.id === 'b').sync.loaded, false);
+    assert.equal(cached.conversations.find((c) => c.id === 'restricted').messages.length, 0);
+    assert(!cached.conversations.some((c) => c.id === 'revoked'));
+    cached = mergeUpdate(
+        cached,
+        update(2, [patch('b', [], { invalidate: true, revision: 'r2' })], {
+            serverEpoch: 'server2',
+        }),
+    );
+    assert.equal(cached.conversations.find((c) => c.id === 'b').messages[0].id, 'cached');
+    cached = mergeUpdate(
+        cached,
+        update(
+            3,
+            [patch('b', [message('replacement')], { window: ['replacement'], revision: 'r2' })],
+            { serverEpoch: 'server2' },
+        ),
+    );
+    assert.deepEqual(
+        cached.conversations.find((c) => c.id === 'b').messages.map((m) => m.id),
+        ['replacement'],
+    );
+    assert.equal(cached.conversations.find((c) => c.id === 'b').sync.stale, false);
+    console.log(
+        'PASS restart retains inactive caches until validation, while restrictions and revocations clear content',
+    );
     for (let i = 2; i < 302; i++) {
         const previousId = state.conversations[0].messages[0].id;
         const revision = state.conversations[0].sync.revision;
