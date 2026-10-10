@@ -61,7 +61,7 @@ public static class OfflineContent
         IConfiguration config)
     {
         var user = CurrentUser(http);
-        string Source(string value) => Regex.Match(emoji.GetEmojiHtml(value).Value, "src=\"([^\"]+)\"").Groups[1].Value.Replace("https://cdn.jsdelivr.net/gh/jdecked/twemoji@latest/assets/svg/", "/chat-client/emoji/");
+        string Source(string value) => Regex.Match(emoji.GetEmojiHtml(value).Value, "src=\"([^\"]+)\"").Groups[1].Value;
         var categories = custom.Packs.Select(p => new
         {
             key = p.Key,

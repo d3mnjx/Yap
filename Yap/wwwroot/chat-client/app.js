@@ -717,6 +717,9 @@ $('#signout').onclick = async () => {
     location.href = '/auth/signout';
 };
 window.addEventListener('popstate', render);
+document.addEventListener('chat-content', () => {
+    if (snapshot) render();
+});
 function acceptSnapshot(
     data,
     attemptGeneration,

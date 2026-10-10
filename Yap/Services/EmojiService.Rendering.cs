@@ -13,14 +13,14 @@ namespace Yap.Services;
 /// (emoji-datasource-apple PNGs) or Twemoji (SVGs) — with self-hosted overrides in
 /// <c>wwwroot/emoji-fallback/</c> taking priority in both modes. The standalone Twemoji methods in
 /// <c>EmojiService.cs</c> (<c>ConvertEmojisToTwemoji</c> / <c>ProcessMessageContent</c> /
-/// <c>GetPickerEmojiHtml</c>) are an untouched full-revert backup.
+/// <c>GetPickerEmojiHtml</c>) retain the older rendering API.
 ///
 /// Resolution order for each emoji:
 ///   1. self-hosted override  (wwwroot/emoji-fallback/{codepoint}.png) — for emoji missing or
 ///      outdated in the chosen set (e.g. new Unicode releases). Drop a file named by its codepoint
 ///      and it is picked up automatically (folder scanned once at startup).
-///   2. the chosen set's CDN  (Apple emoji-datasource, or Twemoji — per ActiveEmojiStyle).
-///   3. Twemoji CDN           (final onerror fallback; skipped when Twemoji is already the source).
+///   2. the chosen artwork set (local pinned Twemoji, or Apple CDN — per ActiveEmojiStyle).
+///   3. local Twemoji artwork (final onerror fallback; skipped when Twemoji is already the source).
 ///
 /// Apple filename convention (verified against the CDN): the fully-qualified <c>unified</c>
 /// codepoint, lowercased — FE0F kept, each codepoint zero-padded to >=4 (heart = 2764-fe0f,
@@ -43,10 +43,10 @@ public partial class EmojiService
     private const string AppleCdnBase = "https://cdn.jsdelivr.net/npm/emoji-datasource-apple@16.0.0/img/apple/64";
     private static string AppleImgUrl(string codePoint) => $"{AppleCdnBase}/{codePoint}.png";
 
-    // Self-hosted overrides served from wwwroot/emoji-fallback/, and the Twemoji CDN used as the
-    // Twemoji source / universal final fallback.
+    // Self-hosted overrides served from wwwroot/emoji-fallback/, and the local Twemoji artwork used as the
+    // pinned Twemoji source / universal final fallback.
     private const string LocalFallbackUrlBase = "/emoji-fallback";
-    private const string TwemojiCdnBase = "https://cdn.jsdelivr.net/gh/jdecked/twemoji@latest/assets/svg";
+    private const string TwemojiLocalBase = "/chat-client/emoji";
 
     // Memoized <img> markup for picker cells (lazy; the style is a const so a rebuild rebuilds it).
     private readonly ConcurrentDictionary<string, MarkupString> _emojiCache = new();
@@ -61,9 +61,9 @@ public partial class EmojiService
 
     /// <summary>Twin of <see cref="GetPickerEmojiHtml"/> for the emoji picker grid/sidebar.</summary>
     /// <remarks>No Twemoji <c>onerror</c> fallback: every picker emoji comes from the curated
-    /// EmojiData set and is present in the chosen CDN, so the fallback would only bloat ~1400
+    /// EmojiData set and is present in the chosen artwork set, so the fallback would only bloat ~1400
     /// cached cells. Cells are <c>loading="lazy"</c> — load-bearing for the mounted-hidden
-    /// picker: inside <c>display:none</c> a lazy image never intersects, so ~1000 CDN fetches
+    /// picker: inside <c>display:none</c> a lazy image never intersects, so ~1000 image fetches
     /// wait until the picker actually opens and cells scroll near view.</remarks>
     public MarkupString GetEmojiHtml(string emoji)
         => _emojiCache.GetOrAdd(emoji, e => ConvertEmojis(e, forceSmall: true, withFallback: false, lazyImg: true));
@@ -72,7 +72,7 @@ public partial class EmojiService
     /// Converts Unicode emoji in <paramref name="text"/> to <c>&lt;img&gt;</c> tags for the active
     /// emoji set (<see cref="ActiveEmojiStyle"/>). Custom <c>:shortcode:</c> emoji and all sizing
     /// behaviour match the Twemoji backup path. When <paramref name="withFallback"/> is true, each
-    /// Unicode-emoji image gets an <c>onerror</c> handler that falls back to the Twemoji CDN.
+    /// Unicode-emoji image gets an <c>onerror</c> handler that falls back to the local Twemoji artwork.
     /// <paramref name="lazyImg"/> adds <c>loading="lazy"</c> — picker cells only; message content
     /// stays eager so emoji never pop in while reading.
     /// </summary>
@@ -205,14 +205,14 @@ public partial class EmojiService
 
     /// <summary>
     /// Builds an emoji <c>&lt;img&gt;</c>: self-hosted override if present, otherwise the active set's
-    /// CDN (<see cref="ActiveEmojiStyle"/> — Apple or Twemoji), with an optional <c>onerror</c>
-    /// fallback to the Twemoji CDN.
+    /// artwork (<see cref="ActiveEmojiStyle"/> — Apple or Twemoji), with an optional <c>onerror</c>
+    /// fallback to the local Twemoji artwork.
     /// </summary>
     private string BuildEmojiImg(string emoji, string appleCp, string size, string verticalAlign, bool withFallback, bool lazyImg = false)
     {
         var twemojiCp = GetCodePoint(emoji); // Twemoji naming (FE0F stripped, minimal width)
         var twemojiUrl = (!string.IsNullOrEmpty(twemojiCp) && twemojiCp != "fffd")
-            ? $"{TwemojiCdnBase}/{twemojiCp}.svg"
+            ? $"{TwemojiLocalBase}/{twemojiCp}.svg"
             : null;
 
         // The chosen set for everything that isn't a self-hosted override.

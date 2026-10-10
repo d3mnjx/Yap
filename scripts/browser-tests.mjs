@@ -22,6 +22,8 @@ const allowed = new Set([
     ...standardSuites,
     'composer-parity',
     'emoji-parity',
+    'emoji-loading',
+    'emoji-cache',
     'gif-parity',
     'action-parity',
     'gallery-parity',

@@ -106,7 +106,7 @@ GIF favorite feedback and explicit presence status still await server acceptance
 
 Relevant code: [pending changes](../Yap/wwwroot/chat-client/storage.js), [sender coordination](../Yap/wwwroot/chat-client/sender.js), [emoji data and grid](../Yap/wwwroot/chat-client/content.js), [GIF favorites](../Yap/wwwroot/chat-client/gifs.js), and [presence](../Yap/wwwroot/chat-client/live.js).
 
-These performance limitations remain in shell v34. Server-side snapshot construction is another potential scaling cost, but this small workload does not measure server capacity.
+These measurements describe frozen v33 (the same artwork behavior remained in v34). Shell v35 replaces the artwork bundle with individual SVGs and local metadata, and repairs the catalog/render race. These timings are not measurements of v35; picker grid construction and physical-phone performance still need measurement. Server fan-out has also since been redesigned; see [the separate fan-out measurements](measurements/fanout/README.md).
 
 ## Four-week PWA return and antiforgery
 

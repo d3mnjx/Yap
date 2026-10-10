@@ -1,5 +1,14 @@
 // Loaded by the single root worker. Never cache personalized HTML, API responses or auth redirects.
-const CHAT_SHELL = 'yap-chat-shell-v34';
+const CHAT_SHELL = 'yap-chat-shell-v36';
+// Pinned, unmodified artwork outlives shell releases. Change this only with Twemoji.
+const CHAT_EMOJI_CACHE = 'yap-chat-emoji-17.0.3';
+const CHAT_EMOJI_DEFAULTS = [
+    '/chat-client/emoji/2764.svg',
+    '/chat-client/emoji/1f602.svg',
+    '/chat-client/emoji/1f44d.svg',
+];
+const isTwemoji = (path) => /^\/chat-client\/emoji\/[0-9a-f-]+\.svg$/.test(path);
+const emojiCacheName = (path) => (isTwemoji(path) ? CHAT_EMOJI_CACHE : CHAT_SHELL);
 function isChatNavigation(path) {
     return /^\/(?:chat|lobby)\/?$/.test(path) || /^\/(?:room|dm)\/[^/]+\/?$/.test(path);
 }
@@ -12,7 +21,7 @@ const CHAT_ASSETS = [
     '/chat-client/composer.js',
     '/emoji_selection_greys.png',
     '/emoji_selection_color.png',
-    '/chat-client/emoji/artwork.json',
+    '/chat-client/emoji/catalog.js',
     '/chat-client/index.html',
     '/chat-client/api.js',
     '/chat-client/sender.js',
@@ -103,12 +112,7 @@ self.addEventListener('install', (event) => {
         caches.open(CHAT_SHELL).then(async (cache) => {
             // Install only the executable shell. Artwork and install-guide assets cache on
             // use, so initial setup does not compete with chat for large optional downloads.
-            await cache.addAll(
-                CHAT_ASSETS.filter(
-                    (path) =>
-                        !path.includes('/add-to-homescreen-') && !path.endsWith('/artwork.json'),
-                ),
-            );
+            await cache.addAll(CHAT_ASSETS.filter((path) => !path.includes('/add-to-homescreen-')));
             // Fonts are part of the shell; scene images cache when the browser requests them.
             const dependencies = new Set();
             for (const path of ['/app.css', '/themes.css', '/themes/teahouse.css']) {
@@ -117,20 +121,82 @@ self.addEventListener('install', (event) => {
                     if (match[1].startsWith('/fonts/')) dependencies.add(match[1]);
             }
             await cache.addAll([...dependencies]);
+            const emoji = await caches.open(CHAT_EMOJI_CACHE);
+            for (const path of CHAT_EMOJI_DEFAULTS) {
+                if (!(await emoji.match(path)))
+                    await emoji.add(
+                        new Request(new URL(path, self.location.origin), { cache: 'reload' }),
+                    );
+            }
         }),
     );
 });
+// Personal recents arrive after the authenticated catalog. Bound and serialize warming
+// so it cannot flood the connection with thousands of optional image requests.
+let emojiWarming = Promise.resolve();
+self.addEventListener('message', (event) => {
+    if (event.data?.type !== 'chat-warm-emoji' || !Array.isArray(event.data.paths)) return;
+    const paths = [...new Set(event.data.paths)]
+        .slice(0, 26)
+        .filter(
+            (path) =>
+                typeof path === 'string' &&
+                /^\/(chat-client\/emoji|emoji-packs|emoji-fallback|custom-emojis)\/[a-zA-Z0-9_./-]+\.(svg|png|gif|webp|jpg|jpeg)$/.test(
+                    path,
+                ) &&
+                !path.includes('..'),
+        );
+    emojiWarming = emojiWarming
+        .catch(() => {})
+        .then(async () => {
+            for (const path of paths) {
+                const cache = await caches.open(emojiCacheName(path));
+                if (await cache.match(path)) continue;
+                try {
+                    const response = await fetch(path, {
+                        signal: AbortSignal.timeout(5000),
+                        priority: 'low',
+                        cache: isTwemoji(path) ? 'reload' : 'default',
+                    });
+                    if (response.ok) await cache.put(path, response);
+                } catch {
+                    /* Optional artwork can be fetched on next use. */
+                }
+            }
+        });
+    event.waitUntil(emojiWarming);
+});
 self.addEventListener('activate', (event) => {
     event.waitUntil(
-        caches
-            .keys()
-            .then((keys) =>
-                Promise.all(
-                    keys
-                        .filter((key) => key.startsWith('yap-chat-shell-') && key !== CHAT_SHELL)
-                        .map((key) => caches.delete(key)),
-                ),
-            ),
+        (async () => {
+            const keys = await caches.keys();
+            // v35 shipped this exact pin in the shell cache. Preserve already downloaded SVGs
+            // during the move, but never import those bytes into a future artwork version.
+            if (
+                CHAT_EMOJI_CACHE === 'yap-chat-emoji-17.0.3' &&
+                keys.includes('yap-chat-shell-v35')
+            ) {
+                const old = await caches.open('yap-chat-shell-v35');
+                const emoji = await caches.open(CHAT_EMOJI_CACHE);
+                for (const request of await old.keys()) {
+                    const url = new URL(request.url);
+                    if (url.origin !== self.location.origin || !isTwemoji(url.pathname)) continue;
+                    if (!(await emoji.match(request))) {
+                        const response = await old.match(request);
+                        if (response?.ok) await emoji.put(request, response);
+                    }
+                }
+            }
+            await Promise.all(
+                keys
+                    .filter(
+                        (key) =>
+                            (key.startsWith('yap-chat-shell-') && key !== CHAT_SHELL) ||
+                            (key.startsWith('yap-chat-emoji-') && key !== CHAT_EMOJI_CACHE),
+                    )
+                    .map((key) => caches.delete(key)),
+            );
+        })(),
     );
 });
 // A controller has completed installation; the legacy push-only worker cannot send this ack.
@@ -196,10 +262,13 @@ self.addEventListener('fetch', (event) => {
         /^\/(chat-client\/emoji|emoji-packs|emoji-fallback|custom-emojis)\//.test(url.pathname)
     ) {
         event.respondWith(
-            caches.open(CHAT_SHELL).then(async (cache) => {
+            caches.open(emojiCacheName(url.pathname)).then(async (cache) => {
                 const cached = await cache.match(event.request);
                 if (cached) return cached;
-                const response = await fetch(event.request);
+                // A new artwork pin must bypass an older HTTP-cache entry at the same URL.
+                const response = await fetch(event.request, {
+                    cache: isTwemoji(url.pathname) ? 'reload' : 'default',
+                });
                 if (response.ok) await cache.put(event.request, response.clone());
                 return response;
             }),

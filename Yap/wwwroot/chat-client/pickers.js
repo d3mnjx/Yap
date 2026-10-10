@@ -11,7 +11,8 @@ let factories,
     combined,
     active = 'emoji',
     opened = null,
-    popup;
+    popup,
+    popupRefresh;
 const backdrop = el('div', 'emoji-picker-backdrop');
 backdrop.hidden = true;
 // Chat isolates its stacking context for theme layers; a body-level backdrop would cover its picker.
@@ -29,6 +30,7 @@ export function closePickers() {
     if (panel) panel.hidden = true;
     popup?.remove();
     popup = null;
+    popupRefresh = null;
     backdrop.hidden = true;
 }
 function layout() {
@@ -87,8 +89,9 @@ export function togglePicker(kind) {
     for (const key of mobile.matches ? ['emoji', 'gif'] : [next]) view(key).opened?.();
     view(mobile.matches ? (active === 'gifs' ? 'gif' : 'emoji') : next).shown?.();
 }
-export function showReactionPicker(anchor, node) {
+export function showReactionPicker(anchor, node, refresh) {
     closePickers();
+    popupRefresh = refresh;
     popup = el('div', 'emoji-picker-wrapper client-reaction-picker');
     popup.append(node);
     document.body.append(popup);
@@ -123,4 +126,9 @@ document.addEventListener('chat-clear', () => {
     panel = null;
     views = {};
     active = 'emoji';
+});
+
+document.addEventListener('chat-content', () => {
+    views.emoji?.refresh?.();
+    popupRefresh?.();
 });

@@ -1,5 +1,5 @@
 import { renderMedia } from './rich-media.js';
-import { richText } from './content.js';
+import { richText, contentRevision } from './content.js';
 import { timestamp } from './dates.js';
 import { favorite } from './gifs.js';
 import { installGuide } from './pwa.js';
@@ -192,6 +192,7 @@ export function createMessages({ identity, snapshot, current, actions, history, 
                 : null;
             const signature = JSON.stringify([
                 message,
+                contentRevision(),
                 header,
                 snapshot().dateSettings,
                 replyTarget,
@@ -222,7 +223,7 @@ export function createMessages({ identity, snapshot, current, actions, history, 
                     nodes.set(message.id, record);
                 }
             }
-            // Revoke only hydrated media URLs above; emoji artwork URLs are shared and owned by content.js.
+            // Only hydrated message media uses object URLs.
             // Append only new nodes. Existing nodes retain selection, playback, and scroll geometry.
             const atPosition = $('#timeline').children[position++];
             if (atPosition !== record.node)

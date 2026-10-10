@@ -34,7 +34,7 @@ public partial class EmojiService
         if (!string.IsNullOrEmpty(codePoint) && codePoint != "fffd")
         {
             _pickerEmojiCache[emoji] = new MarkupString(
-                $"<img src=\"https://cdn.jsdelivr.net/gh/jdecked/twemoji@latest/assets/svg/{codePoint}.svg\" " +
+                $"<img src=\"/chat-client/emoji/{codePoint}.svg\" " +
                 $"alt=\"{emoji}\" class=\"emoji\" style=\"width: 18px; height: 18px; vertical-align: -3px; display: inline-block;\" />");
         }
     }
@@ -63,7 +63,7 @@ public partial class EmojiService
     /// Converts all Unicode emoji characters in the specified text to Twemoji SVG image tags, preserving the original
     /// text for non-emoji content.
     /// </summary>
-    /// <remarks>The rendered emoji images use the Twemoji CDN and are styled according to the specified
+    /// <remarks>The rendered emoji images use the local Twemoji artwork and are styled according to the specified
     /// parameters. If the text consists only of emojis and whitespace, larger emoji images are used for emphasis. This
     /// method is intended for use in Blazor or other environments that support MarkupString rendering.</remarks>
     /// <param name="text">The input text that may contain Unicode emoji characters to be replaced with Twemoji images. Can be null or
@@ -84,12 +84,12 @@ public partial class EmojiService
 
         var (emojiSize, verticalAlign)
             = (inline, forceSmall, isEmojiOnly) switch
-        {
-              (true, _, _) => ("1em", "-0.15em"),      // Inline text (display names, room names)
-              (_, true, _) => ("18px", "-3px"),         // Reaction pills
-              (_, _, true) => ("3em", "-0.4em"),        // Emoji-only messages
-               _ => ("1.2em", "-0.2em")                  // Mixed content messages - nomral chat message containing text + emojis
-        };
+            {
+                (true, _, _) => ("1em", "-0.15em"),      // Inline text (display names, room names)
+                (_, true, _) => ("18px", "-3px"),         // Reaction pills
+                (_, _, true) => ("3em", "-0.4em"),        // Emoji-only messages
+                _ => ("1.2em", "-0.2em")                  // Mixed content messages - nomral chat message containing text + emojis
+            };
 
         // Replace custom emoji shortcodes FIRST (before Unicode emoji replacement)
         var result = CustomEmojiShortcodeRegex().Replace(text, match =>
@@ -148,7 +148,7 @@ public partial class EmojiService
                 }
                 else
                 {
-                    sb.Append($"<img src=\"https://cdn.jsdelivr.net/gh/jdecked/twemoji@latest/assets/svg/{codePoint}.svg\" " +
+                    sb.Append($"<img src=\"/chat-client/emoji/{codePoint}.svg\" " +
                               $"alt=\"{emoji}\" class=\"emoji\" style=\"width: {emojiSize}; height: {emojiSize}; vertical-align: {verticalAlign}; display: inline-block;\" />");
                 }
 
