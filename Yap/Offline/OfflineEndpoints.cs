@@ -101,6 +101,25 @@ public static class OfflineEndpoints
         });
         OfflineContent.Map(api);
         api.MapPost("/pwa/installed", async (HttpContext http, UserService users) => { await users.MarkPwaInstalledAsync(users.AuthenticateByToken(http.Request.Cookies[AuthMiddleware.CookieName]!)!.Id); return Results.Ok(new { }); });
+        api.MapPost("/preferences/detect", async (DetectedLocale request, HttpContext http, UserService users, OfflineSync sync) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.TimeZone) || string.IsNullOrWhiteSpace(request.Locale)
+                || request.TimeZone.Length > 100 || request.Locale.Length > 100
+                || LocaleResolver.ResolveTimeZone(request.TimeZone) == null)
+                return Results.BadRequest();
+            try
+            {
+                _ = System.Globalization.CultureInfo.GetCultureInfo(request.Locale);
+            }
+            catch (System.Globalization.CultureNotFoundException) { return Results.BadRequest(); }
+            var user = users.AuthenticateByToken(http.Request.Cookies[AuthMiddleware.CookieName]!)!;
+            // Detection fills missing defaults only. A reconnect or another device must
+            // never replace the user's explicit timezone/date-format settings.
+            if (user.TimeZone == null || user.Locale == null || user.DateFormat == null)
+                await users.UpdateLocaleAsync(user.Id, user.TimeZone ?? request.TimeZone,
+                    user.Locale ?? request.Locale, user.DateFormat ?? LocaleResolver.GuessDateFormatFromLocale(user.Locale ?? request.Locale));
+            return Results.Ok(sync.Bootstrap(user, request.Path));
+        });
         api.MapGet("/session", (HttpContext http) => Results.Ok(Session(http)));
         api.MapGet("/bootstrap", (HttpContext http, string? path, Guid? channelId, string? epoch, string? revision, Guid? knownUser, UserService users, OfflineSnapshotService snapshots, OfflineSync sync) =>
         {
@@ -250,6 +269,7 @@ public static class OfflineEndpoints
         users.RecordLoginOrigin(user.Id, $"{http.Request.Scheme}://{http.Request.Host}");
         return new
         {
+            needsLocaleDetection = user.TimeZone == null || user.Locale == null || user.DateFormat == null,
             userId = user.Id,
             liveTicket = services.GetRequiredService<OfflineLiveService>().Ticket(user),
             hasWayBack = users.HasPassword(user.Username) || services.GetRequiredService<AccessLinkService>().HasActiveLink(user.Id),
@@ -266,6 +286,7 @@ public static class OfflineEndpoints
     /// <summary>
     /// The highest arrival checkpoint observed by the client, leaving newer unseen arrivals unread.
     /// </summary>
+    public record DetectedLocale(string TimeZone, string Locale, string? Path);
     public record ReadRequest(long Through);
     /// <summary>An observed checkpoint in a batched background read acknowledgement.</summary>
     public record ReadCheckpoint(Guid ChannelId, long Through);

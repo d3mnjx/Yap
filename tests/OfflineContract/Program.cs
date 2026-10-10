@@ -307,6 +307,7 @@ try
             && (await Send(removable.Id, Guid.NewGuid(), "new send to deleted room")).StatusCode == HttpStatusCode.NotFound,
             "deleted-room snapshot, retained receipt and rejection of new sends");
         await PresenceChecks.Run(factory.Services, http, anti, alice, bob, carol, privateDm.Id, room.Id);
+        await LocaleChecks.Run(http, anti, alice);
         await GifPagingChecks.Run(http, anti, chat, admin);
         await OriginChecks.Run(factory.Services, http);
         await users.RotateTokenAsync(alice.Id);

@@ -824,6 +824,24 @@ async function connectChat(bootstrap = null) {
         if (identity && identity.userId !== session.userId) clearUI();
         identity = await storage.establish(session.userId);
         if (attemptGeneration !== connectionGeneration) return;
+        if (session.needsLocaleDetection) {
+            try {
+                bootstrap.update = await post(
+                    'preferences/detect',
+                    {
+                        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                        locale: navigator.language,
+                        path: location.pathname,
+                    },
+                    session,
+                );
+                session.needsLocaleDetection = false;
+            } catch (error) {
+                if (error.message === 'ACCOUNT_CHANGED') throw error;
+                // Unavailable detection must not prevent cached chat or sending.
+            }
+        }
+        if (attemptGeneration !== connectionGeneration) return;
         await acceptSnapshot(bootstrap.update, attemptGeneration, null, { baseline: true });
         sender.start();
         // Optional data never gates the active view or outgoing operations.
