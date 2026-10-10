@@ -7,7 +7,8 @@ using Yap.Models;
 namespace Yap.Services;
 
 /// <summary>
-/// Handles write-through persistence for chat data.
+/// Handles optional persistence for channel configuration, preferences and startup snapshots.
+/// Message, mutation and checkpoint acceptance belongs to IChatStore.
 /// When disabled, all methods are no-ops.
 /// </summary>
 public class ChatPersistenceService
@@ -89,122 +90,6 @@ public class ChatPersistenceService
 
     #endregion
 
-    #region Message Operations
-
-    // Copy persisted scalar/media fields once; navigation properties belong to the new context.
-    private static ChatMessage DetachedMessage(ChatMessage message) => new(
-        message.ChannelId, message.UserId, message.Username, message.Content, message.Timestamp,
-        message.ImageUrls.ToList(), message.ReplyToMessageId, message.VideoUrls.ToList(), message.GifAttachments.ToList())
-    {
-        Id = message.Id,
-        OperationId = message.OperationId,
-        IsEdited = message.IsEdited
-    };
-
-    public async Task<bool> PersistNewMessageAsync(ChatMessage message)
-    {
-        if (!IsEnabled) return false;
-
-        try
-        {
-            await using var db = await _dbFactory!.CreateDbContextAsync();
-
-            var newMessage = DetachedMessage(message);
-
-            db.Messages.Add(newMessage);
-            await db.SaveChangesAsync();
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to persist new message {MessageId}", message.Id);
-            // Legacy server/bot messages remain best-effort; callers still publish in memory.
-            return false;
-        }
-    }
-
-    public async Task<TextSendReceipt?> GetTextReceiptAsync(Guid userId, Guid operationId)
-    {
-        await using var db = await _dbFactory!.CreateDbContextAsync();
-        return await db.TextSendReceipts.AsNoTracking().SingleOrDefaultAsync(r => r.UserId == userId && r.OperationId == operationId);
-    }
-
-    public async Task<ChatMessage?> GetAcceptedMessageAsync(Guid messageId)
-    {
-        await using var db = await _dbFactory!.CreateDbContextAsync();
-        return await db.Messages.AsNoTracking().Include(m => m.Reactions).SingleOrDefaultAsync(m => m.Id == messageId);
-    }
-
-    public async Task PersistTextAcceptanceAsync(ChatMessage message, TextSendReceipt receipt, IReadOnlyList<Guid>? recipients = null)
-    {
-        if (!IsEnabled) throw new InvalidOperationException("Durable sends require persistence.");
-        await using var db = await _dbFactory!.CreateDbContextAsync();
-        await using var transaction = await db.Database.BeginTransactionAsync();
-        db.Messages.Add(DetachedMessage(message));
-        db.TextSendReceipts.Add(receipt);
-        // A receipt promises both the message and recipient checkpoints. An unread write
-        // failure must roll back acceptance so retry can safely complete all three.
-        await db.SaveChangesAsync();
-        await IncrementReadStatesAsync(db, message.ChannelId, recipients ?? []);
-        await transaction.CommitAsync();
-    }
-
-    public async Task PersistMutationAsync(TextSendReceipt receipt, string kind, string? content, string? emoji, bool active, string username)
-    {
-        await using var db = await _dbFactory!.CreateDbContextAsync();
-        await using var transaction = await db.Database.BeginTransactionAsync();
-        var message = await db.Messages.Include(m => m.Reactions).SingleOrDefaultAsync(m => m.Id == receipt.MessageId && m.ChannelId == receipt.ChannelId);
-        if (message == null && kind != "delete")
-            throw new ChatSendException(404, "message_unavailable", "This message was deleted or is no longer available.");
-        if (message != null)
-        {
-            if (kind != "reaction" && message.UserId != receipt.UserId)
-                throw new ChatSendException(403, "not_owner", "You can only change your own messages.");
-            if (kind == "edit")
-            {
-                if (message.HasMedia) throw new ChatSendException(400, "media_message", "Media messages cannot be edited.");
-                message.Content = content!; message.IsEdited = true;
-            }
-            else if (kind == "delete") db.Messages.Remove(message);
-            else
-            {
-                var existing = message.Reactions.Where(r => r.UserId == receipt.UserId && r.Emoji == emoji).ToArray();
-                if (!active) db.Reactions.RemoveRange(existing);
-                else if (existing.Length == 0) message.Reactions.Add(new Reaction
-                {
-                    MessageId = message.Id,
-                    UserId = receipt.UserId,
-                    Username = username,
-                    Emoji = emoji!
-                });
-            }
-        }
-        // Mutation and receipt must commit together: a retry must not undo a newer accepted edit.
-        db.TextSendReceipts.Add(receipt);
-        await db.SaveChangesAsync(); await transaction.CommitAsync();
-    }
-
-    public async Task PersistMessagesInBulkAsync(IReadOnlyList<ChatMessage> messages)
-    {
-        if (!IsEnabled || messages.Count == 0) return;
-
-        try
-        {
-            await using var db = await _dbFactory!.CreateDbContextAsync();
-
-            var detached = messages.Select(DetachedMessage);
-
-            db.Messages.AddRange(detached);
-            await db.SaveChangesAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to bulk persist {Count} messages", messages.Count);
-        }
-    }
-
-    #endregion
-
     #region Reaction Operations
 
     /// <summary>
@@ -234,48 +119,6 @@ public class ChatPersistenceService
             _logger.LogError(ex, "Failed to load top reaction emojis for user {UserId}", userId);
             return new();
         }
-    }
-
-    #endregion
-
-    #region Read State Operations
-
-    // json_each uses one parameter for any recipient count (no SQLite variable-limit cliff).
-    // The read-state gate in ChatService spans this transaction and memory publication.
-    public async Task IncrementReadStatesAsync(Guid channelId, IReadOnlyList<Guid> recipients)
-    {
-        if (!IsEnabled || recipients.Count == 0) return;
-        await using var db = await _dbFactory!.CreateDbContextAsync();
-        await using var transaction = await db.Database.BeginTransactionAsync();
-        await IncrementReadStatesAsync(db, channelId, recipients);
-        await transaction.CommitAsync();
-    }
-
-    private static async Task IncrementReadStatesAsync(ChatDbContext db, Guid channelId, IReadOnlyList<Guid> recipients)
-    {
-        if (recipients.Count == 0) return;
-        var channel = channelId.ToString().ToUpperInvariant();
-        var ids = System.Text.Json.JsonSerializer.Serialize(recipients.Select(id => id.ToString().ToUpperInvariant()));
-        await db.Database.ExecuteSqlInterpolatedAsync($"INSERT OR IGNORE INTO ChannelReadStates (UserId, ChannelId, LastReadAt, UnreadCount, ReceivedCount, ReadThrough) SELECT value, {channel}, {DateTime.MinValue}, 0, 0, 0 FROM json_each({ids})");
-        await db.Database.ExecuteSqlInterpolatedAsync($"UPDATE ChannelReadStates SET UnreadCount = UnreadCount + 1, ReceivedCount = ReceivedCount + 1 WHERE ChannelId = {channel} AND UserId IN (SELECT value FROM json_each({ids}))");
-    }
-
-    public Task PersistReadStateAsync(ChannelReadState state) => PersistReadStatesAsync([state]);
-
-    public async Task PersistReadStatesAsync(IEnumerable<ChannelReadState> states)
-    {
-        if (!IsEnabled) return;
-        await using var db = await _dbFactory!.CreateDbContextAsync();
-        foreach (var state in states)
-        {
-            var existing = await db.ChannelReadStates.FindAsync(state.UserId, state.ChannelId);
-            if (existing == null) { existing = new ChannelReadState { UserId = state.UserId, ChannelId = state.ChannelId }; db.ChannelReadStates.Add(existing); }
-            existing.LastReadAt = state.LastReadAt;
-            existing.UnreadCount = state.UnreadCount;
-            existing.ReceivedCount = state.ReceivedCount;
-            existing.ReadThrough = state.ReadThrough;
-        }
-        await db.SaveChangesAsync();
     }
 
     #endregion

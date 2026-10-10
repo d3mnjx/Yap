@@ -21,7 +21,8 @@ Access at `http://localhost:5221` - it's up to you how to make this accessible f
 
 - **No registration required** - Just log in with username, no passwords or social logins
 - **User profiles** - Set profile picture, display name, and bio; avatars shown in chat
-- **Durable offline chat** - Cached conversations, local drafts and queued messages/actions survive disconnection and reload. SQLite persistence is required for durable sending.
+- **Offline chat** - Cached conversations, local drafts and queued messages/actions survive disconnection and reload. Sending works with or without SQLite.
+- **Database optional** - Accounts, messages, operation receipts and read checkpoints can live only in memory and are wiped on restart, or use SQLite to retain them.
 - **Customizable labels in config** - make it fun or serious
 - **Emoji support** - Beautiful Twemoji rendering 
 - **Custom emojis** - Drop image files into `Data/custom-emojis/` (data volume) folder and they become available for your users

@@ -12,14 +12,11 @@ public sealed class ChatSendException(int status, string code, string message) :
 
 public partial class ChatService
 {
-    public bool DurableSendingEnabled => _persistence.IsEnabled;
     public int MaxTextLength => _limits.MaxTextLength;
 
     public async Task<TextSendReceipt> SendTextAsync(User user, Guid channelId, Guid operationId, string? content, Guid? replyToMessageId = null, List<string>? images = null, List<string>? videos = null, List<GifAttachment>? gifs = null,
         string? mediaIdentity = null, Func<Task<(List<string>? Images, List<string>? Videos, List<GifAttachment>? Gifs)>>? resolveMedia = null)
     {
-        if (!_persistence.IsEnabled)
-            throw new ChatSendException(503, "persistence_required", "Sending requires server persistence to be enabled.");
         content ??= "";
         var hasMedia = mediaIdentity != null || (images?.Count ?? 0) + (videos?.Count ?? 0) + (gifs?.Count ?? 0) > 0;
         if (operationId == Guid.Empty || (!hasMedia && string.IsNullOrWhiteSpace(content)) || content.Length > MaxTextLength)
@@ -52,23 +49,14 @@ public partial class ChatService
         else
             receiptPayload = content;
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(receiptPayload)));
+        using (await LockAcceptance($"operation:{user.Id}:{operationId}"))
         using (await LockAcceptance("message:" + operationId))
         {
-            var previous = await _persistence.GetTextReceiptAsync(user.Id, operationId);
+            var previous = await _store.GetTextReceiptAsync(user.Id, operationId);
             if (previous != null)
             {
                 if (previous.ChannelId != channelId || previous.ContentHash != hash)
                     throw new ChatSendException(409, "operation_conflict", "This send ID was already used for different content.");
-                // Repair the process-local view after an ambiguous database commit, without repeating
-                // notifications. A deleted row stays deleted; the receipt alone never recreates it.
-                if (GetMessageById(channelId, previous.MessageId) == null)
-                {
-                    var persisted = await _persistence.GetAcceptedMessageAsync(previous.MessageId);
-                    if (persisted != null)
-                        lock (GetChannelLock(channelId))
-                            if (_channelMessages.TryGetValue(channelId, out var messages) && !messages.Any(m => m.Id == persisted.Id))
-                                messages.Add(persisted);
-                }
                 return previous; // Return even after a delete or a later permission change; never resend.
             }
             var channel = GetChannel(channelId);
@@ -92,35 +80,52 @@ public partial class ChatService
                 ContentHash = hash,
                 AcceptedAt = message.Timestamp
             };
-            List<Guid> affectedUserIds;
+            await AcceptMessageAsync(channel, message, receipt);
+            return receipt;
+        }
+    }
+
+    private async Task AcceptMessageAsync(Channel channel, ChatMessage message, TextSendReceipt receipt, bool countUnread = true)
+    {
+        async Task Store(IReadOnlyList<Guid> recipients)
+        {
             try
             {
-                affectedUserIds = await IncrementUnreadCountsAsync(channelId, user.Id,
-                    async recipients =>
-                    {
-                        await _persistence.PersistTextAcceptanceAsync(message, receipt, recipients);
-                        // Publish the row before its checkpoint becomes observable. A window
-                        // must never acknowledge an arrival that is still absent from memory.
-                        lock (GetChannelLock(channelId))
-                            if (_channelMessages.TryGetValue(channelId, out var messages))
-                                messages.Add(message);
-                    });
+                await _store.PersistTextAcceptanceAsync(message, receipt, recipients);
             }
             catch (Microsoft.EntityFrameworkCore.DbUpdateException error) when (error.InnerException is Microsoft.Data.Sqlite.SqliteException { SqliteExtendedErrorCode: 1555 or 2067 })
             {
-                var accepted = await _persistence.GetTextReceiptAsync(user.Id, operationId);
-                if (accepted == null || accepted.ChannelId != channelId || accepted.ContentHash != hash)
-                    throw new ChatSendException(409, "operation_conflict", "This send ID was already used for different content.");
-                return accepted;
+                // Competing same-account retries share a gate. A remaining PK collision
+                // is conflicting intent, not a temporary error to retry forever.
+                throw new ChatSendException(409, "operation_conflict", "This send ID was already used.");
             }
-            // Persistence is now authoritative. A notification failure cannot turn acceptance into failure.
-            try
-            {
-                await PublishMessageAsync(channel, message, affectedUserIds);
-            }
-            catch (Exception ex) { _logger.LogError(ex, "Post-commit notification failed for {MessageId}", message.Id); }
-            return receipt;
+            // The message must be visible before its arrival checkpoint can be observed.
+            lock (GetChannelLock(channel.Id))
+                if (_channelMessages.TryGetValue(channel.Id, out var messages))
+                {
+                    messages.Add(message);
+                    if (!countUnread)
+                        messages.Sort((a, b) => a.Timestamp.CompareTo(b.Timestamp));
+                }
         }
+        List<Guid> recipients = [];
+        if (countUnread)
+            recipients = await IncrementUnreadCountsAsync(channel.Id, message.UserId, Store);
+        else
+            await Store([]);
+        // Acceptance is authoritative. Notification failures cannot turn it into a retry.
+        try
+        {
+            if (countUnread)
+                await PublishMessageAsync(channel, message, recipients);
+            else
+            {
+                // Historical admin fixtures appear in streams without firing arrival push.
+                _changes.Touch(channel.Id, message.Id, history: false);
+                NotifySubscribers(OnMessageReceived, message);
+            }
+        }
+        catch (Exception error) { _logger.LogError(error, "Post-commit notification failed for {MessageId}", message.Id); }
     }
 
     public async Task<Channel> OpenDirectMessageAsync(User user, string username)

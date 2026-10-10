@@ -20,8 +20,6 @@ public partial class ChatService
     public async Task<TextSendReceipt> MutateMessageAsync(User user, Guid channelId, Guid messageId,
         Guid operationId, string kind, string? content, string? emoji, bool active)
     {
-        if (!DurableSendingEnabled)
-            throw new ChatSendException(503, "persistence_required", "Changes require server persistence.");
         if (operationId == Guid.Empty || kind is not ("edit" or "delete" or "reaction"))
             throw new ChatSendException(400, "invalid_operation", "Invalid message operation.");
         if (kind == "edit" && (string.IsNullOrWhiteSpace(content) || content.Length > MaxTextLength))
@@ -36,69 +34,71 @@ public partial class ChatService
             emoji,
             active
         })));
+        using (await LockAcceptance($"operation:{user.Id}:{operationId}"))
         using (await LockAcceptance("message:" + messageId))
         {
             // Old cached sends may have a different server ID; resolve the sender's own receipt.
-            var originalSend = await _persistence.GetTextReceiptAsync(user.Id, messageId);
+            var originalSend = await _store.GetTextReceiptAsync(user.Id, messageId);
             if (originalSend?.ChannelId == channelId)
                 messageId = originalSend.MessageId;
-            var receipt = await _persistence.GetTextReceiptAsync(user.Id, operationId);
+            var receipt = await _store.GetTextReceiptAsync(user.Id, operationId);
             if (receipt != null && (receipt.ChannelId != channelId || receipt.ContentHash != hash))
                 throw new ChatSendException(409, "operation_conflict", "Operation ID already used for another change.");
-            if (receipt == null)
+            if (receipt != null)
+                return receipt; // Never apply an old payload over newer accepted state.
+            ChatMessage? target;
+            var mutation = new ChatMutation(kind, content, emoji, active, user.Id, user.Username);
+            var channel = GetChannel(channelId);
+            if (channel == null || !channel.CanAccess(user.Id))
+                throw new ChatSendException(404, "conversation_unavailable", "Conversation unavailable.");
+            if (!channel.CanWrite(user.Id, IsAdmin(user.Id)))
+                throw new ChatSendException(403, "read_only", "You cannot change messages in this conversation.");
+            target = GetMessageById(channelId, messageId);
+            if (target == null && kind != "delete")
+                throw new ChatSendException(404, "message_unavailable", "Message unavailable.");
+            if (target != null && kind != "reaction" && target.UserId != user.Id)
+                throw new ChatSendException(403, "not_owner", "You can only change your own messages.");
+            if (kind == "edit" && target!.HasMedia)
+                throw new ChatSendException(400, "media_message", "Media messages cannot be edited.");
+            if (target != null && !CanReadMessage(user, target))
+                throw new ChatSendException(404, "message_unavailable", "Message unavailable.");
+            receipt = new TextSendReceipt
             {
-                var channel = GetChannel(channelId);
-                if (channel == null || !channel.CanAccess(user.Id))
-                    throw new ChatSendException(404, "conversation_unavailable", "Conversation unavailable.");
-                if (!channel.CanWrite(user.Id, IsAdmin(user.Id)))
-                    throw new ChatSendException(403, "read_only", "You cannot change messages in this conversation.");
-                var target = GetMessageById(channelId, messageId);
-                if (target != null && !CanReadMessage(user, target))
-                    throw new ChatSendException(404, "message_unavailable", "Message unavailable.");
-                receipt = new TextSendReceipt
-                {
-                    UserId = user.Id,
-                    OperationId = operationId,
-                    ChannelId = channelId,
-                    MessageId = messageId,
-                    ContentHash = hash,
-                    AcceptedAt = DateTime.UtcNow
-                };
-                await _persistence.PersistMutationAsync(receipt, kind, content, emoji, active, user.Username);
-            }
-            // Reload current DB state even on duplicate acceptance. Never replay old payload over a newer edit.
-            var persisted = await _persistence.GetAcceptedMessageAsync(messageId);
-            ChatMessage? removed = null;
+                UserId = user.Id,
+                OperationId = operationId,
+                ChannelId = channelId,
+                MessageId = messageId,
+                ContentHash = hash,
+                AcceptedAt = DateTime.UtcNow
+            };
+            await _store.PersistMutationAsync(receipt, mutation);
             lock (GetChannelLock(channelId))
             {
-                if (_channelMessages.TryGetValue(channelId, out var messages))
+                if (_channelMessages.TryGetValue(channelId, out var messages) && target != null)
                 {
-                    var index = messages.FindIndex(m => m.Id == messageId);
-                    if (index >= 0)
-                    {
-                        removed = messages[index];
-                        if (persisted == null)
-                            messages.RemoveAt(index);
-                        else
-                            messages[index] = persisted;
-                    }
+                    if (kind == "delete")
+                        messages.Remove(target);
+                    else
+                        mutation.Apply(target);
                 }
             }
-            // The committed database row has now replaced memory; projection cannot see the old value.
+            // Publish only after the accepted mutation is visible on the existing object.
             _changes.Touch(channelId, messageId);
             if (kind is "edit" or "delete")
                 foreach (var reply in GetMessages(channelId, int.MaxValue).Where(m => m.ReplyToMessageId == messageId))
                     _changes.Touch(channelId, reply.Id);
-            if (persisted == null)
+            if (kind == "delete")
             {
-                if (removed != null)
-                    _gifService.DecrementReferences(removed.GifAttachments);
-                OnMessageDeleted?.Invoke(messageId, channelId);
+                if (target != null)
+                    RunNotification(() => _gifService.DecrementReferences(target.GifAttachments));
+                if (OnMessageDeleted is { } handlers)
+                    foreach (Action<Guid, Guid> handler in handlers.GetInvocationList())
+                        RunNotification(() => handler(messageId, channelId));
             }
             else if (kind == "reaction")
-                OnReactionChanged?.Invoke(persisted);
+                NotifySubscribers(OnReactionChanged, target!);
             else
-                OnMessageUpdated?.Invoke(persisted);
+                NotifySubscribers(OnMessageUpdated, target!);
             return receipt;
         }
     }

@@ -121,17 +121,20 @@ static class PresenceChecks
         Check(chat.GetUnreadCount(alice.Id, dm.Id) == 1, "concurrent read and arrival cannot lose an unread increment");
         await chat.MarkObservedReadAsync(alice.Id, dm.Id, seen);
         Check(chat.GetUnreadCount(alice.Id, dm.Id) == 1, "out-of-order old read cannot regress checkpoint");
-        await using var db = await services.GetRequiredService<IDbContextFactory<ChatDbContext>>().CreateDbContextAsync();
-        await db.Database.ExecuteSqlRawAsync("CREATE TRIGGER reject_read BEFORE UPDATE ON ChannelReadStates BEGIN SELECT RAISE(ABORT, 'test read failure'); END;");
+        await using var db = services.GetService<IDbContextFactory<ChatDbContext>>() is { } factory ? await factory.CreateDbContextAsync() : null;
         var latest = chat.GetReadCheckpoint(alice.Id, dm.Id).Received;
-        rejected = false;
-        try
+        if (db != null)
         {
-            await chat.MarkObservedReadAsync(alice.Id, dm.Id, latest);
+            await db.Database.ExecuteSqlRawAsync("CREATE TRIGGER reject_read BEFORE UPDATE ON ChannelReadStates BEGIN SELECT RAISE(ABORT, 'test read failure'); END;");
+            rejected = false;
+            try
+            {
+                await chat.MarkObservedReadAsync(alice.Id, dm.Id, latest);
+            }
+            catch { rejected = true; }
+            Check(rejected && chat.GetUnreadCount(alice.Id, dm.Id) == 1, "failed read persistence is not acknowledged or applied in memory");
+            await db.Database.ExecuteSqlRawAsync("DROP TRIGGER reject_read;");
         }
-        catch { rejected = true; }
-        Check(rejected && chat.GetUnreadCount(alice.Id, dm.Id) == 1, "failed read persistence is not acknowledged or applied in memory");
-        await db.Database.ExecuteSqlRawAsync("DROP TRIGGER reject_read;");
         await chat.MarkObservedReadAsync(alice.Id, dm.Id, latest);
         await chat.SendTextAsync(carol, dm.Id, Guid.NewGuid(), "unread across restart");
         async Task<HttpResponseMessage> Read(Guid id, long target, bool token = true)
@@ -145,7 +148,9 @@ static class PresenceChecks
         Check((await Read(privateDm, 0)).StatusCode == HttpStatusCode.NotFound, "nonmember DM read denied");
         Check((await Read(dm.Id, long.MaxValue)).StatusCode == HttpStatusCode.BadRequest, "future read checkpoint rejected");
         Check((await Read(dm.Id, latest)).IsSuccessStatusCode && chat.GetUnreadCount(alice.Id, dm.Id) == 1, "HTTP read replay retains unseen arrival");
-        var persisted = await db.ChannelReadStates.AsNoTracking().SingleAsync(s => s.UserId == alice.Id && s.ChannelId == dm.Id);
+        var checkpoint = chat.GetReadCheckpoint(alice.Id, dm.Id);
+        var persisted = db != null ? await db.ChannelReadStates.AsNoTracking().SingleAsync(s => s.UserId == alice.Id && s.ChannelId == dm.Id)
+            : new ChannelReadState { ReceivedCount = checkpoint.Received, ReadThrough = checkpoint.ReadThrough, UnreadCount = checkpoint.Unread };
         Check(persisted.ReceivedCount - persisted.ReadThrough == 1 && persisted.UnreadCount == 1, "checkpoint and unread count persist together");
     }
 }

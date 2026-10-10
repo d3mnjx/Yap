@@ -149,8 +149,10 @@ static class DesignChecks
             await live.Report("design-viewer", viewer, true, 0, null);
             await chat.SendTextAsync(sender, dm.Id, Guid.NewGuid(), "unloaded window");
             Check(chat.GetUnreadCount(viewer.Id, dm.Id) == 1, "unloaded or invalidated windows retain unread arrivals");
-            await using var db = await services.GetRequiredService<IDbContextFactory<ChatDbContext>>().CreateDbContextAsync();
-            var state = await db.ChannelReadStates.AsNoTracking().SingleAsync(s => s.UserId == viewer.Id && s.ChannelId == dm.Id);
+            await using var db = services.GetService<IDbContextFactory<ChatDbContext>>() is { } factory ? await factory.CreateDbContextAsync() : null;
+            var checkpoint = chat.GetReadCheckpoint(viewer.Id, dm.Id);
+            var state = db != null ? await db.ChannelReadStates.AsNoTracking().SingleAsync(s => s.UserId == viewer.Id && s.ChannelId == dm.Id)
+                : new ChannelReadState { UnreadCount = checkpoint.Unread, ReceivedCount = checkpoint.Received, ReadThrough = checkpoint.ReadThrough };
             Check(state.UnreadCount == 1 && state.ReceivedCount - state.ReadThrough == 1,
                 "foreground policy preserves persisted checkpoint arithmetic");
             var sources = services.GetRequiredService<NotificationAudit>().GetUnreadChanges()

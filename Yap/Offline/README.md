@@ -27,7 +27,9 @@ The folder groups related HTTP/SignalR adapters and projections inside the exist
 flowchart LR
     Browser <-->|HTTP| Endpoints[OfflineEndpoints]
     Endpoints --> Chat[ChatService]
-    Chat --> Persistence[ChatPersistenceService]
+    Chat --> Store[IChatStore]
+    Store --> SQLite[SqliteChatStore]
+    Store --> Memory[MemoryChatStore]
     Chat -->|change events| Signal[OfflineChangeSignal]
     Signal --> Fanout[OfflineFanout]
     Fanout -->|authorized queued patches| Hub[OfflineHub]
@@ -38,7 +40,7 @@ flowchart LR
 ```
 
 1. **Connect and read.** Bootstrap validates the cookie and supplies an account-bound antiforgery token and short-lived live-session ticket. It returns summaries and the active recent window; matching cached revisions omit unchanged message bodies. Missing windows fill in the background. `OfflineSnapshotService` constructs the authorized state and `OfflineSync` shapes the wire response. Snapshot construction reads the shared services; this folder does not maintain a second message database.
-2. **Accept a write.** `OfflineEndpoints` passes the authenticated operation to `ChatService.Text`, `.Actions` or `.Reads`. Message/mutation receipts are persisted through `ChatPersistenceService`; the HTTP response includes compact current authority for the browser to reconcile. `OfflineContent` resolves account-owned uploads or trusted GIF selections when needed.
+2. **Accept a write.** `OfflineEndpoints` passes the authenticated operation to `ChatService.Text`, `.Actions` or `.Reads`. Message/mutation receipts are accepted through `IChatStore`, backed by SQLite or process memory; the HTTP response includes compact current authority for the browser to reconcile. `OfflineContent` resolves account-owned uploads or trusted GIF selections when needed.
 3. **Notify connected clients.** Shared chat mutations produce one projected event through `OfflineChangeSignal` and `OfflineFanout`. Only subscribed authorized users receive it. Unread, preference and favorite events update only the affected account; profile changes invalidate affected windows. Each connection has one 128-entry queue; pending entries coalesce per conversation without borrowing another conversation’s sequence stamp, and overflow resets through authorized invalidations. Authentication is revalidated while streaming and during idle periods. History versions invalidate older cached pages on mutations while allowing ordinary arrivals to preserve them.
 4. **Track live activity.** Hub calls use `OfflineLiveService` to join/report/change status/type. `WatchActivity` registers the session and selected conversation in the streaming call, then publishes changed live fields separately from messages. Report/Typing are ordered sends without a reply dependency; explicit status selection awaits confirmation. Disconnect handling clears visibility/typing immediately; `ChatService.ConnectionDown` owns cancellable disconnect grace/retention timers for both transports. The authenticated `/api/chat/presence/leave` request reports explicit closure and removes only that connection immediately. `OfflineLiveCleanup` drives the shared 100 ms presence projection ticker; it does not sweep session lifetimes. People and per-channel typing are built once per tick; unchanged views are not sent. Per-method connection limits allow 12-call bursts and four sustained calls/second.
 

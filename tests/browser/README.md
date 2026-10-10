@@ -27,7 +27,7 @@ ASPNETCORE_ENVIRONMENT=Development dotnet Yap.dll --urls http://127.0.0.1:7643
 
 Use test configuration with registration enabled and SQLite persistence for durable/restart scenarios; see [offline behavior](../../docs/offline-behavior.md). Do not copy production credentials or databases into a fixture.
 
-The server contract suite includes login-link origin isolation, migration/restart checks, link-preview expiry/restart recovery, Klipy search/trending pagination and send retries with synthetic HTTP responses, and the real one-minute delayed welcome DM. It creates its own temporary app/database and does not need the browser fixture.
+The server contract suite runs in both SQLite and memory modes by default (`-- --sqlite` or `-- --memory` selects one). Storage-failure injection and migrations are SQLite-only; restart assertions check the appropriate persistence/account lifetime. It includes login-link origin isolation, migration/restart checks, link-preview expiry/restart recovery, Klipy search/trending pagination and send retries with synthetic HTTP responses, and the real one-minute delayed welcome DM. It creates its own temporary app/database and does not need the browser fixture.
 
 The runner neither starts nor stops the fixture. Check `/login` before running. From another terminal in the repository:
 
@@ -47,6 +47,7 @@ Suite discovery reads `tests/browser/*.cjs`; the default selection remains the o
 | `design-decisions` | Conditional root routing, hub protocol rejection with retained draft, retained-page cookie renewal and existing-install guidance. Uses the isolated origin. |
 | `maintenance` | Requires a disposable instance with `OfflineChat:MaxTextLength=37`; checks configured compose/edit limits and HTTP 426 recovery with retained drafts. |
 | `locale` | Browser timezone/locale detection with US and Czech contexts, Settings saves preserving locale, clock formatting, saved reload and first-send independence from stalled detection. Uses the isolated origin. |
+| `memory-mode` | Requires `YAP_TEST_PACKAGE` (complete publish output). Owns a disposable memory-only server on 8097. Checks sends/actions, reconnect replay, restart invalidating the login with locked cached work, and a new account receiving none of the old queue. |
 | `restart-cache` | Requires `YAP_TEST_PACKAGE` (complete publish output). Copies it into a private fixture, owns port 8055, restarts the real server, blocks recovery, checks offline navigation with an updating indicator and later deletion reconciliation. |
 | `appearance` | Theme/font/scene before app modules, Settings return with older cached preferences, neutral offline shell and anonymous defaults after account use. Uses the isolated origin. |
 | `emoji-cache` | Real root/client workers on a disposable static origin; direct/warmed cache entries, no SVG requests across a CSS-only manifest upgrade, offline reuse, separate custom caching, and replacement on a changed artwork pin. No app fixture needed; `YAP_BROWSER=firefox` also supported. |

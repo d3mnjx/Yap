@@ -17,6 +17,7 @@ public partial class ChatService
     private readonly ConcurrentDictionary<string, UserSession> _users = new();
     private readonly PushNotificationService _pushService;
     private readonly ChatPersistenceService _persistence;
+    private readonly IChatStore _store;
     private readonly UserService _userService;
     private readonly LinkPreviewService _linkPreviewService;
     private readonly LinkPreviewSettingsService _linkPreviewSettings;
@@ -92,7 +93,7 @@ public partial class ChatService
 
     private readonly Yap.Offline.ChatLimits _limits;
 
-    public ChatService(PushNotificationService pushService, ChatPersistenceService persistence, UserService userService,
+    public ChatService(PushNotificationService pushService, ChatPersistenceService persistence, IChatStore store, UserService userService,
         LinkPreviewService linkPreviewService, LinkPreviewSettingsService linkPreviewSettings,
         MediaCacheService mediaCacheService, GifService gifService, NotificationAudit audit,
         NotificationSettingsService notifications, ILogger<ChatService> logger, Yap.Offline.ChatLimits limits, OfflineChangeSignal changes, TimeProvider connectionClock, PresenceOptions presenceOptions)
@@ -103,6 +104,7 @@ public partial class ChatService
         _audit = audit;
         _notifications = notifications;
         _persistence = persistence;
+        _store = store;
         _userService = userService;
         _linkPreviewService = linkPreviewService;
         _linkPreviewSettings = linkPreviewSettings;
@@ -349,6 +351,7 @@ public partial class ChatService
 
         // Delete from database
         var sw = Stopwatch.StartNew();
+        await _store.DeleteChannelMessagesAsync(channelId);
         await _persistence.DeleteChannelAsync(channelId);
 
         _logger.LogDebug("DeleteRoom '{RoomName}' channel={ChannelId}: persist={ElapsedMs}ms", channel.Name, channelId, sw.ElapsedMilliseconds);
@@ -963,48 +966,20 @@ public partial class ChatService
     {
         if (!_channels.TryGetValue(channelId, out var channel) || !channel.CanAccess(userId)
             || !channel.CanWrite(userId, IsAdmin(userId))) return;
-        var message = new ChatMessage(channelId, userId, username, content, DateTime.UtcNow, imageUrls, replyToMessageId, videoUrls, gifAttachments);
-        var persisted = await _persistence.PersistNewMessageAsync(message);
-        // Best-effort bot content may remain visible for this process, but must not
-        // leave durable unread counts behind when there is no stored message.
-        await PublishMessageAsync(channel, message, persisted || !_persistence.IsEnabled ? null : []);
+        var user = _userService.GetById(userId);
+        if (user == null) return;
+        await SendTextAsync(user, channelId, Guid.NewGuid(), content, replyToMessageId, imageUrls, videoUrls, gifAttachments);
     }
 
-    private async Task PublishMessageAsync(Channel channel, ChatMessage message, List<Guid>? acceptedRecipients = null)
+    private Task PublishMessageAsync(Channel channel, ChatMessage message, List<Guid> affectedUserIds)
     {
-        var totalSw = Stopwatch.StartNew();
         var channelId = channel.Id;
-        var userId = message.UserId;
         var username = message.Username;
         var content = message.Content;
-        lock (GetChannelLock(channelId))
-        {
-            if (!_channelMessages.TryGetValue(channelId, out var messages)) return;
-            if (messages.Any(m => m.Id == message.Id))
-            {
-                if (acceptedRecipients == null) return;
-            }
-            else messages.Add(message);
-        }
         RunNotification(() => _gifService.IncrementReferences(message.GifAttachments));
-
-        // Update unread counts in memory + DB (awaited — fast, no events)
-        var unreadSw = Stopwatch.StartNew();
-        List<Guid> affectedUserIds = acceptedRecipients ?? [];
-        try { if (acceptedRecipients == null) affectedUserIds = await IncrementUnreadCountsAsync(channelId, userId); }
-        catch (Exception error)
-        {
-            // Acceptance is already durable. The incremental stream has no periodic full
-            // snapshot to repair a swallowed event, so publish even if unread persistence fails.
-            _logger.LogError(error, "Unread persistence failed after accepting {MessageId}", message.Id);
-        }
-        var unreadMs = unreadSw.ElapsedMilliseconds;
 
         // Clear typing state in memory (fast, no event dispatch)
         var wasTyping = _channelTypingUsers.TryGetValue(channelId, out var typingUsers) && typingUsers.TryRemove(username, out _);
-
-        _logger.LogDebug("PublishMessage by {User} to channel {ChannelId}: unread={UnreadMs}ms ({AffectedUsers} users) publishTotal={TotalMs}ms media={HasMedia}",
-            username, channelId, unreadMs, affectedUserIds.Count, totalSw.ElapsedMilliseconds, message.HasMedia);
 
         // Notify all subscribers
         if (wasTyping)
@@ -1030,6 +1005,7 @@ public partial class ChatService
 
         // Push (fire-and-forget, doesn't block the send).
         RunNotification(() => DispatchPush(channel, username, message, content));
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -1106,7 +1082,7 @@ public partial class ChatService
 
     /// <summary>
     /// Generates test messages spread across a time span for debugging scroll and history limits.
-    /// Messages are inserted directly into memory and DB without firing events.
+    /// Messages use ordinary acceptance without unread increments for historical fixtures.
     /// </summary>
     public async Task<int> GenerateTestMessagesAsync(Guid channelId, Guid userId, string username, int count, TimeSpan timeSpan)
     {
@@ -1151,21 +1127,20 @@ public partial class ChatService
             }
         }
 
-        // Insert into memory (sorted by timestamp, before any newer messages)
-        lock (GetChannelLock(channelId))
+        foreach (var message in testMessages)
         {
-            messages.AddRange(testMessages);
-            messages.Sort((a, b) => a.Timestamp.CompareTo(b.Timestamp));
+            message.OperationId = message.Id;
+            var receipt = new TextSendReceipt
+            {
+                UserId = message.UserId,
+                OperationId = message.Id,
+                ChannelId = channelId,
+                MessageId = message.Id,
+                ContentHash = "generated",
+                AcceptedAt = DateTime.UtcNow
+            };
+            await AcceptMessageAsync(channel, message, receipt, countUnread: false);
         }
-
-        // Persist all to DB in one batch
-        await _persistence.PersistMessagesInBulkAsync(testMessages);
-
-        _logger.LogInformation("Generated {Count} test messages in channel {ChannelId} spanning {TimeSpan}", count, channelId, timeSpan);
-
-        // Incremental subscribers need every inserted record; one final pulse no longer
-        // causes a full snapshot rebuild. Their bounded queues coalesce this burst.
-        foreach (var message in testMessages) { _changes.Touch(message.ChannelId, message.Id, history: false); NotifySubscribers(OnMessageReceived, message); }
 
         return count;
     }
@@ -1378,13 +1353,11 @@ public partial class ChatService
     }
 
     private async Task<List<Guid>> IncrementUnreadCountsAsync(Guid channelId, Guid senderUserId,
-        Func<IReadOnlyList<Guid>, Task>? accept = null)
+        Func<IReadOnlyList<Guid>, Task> accept)
     {
         if (!_channels.TryGetValue(channelId, out var channel))
         {
-            if (accept != null)
-                throw new ChatSendException(404, "conversation_unavailable", "This conversation is no longer available.");
-            return new List<Guid>();
+            throw new ChatSendException(404, "conversation_unavailable", "This conversation is no longer available.");
         }
 
         // Collect user IDs to update
@@ -1427,7 +1400,7 @@ public partial class ChatService
 
         if (userIdsToIncrement.Count == 0)
         {
-            if (accept != null) await accept(userIdsToIncrement);
+            await accept(userIdsToIncrement);
             return userIdsToIncrement;
         }
 
@@ -1441,12 +1414,7 @@ public partial class ChatService
                 state.UnreadCount++;
                 return state;
             }).ToArray();
-            if (accept != null) await accept(userIdsToIncrement);
-            else
-            {
-                try { await _persistence.IncrementReadStatesAsync(channelId, userIdsToIncrement); }
-                catch (Exception error) { _logger.LogError(error, "Legacy unread persistence failed for {ChannelId}", channelId); }
-            }
+            await accept(userIdsToIncrement);
             foreach (var state in updated) _readStates[(state.UserId, channelId)] = state;
             if (channel.IsDirectMessage)
                 foreach (var state in updated)

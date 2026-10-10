@@ -27,8 +27,8 @@ static class FollowupChecks
             Check(state.TimeZone == "Europe/Prague" && state.Locale == "cs-CZ" && state.DateFormat == "dmy-24h",
                 "fresh Settings session loads timezone, locale and date format together");
             await users.UpdateLocaleAsync(user.Id, state.TimeZone, state.Locale, "ymd-12h");
-            await using var db = await services.GetRequiredService<IDbContextFactory<ChatDbContext>>().CreateDbContextAsync();
-            var saved = await db.Users.AsNoTracking().SingleAsync(u => u.Id == user.Id);
+            await using var db = services.GetService<IDbContextFactory<ChatDbContext>>() is { } factory ? await factory.CreateDbContextAsync() : null;
+            var saved = db != null ? await db.Users.AsNoTracking().SingleAsync(u => u.Id == user.Id) : users.GetById(user.Id)!;
             Check(saved.Locale == "cs-CZ" && saved.TimeZone == "Europe/Prague" && saved.DateFormat == "ymd-12h",
                 "Settings date save preserves the persisted locale and timezone");
 

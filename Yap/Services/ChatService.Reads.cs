@@ -51,7 +51,7 @@ public partial class ChatService
             state.ReadThrough = target;
             state.UnreadCount = checked((int)(state.ReceivedCount - target));
             state.LastReadAt = DateTime.UtcNow;
-            await _persistence.PersistReadStateAsync(state);
+            await _store.PersistReadStateAsync(state);
             _readStates[(userId, channelId)] = state;
             if (channel.IsDirectMessage && previousCount > state.UnreadCount)
             {

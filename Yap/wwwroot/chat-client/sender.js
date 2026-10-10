@@ -37,9 +37,7 @@ export function createSender({
         !!(item.files?.length || item.gifSource || item.gifEntryId || item.uploadIds?.length);
     const payload = ({ files, uploads, progress, gifPreview, gifSource, ...item }) => item;
     async function reject(item, error, account) {
-        const terminal =
-            error.code === 'persistence_required' ||
-            ([400, 403, 404, 409, 413].includes(error.status) && error.code !== 'csrf');
+        const terminal = [400, 403, 404, 409, 413].includes(error.status) && error.code !== 'csrf';
         await storage.setDelivery(
             item.operationId,
             terminal ? 'failed' : 'queued',

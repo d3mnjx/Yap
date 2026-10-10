@@ -86,6 +86,8 @@ production once and the failure is silent on the client side.
 The comments in `Yap/appsettings.json` are the source of truth for these keys. If this table and
 that file disagree, trust the file.
 
+With `ChatSettings:Persistence:Enabled=false`, sending and message actions work normally, with retry receipts kept in memory. A restart wipes accounts and conversations too: offline clients receive an invalid-login response, lock the old account's cached work, and require login. A newly registered account never inherits the old queue, even with the same username. Both storage backends retain operation receipts for 24 hours; cleanup runs once a minute. Receipt-based retry deduplication is bounded by that retention (and by process lifetime in memory mode).
+
 ## Settings the admin panel owns
 
 Some settings are changed from `/admin` at runtime and are not in `appsettings.json`. They persist

@@ -223,6 +223,6 @@ public sealed class OfflineSnapshotService(ChatService chat, UserService users, 
         var limit = Math.Min(RecentLimit, Math.Max(1, 20000 / Math.Max(1, channels.Length)));
         return new ReaderSnapshot(2, "", Epoch, 0, Summary(user), users.IsAdmin(user.Id), user.Theme ?? "discord-dark",
             user.FontSize, user.TimeZone, user.DateFormat, branding.ProjectName, limit,
-            chat.DurableSendingEnabled, limits.MaxTextLength, users.GetAllUsers().Where(u => u.Id == user.Id || chat.HasActiveSession(u.Username) || channels.Any(c => c.IsDirectMessage && c.CanAccess(u.Id))).OrderBy(u => u.Username).Select(Summary).ToArray(), [], limits.MaxOperationsPerBatch, limits.MaxBatchBytes, limits.MaxFilesPerMessage, limits.AllowedExtensions, limits.MaxUploadBytes, limits.HistoryPageSize, limits.HistoryMaxMessages, limits.ReadBatch, limits.TypingTimeoutMs, limits.AwayAfterMs, DateSettings(user));
+            true, limits.MaxTextLength, users.GetAllUsers().Where(u => u.Id == user.Id || chat.HasActiveSession(u.Username) || channels.Any(c => c.IsDirectMessage && c.CanAccess(u.Id))).OrderBy(u => u.Username).Select(Summary).ToArray(), [], limits.MaxOperationsPerBatch, limits.MaxBatchBytes, limits.MaxFilesPerMessage, limits.AllowedExtensions, limits.MaxUploadBytes, limits.HistoryPageSize, limits.HistoryMaxMessages, limits.ReadBatch, limits.TypingTimeoutMs, limits.AwayAfterMs, DateSettings(user));
     }
 }
