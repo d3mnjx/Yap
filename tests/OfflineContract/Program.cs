@@ -52,6 +52,11 @@ try
             AllowAutoRedirect = false,
             HandleCookies = false
         });
+        Check(!typeof(OfflineHub).Assembly.GetManifestResourceNames().Any(name => name.EndsWith(".razor.css")),
+            "chat styles have no embedded Razor component dependency");
+        Check(typeof(OfflineHub).Assembly.GetType("Yap.Components.Pages.RoomChat") == null
+            && typeof(OfflineHub).Assembly.GetType("Yap.Components.Pages.DmChat") == null,
+            "retired Blazor chat pages are absent from the application");
         // Route removal must apply to the endpoint table as well as auth classification.
         var endpoints = factory.Services.GetRequiredService<Microsoft.AspNetCore.Routing.EndpointDataSource>()
             .Endpoints.OfType<Microsoft.AspNetCore.Routing.RouteEndpoint>()

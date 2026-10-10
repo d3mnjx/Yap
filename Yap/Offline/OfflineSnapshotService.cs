@@ -133,7 +133,7 @@ public sealed class OfflineSnapshotService(ChatService chat, UserService users, 
                 var cached = media.GetCachedMedia(url);
                 if (cached == null && preview?.HasContent != true && preview?.CachedMediaUrl == null)
                     return null;
-                // Match ChatBase's media enrichment on disk hits too: dimensions reserve portrait
+                // Enrich media on disk hits too: dimensions reserve portrait
                 // players before metadata loads, and the sidecar title survives empty OG scrapes.
                 return new LinkPreview
                 {

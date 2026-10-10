@@ -1438,9 +1438,10 @@
                             styles does not instantiate Razor components.
                         </p>
                         <p>
-                            The old <code>RoomChat.razor</code> and <code>DmChat.razor</code> source
-                            remains, but their <code>@page</code> directives are removed. They do
-                            not serve the current chat routes.
+                            The old <code>RoomChat.razor</code>, <code>DmChat.razor</code> and their
+                            chat-only dependencies are removed. The browser client owns its static
+                            <code>component-styles.css</code>; Razor CSS files are no longer embedded
+                            or extracted at runtime.
                         </p>
                     </article>
                 </div>
@@ -1661,8 +1662,7 @@
         MapApi(app.MapGroup(&quot;/api/chat&quot;));
         app.MapHub&lt;OfflineHub&gt;(&quot;/hubs/chat&quot;);
         foreach (var path in new[] { &quot;/chat&quot;, &quot;/lobby&quot;, &quot;/room/{id:guid}&quot;, &quot;/dm/{username}&quot; })
-            app.MapGet(path, (IWebHostEnvironment env) =&gt; Results.File(Path.Combine(env.WebRootPath, &quot;chat-client&quot;, &quot;index.html&quot;), &quot;text/html&quot;));
-        app.MapGet(&quot;/chat-client/component-styles.css&quot;, ComponentStyles);
+            app.MapGet(path, ServeShell);
     }</code></pre>
                 </details>
                 <details>

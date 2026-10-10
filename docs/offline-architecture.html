@@ -1456,8 +1456,8 @@
                         <div class="repo-body">
                             <p>
                                 Chat route ownership moved out of <code>RoomChat.razor</code> and
-                                <code>DmChat.razor</code>. The old components remain in the
-                                repository; their former public chat routes are removed. Login,
+                                <code>DmChat.razor</code>. The unused components and their chat-only dependencies are removed;
+                                browser chat owns an explicit static stylesheet. Login,
                                 Settings, Admin and other retained pages continue using Blazor
                                 Server.
                             </p>

@@ -35,7 +35,7 @@ public class AuthMiddleware
                 userState.FontSize = user.FontSize;
                 // Date/time format is an explicit cross-device preference — load it here so a
                 // fresh circuit on any device starts with the saved value. Without this it stays
-                // null, and ChatBase would re-guess it from the browser locale and persist that
+                // null, and browser detection would re-guess it from the locale and persist that
                 // guess, silently overwriting the user's chosen format. (TimeZone/Locale are
                 // intentionally NOT loaded — they're auto-detected per device.)
                 userState.DateFormat = user.DateFormat;

@@ -79,12 +79,12 @@
             return;
         }
 
-        // Latency telemetry: chat.js pings ProbePing every few seconds and reports send→appear
-        // timings; results land in CircuitTracker for the admin diagnostics table. Hosted here
+        // Latency telemetry: chat.js pings ProbePing and reports circuit RTT
+        // for the admin diagnostics table. Hosted here
         // because ChatLayout is one-per-circuit and survives page navigation.
         try
         {
-            // Settings/Admin now open fresh circuits without ChatBase. Register here so status
+            // Settings/Admin open their own circuits. Register here so status
             // controls and "sign out other devices" have a current session to preserve.
             if (UserState.UserId is { } userId && UserState.Username is { } username
                 && (UserState.SessionId == null || !ChatService.HasSession(UserState.SessionId)))
@@ -119,14 +119,6 @@
 
         if (UserState.SessionId is string sessionId)
             await ChatService.ReportClientStateAsync(sessionId, visible, idleSeconds);
-    }
-
-    // Client-measured "send clicked → own message in the DOM" — the send latency the user actually saw.
-    [JSInvokable]
-    public void ReportSendTiming(double ms)
-    {
-        if (CircuitIdentity.CircuitId is string id)
-            CircuitTracker.ReportSendTiming(id, ms);
     }
 
     private async void HandleSessionKicked(string sessionId)

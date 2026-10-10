@@ -164,7 +164,7 @@
     {
         if (firstRender)
         {
-            // Small delay to catch users added during initialization (ChatBase adds user in OnAfterRenderAsync)
+            // Small delay to catch users added during layout initialization
             await Task.Delay(100);
             var currentCount = ChatService.GetOnlineUsers().Count;
             if (currentCount != onlineCount)

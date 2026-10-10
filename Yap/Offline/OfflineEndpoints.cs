@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Antiforgery;
-using System.Reflection;
 using Yap.Middleware;
 using Yap.Helpers;
 using Yap.Services;
@@ -19,7 +18,6 @@ public static class OfflineEndpoints
         app.MapHub<OfflineHub>("/hubs/chat");
         foreach (var path in new[] { "/chat", "/lobby", "/room/{id:guid}", "/dm/{username}" })
             app.MapGet(path, ServeShell);
-        app.MapGet("/chat-client/component-styles.css", ComponentStyles);
     }
 
     // Only the neutral file is worker-cacheable. Online HTML carries current account
@@ -300,23 +298,4 @@ public static class OfflineEndpoints
     /// than a replayable toggle.
     /// </summary>
     public record MutationRequest(Guid OperationId, string Kind, string? Content, string? Emoji, bool Active);
-
-    private static IResult ComponentStyles()
-    {
-        var assembly = Assembly.GetExecutingAssembly();
-        var css = assembly.GetManifestResourceNames().Where(n => n.EndsWith(".razor.css", StringComparison.Ordinal))
-            .Order().Select(n =>
-            {
-                using var reader = new StreamReader(assembly.GetManifestResourceStream(n)!);
-                var css = reader.ReadToEnd().Replace("::deep", "");
-                // These components share a class name but have different scoped opacity/color rules.
-                // Preserve that boundary when consuming their CSS without Blazor scope attributes.
-                if (n.EndsWith("EmojiPicker.razor.css"))
-                    css = css.Replace(".category-btn", ".emoji-picker .category-btn");
-                if (n.EndsWith("GifPicker.razor.css"))
-                    css = css.Replace(".category-btn", ".gif-picker .category-btn");
-                return css;
-            });
-        return Results.Text(string.Join("\n", css), "text/css");
-    }
 }
