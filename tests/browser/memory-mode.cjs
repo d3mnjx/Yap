@@ -199,6 +199,10 @@ const origin = 'http://127.0.0.1:8097';
                 (await (await import('/chat-client/storage.js')).readIdentity())?.locked === true,
         );
         await page.locator('#notice').getByRole('link', { name: 'Sign in', exact: true }).waitFor();
+        assert.match(
+            await page.locator('#notice').innerText(),
+            /registering again creates a new account and discards the old drafts and outgoing messages/,
+        );
         assert.equal(await page.locator('#timeline .message-group').count(), 0);
         assert(await page.locator('#draft').isDisabled());
         const locked = await page.evaluate(async () => {

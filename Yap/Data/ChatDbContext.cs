@@ -106,6 +106,8 @@ public class ChatDbContext : DbContext
         {
             entity.HasKey(r => new { r.UserId, r.OperationId });
             entity.Property(r => r.ContentHash).HasMaxLength(64);
+            entity.HasIndex(r => r.AcceptedAt);
+            entity.HasIndex(r => new { r.UserId, r.AcceptedAt, r.OperationId });
             entity.HasOne<User>().WithMany().HasForeignKey(r => r.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 

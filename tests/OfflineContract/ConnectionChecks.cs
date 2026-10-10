@@ -73,7 +73,7 @@ static class ConnectionChecks
         Check(chat.GetUserStatus(alice.Username) == UserStatus.Away, "hub drop applies auto-away at configured grace");
         await live.Leave("hub-reconnected"); // duplicate transport notification cannot extend retention
         clock.Advance(policy.HubRetention - policy.DisconnectGrace);
-        Check(!chat.HasSession("chat:hub-reconnected"), "hub drop removes presence five minutes from original disconnect");
+        Check(!chat.HasSession("chat:hub-reconnected"), "hub drop removes presence at configured retention from original disconnect");
 
         async Task<HttpResponseMessage> Close(string id, bool withCsrf = true)
         {
@@ -159,12 +159,18 @@ static class ConnectionChecks
             Check(joined == 2, "return after sustained absence emits a fresh join");
             await chat.ConnectionDown("chat:review-join");
             clock.Advance(policy.DisconnectGrace);
-            Check(left == 2 && chat.HasSession("chat:review-join"), "disconnect announcements use grace independently of retained session lifetime");
+            Check(left == 1 && chat.HasSession("chat:review-join"), "socket drop retains membership without a leave announcement");
             await Join("review-return");
             clock.Advance(policy.DisconnectGrace);
-            Check(joined == 3, "return while a disconnected session is retained announces after sustained absence");
+            Check(joined == 2, "mobile reconnect during retention does not repeat the join announcement");
+            await Join("review-retained");
+            await chat.ConnectionDown("chat:review-retained");
             await live.Close("review-return", alice);
-            clock.Advance(policy.HubRetention + policy.DisconnectGrace);
+            clock.Advance(policy.DisconnectGrace);
+            Check(left == 1, "closing a sibling leaves retained disconnected membership intact");
+            clock.Advance(policy.HubRetention);
+            clock.Advance(policy.DisconnectGrace);
+            Check(left == 2, "last retained session expiry announces leave after grace");
             Check(!callbacksUnderLock, "lifecycle and timer notifications run outside the connection gate");
         }
         finally { chat.OnUserChanged -= Changed; chat.OnUsersListChanged -= People; }

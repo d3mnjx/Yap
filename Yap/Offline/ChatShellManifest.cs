@@ -44,7 +44,7 @@ public sealed class ChatShellManifest
     private static bool IsShellAsset(string path)
     {
         // Precompressed siblings are transport variants, not distinct browser resources.
-        if (path.EndsWith(".br") || path.EndsWith(".gz") || path.EndsWith(".md") || path.Contains("/sample/") || path.Contains("/aardvark-"))
+        if (path.EndsWith(".br") || path.EndsWith(".gz") || path.EndsWith(".md") || path.Contains("/sample/") || path.Contains("/aardvark-") || path.EndsWith("/aardvark.svg"))
             return false;
         if (path.StartsWith("/chat-client/", StringComparison.Ordinal))
             return !(path.StartsWith("/chat-client/emoji/", StringComparison.Ordinal) && path.EndsWith(".svg"));

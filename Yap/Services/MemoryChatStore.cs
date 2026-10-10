@@ -6,6 +6,7 @@ public sealed class MemoryChatStore : IChatStore
 {
     private readonly object gate = new();
     private readonly Dictionary<(Guid UserId, Guid OperationId), TextSendReceipt> receipts = new();
+    private readonly Dictionary<Guid, SortedSet<(DateTime At, Guid Id)>> receiptOrder = new();
     // References are the accepted live objects, not a second copy of message state.
     private readonly Dictionary<Guid, ChatMessage> messages = new();
 
@@ -23,7 +24,7 @@ public sealed class MemoryChatStore : IChatStore
         {
             if (messages.ContainsKey(message.Id) || receipts.ContainsKey((receipt.UserId, receipt.OperationId)))
                 throw new ChatSendException(409, "operation_conflict", "Operation ID already accepted.");
-            receipts.Add((receipt.UserId, receipt.OperationId), receipt);
+            AddReceipt(receipt);
             messages.Add(message.Id, message);
         }
         // ChatService publishes checkpoints and the message before emitting any events.
@@ -33,8 +34,9 @@ public sealed class MemoryChatStore : IChatStore
     {
         lock (gate)
         {
-            if (!receipts.TryAdd((receipt.UserId, receipt.OperationId), receipt))
+            if (receipts.ContainsKey((receipt.UserId, receipt.OperationId)))
                 throw new ChatSendException(409, "operation_conflict", "Operation ID already accepted.");
+            AddReceipt(receipt);
             if (mutation.Kind == "delete") messages.Remove(receipt.MessageId);
         }
         // ChatService applies the validated mutation to the live object after acceptance.
@@ -48,11 +50,34 @@ public sealed class MemoryChatStore : IChatStore
                 messages.Remove(id);
         return Task.CompletedTask;
     }
+    // Called under gate, so a successful acceptance never exceeds the per-account cap.
+    private void AddReceipt(TextSendReceipt receipt)
+    {
+        receipts.Add((receipt.UserId, receipt.OperationId), receipt);
+        if (!receiptOrder.TryGetValue(receipt.UserId, out var order))
+            receiptOrder[receipt.UserId] = order = new();
+        order.Add((receipt.AcceptedAt, receipt.OperationId));
+        while (order.Count > ChatReceiptCleanup.MaxReceiptsPerUser)
+        {
+            var oldest = order.Min;
+            receipts.Remove((receipt.UserId, oldest.Id));
+            order.Remove(oldest);
+        }
+    }
+
     public Task PruneReceiptsAsync(DateTime before)
     {
         lock (gate)
-            foreach (var key in receipts.Where(p => p.Value.AcceptedAt < before).Select(p => p.Key).ToArray())
-                receipts.Remove(key);
+            foreach (var (userId, order) in receiptOrder.ToArray())
+            {
+                while (order.Count > 0 && order.Min.At < before)
+                {
+                    var oldest = order.Min;
+                    receipts.Remove((userId, oldest.Id));
+                    order.Remove(oldest);
+                }
+                if (order.Count == 0) receiptOrder.Remove(userId);
+            }
         return Task.CompletedTask;
     }
 }

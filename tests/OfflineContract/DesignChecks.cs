@@ -144,7 +144,7 @@ static class DesignChecks
             await live.SetStatus("design-viewer", viewer, UserStatus.Away);
             await chat.SendTextAsync(sender, dm.Id, Guid.NewGuid(), "Away arrival");
             Check(chat.GetUnreadCount(viewer.Id, dm.Id) == 1, "manual Away does not suppress unread increments");
-            await chat.MarkObservedReadAsync(viewer.Id, dm.Id, chat.GetReadCheckpoint(viewer.Id, dm.Id).Received, source: "explicit");
+            await chat.MarkObservedReadAsync(viewer.Id, dm.Id, chat.GetReadCheckpoint(viewer.Id, dm.Id).Received, source: "arrival");
             await live.SetStatus("design-viewer", viewer, UserStatus.Online);
             await live.Report("design-viewer", viewer, true, 0, null);
             await chat.SendTextAsync(sender, dm.Id, Guid.NewGuid(), "unloaded window");
@@ -157,7 +157,7 @@ static class DesignChecks
                 "foreground policy preserves persisted checkpoint arithmetic");
             var sources = services.GetRequiredService<NotificationAudit>().GetUnreadChanges()
                 .Where(change => change.User == viewer.Username && change.Kind == "clear").Select(change => change.Source);
-            Check(new[] { "resume", "open", "explicit" }.All(sources.Contains), "read audit retains resume, open and explicit sources");
+            Check(new[] { "resume", "open", "arrival" }.All(sources.Contains), "read audit retains resume, open and arrival sources");
             var room = chat.GetRooms().First(c => c.IsDefault);
             await live.Report("design-viewer", viewer, true, 0, room.Id);
             await chat.SendTextAsync(sender, room.Id, Guid.NewGuid(), "foreground room arrival");

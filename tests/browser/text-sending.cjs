@@ -153,6 +153,7 @@ const suffix = Date.now().toString(36),
             0,
         );
         assert.equal(await alice.locator('#draft').inputValue(), 'draft after queue');
+        await confirmed(second, text('offline once'));
         assert.equal(
             await second
                 .locator('#timeline .message-text')

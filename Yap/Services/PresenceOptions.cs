@@ -4,7 +4,7 @@ namespace Yap.Services;
 public sealed class PresenceOptions
 {
     public TimeSpan DisconnectGrace { get; set; } = TimeSpan.FromSeconds(30);
-    public TimeSpan HubRetention { get; set; } = TimeSpan.FromMinutes(5);
+    public TimeSpan HubRetention { get; set; } = TimeSpan.FromHours(4);
     public TimeSpan CircuitRetention { get; set; } = TimeSpan.FromHours(4);
 
     public void Validate()

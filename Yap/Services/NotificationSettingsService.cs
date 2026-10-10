@@ -1,4 +1,3 @@
-using Yap.Offline;
 using System.Collections.Concurrent;
 using Yap.Models;
 

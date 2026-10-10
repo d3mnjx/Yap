@@ -91,8 +91,8 @@ static class PresenceChecks
         await live.Join("alice3", alice, live.Ticket(alice), UserStatus.Online, true, false, 0);
         Check(chat.GetUserStatus(alice.Username) == UserStatus.Online && !chat.HasSession("chat:alice2"), "reconnect restores auto-away and replaces retained sessions");
         await live.Leave("alice3");
-        clock.Advance(TimeSpan.FromMinutes(5));
-        Check(!chat.HasActiveSession(alice.Username), "five-minute hub retention expires without ghost presence");
+        clock.Advance(services.GetRequiredService<PresenceOptions>().HubRetention);
+        Check(!chat.HasActiveSession(alice.Username), "configured hub retention expires without ghost presence");
 
         var users = services.GetRequiredService<UserService>();
         var admin = users.GetAllUsers().First(u => u.IsAdmin);
@@ -104,7 +104,7 @@ static class PresenceChecks
             "room unread includes live muted users and offline subscribers, excludes offline muted users");
         Check(chat.IsChannelMuted(alice.Id, room.Id) && !chat.IsChannelMuted(bob.Id, room.Id), "room mute policy is preserved");
         await live.Leave("room-alice");
-        clock.Advance(TimeSpan.FromMinutes(5));
+        clock.Advance(services.GetRequiredService<PresenceOptions>().HubRetention);
         await chat.SendMessageAsync(room.Id, admin.Id, admin.Username, "room while offline");
         Check(chat.GetUnreadCount(alice.Id, room.Id) == 1 && chat.GetUnreadCount(bob.Id, room.Id) == 2, "disconnected muted room does not accumulate new unread");
         await users.SetRoomNotificationModeAsync(bob.Id, NotificationMode.MuteAll);

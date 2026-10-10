@@ -6,21 +6,20 @@ import {
     MEDIA_CACHE_PREFIX,
     SHELL_CACHE_PREFIX,
     EMOJI_CACHE,
+    EMOJI_CACHE_PREFIX,
     openDatabase,
 } from './constants.js';
 // Loaded by the single root worker. Never cache personalized HTML, API responses or auth redirects.
 const MANIFEST_URL = '/chat-client/manifest.json';
 const requestedVersion = new URL(self.location.href).searchParams.get('v');
-let installedManifest;
 async function manifest() {
-    if (installedManifest) return installedManifest;
     // Workers can restart while offline; the installed manifest lives beside its assets.
     const names = requestedVersion
         ? [SHELL_CACHE_PREFIX + requestedVersion]
         : (await caches.keys()).filter((name) => name.startsWith(SHELL_CACHE_PREFIX));
     for (const name of names) {
         const cached = await (await caches.open(name)).match(MANIFEST_URL);
-        if (cached) return (installedManifest = await cached.json());
+        if (cached) return cached.json();
     }
     throw new Error('Offline shell is not installed');
 }
@@ -36,71 +35,74 @@ const CHAT_EMOJI_DEFAULTS = [
 ];
 const isTwemoji = (path) => /^\/chat-client\/emoji\/[0-9a-f-]+\.svg$/.test(path);
 const emojiCache = (path) => (isTwemoji(path) ? caches.open(CHAT_EMOJI_CACHE) : shellCache());
-self.addEventListener('install', (event) => {
-    event.waitUntil(
-        (async () => {
-            const response = await fetch(MANIFEST_URL, { cache: 'no-store' });
-            if (!response.ok) throw new Error('Shell manifest unavailable');
-            const next = await response.json();
-            if (requestedVersion && next.version !== requestedVersion)
-                throw new Error('Deployment changed during shell installation');
-            const cache = await caches.open(SHELL_CACHE_PREFIX + next.version);
-            let bridge = (await caches.keys()).includes(MANIFEST_URL)
-                ? await caches.open(MANIFEST_URL)
-                : null;
-            if ((await (await bridge?.match(MANIFEST_URL))?.json())?.version !== next.version)
-                bridge = null;
-            try {
-                // Verify decoded bytes: mixed/stale compressed deployment files must not install.
-                const queue = next.assets.filter((asset) => asset.install !== false);
-                const downloads = await Promise.allSettled(
-                    Array.from({ length: 6 }, async () => {
-                        while (queue.length) {
-                            const asset = queue.shift();
-                            const result =
-                                (await bridge?.match(asset.url)) ||
-                                (await fetch(asset.url, {
-                                    cache: 'reload',
-                                    signal: AbortSignal.timeout(30000),
-                                }));
-                            if (!result.ok)
-                                throw new Error('Shell asset unavailable: ' + asset.url);
-                            const bytes = await result.clone().arrayBuffer();
-                            const digest = [
-                                ...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)),
-                            ]
-                                .map((b) => b.toString(16).padStart(2, '0'))
-                                .join('');
-                            if (digest !== asset.hash)
-                                throw new Error('Shell asset changed: ' + asset.url);
-                            await cache.put(asset.url, result);
-                        }
-                    }),
-                );
-                const failed = downloads.find((result) => result.status === 'rejected');
-                if (failed) throw failed.reason;
-                await cache.put(
-                    MANIFEST_URL,
-                    new Response(JSON.stringify(next), {
-                        headers: { 'Content-Type': 'application/json' },
-                    }),
-                );
-                installedManifest = next;
-                const emoji = await caches.open(CHAT_EMOJI_CACHE);
-                for (const path of CHAT_EMOJI_DEFAULTS)
-                    if (!(await emoji.match(path)))
-                        await emoji.add(
-                            new Request(new URL(path, self.location.origin), { cache: 'reload' }),
-                        );
-            } catch (error) {
-                // A failed candidate never replaces the incumbent's complete shell.
-                if (!(await cache.match(MANIFEST_URL)))
-                    await caches.delete(SHELL_CACHE_PREFIX + next.version);
-                throw error;
-            }
-        })(),
-    );
-});
+let installation;
+function installShell() {
+    return (installation ??= (async () => {
+        const response = await fetch(MANIFEST_URL, {
+            cache: 'no-store',
+            signal: AbortSignal.timeout(10000),
+        });
+        if (!response.ok) throw new Error('Shell manifest unavailable');
+        const next = await response.json();
+        if (requestedVersion && next.version !== requestedVersion)
+            throw new Error('Deployment changed during shell installation');
+        const cache = await caches.open(SHELL_CACHE_PREFIX + next.version);
+        let bridge = (await caches.keys()).includes(MANIFEST_URL)
+            ? await caches.open(MANIFEST_URL)
+            : null;
+        if ((await (await bridge?.match(MANIFEST_URL))?.json())?.version !== next.version)
+            bridge = null;
+        try {
+            // Verify decoded bytes: mixed/stale compressed deployment files must not install.
+            const queue = next.assets.filter((asset) => asset.install !== false);
+            const downloads = await Promise.allSettled(
+                Array.from({ length: 6 }, async () => {
+                    while (queue.length) {
+                        const asset = queue.shift();
+                        const result =
+                            (await bridge?.match(asset.url)) ||
+                            (await fetch(asset.url, {
+                                cache: 'reload',
+                                signal: AbortSignal.timeout(30000),
+                            }));
+                        if (!result.ok) throw new Error('Shell asset unavailable: ' + asset.url);
+                        const bytes = await result.clone().arrayBuffer();
+                        const digest = [
+                            ...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)),
+                        ]
+                            .map((b) => b.toString(16).padStart(2, '0'))
+                            .join('');
+                        if (digest !== asset.hash)
+                            throw new Error('Shell asset changed: ' + asset.url);
+                        await cache.put(asset.url, result);
+                    }
+                }),
+            );
+            const failed = downloads.find((result) => result.status === 'rejected');
+            if (failed) throw failed.reason;
+            await cache.put(
+                MANIFEST_URL,
+                new Response(JSON.stringify(next), {
+                    headers: { 'Content-Type': 'application/json' },
+                }),
+            );
+            const emoji = await caches.open(CHAT_EMOJI_CACHE);
+            for (const path of CHAT_EMOJI_DEFAULTS)
+                if (!(await emoji.match(path)))
+                    await emoji.add(
+                        new Request(new URL(path, self.location.origin), { cache: 'reload' }),
+                    );
+        } catch (error) {
+            // A failed candidate never replaces the incumbent's complete shell.
+            if (!(await cache.match(MANIFEST_URL)))
+                await caches.delete(SHELL_CACHE_PREFIX + next.version);
+            throw error;
+        }
+    })().finally(() => {
+        installation = undefined;
+    }));
+}
+self.addEventListener('install', (event) => event.waitUntil(installShell()));
 // Personal recents arrive after the authenticated catalog. Bound and serialize warming
 // so it cannot flood the connection with thousands of optional image requests.
 let emojiWarming = Promise.resolve();
@@ -148,7 +150,7 @@ self.addEventListener('activate', (event) => {
                             key === 'yap-v2' ||
                             key === 'yap-media-v1' ||
                             (key.startsWith(SHELL_CACHE_PREFIX) && key !== shell) ||
-                            (key.startsWith('yap-chat-emoji-') && key !== CHAT_EMOJI_CACHE),
+                            (key.startsWith(EMOJI_CACHE_PREFIX) && key !== CHAT_EMOJI_CACHE),
                     )
                     .map((key) => caches.delete(key)),
             );
@@ -161,9 +163,18 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('message', (event) => {
     if (event.data?.type === 'CHAT_OFFLINE_CHECK')
         event.waitUntil(
-            manifest().then((value) =>
-                event.source?.postMessage({ type: 'CHAT_OFFLINE_READY', version: value.version }),
-            ),
+            manifest()
+                .catch(async () => {
+                    await installShell();
+                    return manifest();
+                })
+                .then((value) =>
+                    event.source?.postMessage({
+                        type: 'CHAT_OFFLINE_READY',
+                        version: value.version,
+                    }),
+                )
+                .catch(() => {}),
         );
 });
 self.addEventListener('fetch', (event) => {
@@ -171,7 +182,9 @@ self.addEventListener('fetch', (event) => {
     if (url.origin !== self.location.origin) return;
     if (/^\/auth\/(signin|signout|refresh-token|invite)$/.test(url.pathname)) {
         event.respondWith(
-            clearChatData(url.pathname === '/auth/signout').then(() => fetch(event.request)),
+            clearChatData(url.pathname === '/auth/signout')
+                .catch(() => {})
+                .then(() => fetch(event.request)),
         );
         return;
     }

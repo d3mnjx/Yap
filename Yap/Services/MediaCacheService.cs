@@ -1,4 +1,3 @@
-using Yap.Offline;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Security.Cryptography;

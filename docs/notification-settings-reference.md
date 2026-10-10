@@ -78,6 +78,13 @@ what puts the dot on a room for people who are here), plus everyone who unmuted 
 not. The second set exists so a badge and the push that announced it agree. Offline users who have a
 room muted are still skipped, so nobody returns to a sidebar full of dots for rooms they never opened.
 
+A caught-up reader is excluded from new unread increments only when a connected session is
+foreground, non-Away, recently reported, and viewing the loaded/validated conversation. Hidden,
+stale, disconnected, or catching-up sessions use ordinary checkpoints. This suppression avoids
+transient unread badges on another device; it never acknowledges arrivals the reader has not seen.
+Read audits distinguish `open`, `arrival`, and `resume` (`observed` is the compatibility default).
+The first eligible observation of a newly opened window is `open`, even if an arrival renders first.
+
 ## Server-side prerequisites
 
 Push is off unless `Vapid:Subject/PublicKey/PrivateKey` are set in `appsettings.json`. Startup

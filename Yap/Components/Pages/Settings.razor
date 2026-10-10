@@ -1100,31 +1100,6 @@
         await SaveProfileAsync();
     }
 
-    private void GoBack()
-    {
-        // Flush any pending debounced save immediately
-        _debounceCts?.Cancel();
-        if (UserState.UserId.HasValue)
-        {
-            var normalizedDisplayName = string.IsNullOrWhiteSpace(displayName) ? null : displayName.Trim();
-            var normalizedBio = string.IsNullOrWhiteSpace(bio) ? null : bio.Trim();
-            var normalizedCountry = string.IsNullOrWhiteSpace(country) ? null : country.Trim();
-            var cleanProfileUrl = profilePictureUrl?.Split('?')[0];
-
-            _ = UserService.UpdateProfileAsync(
-                UserState.UserId.Value,
-                normalizedDisplayName,
-                cleanProfileUrl,
-                normalizedBio,
-                normalizedCountry);
-
-            UserState.DisplayName = normalizedDisplayName;
-            UserState.ProfilePictureUrl = cleanProfileUrl;
-        }
-
-        Navigation.NavigateTo("/lobby", forceLoad: true);
-    }
-
     // Account security methods
 
     private async Task EnablePassphrase()

@@ -1,12 +1,13 @@
+import './worker-common.js';
 import { get, post } from './api.js';
 import * as storage from './storage.js';
 const installed = () =>
     matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-const chatPath = (path) => /^\/(chat|lobby)\/?$/.test(path) || /^\/(room|dm)\/[^/]+\/?$/.test(path);
 const safeRoute = (value) => {
     try {
         const url = new URL(value, location.origin);
-        return url.origin === location.origin && chatPath(url.pathname)
+        return url.origin === location.origin &&
+            globalThis.yapWorkerCommon.isChatNavigation(url.pathname)
             ? url.pathname + url.search
             : null;
     } catch {
@@ -94,16 +95,6 @@ export async function installGuide(nativePrompt) {
         })
         .show('en');
 }
-const decode = (value) =>
-    Uint8Array.from(
-        atob(
-            value
-                .replace(/-/g, '+')
-                .replace(/_/g, '/')
-                .padEnd(Math.ceil(value.length / 4) * 4, '='),
-        ),
-        (c) => c.charCodeAt(0),
-    );
 export function createPwa({ identity, navigate, notice }) {
     let initialized,
         shown,
@@ -117,7 +108,7 @@ export function createPwa({ identity, navigate, notice }) {
     };
     async function register(publicKey, owner) {
         let registration = await navigator.serviceWorker.getRegistration();
-        const key = decode(publicKey);
+        const key = globalThis.yapWorkerCommon.urlBase64ToUint8Array(publicKey);
         if (!registration)
             throw Error('Notification service is unavailable. Reconnect and try again.');
         // First load can reach chat before the shell finishes installing; subscription needs an active worker.

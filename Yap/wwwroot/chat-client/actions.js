@@ -231,7 +231,15 @@ export function createActions({
             button('edit-cancel', '✕ Cancel', () => cancel(true)),
             el('span', 'edit-hint', 'Enter to save · Shift+Enter for newline · Esc to cancel'),
         );
-        editing = { id: message.id, cancel };
+        editing = {
+            id: message.id,
+            row,
+            cancel,
+            update(value) {
+                message = value;
+                this.id = value.id;
+            },
+        };
         row.classList.add('editing');
         content.replaceChildren(box);
         if (!isTouchDevice()) input.focus();
@@ -386,6 +394,11 @@ export function createActions({
     return {
         attach,
         isEditing: (id) => editing?.id === id,
+        acceptPending(message) {
+            if (!message.operationId || editing?.id !== message.operationId) return null;
+            editing.update(message);
+            return editing.row;
+        },
         reset() {
             closePopup();
             clearTimeout(idleTimer);

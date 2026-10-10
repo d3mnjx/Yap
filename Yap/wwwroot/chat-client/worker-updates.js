@@ -39,14 +39,16 @@ export function registerWorker() {
             });
             if (!response.ok) throw new Error('Shell manifest unavailable');
             const manifest = await response.json();
-            const registration = await navigator.serviceWorker.register(
-                '/service-worker-module.js?v=' + encodeURIComponent(manifest.version),
-                {
+            const registration = await navigator.serviceWorker
+                .register('/service-worker-module.js?v=' + encodeURIComponent(manifest.version), {
                     type: 'module',
                     updateViaCache: 'none',
                     scope: '/',
-                },
-            );
+                })
+                .catch((error) => {
+                    error.workerRegistration = true;
+                    throw error;
+                });
             watchWorkerUpdates(registration);
             return registration;
         } catch (error) {

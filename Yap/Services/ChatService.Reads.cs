@@ -32,7 +32,7 @@ public partial class ChatService
     // never clears arrivals beyond the observed target, including delayed offline replay.
     public async Task MarkObservedReadAsync(Guid userId, Guid channelId, long? through, bool silent = false, string? callerSessionId = null, string source = "observed")
     {
-        if (source is not ("observed" or "open" or "arrival" or "resume" or "explicit"))
+        if (source is not ("observed" or "open" or "arrival" or "resume"))
             throw new ChatSendException(400, "invalid_read_source", "Unknown read source.");
         var channel = GetChannel(channelId);
         if (channel == null || !channel.CanAccess(userId))

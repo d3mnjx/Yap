@@ -38,6 +38,7 @@ public sealed class SqliteChatStore(IDbContextFactory<ChatDbContext> dbFactory) 
         // failure must roll back acceptance so retry can safely complete all three.
         await db.SaveChangesAsync();
         await IncrementReadStatesAsync(db, message.ChannelId, recipients ?? []);
+        await CapReceiptsAsync(db, receipt.UserId);
         await transaction.CommitAsync();
     }
 
@@ -56,6 +57,7 @@ public sealed class SqliteChatStore(IDbContextFactory<ChatDbContext> dbFactory) 
             throw new ChatSendException(404, "message_unavailable", "Message unavailable.");
         db.TextSendReceipts.Add(receipt);
         await db.SaveChangesAsync();
+        await CapReceiptsAsync(db, receipt.UserId);
         await transaction.CommitAsync();
     }
 
@@ -69,7 +71,12 @@ public sealed class SqliteChatStore(IDbContextFactory<ChatDbContext> dbFactory) 
     {
         await using var db = await dbFactory.CreateDbContextAsync();
         await db.TextSendReceipts.Where(r => r.AcceptedAt < before).ExecuteDeleteAsync();
+        // Also bound accounts imported from releases that had only age-based retention.
+        await db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM TextSendReceipts WHERE rowid IN (SELECT rowid FROM (SELECT rowid, ROW_NUMBER() OVER (PARTITION BY UserId ORDER BY AcceptedAt DESC, OperationId DESC) AS position FROM TextSendReceipts) WHERE position > {ChatReceiptCleanup.MaxReceiptsPerUser})");
     }
+
+    private static Task CapReceiptsAsync(ChatDbContext db, Guid userId) =>
+        db.Database.ExecuteSqlInterpolatedAsync($"DELETE FROM TextSendReceipts WHERE UserId = {userId} AND OperationId IN (SELECT OperationId FROM TextSendReceipts WHERE UserId = {userId} ORDER BY AcceptedAt DESC, OperationId DESC LIMIT -1 OFFSET {ChatReceiptCleanup.MaxReceiptsPerUser})");
 
     private static async Task IncrementReadStatesAsync(ChatDbContext db, Guid channelId, IReadOnlyList<Guid> recipients)
     {

@@ -87,7 +87,14 @@ document.addEventListener('chat-update-required', () => {
         'Client update required. Reload Yap to continue. Your saved drafts and outgoing messages are retained.',
     );
     const reload = element('button', '', 'Reload');
-    reload.onclick = () => location.reload();
+    const update = () => registerWorker().catch(() => {});
+    update();
+    reload.onclick = async () => {
+        const registration = await update();
+        // Activation below reloads once the replacement has finished installing. If
+        // workers are blocked, the network-first root can still deliver a current shell.
+        if (!registration?.installing && !registration?.waiting) location.assign('/');
+    };
     $('#notice').append(reload);
 });
 function clearUI() {
@@ -130,7 +137,10 @@ async function loseAccount(remove = false) {
     clearUI();
     composer.update();
     status('Sign in required');
-    notice('Sign in again to resume your saved drafts and outgoing messages.', true);
+    notice(
+        'Sign in to the same account to resume saved work. If this server lost its accounts after a restart, registering again creates a new account and discards the old drafts and outgoing messages.',
+        true,
+    );
 }
 const windows = createWindows({
     identity: () => identity,
@@ -498,10 +508,22 @@ async function renderPending() {
     }
     $('#outgoing-section').hidden = !outgoing.children.length;
     const root = $('#pending');
-    root.replaceChildren();
+    // Keep a pending editor mounted through status updates and acknowledgement.
+    for (const row of [...root.children]) {
+        if (
+            actions.isEditing(row.dataset.operation) &&
+            !pending.some((item) => item.operationId === row.dataset.operation)
+        )
+            actions.reset();
+        if (!actions.isEditing(row.dataset.operation)) row.remove();
+    }
     const messages = snapshot.conversations.find((c) => c.id === channel)?.messages ?? [];
     let previous = messages.at(-1);
+    let position = 0;
     for (const item of pending) {
+        const editingRow = [...root.children].find(
+            (row) => row.dataset.operation === item.operationId,
+        );
         const message = {
             id: item.operationId,
             author: snapshot.user,
@@ -516,6 +538,11 @@ async function renderPending() {
             gifCount: item.gifEntryId || item.gifSource || item.files?.length ? 1 : 0,
             gifs: item.gifPreview ? [item.gifPreview] : [],
         };
+        if (editingRow) {
+            previous = message;
+            position++;
+            continue;
+        }
         const row = item.kind
             ? element('article', 'message-group')
             : messageView.createMessage(message, needsMessageHeader(message, previous), messages);
@@ -563,7 +590,7 @@ async function renderPending() {
             };
             body.append(retryButton);
         }
-        root.append(row);
+        root.insertBefore(row, root.children[position++] || null);
     }
 }
 async function render() {
@@ -761,19 +788,17 @@ function acceptSnapshot(
             if (attemptGeneration !== connectionGeneration) return;
             const old = snapshot;
             if (data.protocol !== PROTOCOL) throw new Error('Client update required');
-            {
-                const committed = await storage.commitUpdate(data, identity, acknowledgedOperation);
-                if (attemptGeneration !== connectionGeneration) return;
-                // Shared storage can already contain another tab's later delta. Advance this
-                // view from the ordered packet so history sees every mutation in that chain.
-                if (committed) snapshot = mergeUpdate(snapshot, data);
-                if (old?.serverEpoch === snapshot?.serverEpoch) {
-                    const before = new Map(old.conversations.map((c) => [c.id, c]));
-                    snapshot.conversations = snapshot.conversations.map((c) => {
-                        const prior = before.get(c.id);
-                        return prior?.sync && prior.sync.version === c.sync?.version ? prior : c;
-                    });
-                }
+            const committed = await storage.commitUpdate(data, identity, acknowledgedOperation);
+            if (attemptGeneration !== connectionGeneration) return;
+            // Shared storage can already contain another tab's later delta. Advance this
+            // view from the ordered packet so history sees every mutation in that chain.
+            if (committed) snapshot = mergeUpdate(snapshot, data);
+            if (old?.serverEpoch === snapshot?.serverEpoch) {
+                const before = new Map(old.conversations.map((c) => [c.id, c]));
+                snapshot.conversations = snapshot.conversations.map((c) => {
+                    const prior = before.get(c.id);
+                    return prior?.sync && prior.sync.version === c.sync?.version ? prior : c;
+                });
             }
             if (attemptGeneration !== connectionGeneration || !snapshot) return;
             if (data.state) window.yapAppearance.apply({ ...snapshot, userId: snapshot.user.id });
@@ -988,15 +1013,19 @@ async function boot() {
                 if ($('#connection').textContent.startsWith('Synced'))
                     status('Synced · available offline');
             });
-            navigator.serviceWorker.addEventListener('controllerchange', checkWorker);
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (updateRequired) location.reload();
+                else checkWorker();
+            });
             registerWorker()
                 .then((registration) => {
                     watchWorkerUpdates(registration);
                     checkWorker();
                 })
                 .catch((error) => {
-                    workerWarning =
-                        'Offline reload and push require a browser with module service workers (Chrome/Edge 91+, Firefox 114+, Safari 15+) and trusted HTTPS or localhost. Update your browser if needed.';
+                    workerWarning = !error.workerRegistration
+                        ? 'Offline setup could not finish downloading. Reconnect and reload to try again; online chat and saved drafts remain available.'
+                        : 'Offline reload and push require a browser with module service workers (Chrome/Edge 91+, Firefox 114+, Safari 15+) and trusted HTTPS or localhost. Update your browser if needed.';
                     notice('');
                     console.warn(error);
                 });

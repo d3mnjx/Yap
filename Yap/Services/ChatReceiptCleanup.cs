@@ -1,8 +1,9 @@
 namespace Yap.Services;
 
-// A day of retry deduplication in either backend; deletion never removes a fresh receipt.
+// Retry deduplication is bounded by age and per-account count; deletion does not bypass retention.
 public sealed class ChatReceiptCleanup(IChatStore store, IWebHostEnvironment env, ILogger<ChatReceiptCleanup> logger) : BackgroundService
 {
+    public const int MaxReceiptsPerUser = 4096;
     public static readonly TimeSpan Retention = TimeSpan.FromDays(1);
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

@@ -221,9 +221,18 @@ public sealed class OfflineFanout : IDisposable
             People();
             // Profiles are embedded in cached message DTOs. A rare profile edit must also
             // invalidate those windows; this work never runs on the message arrival path.
-            foreach (var channel in chat.GetRooms().Concat(chat.GetAllDMChannels()))
-                if (chat.GetMessages(channel.Id, int.MaxValue).Any(m => m.UserId == userId))
-                    changes.Touch(channel.Id);
+            var user = users.GetById(userId);
+            var authored = chat.GetRooms().Concat(user == null ? [] : chat.GetDMChannels(user.Username));
+            var affected = authored.Where(c => chat.AnyMessage(c.Id, m => m.UserId == userId))
+                .Select(c => c.Id).ToHashSet();
+            // An uploader need never have posted in a room/DM that embeds their GIF.
+            var uploaded = gifs.GetAllEntries().Where(g => g.UploadedByUserId == userId).Select(g => g.Id).ToHashSet();
+            if (uploaded.Count > 0)
+                foreach (var channel in chat.GetRooms().Concat(chat.GetAllDMChannels()))
+                    if (chat.AnyMessage(channel.Id, m => m.GifAttachments.Any(g => uploaded.Contains(g.GifEntryId))))
+                        affected.Add(channel.Id);
+            foreach (var id in affected)
+                changes.Touch(id);
         }
         else if (accounts.TryGetValue(userId, out var account))
         {
@@ -424,7 +433,7 @@ public sealed class OfflineFanout : IDisposable
                         // A digest at the delta's base is already represented by the chain.
                         // Gaps and explicit later invalidations must still force a refill.
                         Invalidate = (patch.Invalidate && !(previous.BaseRevision != null && previous.Revision == patch.Revision))
-                            || (previous.Invalidate && patch.BaseRevision != previous.Revision)
+                            || (previous.Invalidate && (previous.BaseRevision != null || patch.BaseRevision != previous.Revision))
                             || (previous.BaseRevision != null && patch.BaseRevision != null && previous.Revision != patch.BaseRevision)
                     };
                 }

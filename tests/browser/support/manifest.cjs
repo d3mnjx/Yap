@@ -14,6 +14,7 @@ function manifest(root, read = (url) => fs.readFileSync(path.join(root, url))) {
                 !/\.(br|gz|md)$/.test(url) &&
                 !url.includes('/sample/') &&
                 !url.includes('/aardvark-') &&
+                !url.endsWith('/aardvark.svg') &&
                 !/^\/chat-client\/emoji\/.*\.svg$/.test(url) &&
                 (/^\/(chat-client|fonts|themes|images)\//.test(url) ||
                     /^\/(app\.css|themes\.css|notif\.mp3|js\/appearance\.js|service-worker(?:-module)?\.js|icon(?:-192|-512)?\.(?:svg|png)|emoji_selection_(?:greys|color)\.png)$/.test(

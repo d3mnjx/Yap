@@ -106,8 +106,6 @@ public partial class ChatService : IDisposable
                 ReadingChannelId = null
             };
             PeopleChanged(notifications);
-            if (!_users.Values.Any(u => u.Connected && u.Username.Equals(session.Username, StringComparison.OrdinalIgnoreCase)))
-                SchedulePresenceChange(session.Username, false);
             var pending = new Disconnect(_connectionClock.GetUtcNow(),
                 session.CircuitId == null ? _presenceOptions.HubRetention : _presenceOptions.CircuitRetention);
             _disconnects.Add(sessionId, pending);

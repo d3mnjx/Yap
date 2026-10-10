@@ -29,4 +29,5 @@ export function openDatabase() {
     });
 }
 
-export const EMOJI_CACHE = 'yap-chat-emoji-17.0.3';
+export const EMOJI_CACHE_PREFIX = 'yap-chat-emoji-';
+export const EMOJI_CACHE = EMOJI_CACHE_PREFIX + '17.0.3';

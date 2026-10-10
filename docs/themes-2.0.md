@@ -77,9 +77,9 @@ It looks like it could: `--bg-primary` already accepts a full CSS `background` v
 `sunset` put `linear-gradient(...)` in it today. But that variable is doing **two different jobs**:
 
 1. the **page canvas** — `.chat-container`, `.messages-container` (`wwwroot/chat-client/shared.css`)
-2. an **opaque fill for small elements** — message hover states (`MessageItem.razor.css:476, 503,
-   568, 732, 765`), the input box (`MessageInput.razor.css:41, 352`), the scrollbar thumb border
-   (`ChatLayout.razor.css:72`), an Admin panel surface.
+2. an **opaque fill for small elements** — message hover states (`Yap/wwwroot/chat-client/messages.css`),
+   the input box (`Yap/wwwroot/chat-client/composer.css`), the scrollbar thumb border
+   (`Yap/Components/Layout/ChatLayout.razor.css`), an Admin panel surface.
 
 Job 2 restarts the background inside every small element. With a gradient nobody notices. With
 `url(teahouse.webp)` you get a tea house tiled inside every message hover rectangle. It is not a

@@ -76,7 +76,7 @@ public sealed class ChatCircuitHandler : CircuitHandler
         {
             // Circuit eviction and presence retention callbacks need not run at the same
             // instant. A surviving warm circuit recreates its expired presence session.
-            if (!_chatService.HasSession(connectedSession) && _userState.UserId is { } userId && _userState.Username is { } username)
+            if (_userState.UserId is { } userId && _userState.Username is { } username)
                 await _chatService.AddUserAsync(connectedSession, userId, username, _userState.Status,
                     clientIp: _clientIp, circuitId: circuit.Id, pageVisible: false);
             await _chatService.ConnectionUp(connectedSession);
@@ -104,8 +104,7 @@ public sealed class ChatCircuitHandler : CircuitHandler
     {
         _circuitTracker.OnConnectionDown(circuit.Id);
 
-        // Save status for potential restore on reconnect.
-        // Don't change user status here — circuit close handles cleanup via RemoveUserAsync.
+        // ChatService owns grace, status preservation and eventual session removal.
         if (!string.IsNullOrEmpty(_userState.SessionId) && !string.IsNullOrEmpty(_userState.Username))
         {
             await _chatService.ConnectionDown(_userState.SessionId);

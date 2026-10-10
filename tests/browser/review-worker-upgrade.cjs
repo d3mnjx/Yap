@@ -164,7 +164,33 @@ proxy.on('upgrade', (req, socket, head) => {
         holdWrites = true;
         packagePath = newPackage;
         await context.setOffline(false);
-        await page.reload();
+        if (process.env.YAP_PROTOCOL_UPGRADE === '1') {
+            // Use a current-code incumbent with a distinct asset manifest to exercise 426
+            // while it is already controlling an open editor, rather than navigation updates.
+            await context.route('**/api/chat/protocol-fixture', (route) =>
+                route.fulfill({
+                    status: 426,
+                    contentType: 'application/json',
+                    body: JSON.stringify({
+                        code: 'update_required',
+                        error: 'Client update required.',
+                    }),
+                }),
+            );
+            const navigation = page.waitForEvent(
+                'framenavigated',
+                (frame) => frame === page.mainFrame(),
+            );
+            await page.evaluate(async () => {
+                try {
+                    await (await import('/chat-client/api.js')).get('protocol-fixture');
+                } catch {}
+            });
+            await navigation;
+            console.log(
+                'PASS protocol 426 triggers worker update and reload on controller activation',
+            );
+        } else await page.reload();
         // Fresh HTML loads the watcher even while the incumbent worker serves the old app.
         await poll(
             page,

@@ -61,6 +61,43 @@ static class StoreChecks
         Check(results.Count(r => r) == 1 && new[] { target, serverMessage }.Count(m => m.Content == "shared operation") == 1,
             "one operation ID cannot accept mutations of two messages concurrently");
 
+        // Both aliases must wait on the resolved message lock. Otherwise an edit through
+        // an outgoing operation ID can race a delete addressed by the accepted server ID.
+        var lockMethod = typeof(ChatService).GetMethod("LockAcceptance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+        var lease = await (Task<IDisposable>)lockMethod.Invoke(chat, ["message:" + target.Id])!;
+        var aliased = chat.MutateMessageAsync(user, channel, sent.OperationId, Guid.NewGuid(), "edit", "aliased edit", null, false);
+        try
+        {
+            await Task.Delay(50);
+            Check(!aliased.IsCompleted, "pending-operation alias shares the accepted message mutation lock");
+        }
+        finally { lease.Dispose(); }
+        await aliased;
+        Check(target.Content == "aliased edit", "pending-operation alias edits the accepted message");
+
+        var capped = (await services.GetRequiredService<UserService>().CreateUserAsync("receiptcapfixture"))!;
+        var capReceipts = new List<TextSendReceipt>();
+        for (var i = 0; i < ChatReceiptCleanup.MaxReceiptsPerUser + 2; i++)
+        {
+            var cappedReceipt = new TextSendReceipt
+            {
+                UserId = capped.Id,
+                OperationId = Guid.NewGuid(),
+                ChannelId = channel,
+                MessageId = Guid.NewGuid(),
+                ContentHash = "count fixture",
+                AcceptedAt = DateTime.UtcNow.AddHours(-1).AddMilliseconds(i)
+            };
+            capReceipts.Add(cappedReceipt);
+            await store.PersistMutationAsync(cappedReceipt, new ChatMutation("delete", null, null, false, capped.Id, capped.Username));
+        }
+        Check(await store.GetTextReceiptAsync(capped.Id, capReceipts[0].OperationId) == null
+            && await store.GetTextReceiptAsync(capped.Id, capReceipts[1].OperationId) == null
+            && await store.GetTextReceiptAsync(capped.Id, capReceipts[2].OperationId) != null
+            && await store.GetTextReceiptAsync(capped.Id, capReceipts[^1].OperationId) != null
+            && await store.GetTextReceiptAsync(user.Id, sent.OperationId) != null,
+            "receipt count is capped at acceptance, evicts oldest first and isolates accounts");
+
         var old = new ChatMessage(channel, user.Id, user.Username, "expired receipt", DateTime.UtcNow);
         var receipt = new TextSendReceipt
         {

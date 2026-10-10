@@ -65,15 +65,29 @@ export function createReader({
     };
     setInterval(flush, 3000);
     let resumed = false;
+    let eligibleWindow;
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden) resumed = true;
     });
     return {
         flush,
         async observe(conversation, source = 'arrival') {
-            const explicit = source === 'open' || source === 'explicit';
-            if (!explicit && resumed) source = 'resume';
             const owner = identity();
+            const window =
+                owner &&
+                conversation &&
+                !document.hidden &&
+                conversation.sync?.loaded !== false &&
+                !conversation.sync?.stale
+                    ? owner.epoch + ':' + conversation.id
+                    : null;
+            // A first arrival can render before navigation's explicit open callback.
+            // Claim the newly eligible window synchronously before either storage await.
+            if (window && window !== eligibleWindow) source = 'open';
+            // Hiding the same window is a resume, not a new conversation open.
+            if (!document.hidden) eligibleWindow = window;
+            const explicit = source === 'open';
+            if (!explicit && resumed) source = 'resume';
             if (
                 !owner ||
                 document.hidden ||

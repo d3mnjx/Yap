@@ -184,7 +184,8 @@ async function until(check) {
         );
         assert(
             ['open', 'arrival', 'resume'].every((source) => readSources.includes(source)),
-            'Read writes distinguish navigation, arrival and resume in the audit',
+            'Read writes distinguish navigation, arrival and resume in the audit: ' +
+                readSources.join(', '),
         );
         console.log('PASS browser read writes retain open, arrival and resume sources');
         // Cache the unread first, open it offline, then deliver newer text before replaying the read.

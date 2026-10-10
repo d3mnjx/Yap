@@ -33,7 +33,8 @@ const server = http.createServer((req, res) => {
     if (
         url === '/chat-client/manifest.json' ||
         url.startsWith('/api/') ||
-        url.startsWith('/hubs/')
+        url.startsWith('/hubs/') ||
+        url.startsWith('/auth/')
     ) {
         res.setHeader('Content-Type', 'application/json');
         return res.end(
@@ -100,6 +101,23 @@ const server = http.createServer((req, res) => {
         console.log(
             'PASS missing optional artwork does not block install; obsolete root caches are removed',
         );
+        const auth = await page.evaluate(async () => {
+            // A live schema-3 tab makes the worker's schema-4 open fire onblocked.
+            const db = await new Promise((resolve, reject) => {
+                const request = indexedDB.open('yap-chat-v1', 3);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+            try {
+                return await (await fetch('/auth/signin', { method: 'POST' })).json();
+            } finally {
+                db.close();
+            }
+        });
+        assert.equal(auth.network, true);
+        console.log(
+            'PASS blocked local account cleanup cannot block authentication network access',
+        );
         await context.setOffline(true);
         const offline = await page.goto(origin + '/lobby');
         assert(offline.ok());
@@ -131,6 +149,30 @@ const server = http.createServer((req, res) => {
         assert.equal(await page.title(), 'Network /lobby');
         console.log(
             'PASS evicted shell and worker restart preserve API, hub, asset and navigation network access',
+        );
+        await page.evaluate(
+            () =>
+                new Promise((resolve, reject) => {
+                    const timer = setTimeout(() => reject(Error('Shell repair timed out')), 30000);
+                    navigator.serviceWorker.addEventListener('message', function ready(event) {
+                        if (event.data?.type !== 'CHAT_OFFLINE_READY') return;
+                        clearTimeout(timer);
+                        navigator.serviceWorker.removeEventListener('message', ready);
+                        resolve();
+                    });
+                    navigator.serviceWorker.controller.postMessage({ type: 'CHAT_OFFLINE_CHECK' });
+                }),
+        );
+        const restored = await page.evaluate(
+            async () =>
+                (await (await caches.open('yap-chat-shell-eviction-fixture')).keys()).length,
+        );
+        assert.equal(restored, required.length + 1);
+        await context.setOffline(true);
+        const repaired = await page.goto(origin + '/lobby');
+        assert(repaired.ok() && (await repaired.text()).includes('data-appearance'));
+        console.log(
+            'PASS evicted current shell reinstalls and supports offline reload without a release',
         );
         await context.close();
     } finally {

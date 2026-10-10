@@ -33,6 +33,43 @@ static class ChangeChecks
         Check(deletion.SelectMany(u => u.Conversations).SelectMany(c => c.Messages).Any(m => m.Id == reply.MessageId && m.Reply == null),
             "target deletion clears reply previews without other room activity");
 
+        var room = chat.GetChannel(chat.GetLobbyId())!;
+        var previousLimit = room.HistoryLimit;
+        room.HistoryLimit = HistoryLimit.OneDay;
+        changes.Touch(room.Id);
+        await subscription.Read(timeout.Token);
+        var restricted = await chat.SendTextAsync(bob, room.Id, Guid.NewGuid(), "restricted target");
+        var restrictedReply = await chat.SendTextAsync(alice, room.Id, Guid.NewGuid(), "restricted reply", restricted.MessageId);
+        await subscription.Read(timeout.Token);
+        await chat.MutateMessageAsync(bob, room.Id, restricted.MessageId, Guid.NewGuid(), "delete", null, null, false);
+        var restrictedDelete = (await subscription.Read(timeout.Token)).SelectMany(u => u.Conversations).Single(c => c.Id == room.Id);
+        Check(restrictedDelete.Invalidate && restrictedDelete.BaseRevision != null && restrictedDelete.Removed.Length == 0
+            && restrictedDelete.Messages.Any(m => m.Id == restrictedReply.MessageId && m.Reply == null),
+            "restricted delete and reply in one batch retain invalidation without exposing the deleted ID");
+        room.HistoryLimit = previousLimit;
+        changes.Touch(room.Id);
+        await subscription.Read(timeout.Token);
+
+        var uploader = (await services.GetRequiredService<UserService>().CreateUserAsync("uploaderprofilefixture"))!;
+        var gifs = services.GetRequiredService<GifService>();
+        var gif = new GifEntry(null, null, uploader.Id) { GifUrl = "/uploads/profile-fixture.webp", Width = 1, Height = 1 };
+        var entries = (System.Collections.Concurrent.ConcurrentDictionary<Guid, GifEntry>)typeof(GifService)
+            .GetField("_entries", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(gifs)!;
+        entries[gif.Id] = gif;
+        var attributed = await chat.SendTextAsync(bob, channel.Id, Guid.NewGuid(), "GIF attribution", gifs: [new GifAttachment(gif.Id, 1, 1)]);
+        await subscription.Read(timeout.Token);
+        await services.GetRequiredService<UserService>().UpdateProfileAsync(uploader.Id, "Updated uploader", null, null, null);
+        var profile = (await subscription.Read(timeout.Token)).SelectMany(u => u.Conversations).ToArray();
+        Check(profile.Any(c => c.Id == channel.Id && c.Invalidate),
+            "GIF uploader profile invalidates conversations where the uploader never posted or participated");
+        using (var scope = services.CreateScope())
+        {
+            var projection = scope.ServiceProvider.GetRequiredService<OfflineSnapshotService>()
+                .Message(chat.GetMessageById(channel.Id, attributed.MessageId)!, alice.Id);
+            Check(System.Text.Json.JsonSerializer.Serialize(projection.Gifs).Contains("Updated uploader"),
+                "refilled GIF attribution uses the uploader's current display name");
+        }
+
         // Hold the real lazy-description worker while two references arrive. Completing local
         // sidecars then exercises the normal callback without network/provider dependencies.
         var media = services.GetRequiredService<MediaCacheService>();

@@ -156,7 +156,7 @@ export {};
 /**
  * Compact authority from bootstrap, HTTP acknowledgements or WatchChanges.
  * @typedef {object} ChatUpdate
- * @property {2} protocol
+ * @property {3} protocol
  * @property {string} userId
  * @property {string} serverEpoch
  * @property {number} sequence

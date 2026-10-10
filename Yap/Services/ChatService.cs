@@ -1,4 +1,3 @@
-using Yap.Offline;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using Yap.Models;
@@ -525,6 +524,12 @@ public partial class ChatService
         ChangeConnections(notifications =>
         {
             CancelDisconnect(sessionId);
+            if (_users.ContainsKey(sessionId))
+            {
+                SetSessionConnected(sessionId, true, notifications);
+                SchedulePresenceChange(username, true);
+                return;
+            }
             // Check if this is the first session for this user
             var existingSessions = _users.Values
                 .Where(u => u.Username.Equals(username, StringComparison.OrdinalIgnoreCase))
@@ -784,7 +789,7 @@ public partial class ChatService
                 _userStatuses.TryRemove(session.Username, out _);
                 _statusBeforeAutoAway.TryRemove(session.Username, out _);
             }
-            if (!_users.Values.Any(u => u.Connected && u.Username.Equals(session.Username, StringComparison.OrdinalIgnoreCase)))
+            if (!hasOtherSessions)
                 SchedulePresenceChange(session.Username, false);
             PeopleChanged(notifications);
         }
@@ -1154,8 +1159,22 @@ public partial class ChatService
             if (!_channelMessages.TryGetValue(channelId, out var messages)) return false;
             var channel = GetChannel(channelId);
             if (IsAdmin(user.Id) || channel is { SinceJoined: false, HistoryLimit: HistoryLimit.Unlimited }) return messages.Count > limit;
-            return messages.Where(m => CanReadMessage(user, m)).Take(limit + 1).Count() > limit;
+            if (channel == null || !channel.CanAccess(user.Id)) return false;
+            var cutoff = channel.GetHistoryCutoff() ?? DateTime.MinValue;
+            if (channel.SinceJoined && user.CreatedAt > cutoff) cutoff = user.CreatedAt;
+            // Messages are chronological. Count from the recent end and stop at the cutoff;
+            // restricted fan-out must not scan years of hidden history for every viewer.
+            var visible = 0;
+            for (var i = messages.Count - 1; i >= 0 && messages[i].Timestamp >= cutoff; i--)
+                if (++visible > limit) return true;
+            return false;
         }
+    }
+
+    internal bool AnyMessage(Guid channelId, Func<ChatMessage, bool> predicate)
+    {
+        lock (GetChannelLock(channelId))
+            return _channelMessages.TryGetValue(channelId, out var messages) && messages.Any(predicate);
     }
 
     public List<ChatMessage> GetMessages(Guid channelId, int count = 50)

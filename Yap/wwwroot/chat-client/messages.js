@@ -204,6 +204,16 @@ export function createMessages({ identity, snapshot, current, actions, history, 
                 replyTarget,
             ]);
             let record = nodes.get(message.id);
+            if (!record) {
+                const node = actions.acceptPending(message);
+                if (node) {
+                    node.id = `msg-${message.id}`;
+                    node.classList.remove('pending-message');
+                    delete node.dataset.operation;
+                    record = { node };
+                    nodes.set(message.id, record);
+                }
+            }
             if (!record || (record.signature !== signature && !actions.isEditing(message.id))) {
                 if (record?.contentSignature === contentSignature) {
                     // Reactions must not detach media: replacing the row resets playback and GIFs.
@@ -226,8 +236,13 @@ export function createMessages({ identity, snapshot, current, actions, history, 
             // Only hydrated message media uses object URLs.
             // Append only new nodes. Existing nodes retain selection, playback, and scroll geometry.
             const atPosition = $('#timeline').children[position++];
-            if (atPosition !== record.node)
+            if (atPosition !== record.node) {
+                const focused = record.node.contains(document.activeElement)
+                    ? document.activeElement
+                    : null;
                 $('#timeline').insertBefore(record.node, atPosition || null);
+                focused?.focus({ preventScroll: true });
+            }
             keep.add(message.id);
             previous = message;
         }

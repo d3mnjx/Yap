@@ -35,12 +35,12 @@ public partial class ChatService
             active
         })));
         using (await LockAcceptance($"operation:{user.Id}:{operationId}"))
-        using (await LockAcceptance("message:" + messageId))
         {
             // Old cached sends may have a different server ID; resolve the sender's own receipt.
             var originalSend = await _store.GetTextReceiptAsync(user.Id, messageId);
             if (originalSend?.ChannelId == channelId)
                 messageId = originalSend.MessageId;
+            using var messageLock = await LockAcceptance("message:" + messageId);
             var receipt = await _store.GetTextReceiptAsync(user.Id, operationId);
             if (receipt != null && (receipt.ChannelId != channelId || receipt.ContentHash != hash))
                 throw new ChatSendException(409, "operation_conflict", "Operation ID already used for another change.");
