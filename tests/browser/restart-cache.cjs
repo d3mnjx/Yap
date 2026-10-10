@@ -158,9 +158,11 @@ const origin = 'http://127.0.0.1:8055';
         await alice.locator('#timeline').getByText('restart-keep', { exact: true }).waitFor();
         await alice.locator('#dms a[href="/dm/restartcarol"]').click();
         await alice.locator('#timeline').getByText('restart-other', { exact: true }).waitFor();
+        assert(await alice.locator('#window-state').isVisible());
         await contexts[0].setOffline(false);
         release();
         await wait(cachedReady);
+        await wait(() => alice.locator('#window-state').isHidden());
         assert(
             !(await state()).conversations
                 .find((c) => c.id === ids[0])

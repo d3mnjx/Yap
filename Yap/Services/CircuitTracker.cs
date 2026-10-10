@@ -4,8 +4,8 @@ namespace Yap.Services;
 
 /// <summary>
 /// Singleton service that tracks circuit lifecycle and per-circuit latency telemetry for diagnostics.
-/// Latency data comes from three sources: the client-side RTT probe (ChatLayout + chat.js),
-/// slow inbound-event timing (ChatCircuitHandler), and the client-side send→appear timer (chat.js).
+/// Latency data comes from the retained Blazor pages' RTT probe (ChatLayout + chat.js)
+/// and slow inbound-event timing (ChatCircuitHandler).
 /// </summary>
 public class CircuitTracker
 {
@@ -28,11 +28,6 @@ public class CircuitTracker
         public int SlowEventCount { get; init; }         // inbound events over ChatCircuitHandler's slow threshold
         public double? MaxEventMs { get; init; }
         public DateTime? LastSlowEventAt { get; init; }
-        public double? LastSendToAppearMs { get; init; } // client-measured: send click → own message in the DOM
-        public double? AvgSendToAppearMs { get; init; }  // EWMA, same smoothing as RTT — a single good send must not hide a bad streak
-        public double? MaxSendToAppearMs { get; init; }
-        public int SendSamples { get; init; }
-        public DateTime? SendTimingAt { get; init; }
         public DateTime? ClosedAt { get; init; }         // set when the circuit moves into the recently-closed ring
     }
 
@@ -92,16 +87,6 @@ public class CircuitTracker
             SlowEventCount = info.SlowEventCount + 1,
             MaxEventMs = Math.Max(info.MaxEventMs ?? 0, elapsedMs),
             LastSlowEventAt = DateTime.UtcNow
-        });
-
-    public void ReportSendTiming(string circuitId, double ms) =>
-        Update(circuitId, info => info with
-        {
-            LastSendToAppearMs = ms,
-            AvgSendToAppearMs = info.AvgSendToAppearMs is double avg ? 0.75 * avg + 0.25 * ms : ms,
-            MaxSendToAppearMs = Math.Max(info.MaxSendToAppearMs ?? 0, ms),
-            SendSamples = info.SendSamples + 1,
-            SendTimingAt = DateTime.UtcNow
         });
 
     // Read-modify-write without a lock: all frequent writers for one circuit run on that circuit's

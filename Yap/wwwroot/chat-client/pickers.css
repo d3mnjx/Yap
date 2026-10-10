@@ -59,8 +59,8 @@
     display: block;
 }
 /* The wrapped pickers have their own fixed widths/heights and shadows — strip them
-   so they fill our pane cleanly. !important because the inner picker's own scoped
-   rule has identical specificity (0,2,0) and could win on source-order ties. */
+   so they fill our pane cleanly. These overrides also take precedence over the
+   standalone picker dimensions at narrow breakpoints. */
 .combined-pane .emoji-picker,
 .combined-pane .gif-picker {
     width: 100% !important;
@@ -699,4 +699,23 @@
 /* Category jumps own the scroll offset; lazy section layout must not anchor it to an old row. */
 .emoji-content {
     overflow-anchor: none;
+}
+
+.gif-card-select {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+.gif-card-select img,
+.gif-card-select video {
+    width: 100%;
+    display: block;
+}
+.gif-attribution img {
+    max-width: 100px;
+    max-height: 24px;
+}
+.gif-attribution a {
+    margin: 8px;
 }

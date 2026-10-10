@@ -1,3 +1,70 @@
+/* Scrollable timeline and bounded-history controls. */
+.messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 0 0.25rem 0;
+    min-width: 0; /* Allow flex item to shrink below content size */
+}
+/* The scrollable content. Carries the flex column that used to live on .messages,
+   so the spacer still pushes a short conversation to the bottom (min-height 100%
+   gives the spacer room to stretch into). */
+.messages-flow {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+/* Spacer pushes messages to bottom when few messages */
+.messages-spacer {
+    flex: 1 1 auto;
+}
+/* Scrollbar styling */
+.messages::-webkit-scrollbar {
+    width: 16px;
+}
+.messages::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+    border-radius: 8px;
+}
+.messages::-webkit-scrollbar-thumb {
+    background: var(--bg-header);
+    border: 4px solid var(--bg-primary);
+    border-radius: 8px;
+}
+.messages::-webkit-scrollbar-thumb:hover {
+    background: var(--bg-darkest);
+}
+/* Loading indicator for infinite scroll */
+.loading-more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+.loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--bg-muted);
+    border-top-color: var(--text-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+/* History start message */
+.history-start {
+    text-align: center;
+    padding: 1rem;
+    color: var(--text-placeholder);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
 /* Timeline rows, content, actions, reactions and editing. */
 /* Hide message action popups on mobile scroll/idle dismiss.
    The slower transition applies only while this class is present, so the
@@ -509,8 +576,7 @@
     gap: 8px;
 }
 /* The edit box is deliberately a small message input: same bg/radius/padding/autogrow,
-   so editing feels like composing. Styles duplicated (not shared) because CSS isolation
-   keeps MessageInput's scoped rules invisible here. */
+   so editing feels like composing. Explicit editor selectors keep its layout independent. */
 .edit-input {
     width: 100%;
     padding: 0.6875rem 1rem;
@@ -902,4 +968,55 @@
     width: 1em;
     height: 1em;
     vertical-align: -0.15em;
+}
+
+.reply-preview {
+    background: transparent;
+    border: 0;
+    text-align: left;
+}
+
+.history-load-button {
+    border: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    padding: 12px;
+    cursor: pointer;
+}
+
+.video-play-overlay {
+    border: 0;
+    padding: 0;
+    width: 100%;
+    cursor: pointer;
+}
+
+/* Small avatar in reply preview */
+.reply-preview .avatar {
+    width: 16px !important;
+    height: 16px !important;
+    font-size: 0.45rem !important;
+    flex-shrink: 0;
+}
+.message-group.has-reply .avatar {
+    position: relative;
+    z-index: 2;
+}
+
+/* Items in a row stretch equally */
+.gallery-row .gallery-item {
+    flex: 1 1 0%;
+    min-width: 0;
+}
+.gallery-item {
+    position: relative;
+    cursor: pointer;
+}
+.gallery-item:hover .gallery-image {
+    opacity: 0.85;
+}
+.gallery-item {
+    border: 0;
+    background: transparent;
+    padding: 0;
 }

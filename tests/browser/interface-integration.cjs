@@ -3,7 +3,7 @@ const { fixturePage } = require('./support/authority.cjs');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright'),
     assert = require('node:assert/strict'),
     fs = require('node:fs');
-const origin = 'http://127.0.0.1:7643',
+const origin = process.env.YAP_TEST_ORIGIN || 'http://127.0.0.1:7643',
     out = process.env.YAP_TEST_ARTIFACTS || '/tmp/yap-interface-integration';
 fs.mkdirSync(out, { recursive: true });
 (async () => {
@@ -31,6 +31,10 @@ fs.mkdirSync(out, { recursive: true });
             document.querySelector('#connection')?.textContent.startsWith('Synced'),
         );
         await page.evaluate(() => navigator.serviceWorker.ready);
+        // Catalog labels load independently of synchronization and worker readiness.
+        await page.waitForFunction(() =>
+            document.querySelector('#title')?.textContent.startsWith('Welcome to '),
+        );
         assert.match(await page.locator('#title').innerText(), /^Welcome to /);
         assert.equal(
             await page.locator('#draft').getAttribute('placeholder'),
@@ -95,6 +99,10 @@ fs.mkdirSync(out, { recursive: true });
             () =>
                 document.documentElement.dataset.theme === 'nord' &&
                 getComputedStyle(document.documentElement).fontSize === '20px',
+        );
+        // Appearance is applied before the app runs; it is not a draft-restoration signal.
+        await page.waitForFunction(
+            () => document.querySelector('#draft')?.value === 'Settings preserves this draft',
         );
         assert.equal(await page.locator('#draft').inputValue(), 'Settings preserves this draft');
         await page.waitForFunction(

@@ -576,7 +576,7 @@ async function render() {
     selectedConversationId = id;
     const turn = ++renderGeneration;
     const c = snapshot.conversations.find((c) => c.id === selectedConversationId);
-    syncThemeColor();
+    window.syncThemeColorMeta?.();
     $('.chat-container').dataset.context = c?.kind || 'room';
     $('#header-line').src =
         c?.kind === 'dm' ? '/images/purpleline01_3px.png' : '/images/turqline01_3px.png';
@@ -591,6 +591,7 @@ async function render() {
         ),
     );
     notifications.render();
+    $('#window-state').hidden = !c?.sync?.stale;
     $('#back').hidden = !c || c.isDefault;
     $('#header-avatar').replaceChildren();
     const partner =
@@ -835,26 +836,36 @@ async function connectChat(bootstrap = null) {
         if (identity && identity.userId !== session.userId) clearUI();
         identity = await storage.establish(session.userId);
         if (attemptGeneration !== connectionGeneration) return;
-        if (session.needsLocaleDetection) {
-            try {
-                bootstrap.update = await post(
-                    'preferences/detect',
-                    {
-                        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                        locale: navigator.language,
-                        path: location.pathname,
-                    },
-                    session,
-                );
-                session.needsLocaleDetection = false;
-            } catch (error) {
-                if (error.message === 'ACCOUNT_CHANGED') throw error;
-                // Unavailable detection must not prevent cached chat or sending.
-            }
-        }
-        if (attemptGeneration !== connectionGeneration) return;
         await acceptSnapshot(bootstrap.update, attemptGeneration, null, { baseline: true });
         sender.start();
+        if (session.needsLocaleDetection) {
+            // Detection is optional background work: a stalled request cannot delay the
+            // first send, presence connection, or the selected conversation's bootstrap.
+            post(
+                'preferences/detect',
+                {
+                    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    locale: navigator.language,
+                    hourCycle: new Intl.DateTimeFormat(undefined, {
+                        hour: 'numeric',
+                    }).resolvedOptions().hourCycle,
+                    path: location.pathname,
+                    channelId: new URLSearchParams(location.search).get('channel'),
+                },
+                session,
+                { signal: AbortSignal.timeout(3000) },
+            )
+                .then(async (update) => {
+                    if (attemptGeneration !== connectionGeneration) return;
+                    session.needsLocaleDetection = false;
+                    await acceptSnapshot(update, attemptGeneration);
+                })
+                .catch((error) => {
+                    if (attemptGeneration !== connectionGeneration) return;
+                    if (['AUTH_REQUIRED', 'ACCOUNT_CHANGED'].includes(error.message)) loseAccount();
+                    // Other failures retry detection on the next connection.
+                });
+        }
         // Optional data never gates the active view or outgoing operations.
         reader.flush();
         loadContent(identity)
@@ -1123,45 +1134,4 @@ $('#retry-client').onclick = async () => {
         showRecovery();
     }
 };
-const scenes = [
-    'midnight',
-    'midnight',
-    '2am',
-    '314am',
-    '4am',
-    '4am',
-    '6am',
-    '6am',
-    '8am',
-    '8am',
-    '10am',
-    '10am',
-    'noon',
-    'noon',
-    '2pm',
-    '2pm',
-    '4pm',
-    '4pm',
-    '6pm',
-    '6pm',
-    '8pm',
-    '8pm',
-    '10pm',
-    '10pm',
-];
-function syncThemeColor() {
-    // Phone chrome follows the actual theme/scene canvas, including Tea House's time changes.
-    const color = getComputedStyle(document.documentElement).backgroundColor;
-    if (color && color !== 'transparent' && color !== 'rgba(0, 0, 0, 0)')
-        $('meta[name="theme-color"]').content = color;
-}
-function scene() {
-    document.documentElement.dataset.scene = scenes[new Date().getHours()];
-    syncThemeColor();
-}
-document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) scene();
-});
-scene();
-setInterval(scene, 60000);
 boot();

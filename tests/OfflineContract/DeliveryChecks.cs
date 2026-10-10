@@ -49,8 +49,41 @@ static class DeliveryChecks
                 && chat.GetUnreadCount(other.Id, channel.Id) == 1, "retry publishes once with durable unread despite a throwing subscriber");
             await db.Database.ExecuteSqlRawAsync("CREATE TRIGGER reject_legacy_delivery BEFORE INSERT ON Messages WHEN NEW.Content = 'legacy-delivery-fixture' BEGIN SELECT RAISE(ABORT, 'synthetic legacy failure'); END;");
             await chat.SendMessageAsync(channel.Id, sender.Id, sender.Username, "legacy-delivery-fixture");
-            Check(arrivals == 2 && unread == 2 && chat.GetMessages(channel.Id, 100).Any(m => m.Content == "legacy-delivery-fixture")
+            state = await db.ChannelReadStates.AsNoTracking().SingleAsync(s => s.UserId == other.Id && s.ChannelId == channel.Id);
+            Check(arrivals == 2 && unread == 1 && state.ReceivedCount == 1 && state.UnreadCount == 1
+                && chat.GetUnreadCount(other.Id, channel.Id) == 1
+                && chat.GetMessages(channel.Id, 100).Any(m => m.Content == "legacy-delivery-fixture")
                 && !await db.Messages.AnyAsync(m => m.Content == "legacy-delivery-fixture"), "legacy bot send logs persistence failure and still publishes without throwing");
+
+            Action<Guid, Guid> brokenRead = (_, _) => throw new InvalidOperationException("synthetic read listener failure");
+            chat.OnUnreadChanged -= read;
+            chat.OnUnreadChanged += brokenRead;
+            chat.OnUnreadChanged += read;
+            try
+            {
+                await chat.MarkObservedReadAsync(other.Id, channel.Id, 1);
+                Check(unread == 2 && chat.GetUnreadCount(other.Id, channel.Id) == 0,
+                    "read acknowledgement isolates subscribers and still notifies later listeners");
+            }
+            finally { chat.OnUnreadChanged -= brokenRead; }
+
+            var admin = users.GetAllUsers().First(u => users.IsAdmin(u.Id));
+            var removed = (await chat.CreateRoomAsync(admin.Id, admin.Username, "deliveryrace", sinceJoined: false))!;
+            var lostOperation = Guid.NewGuid();
+            var rejected = false;
+            try
+            {
+                await chat.SendTextAsync(sender, removed.Id, lostOperation, "deleted during media resolution",
+                    resolveMedia: async () =>
+                    {
+                        await chat.DeleteRoomAsync(admin.Id, removed.Id);
+                        return (null, null, null);
+                    });
+            }
+            catch (ChatSendException error) when (error.Status == 404) { rejected = true; }
+            Check(rejected && !await db.TextSendReceipts.AnyAsync(r => r.OperationId == lostOperation)
+                && !await db.Messages.AnyAsync(m => m.Id == lostOperation),
+                "deletion between access check and acceptance returns 404 without a phantom receipt");
         }
         finally
         {

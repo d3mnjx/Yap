@@ -1269,7 +1269,6 @@
                                 <th>Connected</th>
                                 <th title="Client-measured circuit round trip: last / average / max">RTT last/avg/max</th>
                                 <th title="Inbound events the server took ≥100ms to process">Slow events</th>
-                                <th title="Client-measured: send click → own message rendered — last / average / max">Send→appear last/avg/max</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1285,16 +1284,13 @@
                                         @FormatMs(c.LastRttMs) / @FormatMs(c.AvgRttMs) / @FormatMs(c.MaxRttMs)
                                     </td>
                                     <td>@(c.SlowEventCount == 0 ? "—" : $"{c.SlowEventCount}× (max {c.MaxEventMs:F0}ms)")</td>
-                                    <td title="@c.SendSamples samples, last @FormatAgo(c.SendTimingAt)">
-                                        @FormatMs(c.LastSendToAppearMs) / @FormatMs(c.AvgSendToAppearMs) / @FormatMs(c.MaxSendToAppearMs)
-                                    </td>
                                 </tr>
                             }
                             @* Closed circuits continue the same row budget, so one button governs both segments. *@
                             @if (diagClosedCircuits.Count > 0 && diagCircuitsVisible > diagCircuits.Count)
                             {
                                 @* Bounded trail (last 50) — lets an admin inspect a user's numbers after they signed out *@
-                                <tr><td colspan="7" style="color: var(--text-secondary); padding-top: 10px;">Recently closed</td></tr>
+                                <tr><td colspan="6" style="color: var(--text-secondary); padding-top: 10px;">Recently closed</td></tr>
                                 @foreach (var c in diagClosedCircuits.Take(diagCircuitsVisible - diagCircuits.Count))
                                 {
                                     var laggy = c.IsWebSocket == false || c.AvgRttMs > 250;
@@ -1307,9 +1303,6 @@
                                             @FormatMs(c.LastRttMs) / @FormatMs(c.AvgRttMs) / @FormatMs(c.MaxRttMs)
                                         </td>
                                         <td>@(c.SlowEventCount == 0 ? "—" : $"{c.SlowEventCount}× (max {c.MaxEventMs:F0}ms)")</td>
-                                        <td title="@c.SendSamples samples, last @FormatAgo(c.SendTimingAt)">
-                                            @FormatMs(c.LastSendToAppearMs) / @FormatMs(c.AvgSendToAppearMs) / @FormatMs(c.MaxSendToAppearMs)
-                                        </td>
                                     </tr>
                                 }
                             }

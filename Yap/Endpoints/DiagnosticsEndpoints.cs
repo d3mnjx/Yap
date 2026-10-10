@@ -43,12 +43,7 @@ public static class DiagnosticsEndpoints
                     c.RttUpdatedAt,
                     c.SlowEventCount,
                     c.MaxEventMs,
-                    c.LastSlowEventAt,
-                    c.LastSendToAppearMs,
-                    c.AvgSendToAppearMs,
-                    c.MaxSendToAppearMs,
-                    c.SendSamples,
-                    c.SendTimingAt
+                    c.LastSlowEventAt
                 }),
                 summary = new
                 {

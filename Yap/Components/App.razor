@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 @* Server-rendered font-size (like data-theme) = zero flash; applyFontSize in chat.js does live switching.
    Null (default) omits the style attribute entirely; out-of-range DB values are ignored as a safety net. *@
-<html lang="en" data-appearance-user="@UserState.UserId" data-theme="@(UserState.Theme ?? "discord-dark")"
+<html lang="en" data-appearance-user="@(UserState.UserId?.ToString() ?? "")" data-theme="@(UserState.Theme ?? "discord-dark")"
       style="@(UserState.FontSize is >= Yap.Models.User.MinFontSize and <= Yap.Models.User.MaxFontSize ? $"font-size: {UserState.FontSize}px" : null)">
 
 <head>
@@ -11,50 +11,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
     <base href="/" />
     <script src="/js/appearance.js"></script>
-
-    @* Time-of-day scene for scene themes (Tea House). Inline and blocking, and placed
-       BEFORE the stylesheet links: data-theme is server-rendered to avoid a flash, but
-       the server cannot know the client's clock, so the attribute has to be set here to
-       be in place for the first paint. Ahead of the links so it does not wait on CSS.
-       Themes that define no [data-scene] block simply ignore the attribute. *@
-    <script>
-        (function () {
-            // Hour -> scene, taken verbatim from the source theme's own map. Hour 3 is
-            // the 3:14 am easter egg (a Taoist fox leading jiangshi past the house).
-            var SCENES = ["midnight", "midnight", "2am", "314am", "4am", "4am",
-                          "6am", "6am", "8am", "8am", "10am", "10am",
-                          "noon", "noon", "2pm", "2pm", "4pm", "4pm",
-                          "6pm", "6pm", "8pm", "8pm", "10pm", "10pm"];
-            function applyScene() {
-                var s = SCENES[new Date().getHours()];
-                if (document.documentElement.dataset.scene !== s) {
-                    document.documentElement.dataset.scene = s;
-                    syncThemeColorMeta();
-                }
-            }
-            // The iOS status bar and browser chrome take their tint from the
-            // theme-color meta (and the root background-color, which app.css
-            // guarantees is a real color). Re-read the computed color after
-            // every theme or scene change so the phone chrome follows the app.
-            // Before the stylesheets load the computed color is transparent -
-            // keep the server-rendered default then.
-            function syncThemeColorMeta() {
-                var bg = getComputedStyle(document.documentElement).backgroundColor;
-                if (!bg || bg === "transparent" || bg === "rgba(0, 0, 0, 0)") { return; }
-                var meta = document.querySelector('meta[name="theme-color"]');
-                if (meta && meta.content !== bg) { meta.content = bg; }
-            }
-            window.syncThemeColorMeta = syncThemeColorMeta;
-            document.addEventListener("DOMContentLoaded", syncThemeColorMeta);
-            applyScene();
-            window.applyScene = applyScene;
-            setInterval(applyScene, 60000);
-            // A device asleep past a scene boundary wakes on the wrong scene otherwise.
-            document.addEventListener("visibilitychange", function () {
-                if (!document.hidden) applyScene();
-            });
-        })();
-    </script>
 
     <ResourcePreloader />
     <link rel="stylesheet" href="@Assets["app.css"]" />
@@ -70,7 +26,7 @@
     <!-- use-credentials: the manifest fetch must send the auth cookie, or every install would get the anonymous (untokenized) start_url -->
     <link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials" />
     <link rel="apple-touch-icon" href="icon-192.png" />
-    <!-- Pre-CSS default; syncThemeColorMeta (inline script above) retints it to the active theme's canvas color -->
+    <!-- Pre-CSS default; appearance.js retints it to the active theme's canvas color -->
     <meta name="theme-color" content="#1a1a2e" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

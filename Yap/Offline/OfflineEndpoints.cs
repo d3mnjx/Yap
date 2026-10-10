@@ -35,8 +35,11 @@ public static class OfflineEndpoints
         var theme = System.Net.WebUtility.HtmlEncode(user.Theme ?? "discord-dark");
         var size = user.FontSize is >= Yap.Models.User.MinFontSize and <= Yap.Models.User.MaxFontSize
             ? $"font-size: {user.FontSize}px" : "";
-        html = html.Replace("<html lang=\"en\" data-theme=\"discord-dark\">",
-            $"<html lang=\"en\" data-theme=\"{theme}\" style=\"{size}\" data-appearance-user=\"{user.UserId}\">");
+        var appearanceToken = new System.Text.RegularExpressions.Regex(@"\bdata-appearance(?=\s|>)");
+        if (appearanceToken.Matches(html).Count != 1)
+            throw new InvalidOperationException("Chat shell is missing its data-appearance placeholder.");
+        html = appearanceToken.Replace(html, _ =>
+            $"data-theme=\"{theme}\" style=\"{size}\" data-appearance-user=\"{user.UserId}\"");
         http.Response.ContentType = "text/html; charset=utf-8";
         http.Response.Headers.CacheControl = "no-store";
         await http.Response.WriteAsync(html);
@@ -116,7 +119,8 @@ public static class OfflineEndpoints
         {
             if (string.IsNullOrWhiteSpace(request.TimeZone) || string.IsNullOrWhiteSpace(request.Locale)
                 || request.TimeZone.Length > 100 || request.Locale.Length > 100
-                || LocaleResolver.ResolveTimeZone(request.TimeZone) == null)
+                || LocaleResolver.ResolveTimeZone(request.TimeZone) == null
+                || request.HourCycle is not (null or "h11" or "h12" or "h23" or "h24"))
                 return Results.BadRequest();
             try
             {
@@ -126,10 +130,17 @@ public static class OfflineEndpoints
             var user = users.AuthenticateByToken(http.Request.Cookies[AuthMiddleware.CookieName]!)!;
             // Detection fills missing defaults only. A reconnect or another device must
             // never replace the user's explicit timezone/date-format settings.
+            var locale = user.Locale ?? request.Locale;
+            var clock = request.HourCycle switch
+            {
+                "h11" or "h12" => "12h",
+                "h23" or "h24" => "24h",
+                _ => LocaleResolver.GuessClockFromLocale(locale)
+            };
             if (user.TimeZone == null || user.Locale == null || user.DateFormat == null)
                 await users.UpdateLocaleAsync(user.Id, user.TimeZone ?? request.TimeZone,
-                    user.Locale ?? request.Locale, user.DateFormat ?? LocaleResolver.GuessDateFormatFromLocale(user.Locale ?? request.Locale));
-            return Results.Ok(sync.Bootstrap(user, request.Path));
+                    locale, user.DateFormat ?? $"{LocaleResolver.GuessDateOrderFromLocale(locale)}-{clock}");
+            return Results.Ok(sync.Bootstrap(user, request.Path, request.ChannelId));
         });
         api.MapGet("/session", (HttpContext http) => Results.Ok(Session(http)));
         api.MapGet("/bootstrap", (HttpContext http, string? path, Guid? channelId, string? epoch, string? revision, Guid? knownUser, UserService users, OfflineSnapshotService snapshots, OfflineSync sync) =>
@@ -309,7 +320,7 @@ public static class OfflineEndpoints
     /// <summary>
     /// The highest arrival checkpoint observed by the client, leaving newer unseen arrivals unread.
     /// </summary>
-    public record DetectedLocale(string TimeZone, string Locale, string? Path);
+    public record DetectedLocale(string TimeZone, string Locale, string? Path, string? HourCycle = null, Guid? ChannelId = null);
     public record ReadRequest(long Through);
     /// <summary>An observed checkpoint in a batched background read acknowledgement.</summary>
     public record ReadCheckpoint(Guid ChannelId, long Through);

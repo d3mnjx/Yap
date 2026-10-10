@@ -18,11 +18,11 @@
             /* Storage may be blocked. */
         }
     }
-    if (root.dataset.appearanceUser) {
+    if (root.hasAttribute('data-appearance-user')) {
         apply({
             userId: root.dataset.appearanceUser,
-            theme: root.dataset.theme,
-            fontSize: parseInt(root.style.fontSize),
+            theme: root.dataset.appearanceUser ? root.dataset.theme : 'discord-dark',
+            fontSize: root.dataset.appearanceUser ? parseInt(root.style.fontSize) : null,
         });
     } else {
         try {
@@ -59,7 +59,24 @@
         '10pm',
         '10pm',
     ];
-    root.dataset.scene = scenes[new Date().getHours()];
+    function syncThemeColorMeta() {
+        const color = getComputedStyle(root).backgroundColor;
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta && color && color !== 'transparent' && color !== 'rgba(0, 0, 0, 0)')
+            meta.content = color;
+    }
+    function applyScene() {
+        root.dataset.scene = scenes[new Date().getHours()];
+        syncThemeColorMeta();
+    }
+    window.syncThemeColorMeta = syncThemeColorMeta;
+    window.applyScene = applyScene;
+    applyScene();
+    document.addEventListener('DOMContentLoaded', syncThemeColorMeta);
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) applyScene();
+    });
+    setInterval(applyScene, 60000);
     window.yapAppearance = {
         apply,
         get current() {

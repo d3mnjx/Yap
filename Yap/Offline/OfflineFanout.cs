@@ -9,6 +9,7 @@ namespace Yap.Offline;
 /// <summary>Projects each message event once and routes it only to authorized connection queues.</summary>
 public sealed class OfflineFanout : IDisposable
 {
+    private readonly ILogger<OfflineFanout> logger;
     private readonly ChatService chat;
     private readonly GifService gifs;
     private readonly UserService users;
@@ -18,8 +19,9 @@ public sealed class OfflineFanout : IDisposable
     private readonly ConcurrentDictionary<Guid, Subscription> connections = new();
     private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<Guid, Subscription>> accounts = new();
     private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<Guid, Subscription>> channels = new();
-    public OfflineFanout(ChatService chat, UserService users, OfflineSnapshotService snapshots, OfflineChangeSignal changes, NotificationSettingsService notifications, GifService gifs)
+    public OfflineFanout(ChatService chat, UserService users, OfflineSnapshotService snapshots, OfflineChangeSignal changes, NotificationSettingsService notifications, GifService gifs, ILogger<OfflineFanout> logger)
     {
+        this.logger = logger;
         this.chat = chat;
         this.users = users;
         this.snapshots = snapshots;
@@ -110,21 +112,29 @@ public sealed class OfflineFanout : IDisposable
         {
             foreach (var subscription in connections.Values)
             {
-                var metadata = snapshots.Metadata(subscription.User, id);
-                if (metadata == null)
+                try
                 {
-                    if (!subscription.Channels.TryRemove(id, out _))
-                        continue;
-                    if (channels.TryGetValue(id, out var old))
-                        old.TryRemove(subscription.Id, out _);
-                    subscription.Enqueue(new(2, subscription.User.Id, changes.Epoch, sequence, null, [], [id], []));
+                    var metadata = snapshots.Metadata(subscription.User, id);
+                    if (metadata == null)
+                    {
+                        if (!subscription.Channels.TryRemove(id, out _))
+                            continue;
+                        if (channels.TryGetValue(id, out var old))
+                            old.TryRemove(subscription.Id, out _);
+                        subscription.Enqueue(new(2, subscription.User.Id, changes.Epoch, sequence, null, [], [id], []));
+                    }
+                    else
+                    {
+                        subscription.Channels[id] = 0;
+                        channels.GetOrAdd(id, _ => new())[subscription.Id] = subscription;
+                        subscription.Enqueue(new(2, subscription.User.Id, changes.Epoch, sequence, null,
+                            [new(id, metadata, [], [], null, null, OfflineSync.Revision(metadata), true)], [], []));
+                    }
+
                 }
-                else
+                catch (Exception error)
                 {
-                    subscription.Channels[id] = 0;
-                    channels.GetOrAdd(id, _ => new())[subscription.Id] = subscription;
-                    subscription.Enqueue(new(2, subscription.User.Id, changes.Epoch, sequence, null,
-                        [new(id, metadata, [], [], null, null, OfflineSync.Revision(metadata), true)], [], []));
+                    logger.LogError(error, "Chat fan-out failed for connection {ConnectionId}", subscription.Id);
                 }
             }
             return;
@@ -135,20 +145,28 @@ public sealed class OfflineFanout : IDisposable
         var projected = message == null ? null : snapshots.Message(message);
         foreach (var subscription in members.Values)
         {
-            var user = subscription.User;
-            var metadata = snapshots.Metadata(user, id);
-            if (metadata == null)
-                continue;
-            var visible = message != null && chat.CanReadMessage(user, message);
-            var value = visible ? snapshots.ForViewer(projected!, message!, user) : null;
-            // Deleted restricted history has no readable timestamp left. Invalidate without
-            // exposing its id; the authorized window endpoint decides what can remain.
-            var invalidate = !visible && metadata.HistoryLimited;
-            subscription.Enqueue(new(2, user.Id, changes.Epoch, sequence, null,
-                [new(id, metadata, value == null ? [] : [value],
+            try
+            {
+                var user = subscription.User;
+                var metadata = snapshots.Metadata(user, id);
+                if (metadata == null)
+                    continue;
+                var visible = message != null && chat.CanReadMessage(user, message);
+                var value = visible ? snapshots.ForViewer(projected!, message!, user) : null;
+                // Deleted restricted history has no readable timestamp left. Invalidate without
+                // exposing its id; the authorized window endpoint decides what can remain.
+                var invalidate = !visible && metadata.HistoryLimited;
+                subscription.Enqueue(new(2, user.Id, changes.Epoch, sequence, null,
+                    [new(id, metadata, value == null ? [] : [value],
                     message == null && !invalidate ? [messageId.Value] : [], null,
                     before.ToString(System.Globalization.CultureInfo.InvariantCulture), after.ToString(System.Globalization.CultureInfo.InvariantCulture), invalidate)],
-                [], value == null ? [] : [value.Author]));
+                    [], value == null ? [] : [value.Author]));
+
+            }
+            catch (Exception error)
+            {
+                logger.LogError(error, "Chat fan-out failed for connection {ConnectionId}", subscription.Id);
+            }
         }
     }
 

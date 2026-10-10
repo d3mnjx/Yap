@@ -33,11 +33,10 @@ public class AuthMiddleware
                 userState.ProfilePictureUrl = user.ProfilePictureUrl;
                 userState.Theme = user.Theme;
                 userState.FontSize = user.FontSize;
-                // Date/time format is an explicit cross-device preference — load it here so a
-                // fresh circuit on any device starts with the saved value. Without this it stays
-                // null, and browser detection would re-guess it from the locale and persist that
-                // guess, silently overwriting the user's chosen format. (TimeZone/Locale are
-                // intentionally NOT loaded — they're auto-detected per device.)
+                // Settings saves these together. Load all account preferences so a fresh
+                // Blazor circuit cannot clear the locale while changing the date or clock.
+                userState.TimeZone = user.TimeZone;
+                userState.Locale = user.Locale;
                 userState.DateFormat = user.DateFormat;
                 userState.Status = UserStatus.Online;
 

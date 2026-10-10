@@ -101,9 +101,9 @@ public class ChatPersistenceService
         IsEdited = message.IsEdited
     };
 
-    public async Task PersistNewMessageAsync(ChatMessage message)
+    public async Task<bool> PersistNewMessageAsync(ChatMessage message)
     {
-        if (!IsEnabled) return;
+        if (!IsEnabled) return false;
 
         try
         {
@@ -113,11 +113,13 @@ public class ChatPersistenceService
 
             db.Messages.Add(newMessage);
             await db.SaveChangesAsync();
+            return true;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to persist new message {MessageId}", message.Id);
             // Legacy server/bot messages remain best-effort; callers still publish in memory.
+            return false;
         }
     }
 

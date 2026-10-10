@@ -62,6 +62,17 @@ if (
         console.log(
             'PASS appearance before module startup, online root/routes, neutral cached shell and stale snapshot return',
         );
+        // Anonymous server HTML must not adopt another account's cached mirror.
+        await context.clearCookies();
+        await page.goto(origin + '/login');
+        assert.deepEqual(
+            await page.evaluate(() => [
+                document.documentElement.dataset.theme,
+                document.documentElement.style.fontSize,
+            ]),
+            ['discord-dark', ''],
+        );
+        console.log('PASS anonymous appearance does not inherit the previous account');
         await context.close();
     } finally {
         await browser.close();

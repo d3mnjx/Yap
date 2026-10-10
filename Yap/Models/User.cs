@@ -55,12 +55,12 @@ public class User
     public string? Country { get; set; }
 
     /// <summary>
-    /// Client's IANA timezone (e.g. "Europe/Prague"). Updated on each connect.
+    /// Account timezone (e.g. "Europe/Prague"). Detected when missing; changed through Settings.
     /// </summary>
     public string? TimeZone { get; set; }
 
     /// <summary>
-    /// Client's browser locale (e.g. "cs-CZ"). Updated on each connect.
+    /// Account formatting locale (e.g. "cs-CZ"). Detected when missing, retained across devices.
     /// </summary>
     public string? Locale { get; set; }
 

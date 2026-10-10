@@ -919,8 +919,10 @@ public partial class ChatService
         if (!_channels.TryGetValue(channelId, out var channel) || !channel.CanAccess(userId)
             || !channel.CanWrite(userId, IsAdmin(userId))) return;
         var message = new ChatMessage(channelId, userId, username, content, DateTime.UtcNow, imageUrls, replyToMessageId, videoUrls, gifAttachments);
-        await _persistence.PersistNewMessageAsync(message);
-        await PublishMessageAsync(channel, message);
+        var persisted = await _persistence.PersistNewMessageAsync(message);
+        // Best-effort bot content may remain visible for this process, but must not
+        // leave durable unread counts behind when there is no stored message.
+        await PublishMessageAsync(channel, message, persisted || !_persistence.IsEnabled ? null : []);
     }
 
     private async Task PublishMessageAsync(Channel channel, ChatMessage message, List<Guid>? acceptedRecipients = null)
@@ -1002,31 +1004,34 @@ public partial class ChatService
 
         foreach (var recipient in ResolvePushRecipients(channel, senderUsername))
         {
-            var status = GetUserStatus(recipient.Username);
-            var pageVisible = IsPageVisible(recipient.Username);
-            var sessionsSnapshot = DescribeRecipientSessions(recipient.Username);
-            var subCount = _pushService.GetSubscriptionCount(recipient.Username);
-            var totalUnread = GetTotalUnreadCount(recipient.Id);
-
-            // Diagnostic: show which session (device) makes the recipient "visible" and how many
-            // push subscriptions they have — explains skipped pushes / silent phone.
-            _logger.LogDebug("Push decision: to={Recipient} channel={Channel} status={Status} anyPageVisible={PageVisible} subscriptions={SubCount} sessions=[{Sessions}]",
-                recipient.Username, DescribeChannel(channel), status, pageVisible, subCount, sessionsSnapshot);
-
-            if (status == UserStatus.Online && pageVisible)
+            RunNotification(() =>
             {
-                _audit.RecordPushDecision(senderUsername, recipient.Username, "suppressed: Online + visible", sessionsSnapshot, subCount, totalUnread);
-                _logger.LogDebug("Push skipped: {Recipient} is Online and has a visible page", recipient.Username);
-                continue;
-            }
+                var status = GetUserStatus(recipient.Username);
+                var pageVisible = IsPageVisible(recipient.Username);
+                var sessionsSnapshot = DescribeRecipientSessions(recipient.Username);
+                var subCount = _pushService.GetSubscriptionCount(recipient.Username);
+                var totalUnread = GetTotalUnreadCount(recipient.Id);
 
-            _audit.RecordPushDecision(senderUsername, recipient.Username, "push", sessionsSnapshot, subCount, totalUnread);
-            _logger.LogDebug("Push: from={From} to={To} channel={Channel} totalUnread={UnreadCount} status={Status}",
-                senderUsername, recipient.Username, DescribeChannel(channel), totalUnread, status);
+                // Diagnostic: show which session (device) makes the recipient "visible" and how many
+                // push subscriptions they have — explains skipped pushes / silent phone.
+                _logger.LogDebug("Push decision: to={Recipient} channel={Channel} status={Status} anyPageVisible={PageVisible} subscriptions={SubCount} sessions=[{Sessions}]",
+                    recipient.Username, DescribeChannel(channel), status, pageVisible, subCount, sessionsSnapshot);
 
-            _ = channel.IsDirectMessage
-                ? _pushService.SendDmNotificationAsync(recipient.Username, senderUsername, preview, totalUnread)
-                : _pushService.SendRoomNotificationAsync(recipient.Username, channel.Name, channel.Id, senderUsername, preview, totalUnread);
+                if (status == UserStatus.Online && pageVisible)
+                {
+                    _audit.RecordPushDecision(senderUsername, recipient.Username, "suppressed: Online + visible", sessionsSnapshot, subCount, totalUnread);
+                    _logger.LogDebug("Push skipped: {Recipient} is Online and has a visible page", recipient.Username);
+                    return;
+                }
+
+                _audit.RecordPushDecision(senderUsername, recipient.Username, "push", sessionsSnapshot, subCount, totalUnread);
+                _logger.LogDebug("Push: from={From} to={To} channel={Channel} totalUnread={UnreadCount} status={Status}",
+                    senderUsername, recipient.Username, DescribeChannel(channel), totalUnread, status);
+
+                _ = channel.IsDirectMessage
+                    ? _pushService.SendDmNotificationAsync(recipient.Username, senderUsername, preview, totalUnread)
+                    : _pushService.SendRoomNotificationAsync(recipient.Username, channel.Name, channel.Id, senderUsername, preview, totalUnread);
+            });
         }
     }
 
@@ -1115,7 +1120,7 @@ public partial class ChatService
 
         // Incremental subscribers need every inserted record; one final pulse no longer
         // causes a full snapshot rebuild. Their bounded queues coalesce this burst.
-        foreach (var message in testMessages) { _changes.Touch(message.ChannelId, message.Id, history: false); OnMessageReceived?.Invoke(message); }
+        foreach (var message in testMessages) { _changes.Touch(message.ChannelId, message.Id, history: false); NotifySubscribers(OnMessageReceived, message); }
 
         return count;
     }
@@ -1331,7 +1336,11 @@ public partial class ChatService
         Func<IReadOnlyList<Guid>, Task>? accept = null)
     {
         if (!_channels.TryGetValue(channelId, out var channel))
+        {
+            if (accept != null)
+                throw new ChatSendException(404, "conversation_unavailable", "This conversation is no longer available.");
             return new List<Guid>();
+        }
 
         // Collect user IDs to update
         var userIdsToIncrement = new List<Guid>();

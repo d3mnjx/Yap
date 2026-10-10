@@ -523,3 +523,15 @@
     flex-shrink: 0;
     opacity: 0.6;
 }
+
+#upload-button {
+    border: 0;
+    padding: 0;
+}
+#draft {
+    min-width: 0;
+}
+.drag-over {
+    outline: 2px dashed var(--text-primary);
+    outline-offset: -4px;
+}

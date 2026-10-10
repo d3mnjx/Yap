@@ -1,5 +1,4 @@
 /* Browser shell navigation, connection and delivery presentation. */
-/* The prototype consumes the original component styles, with only shell adaptations here. */
 [hidden] {
     display: none !important;
 }
@@ -38,11 +37,6 @@
     #connection {
         max-width: 110px;
     }
-    .chat-header h3 {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
 }
 @media (max-width: 600px) {
     #connection {
@@ -79,62 +73,12 @@
     padding: 3px 8px;
     cursor: pointer;
 }
-.reply-preview {
-    background: transparent;
-    border: 0;
-    text-align: left;
-}
-.gif-card-select {
-    padding: 0;
-    border: 0;
-    background: transparent;
-    cursor: pointer;
-}
-.gif-card-select img,
-.gif-card-select video {
-    width: 100%;
-    display: block;
-}
-.gif-attribution img {
-    max-width: 100px;
-    max-height: 24px;
-}
-.gif-attribution a {
-    margin: 8px;
-}
-#upload-button {
-    border: 0;
-    padding: 0;
-}
-#draft {
-    min-width: 0;
-}
-.drag-over {
-    outline: 2px dashed var(--text-primary);
-    outline-offset: -4px;
-}
-.history-load-button {
-    border: 0;
-    background: transparent;
-    color: var(--text-secondary);
-    padding: 12px;
-    cursor: pointer;
-}
-.profile-info-btn {
-    display: none;
-}
-@media (max-width: 768px) {
-    .profile-info-btn {
-        display: flex;
-    }
-}
-.video-play-overlay {
-    border: 0;
-    padding: 0;
-    width: 100%;
-    cursor: pointer;
-}
 #recovery {
     height: auto;
     flex: none;
+}
+
+#window-state {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
 }

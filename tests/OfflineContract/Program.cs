@@ -22,7 +22,6 @@ var config = new Dictionary<string, string?>
     ["ChatSettings:Persistence:Enabled"] = "true",
     ["ChatSettings:Persistence:ConnectionStrings:SQLite"] = "Data Source=" + Path.Combine(root, "Data", "yap.db"),
     ["ChatSettings:Bot:Enabled"] = "false",
-    ["ChatSettings:Ipv4BeaconUrl"] = "",
     ["Vapid:PublicKey"] = "",
     ["Vapid:PrivateKey"] = "",
     ["OfflineChat:RecentMessageLimit"] = "3",
@@ -316,6 +315,7 @@ try
         await PresenceChecks.Run(factory.Services, http, anti, alice, bob, carol, privateDm.Id, room.Id);
         await DeliveryChecks.Run(factory.Services, alice);
         await LocaleChecks.Run(http, anti, alice);
+        await FollowupChecks.Run(factory.Services, http, anti, alice);
         await GifPagingChecks.Run(http, anti, chat, admin);
         await OriginChecks.Run(factory.Services, http);
         await users.RotateTokenAsync(alice.Id);

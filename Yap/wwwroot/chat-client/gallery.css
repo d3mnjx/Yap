@@ -179,23 +179,6 @@
         background: rgba(0, 0, 0, 0.45);
     }
 }
-/* Items in a row stretch equally */
-.gallery-row .gallery-item {
-    flex: 1 1 0%;
-    min-width: 0;
-}
-.gallery-item {
-    position: relative;
-    cursor: pointer;
-}
-.gallery-item:hover .gallery-image {
-    opacity: 0.85;
-}
-.gallery-item {
-    border: 0;
-    background: transparent;
-    padding: 0;
-}
 .modal-stage p {
     margin: auto;
     color: white;

@@ -63,24 +63,6 @@ window.setAppBadge = async (count) => {
     return false;
 };
 
-window.clearAppBadge = async () => {
-    if ('clearAppBadge' in navigator) {
-        try {
-            await navigator.clearAppBadge();
-            return true;
-        } catch (e) {
-            console.warn('[PWA] Badge clear failed:', e);
-            return false;
-        }
-    }
-    return false;
-};
-
-// Check if Badge API is supported
-window.isBadgeSupported = () => {
-    return 'setAppBadge' in navigator;
-};
-
 // ==========================================
 // Push Notification Subscription
 // ==========================================
@@ -113,11 +95,6 @@ window.requestNotificationPermission = async () => {
 window.isPwaInstalled = () => {
     return window.matchMedia('(display-mode: standalone)').matches ||
            window.navigator.standalone === true;
-};
-
-// PWA last-route persistence (resume where you left off)
-window.saveLastRoute = (route) => {
-    localStorage.setItem('yap-last-route', route);
 };
 
 window.getLastPwaRoute = () => {
@@ -374,7 +351,7 @@ window.scrollToElementId = (id) => {
 
 window.applyTheme = (themeId) => {
     window.yapAppearance.apply({ ...window.yapAppearance.current, theme: themeId });
-    // Retint the phone's status bar / browser chrome (defined in App.razor).
+    // Retint the phone's status bar / browser chrome (owned by appearance.js).
     window.syncThemeColorMeta?.();
 };
 
@@ -383,73 +360,6 @@ window.applyTheme = (themeId) => {
 window.applyFontSize = (px) => {
     window.yapAppearance.apply({ ...window.yapAppearance.current, fontSize: px });
 };
-
-// ==========================================
-// GIF (MP4) message autoplay — canplay-based
-// ==========================================
-// Why this exists: Blazor Server's prerender → hydrate cycle can race the browser's autoplay
-// decision (see dotnet/aspnetcore#59415). Rather than rely on the `autoplay` attribute surviving
-// hydration, we listen for the native `canplay` event in the capturing phase on the document.
-// That event fires once the browser has buffered enough data to start playing, regardless of
-// when the <video> element was added to the DOM or whether Blazor patched it. We then call .play(),
-// which works for muted+playsinline videos under every browser's autoplay policy.
-//
-// If a video's play() ever rejects with NotAllowedError (rare for muted videos but possible under
-// strict policy), we install a one-shot pointerdown/keydown listener so the next user gesture
-// anywhere unblocks every paused .gif-message-video on the page.
-(function () {
-    if (window.__gifAutoplayWired) return;
-    window.__gifAutoplayWired = true;
-
-    // Both chat-message gifs and picker-grid previews share the same canplay-driven autoplay.
-    const GIF_VIDEO_SELECTOR = '.gif-message-video, .gif-card-video';
-
-    const isGifVideo = (v) =>
-        v && v.tagName === 'VIDEO' && v.classList &&
-        (v.classList.contains('gif-message-video') || v.classList.contains('gif-card-video'));
-
-    const tryPlay = (v) => {
-        if (!isGifVideo(v) || !v.paused) return;
-        v.play().catch(err => {
-            if (err && err.name === 'NotAllowedError') installClickUnlock();
-            else console.warn(`[gif autoplay] ${err.name}: ${err.message} — ${v.currentSrc}`);
-        });
-    };
-
-    function installClickUnlock() {
-        if (window.__gifKickPending) return;
-        window.__gifKickPending = true;
-        const unlock = () => {
-            window.__gifKickPending = false;
-            document.removeEventListener('pointerdown', unlock, true);
-            document.removeEventListener('keydown', unlock, true);
-            document.querySelectorAll(GIF_VIDEO_SELECTOR).forEach(v => {
-                if (v.paused) v.play().catch(() => {});
-            });
-        };
-        document.addEventListener('pointerdown', unlock, true);
-        document.addEventListener('keydown', unlock, true);
-    }
-
-    // Drop the loading spinner once a chat GIF can paint. The CSS spins until we add
-    // .gif-loaded to the .gif-message box. Covers <img> (animated webp/gif) via `load` and
-    // the legacy <video> fallback via `canplay`; `error` also clears it so a broken URL never
-    // spins forever. closest('.gif-message') returns null for every other image/video on the
-    // page (avatars, emojis, gallery images, picker previews), so this is a cheap no-op for them.
-    const markGifLoaded = (el) => {
-        const box = el && el.closest && el.closest('.gif-message');
-        if (box) box.classList.add('gif-loaded');
-    };
-
-    // Catches every <video> reaching the canplay state — initial-render, freshly inserted, or
-    // hydrated. Capturing-phase listener ensures we see the event regardless of bubbling.
-    document.addEventListener('canplay', e => { tryPlay(e.target); markGifLoaded(e.target); }, true);
-    // `load`/`error` don't bubble, so capture them at the document to catch <img> regardless of
-    // when Blazor inserted or patched the element.
-    document.addEventListener('load', e => markGifLoaded(e.target), true);
-    document.addEventListener('error', e => markGifLoaded(e.target), true);
-})();
-
 
 // Circuit heartbeat/RTT for retained Blazor pages. Chat has its own presence owner.
 let telemetryRef = null;

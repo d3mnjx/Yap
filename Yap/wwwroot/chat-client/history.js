@@ -11,6 +11,8 @@ export function createHistory({ identity, current, changed, notice }) {
         [...new Map([...a, ...b].map((m) => [m.id, m])).values()].sort(
             (a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp),
         );
+    // Unlike recent windows, older pages are invalidated on restart: their bounded
+    // refresh cannot validate every previously loaded row against missed moderation.
     const version = (c) =>
         `${latest?.serverEpoch}:${c.historyLimited ? c.contentVersion : (c.historyVersion ?? c.contentVersion)}`;
     const valid = (c) =>
