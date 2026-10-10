@@ -1586,7 +1586,7 @@ window.cleanupInfiniteScroll = () => {
 // ==========================================
 
 window.applyTheme = (themeId) => {
-    document.documentElement.dataset.theme = themeId || 'discord-dark';
+    window.yapAppearance.apply({ ...window.yapAppearance.current, theme: themeId });
     // Retint the phone's status bar / browser chrome (defined in App.razor).
     window.syncThemeColorMeta?.();
 };
@@ -1594,7 +1594,7 @@ window.applyTheme = (themeId) => {
 // Root font size: scales every rem-based size in the app. Clearing the inline
 // style (null/0) falls back to the browser default (16px).
 window.applyFontSize = (px) => {
-    document.documentElement.style.fontSize = px ? px + 'px' : '';
+    window.yapAppearance.apply({ ...window.yapAppearance.current, fontSize: px });
 };
 
 // ==========================================

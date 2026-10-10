@@ -559,10 +559,7 @@ async function render() {
     selectedConversationId = id;
     const turn = ++renderGeneration;
     const c = snapshot.conversations.find((c) => c.id === selectedConversationId);
-    document.documentElement.dataset.theme = snapshot.theme;
     syncThemeColor();
-    document.documentElement.style.fontSize =
-        snapshot.fontSize >= 12 && snapshot.fontSize <= 24 ? `${snapshot.fontSize}px` : '';
     $('.chat-container').dataset.context = c?.kind || 'room';
     $('#header-line').src =
         c?.kind === 'dm' ? '/images/purpleline01_3px.png' : '/images/turqline01_3px.png';
@@ -754,6 +751,8 @@ function acceptSnapshot(
                 snapshot = committed ? data : (await storage.readState())?.snapshot;
             }
             if (attemptGeneration !== connectionGeneration || !snapshot) return;
+            if (data.protocol !== 2 || data.state)
+                window.yapAppearance.apply({ ...snapshot, userId: snapshot.user.id });
             await chatHistory
                 .reconcile(snapshot, data.protocol === 2 ? data : undefined)
                 .catch(() => {});
@@ -975,6 +974,13 @@ async function boot() {
         await chatHistory.restore(state?.userId === identity.userId ? state.snapshot : null);
         if (state?.userId === identity.userId && state.snapshot) {
             snapshot = state.snapshot;
+            // Settings writes the synchronous mirror. An older IndexedDB snapshot must
+            // not briefly undo it while bootstrap is still applying current preferences.
+            if (
+                !window.yapAppearance.current ||
+                window.yapAppearance.current.userId !== identity.userId
+            )
+                window.yapAppearance.apply({ ...snapshot, userId: identity.userId });
             await render();
         }
         if (navigator.onLine) await connectChat(bootstrap);
@@ -1030,6 +1036,8 @@ storage.onExternalChange(async (event) => {
                         return;
                     snapshot = mergeUpdate(snapshot, event.update);
                 } else snapshot = current.snapshot;
+                if (snapshot && (!event?.update || event.update.state))
+                    window.yapAppearance.apply({ ...snapshot, userId: snapshot.user.id });
                 if (snapshot) await chatHistory.reconcile(snapshot, event?.update).catch(() => {});
                 await render();
                 sender.flush();

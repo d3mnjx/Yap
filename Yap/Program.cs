@@ -457,7 +457,7 @@ app.Use(async (context, next) =>
     {
         context.Response.ContentType = "text/html; charset=utf-8";
         context.Response.Headers.CacheControl = "no-store";
-        await context.Response.SendFileAsync(Path.Combine(app.Environment.WebRootPath, "chat-client", "index.html"));
+        await OfflineEndpoints.ServeShell(context, app.Environment, context.RequestServices.GetRequiredService<UserStateService>());
         return;
     }
     await next(context);

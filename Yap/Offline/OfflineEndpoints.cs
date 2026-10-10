@@ -18,8 +18,23 @@ public static class OfflineEndpoints
         MapApi(app.MapGroup("/api/chat"));
         app.MapHub<OfflineHub>("/hubs/chat");
         foreach (var path in new[] { "/chat", "/lobby", "/room/{id:guid}", "/dm/{username}" })
-            app.MapGet(path, (IWebHostEnvironment env) => Results.File(Path.Combine(env.WebRootPath, "chat-client", "index.html"), "text/html"));
+            app.MapGet(path, ServeShell);
         app.MapGet("/chat-client/component-styles.css", ComponentStyles);
+    }
+
+    // Only the neutral file is worker-cacheable. Online HTML carries current account
+    // preferences before CSS; the blocking script mirrors them for cached navigation.
+    public static async Task ServeShell(HttpContext http, IWebHostEnvironment env, UserStateService user)
+    {
+        var html = await File.ReadAllTextAsync(Path.Combine(env.WebRootPath, "chat-client", "index.html"));
+        var theme = System.Net.WebUtility.HtmlEncode(user.Theme ?? "discord-dark");
+        var size = user.FontSize is >= Yap.Models.User.MinFontSize and <= Yap.Models.User.MaxFontSize
+            ? $"font-size: {user.FontSize}px" : "";
+        html = html.Replace("<html lang=\"en\" data-theme=\"discord-dark\">",
+            $"<html lang=\"en\" data-theme=\"{theme}\" style=\"{size}\" data-appearance-user=\"{user.UserId}\">");
+        http.Response.ContentType = "text/html; charset=utf-8";
+        http.Response.Headers.CacheControl = "no-store";
+        await http.Response.WriteAsync(html);
     }
 
     private static void MapApi(RouteGroupBuilder api)

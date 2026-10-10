@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 @* Server-rendered font-size (like data-theme) = zero flash; applyFontSize in chat.js does live switching.
    Null (default) omits the style attribute entirely; out-of-range DB values are ignored as a safety net. *@
-<html lang="en" data-theme="@(UserState.Theme ?? "discord-dark")"
+<html lang="en" data-appearance-user="@UserState.UserId" data-theme="@(UserState.Theme ?? "discord-dark")"
       style="@(UserState.FontSize is >= Yap.Models.User.MinFontSize and <= Yap.Models.User.MaxFontSize ? $"font-size: {UserState.FontSize}px" : null)">
 
 <head>
@@ -10,6 +10,7 @@
     <!-- interactive-widget=resizes-content: resize viewport when mobile keyboard opens (works on Chrome/Brave iOS, not Safari) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
     <base href="/" />
+    <script src="/js/appearance.js"></script>
 
     @* Time-of-day scene for scene themes (Tea House). Inline and blocking, and placed
        BEFORE the stylesheet links: data-theme is server-rendered to avoid a flash, but

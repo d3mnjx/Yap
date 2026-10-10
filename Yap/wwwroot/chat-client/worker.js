@@ -1,5 +1,5 @@
 // Loaded by the single root worker. Never cache personalized HTML, API responses or auth redirects.
-const CHAT_SHELL = 'yap-chat-shell-v37';
+const CHAT_SHELL = 'yap-chat-shell-v38';
 // Pinned, unmodified artwork outlives shell releases. Change this only with Twemoji.
 const CHAT_EMOJI_CACHE = 'yap-chat-emoji-17.0.3';
 const CHAT_EMOJI_DEFAULTS = [
@@ -13,6 +13,7 @@ function isChatNavigation(path) {
     return /^\/(?:chat|lobby)\/?$/.test(path) || /^\/(?:room|dm)\/[^/]+\/?$/.test(path);
 }
 const CHAT_ASSETS = [
+    '/js/appearance.js',
     '/chat-client/messages.js',
     '/chat-client/worker-updates.js',
     '/chat-client/scroll.js',

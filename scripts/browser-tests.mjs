@@ -24,6 +24,7 @@ const allowed = new Set([
     'emoji-parity',
     'emoji-loading',
     'emoji-cache',
+    'appearance',
     'gif-parity',
     'action-parity',
     'gallery-parity',
