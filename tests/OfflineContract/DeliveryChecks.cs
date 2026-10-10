@@ -40,7 +40,7 @@ static class DeliveryChecks
                     await chat.SendTextAsync(sender, channel.Id, operation, "atomic delivery");
                 }
                 catch { failed = true; }
-                Check(failed && !await db.Messages.AnyAsync(m => m.Id == operation)
+                Check(failed && !await db.Messages.AnyAsync(m => m.OperationId == operation)
                     && !await db.TextSendReceipts.AnyAsync(r => r.OperationId == operation)
                     && chat.GetMessageById(channel.Id, operation) == null && arrivals == 0
                     && chat.GetUnreadCount(other.Id, channel.Id) == 0, "unread failure rolls back message and receipt without publishing");

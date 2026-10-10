@@ -222,6 +222,8 @@
             if (!confirmed) return;
         }
 
+        if (!await JS.InvokeAsync<bool>("confirmChatDiscard")) return;
+
         ActionLog.Log(UserState.UserId?.ToString(), UserActionLog.KnownActions.LOGOUT, info: UserState.Username);
 
         // Unsubscribe push for this device only (not all devices)

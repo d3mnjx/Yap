@@ -1,3 +1,4 @@
+import { confirmDiscard } from './account-actions.js';
 import { PROTOCOL } from './constants.js';
 import { timestamp } from './dates.js';
 import { createScroll } from './scroll.js';
@@ -597,7 +598,7 @@ async function render() {
     );
     notifications.render();
     $('#window-state').hidden = !c?.sync?.stale;
-    $('#back').hidden = !c || c.isDefault;
+    $('#back').hidden = c?.kind !== 'dm';
     $('#header-avatar').replaceChildren();
     const partner =
         c?.kind === 'dm'
@@ -722,6 +723,8 @@ document.addEventListener('click', (event) => {
     if (!event.target.closest('#account-menu, #menu-button')) toggleMenu(false);
 });
 $('#forget').onclick = async () => {
+    await composer.settleDraft();
+    if (!(await confirmDiscard('Forget', $('#draft').value))) return;
     await loseAccount(true);
     notice('Offline data removed. Reload while online to synchronize again.', true);
 };
@@ -736,6 +739,8 @@ $('#signout').onclick = async () => {
         )
     )
         return;
+    await composer.settleDraft();
+    if (!(await confirmDiscard('Sign out', $('#draft').value))) return;
     await pwa.signOut();
     await loseAccount(true);
     location.href = '/auth/signout';

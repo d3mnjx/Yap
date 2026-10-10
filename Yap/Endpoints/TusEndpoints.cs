@@ -12,7 +12,7 @@ namespace Yap.Endpoints;
 
 public static class TusEndpoints
 {
-    private static readonly ConcurrentDictionary<string, object> _completedFiles = new();
+    private static readonly ConcurrentDictionary<string, (object Result, DateTime CreatedAt)> _completedFiles = new();
     private static readonly HashSet<string> _imageExtensions = new(StringComparer.OrdinalIgnoreCase)
         { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
     private static readonly HashSet<string> _videoExtensionsForGifProbe = new(StringComparer.OrdinalIgnoreCase)
@@ -134,7 +134,7 @@ public static class TusEndpoints
                             File.WriteAllText(path + ".tmp", System.Text.Json.JsonSerializer.Serialize(result));
                             File.Move(path + ".tmp", path, true);
                         }
-                        _completedFiles[file.Id] = result;
+                        _completedFiles[file.Id] = (result, DateTime.UtcNow);
                         // The final PATCH can acknowledge completed processing without a
                         // follow-up GET. Retained clients may continue using the receipt route.
                         if (!eventContext.HttpContext.Response.HasStarted)
@@ -330,8 +330,8 @@ public static class TusEndpoints
 
         app.MapGet("/api/tus/info/{fileId}", (string fileId) =>
         {
-            if (_completedFiles.TryRemove(fileId, out var result))
-                return Results.Ok(result);
+            if (_completedFiles.TryRemove(fileId, out var result) && result.CreatedAt >= DateTime.UtcNow - ChatReceiptCleanup.Retention)
+                return Results.Ok(result.Result);
             return Results.NotFound(new { error = "File not found or still processing" });
         }).RequireCors("TusUpload");
     }
@@ -346,7 +346,30 @@ public static class TusEndpoints
     {
         if (!System.Text.RegularExpressions.Regex.IsMatch(id, "^[a-fA-F0-9]{16,64}$")) return null;
         var path = Path.Combine(env.ContentRootPath, "Data", "upload-receipts", userId.ToString("N"), id + ".json");
-        return File.Exists(path) ? System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(File.ReadAllText(path)) : null;
+        try
+        {
+            return File.GetLastWriteTimeUtc(path) >= DateTime.UtcNow - ChatReceiptCleanup.Retention
+                ? System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(File.ReadAllText(path)) : null;
+        }
+        catch (FileNotFoundException) { return null; } // Cleanup may win a concurrent lookup.
+        catch (DirectoryNotFoundException) { return null; }
+    }
+
+    // Completion receipts share the send deduplication window; uploaded media is independent.
+    public static void PruneReceipts(IWebHostEnvironment env, DateTime before)
+    {
+        foreach (var pair in _completedFiles)
+            if (pair.Value.CreatedAt < before)
+                ((ICollection<KeyValuePair<string, (object Result, DateTime CreatedAt)>>)_completedFiles).Remove(pair);
+        var root = Path.Combine(env.ContentRootPath, "Data", "upload-receipts");
+        if (!Directory.Exists(root)) return;
+        foreach (var directory in Directory.EnumerateDirectories(root))
+        {
+            foreach (var path in Directory.EnumerateFiles(directory))
+                if (File.GetLastWriteTimeUtc(path) < before) File.Delete(path);
+            // A completion may be creating a file while the sweep removes an empty folder.
+            // Keep the account folders so writers never lose their parent directory.
+        }
     }
 
     private static long GetMaxUploadBytes(HttpContext httpContext)

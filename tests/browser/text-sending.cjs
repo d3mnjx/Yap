@@ -376,6 +376,7 @@ const suffix = Date.now().toString(36),
             1,
         );
         await up.locator('#menu-button').click();
+        up.once('dialog', (dialog) => dialog.accept());
         await up.locator('#forget').click();
         await until(() =>
             up.evaluate(

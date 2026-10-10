@@ -354,3 +354,9 @@ window.setupLatencyProbe = (dotNetRef) => {
     window._yapProbeTimer = setInterval(ping, 10000);
     ping();
 };
+
+// Retained pages can discard a chat queue created in this or a sibling tab.
+window.confirmChatDiscard = async () => {
+    const { confirmDiscard } = await import('/chat-client/account-actions.js');
+    return confirmDiscard('Sign out');
+};

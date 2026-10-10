@@ -223,8 +223,7 @@
 .message-content a.message-link {
     color: var(--link-color);
     background: var(--link-background, transparent);
-    text-decoration: underline;
-    text-underline-offset: 0.15em;
+    text-decoration: none;
 }
 .message-content a.message-link:hover {
     text-decoration: underline;
@@ -971,6 +970,7 @@
 }
 
 .reply-preview {
+    font-family: inherit;
     background: transparent;
     border: 0;
     text-align: left;

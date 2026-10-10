@@ -15,12 +15,23 @@ static class StoreChecks
         Check(ReferenceEquals(target, chat.GetMessageById(channel, target.Id)) && target.Content == "same object",
             "accepted mutation updates the existing live object without reloading a storage row");
         var other = (await services.GetRequiredService<UserService>().CreateUserAsync("collisionfixture"))!;
-        try
-        {
-            await chat.SendTextAsync(other, channel, sent.OperationId, "collision");
-            throw new Exception("Cross-account message ID collision must fail");
-        }
-        catch (ChatSendException error) { Check(error.Status == 409, "message ID collision is terminal in both stores, never an endless temporary retry"); }
+        var collision = await chat.SendTextAsync(other, channel, sent.OperationId, "collision");
+        Check(sent.MessageId != sent.OperationId && collision.MessageId != sent.MessageId,
+            "accounts can reuse an operation ID without choosing or colliding message primary keys");
+        Check((await chat.SendTextAsync(other, channel, sent.OperationId, "collision")).MessageId == collision.MessageId,
+            "same-account retry keeps the server-generated message ID");
+        using var scope = services.CreateScope();
+        var snapshots = scope.ServiceProvider.GetRequiredService<Yap.Offline.OfflineSnapshotService>();
+        var projected = snapshots.Message(target);
+        Check(projected.OperationId == null && snapshots.Message(target, other.Id).OperationId == null
+            && snapshots.Message(target, user.Id).OperationId == sent.OperationId
+            && snapshots.ForViewer(projected, target, other).OperationId == null
+            && snapshots.ForViewer(projected, target, user).OperationId == sent.OperationId,
+            "windows and shared fan-out reveal operation IDs only to the sender");
+        await chat.MutateMessageAsync(user, channel, target.Id, Guid.NewGuid(), "reaction", null, "👍", true);
+        await chat.MutateMessageAsync(other, channel, target.Id, Guid.NewGuid(), "reaction", null, "❤️", true);
+        Check(snapshots.Message(target).Reactions.Select(r => r.Emoji).SequenceEqual(new[] { "👍", "❤️" }),
+            "reaction pills retain first-used order instead of sorting by codepoint");
         var stored = await store.GetAcceptedMessageAsync(target.Id);
         Check(stored?.Content == target.Content && stored.IsEdited, "storage and live mutation agree");
         await chat.SendMessageAsync(channel, user.Id, user.Username, "server acceptance");
@@ -66,6 +77,23 @@ static class StoreChecks
             && await store.GetTextReceiptAsync(user.Id, sent.OperationId) != null,
             "receipt cleanup removes expired entries and preserves the retry window in both backends");
         Check(await store.GetAcceptedMessageAsync(old.Id) != null, "receipt expiry never deletes accepted messages");
+        var env = services.GetRequiredService<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>();
+        var folder = Path.Combine(env.ContentRootPath, "Data", "upload-receipts", user.Id.ToString("N"));
+        Directory.CreateDirectory(folder);
+        var expired = Guid.NewGuid().ToString("N");
+        var fresh = Guid.NewGuid().ToString("N");
+        File.WriteAllText(Path.Combine(folder, expired + ".json"), "{}");
+        File.WriteAllText(Path.Combine(folder, fresh + ".json"), "{}");
+        File.SetLastWriteTimeUtc(Path.Combine(folder, expired + ".json"), DateTime.UtcNow.AddDays(-2));
+        Check(Yap.Endpoints.TusEndpoints.Completed(env, user.Id, expired) == null
+            && Yap.Endpoints.TusEndpoints.Completed(env, user.Id, fresh) != null
+            && Yap.Endpoints.TusEndpoints.Completed(env, other.Id, fresh) == null,
+            "upload receipt lookup enforces lifetime and account isolation before cleanup");
+        Yap.Endpoints.TusEndpoints.PruneReceipts(env, DateTime.UtcNow - ChatReceiptCleanup.Retention);
+        Check(!File.Exists(Path.Combine(folder, expired + ".json"))
+            && Yap.Endpoints.TusEndpoints.Completed(env, user.Id, fresh) != null
+            && Yap.Endpoints.TusEndpoints.Completed(env, user.Id, fresh) != null,
+            "upload cleanup removes expired files and preserves replayable fresh receipts");
     }
     static void Check(bool condition, string label)
     {

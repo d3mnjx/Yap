@@ -44,6 +44,7 @@ Suite discovery reads `tests/browser/*.cjs`; the default selection remains the o
 | Suites | Purpose / prerequisites |
 | --- | --- |
 | **Default:** `sync-protocol`, `communication`, `review-recovery`, `review-composer`, `text-sending`, `history-interface`, `rich-content`, `message-actions`, `pwa-integration`, `local-http` | Protocol ordering, cached credentials, blocked catalog/window independence, one-POST writes, durable sends, upload cancellation/timeouts and independent-conversation progress, history and reply races, offline media/actions, PWA and worker failure. Use the isolated origin; create their own synthetic accounts. |
+| `low-review` | Persisted jittered retry backoff and terminal attempt budget, manual retry identity, IndexedDB reopen, and unsent-work discard warnings in chat and retained pages. Uses the isolated origin. |
 | `design-decisions` | Conditional root routing, hub protocol rejection with retained draft, retained-page cookie renewal and existing-install guidance. Uses the isolated origin. |
 | `maintenance` | Requires a disposable instance with `OfflineChat:MaxTextLength=37`; checks configured compose/edit limits and HTTP 426 recovery with retained drafts. |
 | `locale` | Browser timezone/locale detection with US and Czech contexts, Settings saves preserving locale, clock formatting, saved reload and first-send independence from stalled detection. Uses the isolated origin. |

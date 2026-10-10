@@ -1,5 +1,7 @@
 import { isTouchDevice } from './composer.js';
-import { recordEmoji } from './content.js';
+import { recordEmoji, richText } from './content.js';
+import { avatar } from './messages.js';
+import { timestamp } from './dates.js';
 import * as storage from './storage.js';
 const el = (tag, cls, text) => {
     const n = document.createElement(tag);
@@ -128,10 +130,43 @@ export function createActions({
         dialog.setAttribute('role', 'dialog');
         dialog.setAttribute('aria-modal', 'true');
         dialog.setAttribute('aria-label', 'Delete Message');
+        const preview = el('div', 'delete-confirm-preview'),
+            meta = el('div', 'preview-meta'),
+            picture = avatar(message.author);
+        picture.className = 'avatar avatar-small';
+        meta.append(
+            picture,
+            el('strong', 'preview-username', message.author.displayName || message.author.username),
+            el('span', 'preview-time', timestamp(message.timestamp, snapshot()?.dateSettings)),
+        );
+        preview.append(meta);
+        if (message.content) {
+            const content = el('div', 'preview-content');
+            content.append(richText(message.content, true));
+            preview.append(content);
+        }
+        const thumbnail =
+            message.images?.[0]?.medium || message.videos?.[0]?.replace(/\.[^.]+$/, '_poster.webp');
+        if (thumbnail) {
+            const image = el('img', 'preview-thumb');
+            image.src = thumbnail;
+            image.alt = 'Attachment';
+            preview.append(image);
+        } else if (message.gifs?.length || message.gifCount) {
+            preview.append(el('div', 'preview-attachment-label', 'GIF attachment'));
+        } else if (message.files?.length) {
+            preview.append(
+                el(
+                    'div',
+                    'preview-attachment-label',
+                    message.files.map((file) => file.name).join(', '),
+                ),
+            );
+        }
         dialog.append(
             el('h3', 'delete-confirm-title', 'Delete Message'),
             el('p', 'delete-confirm-text', 'Are you sure you want to delete this message?'),
-            el('div', 'delete-confirm-preview', message.content || '[Attachment]'),
+            preview,
             el(
                 'div',
                 'delete-confirm-tip',

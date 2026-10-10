@@ -35,14 +35,36 @@ export function createSender({
     }
     const media = (item) =>
         !!(item.files?.length || item.gifSource || item.gifEntryId || item.uploadIds?.length);
-    const payload = ({ files, uploads, progress, gifPreview, gifSource, ...item }) => item;
+    const payload = ({
+        files,
+        uploads,
+        progress,
+        gifPreview,
+        gifSource,
+        retryAttempts,
+        nextAttemptAt,
+        ...item
+    }) => item;
     async function reject(item, error, account) {
-        const terminal = [400, 403, 404, 409, 413].includes(error.status) && error.code !== 'csrf';
+        // Bound every automatic failure, including malformed acknowledgements and unexpected
+        // client errors. Persist the schedule so reloads and sibling tabs cannot reset it.
+        const retryAttempts = (item.retryAttempts || 0) + 1;
+        const terminal =
+            (error.status >= 400 &&
+                error.status < 500 &&
+                ![408, 429].includes(error.status) &&
+                error.code !== 'csrf') ||
+            retryAttempts >= 8;
+        const delay =
+            Math.min(60000, 3000 * 2 ** (retryAttempts - 1)) * (0.75 + Math.random() * 0.25);
         await storage.setDelivery(
             item.operationId,
             terminal ? 'failed' : 'queued',
-            terminal ? error.message : 'Waiting for connection. Retrying is safe.',
+            terminal
+                ? error.message + ' Automatic sending stopped. Use Retry to try again.'
+                : 'Waiting for connection. Retrying is safe.',
             account,
+            { retryAttempts, nextAttemptAt: terminal ? 0 : Date.now() + delay },
         );
         return !terminal;
     }
@@ -156,6 +178,7 @@ export function createSender({
                             const candidates = queue.filter(
                                 (item) => !item.cancelled && item.channelId === channel,
                             );
+                            if (candidates[0].nextAttemptAt > Date.now()) continue;
                             const uploading = media(candidates[0]);
                             if (uploading && [...active.values()].some((job) => job.uploading))
                                 continue;
@@ -166,6 +189,7 @@ export function createSender({
                                     snapshot()?.maxOperationsPerBatch ?? 16,
                                 )) {
                                     if (
+                                        item.nextAttemptAt > Date.now() ||
                                         media(item) ||
                                         new TextEncoder().encode(
                                             JSON.stringify([...items, item].map(payload)),

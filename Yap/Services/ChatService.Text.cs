@@ -50,7 +50,6 @@ public partial class ChatService
             receiptPayload = content;
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(receiptPayload)));
         using (await LockAcceptance($"operation:{user.Id}:{operationId}"))
-        using (await LockAcceptance("message:" + operationId))
         {
             var previous = await _store.GetTextReceiptAsync(user.Id, operationId);
             if (previous != null)
@@ -70,7 +69,7 @@ public partial class ChatService
             // make a previously accepted operation fail its replay or repeat provider side effects.
             if (resolveMedia != null)
                 (images, videos, gifs) = await resolveMedia();
-            var message = new ChatMessage(channelId, user.Id, user.Username, content, DateTime.UtcNow, images, replyToMessageId, videos, gifs) { Id = operationId, OperationId = operationId, ReplyToMessageId = replyToMessageId };
+            var message = new ChatMessage(channelId, user.Id, user.Username, content, DateTime.UtcNow, images, replyToMessageId, videos, gifs) { OperationId = operationId, ReplyToMessageId = replyToMessageId };
             var receipt = new TextSendReceipt
             {
                 UserId = user.Id,

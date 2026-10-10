@@ -98,7 +98,7 @@ export function createMessages({ identity, snapshot, current, actions, history, 
             content.append(install, textWithLinks(after.join('[pwa-install]')));
         } else if (message.content) content.append(textWithLinks(message.content));
         if (message.author.username === 'System') node.classList.add('system-message');
-        if (message.isEdited) content.append(element('span', 'edited-label', ' (edited)'));
+        if (message.isEdited) content.append(element('span', 'edited-indicator', ' (edited)'));
         if (message.images.length) {
             const gallery = element(
                 'div',
@@ -248,7 +248,7 @@ export function createMessages({ identity, snapshot, current, actions, history, 
                   ? 'Older messages are not available in this channel'
                   : conversation.description || `This is the beginning of #${conversation.name}`
             : 'This conversation is not cached or is no longer accessible. Connect to refresh.';
-        $('#load-history').hidden = !conversation?.hasMore || navigator.onLine;
+        $('#load-history').hidden = !conversation?.hasMore || !navigator.onLine;
         $('#load-history').disabled = history.busy;
         const note = $('#history-note');
         note.className =

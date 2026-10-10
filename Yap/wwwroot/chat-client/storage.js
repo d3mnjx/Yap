@@ -167,6 +167,15 @@ export async function commitUpdate(update, identity, acknowledgedOperation = nul
 
 export const draft = (id) =>
     transaction(['drafts'], 'readonly', (tx) => request(tx.objectStore('drafts').get(id)));
+export const hasUnsentWork = () =>
+    transaction(['drafts', 'outbox'], 'readonly', async (tx) => {
+        const drafts = await request(tx.objectStore('drafts').getAll());
+        const pending = await request(tx.objectStore('outbox').count());
+        return (
+            pending > 0 ||
+            drafts.some((value) => (typeof value === 'string' ? !!value.trim() : !!value))
+        );
+    });
 export const saveDraft = (id, value, identity) =>
     locked(() =>
         transaction(['state', 'drafts'], 'readwrite', async (tx) => {
@@ -216,7 +225,7 @@ export async function enqueue(channelId, content, identity, extra = {}, reply = 
     notify('outbox');
     return item;
 }
-export async function setDelivery(operationId, status, error, identity) {
+export async function setDelivery(operationId, status, error, identity, retry = {}) {
     await locked(() =>
         transaction(['state', 'outbox'], 'readwrite', async (tx) => {
             await owner(tx, identity);
@@ -225,7 +234,14 @@ export async function setDelivery(operationId, status, error, identity) {
             // A stream can confirm acceptance before the POST finishes. Never recreate its pending row.
             if (item)
                 store.put(
-                    { ...item, status, error, attempted: item.attempted || status === 'sending' },
+                    {
+                        ...item,
+                        status,
+                        error,
+                        attempted: item.attempted || status === 'sending',
+                        ...(status === 'queued' ? { retryAttempts: 0, nextAttemptAt: 0 } : {}),
+                        ...retry,
+                    },
                     operationId,
                 );
         }),

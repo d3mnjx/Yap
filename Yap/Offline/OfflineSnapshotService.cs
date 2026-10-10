@@ -114,7 +114,7 @@ public sealed class OfflineSnapshotService(ChatService chat, UserService users, 
     {
         ReaderReaction[] reactions;
         lock (message.Reactions)
-            reactions = message.Reactions.GroupBy(r => r.Emoji).OrderBy(g => g.Key)
+            reactions = message.Reactions.GroupBy(r => r.Emoji)
                 .Select(g => new ReaderReaction(g.Key, g.Select(r => r.Username).Order().ToArray())).ToArray();
         var author = users.GetById(message.UserId);
         var target = message.ReplyToMessageId is { } targetId ? chat.GetMessageById(message.ChannelId, targetId) : null;
@@ -126,12 +126,12 @@ public sealed class OfflineSnapshotService(ChatService chat, UserService users, 
             reply = new(target.Id, targetAuthor != null ? Summary(targetAuthor) : new(target.UserId, target.Username, target.Username, null, AvatarColor.GetGradientCss(target.Username)),
                 string.IsNullOrEmpty(target.Content) && target.HasMedia ? "Click to see attachment" : target.Content);
         }
-        return new(message.Id, message.OperationId, author != null ? Summary(author) : new(message.UserId, message.Username,
+        return new(message.Id, viewerId == message.UserId ? message.OperationId : null, author != null ? Summary(author) : new(message.UserId, message.Username,
             message.Username, null, AvatarColor.GetGradientCss(message.Username)), message.Content, DateTime.SpecifyKind(message.Timestamp, DateTimeKind.Utc),
             message.IsEdited, message.ReplyToMessageId,
             message.ImageUrls.Select(url => new ReaderImage(ImageService.GetMediumUrl(url), ImageService.GetLargeUrl(url))).ToArray(),
             message.VideoUrls.ToArray(), message.GifAttachments.Count, reactions,
-            message.GifAttachments.Select(a => gifs.GetEntry(a.GifEntryId)).OfType<GifEntry>().Select(e => OfflineContent.Gif(e, gifs, viewerId ?? Guid.Empty, users.GetById(e.UploadedByUserId ?? Guid.Empty)?.Username)).ToArray(),
+            message.GifAttachments.Select(a => gifs.GetEntry(a.GifEntryId)).OfType<GifEntry>().Select(e => OfflineContent.Gif(e, gifs, viewerId ?? Guid.Empty, users.GetById(e.UploadedByUserId ?? Guid.Empty)?.EffectiveDisplayName)).ToArray(),
             LinkPreviewService.ExtractUrls(message.Content).Take(5).Select(url =>
             {
                 var preview = previewSettings.Enabled && !message.HasMedia
@@ -183,10 +183,11 @@ public sealed class OfflineSnapshotService(ChatService chat, UserService users, 
         }
         return projected with
         {
+            OperationId = viewer.Id == message.UserId ? message.OperationId : null,
             Reply = reply,
             Gifs = message.GifAttachments.Count == 0 ? projected.Gifs :
             message.GifAttachments.Select(a => gifs.GetEntry(a.GifEntryId)).OfType<GifEntry>()
-                .Select(e => OfflineContent.Gif(e, gifs, viewer.Id, users.GetById(e.UploadedByUserId ?? Guid.Empty)?.Username)).ToArray()
+                .Select(e => OfflineContent.Gif(e, gifs, viewer.Id, users.GetById(e.UploadedByUserId ?? Guid.Empty)?.EffectiveDisplayName)).ToArray()
         };
     }
 

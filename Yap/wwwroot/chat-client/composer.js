@@ -314,6 +314,7 @@ export function createComposer({ identity, snapshot, selected, current, live, on
 
     return {
         reply,
+        settleDraft: () => draftWrite,
         update: updateComposer,
         renderReply,
         beginNavigation,
