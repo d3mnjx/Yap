@@ -88,11 +88,11 @@ function emojiUrl(emoji) {
 
 // <img class="emoji" ...>: the size classes are emoji-inline (names, 1em), emoji-text (1.2em), emoji-big
 // (emoji-only rows, 3em) and emoji-pill (18px). Eager by default so emoji never pop in while reading (MR-18).
-export function emojiImage(emoji, size = 'text', { lazy = false } = {}) {
+export function emojiImage(emoji, size = 'text', { lazy = false, picker = false } = {}) {
   const src = emojiUrl(emoji);
   if (!src) return document.createTextNode(emoji);
   // crossorigin: the CDN answers with CORS headers, so the service worker can store a real response, not an opaque one.
-  return el('img', { class: `emoji emoji-${size}`, src, alt: emoji, draggable: 'false', crossorigin: 'anonymous', loading: lazy ? 'lazy' : null, onerror: imageFailed });
+  return el('img', { class: `emoji emoji-${size}`, src: picker ? pickerUrl(src) : src, alt: emoji, draggable: 'false', crossorigin: 'anonymous', loading: lazy ? 'lazy' : null, onerror: imageFailed });
 }
 
 // An image that did not arrive (a poor connection, a short outage of the CDN, the device offline) would stay a
@@ -120,10 +120,15 @@ export function retryFailedImages() {
   failed.clear();
 }
 
-export function packImage(shortcode, size = 'text', { lazy = false } = {}) {
+export function packImage(shortcode, size = 'text', { lazy = false, picker = false } = {}) {
   const url = packs.get(shortcode);
-  return url ? el('img', { class: `emoji emoji-${size} emoji-custom`, src: url, alt: `:${shortcode}:`, draggable: 'false', loading: lazy ? 'lazy' : null, onerror: imageFailed }) : null;
+  return url ? el('img', { class: `emoji emoji-${size} emoji-custom`, src: picker ? pickerUrl(url) : url, alt: `:${shortcode}:`, draggable: 'false', loading: lazy ? 'lazy' : null, onerror: imageFailed }) : null;
 }
+
+// The picker's grid draws thousands of images over time. The worker keeps them in a cache of their own, so the cache
+// the rows read at a cold open stays small and opens fast (service-worker.js). The marker is a query, which the CDN
+// and the static files ignore; the same emoji in a row is a separate, unmarked fetch.
+const pickerUrl = url => `${url}${url.includes('?') ? '&' : '?'}picker`;
 
 const SHORTCODE = /:([a-zA-Z0-9_-]+):/g;
 

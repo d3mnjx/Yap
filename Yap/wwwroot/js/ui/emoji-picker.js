@@ -32,15 +32,15 @@ export function EmojiPicker({ onPick, recordUse = true }) {
     catch { built = false; return; }   // offline before the worker stored the shell: the next open tries again
     keywords = data.keywords;
     const list = [];   // { key, title, icon(), cells: [{ value, keywords, node() }] }
-    list.push({ key: 'recent', title: 'Recent', icon: () => emojiImage('🕐', 'inline', { lazy: true }), cells: [] });
+    list.push({ key: 'recent', title: 'Recent', icon: () => emojiImage('🕐', 'inline', { lazy: true, picker: true }), cells: [] });
     for (const pack of state.emojiImages?.packs ?? []) {
       if (!pack.emojis.length) continue;
-      list.push({ key: pack.key, title: pack.name, icon: () => packImage(pack.emojis[0].shortcode, 'inline'),
-        cells: pack.emojis.map(e => ({ value: `:${e.shortcode}:`, keywords: `${e.shortcode} ${e.keywords ?? ''}`.toLowerCase(), title: `:${e.shortcode}:`, node: () => packImage(e.shortcode, 'text', { lazy: true }) })) });
+      list.push({ key: pack.key, title: pack.name, icon: () => packImage(pack.emojis[0].shortcode, 'inline', { picker: true }),
+        cells: pack.emojis.map(e => ({ value: `:${e.shortcode}:`, keywords: `${e.shortcode} ${e.keywords ?? ''}`.toLowerCase(), title: `:${e.shortcode}:`, node: () => packImage(e.shortcode, 'text', { lazy: true, picker: true }) })) });
     }
     for (const c of data.categories) {
-      list.push({ key: c.id, title: CATEGORY_NAMES[c.id] ?? c.id, icon: () => emojiImage(c.icon, 'inline', { lazy: true }),
-        cells: c.emojis.map(e => ({ value: e, keywords: (keywords[e] ?? '').toLowerCase(), node: () => emojiImage(e, 'text', { lazy: true }) })) });
+      list.push({ key: c.id, title: CATEGORY_NAMES[c.id] ?? c.id, icon: () => emojiImage(c.icon, 'inline', { lazy: true, picker: true }),
+        cells: c.emojis.map(e => ({ value: e, keywords: (keywords[e] ?? '').toLowerCase(), node: () => emojiImage(e, 'text', { lazy: true, picker: true }) })) });
     }
     replace(sidebar, list.map(s => el('button', { class: 'category-btn', type: 'button', 'data-category': s.key, title: s.title, onclick: () => goTo(s.key) }, s.icon())));
     replace(sections, list.map(s => {
@@ -76,8 +76,8 @@ export function EmojiPicker({ onPick, recordUse = true }) {
     if (!grid) return;
     const recent = state.emoji?.recent ?? [];
     if (!recent.length) { replace(grid, [el('div', { class: 'emoji-empty' }, 'No recent emojis yet')]); return; }
-    replace(grid, recent.map(v => cell(v.startsWith(':') ? { value: v, keywords: v.toLowerCase(), title: v, node: () => packImage(v.slice(1, -1), 'text') ?? document.createTextNode(v) }
-                                                        : { value: v, keywords: (keywords[v] ?? '').toLowerCase(), node: () => emojiImage(v, 'text', { lazy: true }) })));
+    replace(grid, recent.map(v => cell(v.startsWith(':') ? { value: v, keywords: v.toLowerCase(), title: v, node: () => packImage(v.slice(1, -1), 'text', { picker: true }) ?? document.createTextNode(v) }
+                                                        : { value: v, keywords: (keywords[v] ?? '').toLowerCase(), node: () => emojiImage(v, 'text', { lazy: true, picker: true }) })));
   }
 
   function goTo(key) {

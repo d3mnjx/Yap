@@ -11,7 +11,15 @@
 
 const BUILD = '{{build}}';
 const SHELL_CACHE = `yap-shell-${BUILD}`;
-const EMOJI_CACHE = 'yap-emoji-v1';
+// Two emoji caches. The rows' cache holds what conversations, names and reactions draw: a few hundred images. The
+// picker's grid asks for thousands over time (every emoji the person scrolls past), so its images go to a cache of
+// their own, marked by a ?picker query on the URL (render/text.js). WebKit opens a cache by reading every record it
+// holds from disk, and the worker starts cold at every launch of the installed app: with one cache for both, a cold
+// open on the iPhone waited 1 to 2 seconds for the first emoji while the rows' cache was already the picker's flood
+// (2026-10-31). The rows' cache is opened at every cold start, so it is also capped (prune). The old yap-emoji-v1
+// goes at activate, and with it the entries of the Twemoji pin before 17.0.3.
+const EMOJI_CACHE = 'yap-emoji-v2';
+const PICKER_CACHE = 'yap-emoji-picker-v1';
 const MEDIA_CACHE = 'yap-media-v1';
 
 // What the shell needs to paint without a network, from one scan of wwwroot at startup. The page itself is stored
@@ -35,7 +43,7 @@ self.addEventListener('install', event => {
 
 self.addEventListener('activate', event => {
     event.waitUntil(caches.keys()
-        .then(names => Promise.all(names.filter(n => ![SHELL_CACHE, EMOJI_CACHE, MEDIA_CACHE].includes(n)).map(n => caches.delete(n))))
+        .then(names => Promise.all(names.filter(n => ![SHELL_CACHE, EMOJI_CACHE, PICKER_CACHE, MEDIA_CACHE].includes(n)).map(n => caches.delete(n))))
         .then(() => self.clients.claim()));
 });
 
@@ -44,7 +52,7 @@ self.addEventListener('fetch', event => {
     if (request.method !== 'GET') return;
     const url = new URL(request.url);
     if (url.origin !== self.location.origin) {
-        if (EMOJI_HOSTS.includes(url.host)) event.respondWith(cacheFirst(request, EMOJI_CACHE));
+        if (EMOJI_HOSTS.includes(url.host)) event.respondWith(cacheFirst(request, emojiCache(url)));
         return;
     }
     if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/hub')) return;   // live data, never cached
@@ -58,13 +66,15 @@ self.addEventListener('fetch', event => {
         return;
     }
     if (isShellAsset(url.pathname)) { event.respondWith(cacheFirst(request, SHELL_CACHE)); return; }
-    if (EMOJI_PATHS.some(p => url.pathname.startsWith(p))) { event.respondWith(cacheFirst(request, EMOJI_CACHE)); return; }
+    if (EMOJI_PATHS.some(p => url.pathname.startsWith(p))) { event.respondWith(cacheFirst(request, emojiCache(url))); return; }
     // Content-addressed media. Profile pictures keep a stable URL and are left to the HTTP cache; range
     // requests cannot be served from the Cache API.
     if (MEDIA_PATHS.some(p => url.pathname.startsWith(p)) && !url.pathname.startsWith('/uploads/profiles/') && !request.headers.has('range')) {
         event.respondWith(cacheFirst(request, MEDIA_CACHE));
     }
 });
+
+const emojiCache = url => url.searchParams.has('picker') ? PICKER_CACHE : EMOJI_CACHE;
 
 function isShellAsset(pathname) {
     return /\.(js|css|woff2|svg|png|webp|mp3)$/.test(pathname) && !MEDIA_PATHS.some(p => pathname.startsWith(p)) && !EMOJI_PATHS.some(p => pathname.startsWith(p));
@@ -74,7 +84,7 @@ function isShellAsset(pathname) {
 // writer of the /login entry: a navigation's own answer is never stored, because the server answers some paths with
 // something else (the welcome page at the root).
 async function shell(request = null) {
-    const cached = await (await caches.open(SHELL_CACHE)).match('/login');
+    const cached = await (await open(SHELL_CACHE)).match('/login');
     if (cached) return cached;
     return request ? fetch(request).catch(() => Response.error()) : Response.error();
 }
@@ -83,16 +93,38 @@ async function shell(request = null) {
 // no-cors fetch) is no answer for a CORS request such as an emoji <img crossorigin>: the browser would show a
 // broken picture. Such a pair fetches again and the real answer wins.
 async function cacheFirst(request, cacheName) {
-    const cache = await caches.open(cacheName);
+    const cache = await open(cacheName);
     const cached = await cache.match(request);
     if (cached && !(cached.type === 'opaque' && request.mode === 'cors')) return cached;
     try {
         const response = await fetch(request);
-        if (response.status === 200 || response.type === 'opaque') cache.put(request, response.clone());   // a 206 range answer cannot be cached
+        // a 206 range answer cannot be cached
+        if (response.status === 200 || response.type === 'opaque') cache.put(request, response.clone()).then(() => prune(cache, cacheName)).catch(() => {});
         return response;
     } catch {
         return Response.error();
     }
+}
+
+// One open per cache for the life of the worker: the emoji of a cold open all ask in the same moment, and each
+// caches.open is a round trip to the storage process.
+const opened = new Map();
+function open(name) {
+    if (!opened.has(name)) opened.set(name, caches.open(name));
+    return opened.get(name);
+}
+
+// The emoji caches stay bounded: the Cache API lists entries in the order they were stored, so the oldest go first,
+// and an evicted image comes back from the network the next time something draws it. The check runs at the first
+// store of a worker's life and every fiftieth after it, because keys() reads the whole index.
+const LIMITS = { [EMOJI_CACHE]: { max: 400, keep: 300 }, [PICKER_CACHE]: { max: 1500, keep: 1200 } };
+let stores = 0;
+async function prune(cache, cacheName) {
+    const limit = LIMITS[cacheName];
+    if (!limit || stores++ % 50) return;
+    const keys = await cache.keys();
+    if (keys.length <= limit.max) return;
+    await Promise.all(keys.slice(0, keys.length - limit.keep).map(key => cache.delete(key)));
 }
 
 // ---- push (NT-23 to NT-29) ----
