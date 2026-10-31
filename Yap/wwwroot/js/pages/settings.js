@@ -479,21 +479,28 @@ export function mount(root, route) {
   // numbers to read there (main.js widens the timing buffer so the entries are still here on the Settings page).
   function emojiTimings() {
     const isEmoji = name => { try { const u = new URL(name); return u.host === 'cdn.jsdelivr.net' || /^\/(emoji-fallback|emoji-packs|custom-emojis)\//.test(u.pathname); } catch { return false; } };
-    const entries = performance.getEntriesByType('resource').filter(e => isEmoji(e.name));
+    const entries = performance.getEntriesByType('resource').filter(e => isEmoji(e.name)).sort((a, b) => a.startTime - b.startTime);
     const ms = v => `${Math.round(v)} ms`;
     const mark = name => { const t = performance.getEntriesByName(name, 'mark')[0]?.startTime; return t == null ? '–' : ms(t); };
+    // The cold-open set: what was asked for in the first three seconds. Those are the images the person waits for;
+    // the picker, a later room and the Settings page ask later, and the first report drowned the open in them.
+    const cold = entries.filter(e => e.startTime < 3000);
+    const answered = cold.map(e => e.responseEnd).sort((a, b) => a - b);
+    const count = (list, test) => String(list.filter(test).length);
     const rows = [
-      ['Emoji images', String(entries.length)],
+      ['Emoji images (first 3 s / all)', `${cold.length} / ${entries.length}`],
       ['Rows painted (device / server)', `${mark('paint')} / ${mark('rows')}`],
-      ['First asked / last answered', entries.length ? `${ms(Math.min(...entries.map(e => e.startTime)))} / ${ms(Math.max(...entries.map(e => e.responseEnd)))}` : '–'],
-      ['Through the worker', String(entries.filter(e => e.workerStart > 0).length)],
-      ['Answered by a cache (0 B)', String(entries.filter(e => e.transferSize === 0).length)],
+      ['First 3 s: first asked', cold.length ? ms(cold[0].startTime) : '–'],
+      ['First 3 s: half / all answered by', cold.length ? `${ms(answered[Math.floor(answered.length / 2)])} / ${ms(answered.at(-1))}` : '–'],
+      ['Through the worker (first 3 s / all)', `${count(cold, e => e.workerStart > 0)} / ${count(entries, e => e.workerStart > 0)}`],
+      ['From a cache, 0 B (first 3 s / all)', `${count(cold, e => e.transferSize === 0)} / ${count(entries, e => e.transferSize === 0)}`],
     ];
     replace($('.emoji-timing-summary'), rows.map(([label, value]) => el('div', { class: 'notification-row' }, el('span', { class: 'notification-label' }, label), el('span', { class: 'notification-value' }, value))));
-    const slowest = [...entries].sort((a, b) => b.responseEnd - a.responseEnd).slice(0, 30);   // the last to answer first
-    replace($('.emoji-timing-list'), slowest.length ? slowest.map(e => el('div', { class: 'cache-entry', title: e.name },
+    // The cold-open set in the order asked, then the rest: the name on its own line, the timing under it.
+    const shown = [...cold, ...entries.filter(e => e.startTime >= 3000)].slice(0, 80);
+    replace($('.emoji-timing-list'), shown.length ? shown.map(e => el('div', { class: 'emoji-timing-entry', title: e.name },
       el('span', { class: 'cache-entry-name' }, e.name.split('/').pop()),
-      el('span', { class: 'cache-entry-size' }, `${ms(e.startTime)} → ${e.responseStart ? `${ms(e.responseStart)} → ` : ''}${ms(e.responseEnd)}${e.workerStart > 0 ? ' · worker' : ''}${e.transferSize === 0 ? ' · 0 B' : ` · ${size(e.transferSize)}`}`)))
+      el('span', { class: 'cache-entry-size' }, `${ms(e.startTime)} → ${ms(e.responseEnd)}${e.workerStart > 0 ? ' · worker' : ''}${e.transferSize === 0 ? ' · 0 B' : ` · ${size(e.transferSize)}`}`)))
       : [el('span', { class: 'form-hint' }, 'No emoji images loaded in this page yet')]);
   }
   async function cacheReport() {

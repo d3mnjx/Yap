@@ -3570,6 +3570,15 @@
     font-variant-numeric: tabular-nums;
 }
 
+/* The emoji timing lines of the debug card (settings.js emojiTimings): the name on one line and the timing under
+   it, because the timing is too long to share a row with the name on a phone. */
+.emoji-timing-entry {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.8125rem;
+    margin-bottom: 4px;
+}
+
 /* Collapsible "DEBUG INFO" section (native <details>) */
 .debug-info > summary {
     display: flex;
