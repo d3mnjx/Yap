@@ -52,7 +52,7 @@ self.addEventListener('fetch', event => {
     if (request.method !== 'GET') return;
     const url = new URL(request.url);
     if (url.origin !== self.location.origin) {
-        if (EMOJI_HOSTS.includes(url.host)) event.respondWith(cacheFirst(request, emojiCache(url)));
+        if (EMOJI_HOSTS.includes(url.host)) event.respondWith(emojiAnswer(request, url));
         return;
     }
     if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/hub')) return;   // live data, never cached
@@ -66,7 +66,7 @@ self.addEventListener('fetch', event => {
         return;
     }
     if (isShellAsset(url.pathname)) { event.respondWith(cacheFirst(request, SHELL_CACHE)); return; }
-    if (EMOJI_PATHS.some(p => url.pathname.startsWith(p))) { event.respondWith(cacheFirst(request, emojiCache(url))); return; }
+    if (EMOJI_PATHS.some(p => url.pathname.startsWith(p))) { event.respondWith(emojiAnswer(request, url)); return; }
     // Content-addressed media. Profile pictures keep a stable URL and are left to the HTTP cache; range
     // requests cannot be served from the Cache API.
     if (MEDIA_PATHS.some(p => url.pathname.startsWith(p)) && !url.pathname.startsWith('/uploads/profiles/') && !request.headers.has('range')) {
@@ -74,7 +74,7 @@ self.addEventListener('fetch', event => {
     }
 });
 
-const emojiCache = url => url.searchParams.has('picker') ? PICKER_CACHE : EMOJI_CACHE;
+const emojiAnswer = (request, url) => url.searchParams.has('picker') ? cacheFirst(request, PICKER_CACHE) : rememberedFirst(request);
 
 function isShellAsset(pathname) {
     return /\.(js|css|woff2|svg|png|webp|mp3)$/.test(pathname) && !MEDIA_PATHS.some(p => pathname.startsWith(p)) && !EMOJI_PATHS.some(p => pathname.startsWith(p));
@@ -125,6 +125,28 @@ async function prune(cache, cacheName) {
     const keys = await cache.keys();
     if (keys.length <= limit.max) return;
     await Promise.all(keys.slice(0, keys.length - limit.keep).map(key => cache.delete(key)));
+}
+
+// The rows' emoji, answered from the worker's own memory after the first time. On the iPhone every <img> element is a
+// request of its own, the same emoji four times within a millisecond, and a cold open asked for 876 of them; each read
+// of the storage took about 3 ms and they ran one after another, 2.6 s until the last emoji showed (2026-10-31, the
+// Settings debug card). The first request of a URL reads the storage, or the network, once; the requests that follow,
+// concurrent or later, share its answer for the life of the worker. A failed answer is not kept: the next request
+// tries again.
+const remembered = new Map();   // url -> Promise<{ status, headers, body } | null>
+const REMEMBER_MAX = 400;       // a few kilobytes each; a room's emoji are a few dozen
+function rememberedFirst(request) {
+    if (!remembered.has(request.url)) {
+        if (remembered.size >= REMEMBER_MAX) remembered.clear();
+        remembered.set(request.url, cacheFirst(request, EMOJI_CACHE)
+            .then(async response => response.ok && response.type !== 'opaque' ? { status: response.status, headers: [...response.headers], body: await response.arrayBuffer() } : null)
+            .catch(() => null));
+    }
+    return remembered.get(request.url).then(answer => {
+        if (answer) return new Response(answer.body, { status: answer.status, headers: answer.headers });
+        remembered.delete(request.url);
+        return Response.error();
+    });
 }
 
 // ---- push (NT-23 to NT-29) ----

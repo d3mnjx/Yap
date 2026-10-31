@@ -53,6 +53,7 @@ export function Timeline(root) {
     if (!state.open) { renderTop(); return; }
     let prev = null;
     for (const m of ordered()) { flow.append(makeRow(m, prev)); prev = m; }
+    drawnFacts = rowFacts();   // what these rows were drawn with (redrawIfRowsChanged)
     // An older page still in flight belongs to the rows just removed: its answer is dropped (loadOlder), and
     // the spinner must not outlive the rows it was loading for. Without this, a reconnect that re-opened the
     // conversation while a page was loading showed "loading older" for ever (the token was never released).
@@ -474,6 +475,20 @@ export function Timeline(root) {
     return true;
   }
 
+  // The rows redraw when a person's name, picture or flags changed, or the quick reactions did (ST-07, MR-41). The
+  // bootstrap fires both at every connect, with the same content nearly every time, and each full redraw asked the
+  // worker for every emoji image once more: on the iPhone every <img> is a request of its own, the open drew the rows
+  // four times, and the worker answered 876 emoji requests one after another, 2.6 s in all (2026-10-31). The rows
+  // remember what they were drawn with, and a bootstrap that brings the same facts leaves them alone.
+  const rowFacts = () => JSON.stringify([Object.keys(state.users).sort().map(k => state.users[k]), state.emoji?.quickReactions]);
+  let drawnFacts = '';
+  function redrawIfRowsChanged() {
+    const facts = rowFacts();
+    if (facts === drawnFacts) return;
+    drawnFacts = facts;
+    redrawAll();
+  }
+
   const offs = [
     on('messages', onMessages), on('pending', onPending), on('presence', onPresence),
     on('connection', () => { if (state.connection !== 'connected') stale = true; renderTop(); renderCatchingUp(); }),   // a lost socket: the rows may be old (TL-39)
@@ -481,9 +496,9 @@ export function Timeline(root) {
     on('rooms', renderTop),
     on('unread', onUnread),
     on('user', () => markReadIfSeen()), on('presence', () => markReadIfSeen()),   // Away ended, here or on the server: the three conditions may hold again (NT-07)
-    on('users', redrawAll),            // a new display name or avatar shows on every row (ST-07)
+    on('users', redrawIfRowsChanged),  // a new display name or avatar shows on every row (ST-07)
     on('favoriteGifIds', redrawStars), // the stars follow the account (PK-36); a full redraw here cost ~800 ms per click
-    on('emoji', redrawAll),            // the quick reactions of the bar (MR-41)
+    on('emoji', redrawIfRowsChanged),  // the quick reactions of the bar (MR-41)
   ];
   current = { jumpTo };
   reset();
