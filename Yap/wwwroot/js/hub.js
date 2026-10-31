@@ -84,7 +84,10 @@ export function onSignedOut(fn) { signedOutHandler = fn; }
 // The bootstrap request names the emoji image rules the device holds, by their stamp. The server leaves them out of
 // its answer when they are current (wire contract, "Bootstrap"): the custom packs are the largest part of the document
 // and change only with a deploy, while this request goes out after every connect, on a phone many times a day.
-const bootstrapUrl = () => store.state.emojiImages?.stamp ? `/api/bootstrap?emojiStamp=${encodeURIComponent(store.state.emojiImages.stamp)}` : '/api/bootstrap';
+function bootstrapUrl() {
+  const stamp = store.state.emojiImages?.stamp;
+  return stamp ? `/api/bootstrap?emojiStamp=${encodeURIComponent(stamp)}` : '/api/bootstrap';
+}
 
 // A hook runs after every connect, in parallel with the bootstrap request: the chat page re-opens its
 // conversation here, the sender posts the outbox (wire contract, "Bootstrap").

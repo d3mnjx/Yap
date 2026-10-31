@@ -28,21 +28,14 @@ export async function loadBootstrap() {
 // The drafts, one per conversation, kept through a reload (IB-53, GEN-21).
 export async function loadDrafts() { return (await db.get(db.STORES.kv, 'drafts')) ?? {}; }
 
+// The tail only: a page of older messages is not stored (OF-14 keeps the promise modest). No emoji pictures with
+// it: the builds of 2026-10-31 that stored them (Blobs, then data URLs) made every open jerk on the phone, because
+// WebKit decodes a data URL again for each <img> that carries it, at each rebuild of the rows (offline-design-notes.md,
+// "Reading"). A row's image carries its network URL, and the worker's cache answers it a frame or two after the text.
 async function saveTail(key, conversation) {
-  // The tail only: a page of older messages is not stored (OF-14 keeps the promise modest).
   const messages = conversation.messages.slice(-50);
   await db.put(db.STORES.snapshots, { channelId: conversation.channelId, partner: conversation.partner ?? null, messages, hasMore: conversation.hasMore && messages.length === conversation.messages.length, restricted: conversation.restricted, typists: [], pins: conversation.pins ?? [], at: Date.now() }, tail(key));
 }
-
-// The record holds no emoji pictures. The builds of 2026-10-31 stored them with the tail (Blobs first, then data
-// URLs) so that the stored paint drew the emoji in the same frame as the text, and every <img> of the page then
-// carried a data URL. After that change every open jerked once the emoji had drawn (the user's devices; not seen in
-// headless Chromium, which decodes a data URL at once and shares it). The probable cause: WebKit decodes a data URL
-// image again, off the main thread, for each <img> element that carries it, and the rows are rebuilt three times at
-// every open (the bootstrap's users and emoji redraws, then the server's rows), so the emoji vanished and came back
-// at each rebuild. A network URL is decoded once per page and shared by every <img>. The emoji come through the
-// worker's cache instead, a frame or two after the text. A record from those builds carries an unused `pictures`
-// field until its next save replaces it.
 
 export async function loadTail(key) {
   const row = await db.get(db.STORES.snapshots, tail(key));

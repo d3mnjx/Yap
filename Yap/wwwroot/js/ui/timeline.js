@@ -33,6 +33,7 @@ export function Timeline(root) {
   let stale = false;               // the rows on screen are the device's copy, or older than the connection (TL-39)
   let unread = false;              // the server counted a message in the open conversation and markRead has not answered yet (NT-07)
   let shownChannel = null;         // the channel the rows belong to
+  let drawnFacts = '';             // what the rows were drawn with: the people and the quick reactions (redrawIfRowsChanged)
 
   // ---- drawing ----
 
@@ -103,6 +104,18 @@ export function Timeline(root) {
     const all = state.open?.messages ?? [];
     all.forEach((m, i) => redraw(m, all[i - 1] ?? null));
     keepPlace();
+  }
+
+  // The rows redraw when a person's name, picture or flags changed, or the quick reactions did (ST-07, MR-41). The
+  // bootstrap fires both at every connect, nearly always with the same content, and each full redraw asked the
+  // worker for every emoji image once more (on the iPhone every <img> is a request of its own, 2026-10-31). So the
+  // rows remember what they were drawn with, and a bootstrap that brings the same facts leaves them alone.
+  const rowFacts = () => JSON.stringify([Object.keys(state.users).sort().map(k => state.users[k]), state.emoji?.quickReactions]);
+  function redrawIfRowsChanged() {
+    const facts = rowFacts();
+    if (facts === drawnFacts) return;
+    drawnFacts = facts;
+    redrawAll();
   }
 
   function neighbours(index) {
@@ -487,20 +500,6 @@ export function Timeline(root) {
     };
     requestAnimationFrame(step);
     return true;
-  }
-
-  // The rows redraw when a person's name, picture or flags changed, or the quick reactions did (ST-07, MR-41). The
-  // bootstrap fires both at every connect, with the same content nearly every time, and each full redraw asked the
-  // worker for every emoji image once more: on the iPhone every <img> is a request of its own, the open drew the rows
-  // four times, and the worker answered 876 emoji requests one after another, 2.6 s in all (2026-10-31). The rows
-  // remember what they were drawn with, and a bootstrap that brings the same facts leaves them alone.
-  const rowFacts = () => JSON.stringify([Object.keys(state.users).sort().map(k => state.users[k]), state.emoji?.quickReactions]);
-  let drawnFacts = '';
-  function redrawIfRowsChanged() {
-    const facts = rowFacts();
-    if (facts === drawnFacts) return;
-    drawnFacts = facts;
-    redrawAll();
   }
 
   const offs = [
