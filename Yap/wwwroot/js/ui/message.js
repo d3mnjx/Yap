@@ -320,18 +320,32 @@ function renderPending(rowNode, m) {
 
 // ---- the action bar and its popups (MR-46 to MR-68) ----
 
+// The three quick reaction buttons are built when the bar first shows, not when the row is drawn. The bar is
+// invisible until a hover, a tap or keyboard focus, and fifty rows times three emoji images was the largest share
+// of a cold open's image requests on the iPhone, where every <img> is a request of its own (2026-10-31). The filler
+// waits per row; showTouched, the pointerover and focusin listeners below and rowReplaced run it.
+const quickFillers = new WeakMap();   // rowNode -> () => void, until the bar first shows
+function fillQuick(rowNode) {
+  const fill = quickFillers.get(rowNode);
+  if (!fill) return;
+  quickFillers.delete(rowNode);
+  fill();
+}
+
 function renderActions(rowNode, m) {
   const bar = rowNode.querySelector('.message-actions');
   const quick = bar.querySelector('.quick-reactions');
   if (m.pending) { quick.remove(); bar.querySelector('.action-divider').remove(); bar.querySelector('.action-picker').remove(); bar.querySelector('.action-reply').remove(); }
   else {
-    for (const emoji of state.emoji?.quickReactions ?? []) {
-      const b = clone('t-action-reaction');
-      b.title = emoji;
-      replace(b, inline(emoji, 'pill'));
-      b.addEventListener('click', () => react(rowNode, m, emoji));
-      quick.append(b);
-    }
+    quickFillers.set(rowNode, () => {
+      for (const emoji of state.emoji?.quickReactions ?? []) {
+        const b = clone('t-action-reaction');
+        b.title = emoji;
+        replace(b, inline(emoji, 'pill'));
+        b.addEventListener('click', () => react(rowNode, m, emoji));
+        quick.append(b);
+      }
+    });
     bar.querySelector('.action-picker').addEventListener('click', e => openReactionPicker(rowNode, m, e.currentTarget));
     bar.querySelector('.action-reply').addEventListener('click', () => document.dispatchEvent(new CustomEvent('yap:reply', { detail: m })));   // IB-49
   }
@@ -476,6 +490,7 @@ const keepsBar = rowNode => rowNode.classList.contains('picker-open') || rowNode
 const listOf = rowNode => rowNode.closest('.messages');
 
 function showTouched(rowNode) {
+  fillQuick(rowNode);   // the bar shows: its quick reactions exist from here
   if (touched && touched !== rowNode) touched.classList.remove('touched');   // one bar at a time (MR-50)
   touched = rowNode;
   rowNode.classList.add('touched');
@@ -507,6 +522,10 @@ document.addEventListener('pointerdown', e => {
   if (!e.target.isConnected || (touched && keepsBar(touched))) armTouchTimer(); else hideTouched();
 }, { capture: true, passive: true });
 document.addEventListener('pointercancel', () => { touchRow = null; });
+// A pointer that can hover shows the bar through CSS (:hover); its quick reactions are built as the pointer enters
+// the row. Keyboard focus in a row (tabbing to its buttons) builds them too.
+document.addEventListener('pointerover', e => { if (e.pointerType !== 'touch') { const rowNode = rowOf(e.target); if (rowNode) fillQuick(rowNode); } }, { passive: true });
+document.addEventListener('focusin', e => { const rowNode = rowOf(e.target); if (rowNode) fillQuick(rowNode); });
 document.addEventListener('click', e => {
   const rowNode = touchRow; touchRow = null;
   if (!rowNode?.isConnected || !rowNode.contains(e.target)) return;
@@ -523,6 +542,7 @@ export function touchScrolled(scrollTop) {
 // of the open layer still hold the old node; they look the live row up by id when they close.
 export function rowReplaced(oldNode, newNode) {
   for (const cls of ['touched', 'picker-open', 'menu-open']) if (oldNode.classList.contains(cls)) newNode.classList.add(cls);
+  if (!quickFillers.has(oldNode)) fillQuick(newNode);   // a bar the person has seen keeps its quick reactions
   newNode.append(...oldNode.querySelectorAll(':scope > .emoji-picker-backdrop, :scope > .emoji-picker-wrapper, :scope > .more-menu-layer'));
   if (touched === oldNode) touched = newNode;
 }

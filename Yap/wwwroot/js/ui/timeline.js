@@ -38,11 +38,19 @@ export function Timeline(root) {
 
   function ordered() { return [...(state.open?.messages ?? []), ...state.pending]; }
 
+  // The same message under the same header rule: its node can stay through a reset.
+  const unchanged = (r, m, prev) => r.node.classList.contains('has-header') === needsHeader(prev, m) && JSON.stringify(r.message) === JSON.stringify(m);
+
   // A reset for the same conversation (a reconnect, TL-35) keeps the view where it is; a new one opens at the bottom (TL-01).
   function reset() {
     const same = state.open && state.open.channelId === shownChannel;
     const keptTop = list.scrollTop, keptFollowing = following;
-    for (const r of rows.values()) r.node.remove();
+    // The rows of the same conversation whose message did not change stay: the node moves into the new order instead
+    // of being drawn again. At every open the server's rows follow the device's copy, nearly always the same fifty,
+    // and drawing them again asked for every emoji image once more; on the iPhone every <img> is a request of its
+    // own (2026-10-31). A row in the editor stays too while its message is the same.
+    const kept = same ? new Map(rows) : new Map();
+    if (!same) for (const r of rows.values()) r.node.remove();
     rows.clear();
     pendingNodes.forEach(n => n.remove()); pendingNodes = [];
     flow.querySelectorAll('.lobby-line').forEach(n => n.remove());
@@ -52,7 +60,13 @@ export function Timeline(root) {
     unread = state.unread[shownChannel] > 0;   // a count from before this open; chat.js marks it read on open, this is the fallback
     if (!state.open) { renderTop(); return; }
     let prev = null;
-    for (const m of ordered()) { flow.append(makeRow(m, prev)); prev = m; }
+    for (const m of ordered()) {
+      const old = m.pending ? null : kept.get(m.id);
+      if (old && unchanged(old, m, prev)) { kept.delete(m.id); flow.append(old.node); rows.set(m.id, { node: old.node, message: m }); }
+      else flow.append(makeRow(m, prev));
+      prev = m;
+    }
+    for (const r of kept.values()) r.node.remove();   // the rows the new tail does not have
     drawnFacts = rowFacts();   // what these rows were drawn with (redrawIfRowsChanged)
     // An older page still in flight belongs to the rows just removed: its answer is dropped (loadOlder), and
     // the spinner must not outlive the rows it was loading for. Without this, a reconnect that re-opened the
