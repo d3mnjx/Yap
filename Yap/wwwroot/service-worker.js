@@ -12,12 +12,10 @@
 const BUILD = '{{build}}';
 const SHELL_CACHE = `yap-shell-${BUILD}`;
 // One emoji cache, cache-first, for every emoji image: the rows', the names', the reactions' and the picker's grid.
-// The emoji set itself bounds it (a few thousand small files), it is never pruned, and it is what lets the picker
-// work without a network. A repeated image is answered from the worker's memory (rememberedFirst), so a redraw of
-// the rows costs no storage read. Two detours of 2026-10-31 are gone: a cache of its own for the picker changed
-// nothing, and the picker bypassing the worker for the browser's HTTP cache left it to a cache the browser may drop;
-// both gave a picked emoji a path of its own, and the row drew an empty box until the CDN answered. The caches of
-// earlier builds (yap-emoji-v1, yap-emoji-picker-v1) go at activate.
+// The emoji set bounds it (a few thousand small files), it is never pruned, and it is what lets the picker work
+// without a network. One URL, one cache, one path: a cache of its own for the picker, and the picker bypassing the
+// worker, both gave a picked emoji a path of its own, and the row drew an empty box until the CDN answered
+// (performance-notes.md, "Media"). The caches of earlier builds (yap-emoji-v1, yap-emoji-picker-v1) go at activate.
 const EMOJI_CACHE = 'yap-emoji-v2';
 const MEDIA_CACHE = 'yap-media-v1';
 
@@ -51,7 +49,9 @@ self.addEventListener('fetch', event => {
     if (request.method !== 'GET') return;
     const url = new URL(request.url);
     if (url.origin !== self.location.origin) {
-        if (EMOJI_HOSTS.includes(url.host)) event.respondWith(rememberedFirst(request));
+        // The emoji's CDN also serves the admin's chart script and the install guide (admin.js, pwa.js): plain script
+        // and link tags, whose opaque answer cannot be read into the worker's memory. Only images are remembered.
+        if (EMOJI_HOSTS.includes(url.host)) event.respondWith(request.destination === 'image' ? rememberedFirst(request) : cacheFirst(request, EMOJI_CACHE));
         return;
     }
     if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/hub')) return;   // live data, never cached
@@ -111,13 +111,12 @@ function open(name) {
     return opened.get(name);
 }
 
-// Every emoji image, answered from the worker's own memory after the first time. On the iPhone every <img> element is
-// a request of its own, the same emoji four times within a millisecond, and a cold open asked for 876 of them; each
-// read of the storage took about 3 ms and they ran one after another, 2.6 s until the last emoji showed (2026-10-31,
-// the Settings debug card). The first request of a URL reads the storage, or the network, once; the requests that
-// follow, concurrent or later, share its answer for the life of the worker. A failed answer is not kept: the next
-// request tries again. The picker's grid passes through here too, each emoji once, so the memory fills as the
-// person scrolls; when it is full it starts over, and the rows read the storage once more.
+// Every emoji image, from the worker's own memory after its first request. On the iPhone every <img> element is a
+// request of its own, the same emoji four times within a millisecond, and the storage answered a cold open's
+// hundreds of them one after another, seconds in all (performance-notes.md, "Media"). The first request of a URL
+// reads the storage, or the network, once; the requests that follow, concurrent or later, share its answer for the
+// life of the worker. A failed answer is not kept: the next request tries again. The picker's grid fills the memory
+// as the person scrolls; when it is full it starts over, and the rows read the storage once more.
 const remembered = new Map();   // url -> Promise<{ status, headers, body } | null>
 const REMEMBER_MAX = 1000;      // a few kilobytes each
 function rememberedFirst(request) {
