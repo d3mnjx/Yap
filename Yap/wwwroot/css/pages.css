@@ -3570,13 +3570,20 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* The emoji timing lines of the debug card (settings.js emojiTimings): the name on one line and the timing under
+/* The emoji timing lines of the debug card (settings-debug.js emojiTimings): the name on one line and the timing under
    it, because the timing is too long to share a row with the name on a phone. */
 .emoji-timing-entry {
     display: flex;
     flex-direction: column;
     font-size: 0.8125rem;
     margin-bottom: 4px;
+}
+
+/* The clipboard fallback of "Copy timings": the same text in a box to select by hand. */
+.emoji-timing-text {
+    width: 100%;
+    margin-top: 6px;
+    font-size: 11px;
 }
 
 /* Collapsible "DEBUG INFO" section (native <details>) */

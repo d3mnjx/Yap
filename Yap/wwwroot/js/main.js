@@ -19,6 +19,9 @@ import { syncScene } from './scene.js';
 import * as snapshot from './offline/snapshot.js';
 
 performance.mark('scripts');   // the boot report's second phase (AD-41): every static module above has loaded and run when this line runs
+// The browser keeps the timing of 250 loaded files by default, and the shell alone is sixty: the Settings debug card
+// reads the emoji images' timings of this page load (settings-debug.js), so the buffer is widened before they load.
+performance.setResourceTimingBufferSize(1000);
 
 // The installed app launches at /pwa-launch?lt=<token>, the server's hand-off that signs the app in on its first
 // launch (OF-03). The worker answers that navigation with the stored shell, so the launch paints with no round
@@ -77,10 +80,6 @@ on('user', () => {
   syncScene();   // the place for the Tea House sun, once per device and zone
   time.usePreferences(u);
 });
-
-// The browser keeps the timing of 250 loaded files by default, and the shell alone is sixty: the Settings debug report
-// reads the emoji images' timings of this page load (settings.js emojiTimings), so the buffer is widened first.
-performance.setResourceTimingBufferSize(1000);
 
 on('emojiImages', () => text.useImages(state.emojiImages));   // registered before start(): the rules are in place when the stored copy paints
 
