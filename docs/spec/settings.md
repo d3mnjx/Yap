@@ -85,7 +85,7 @@ Settings is the one page where the user changes their profile, appearance, sign-
 
 ### Debug
 
-**ST-25** DEBUG INFO is a collapsed card. It shows what the browser keeps for Yap on this device: cached files by group with their size, and the storage estimate. It also has "Clear this cache" for the media cache. Clearing keeps drafts and unsent messages. Below the caches it lists the emoji images of this page load with the time each was asked for and answered, whether the service worker was in the path and whether a cache answered (the diagnostic for the cold-open wait).
+**ST-25** DEBUG INFO is a collapsed card. It shows what the browser keeps for Yap on this device: cached files by group with their size, and the storage estimate. It also has "Clear this cache" for the media cache. Clearing keeps drafts and unsent messages. Below the caches it lists the emoji images of this page load with the time each was asked for and answered, whether the service worker was in the path and whether a cache answered (the diagnostic for the cold-open wait). "Copy timings" puts the same numbers on the clipboard as text.
 
 ### Phones
 
