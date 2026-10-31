@@ -78,6 +78,10 @@ on('user', () => {
   time.usePreferences(u);
 });
 
+// The browser keeps the timing of 250 loaded files by default, and the shell alone is sixty: the Settings debug report
+// reads the emoji images' timings of this page load (settings.js emojiTimings), so the buffer is widened first.
+performance.setResourceTimingBufferSize(1000);
+
 on('emojiImages', () => text.useImages(state.emojiImages));   // registered before start(): the rules are in place when the stored copy paints
 
 // The new-version strip and the fresh load of a new build live in update.js (SH-20, OF-18).

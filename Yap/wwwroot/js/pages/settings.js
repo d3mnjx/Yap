@@ -470,7 +470,32 @@ export function mount(root, route) {
   $('.version-reload').addEventListener('click', () => { $('.version-reload').disabled = true; reloadForNewBuild(); });
 
   // ---- DEBUG INFO (ST-25) ----
-  $('.debug-info').addEventListener('toggle', e => { if (e.target.open) cacheReport(); }, { once: true });
+  $('.debug-info').addEventListener('toggle', e => { if (e.target.open) { cacheReport(); emojiTimings(); } }, { once: true });
+
+  // The emoji images of this page load, from the browser's resource timing: when each was asked for and answered,
+  // whether the service worker was in the path (workerStart) and whether a cache answered (transferSize 0). The CDN
+  // sends Timing-Allow-Origin, so its entries carry the details. Written for the cold-open wait of 2026-10-31: on the
+  // phone every emoji showed about a second after the text, and two fixes from reasoning alone missed; these are the
+  // numbers to read there (main.js widens the timing buffer so the entries are still here on the Settings page).
+  function emojiTimings() {
+    const isEmoji = name => { try { const u = new URL(name); return u.host === 'cdn.jsdelivr.net' || /^\/(emoji-fallback|emoji-packs|custom-emojis)\//.test(u.pathname); } catch { return false; } };
+    const entries = performance.getEntriesByType('resource').filter(e => isEmoji(e.name));
+    const ms = v => `${Math.round(v)} ms`;
+    const mark = name => { const t = performance.getEntriesByName(name, 'mark')[0]?.startTime; return t == null ? '–' : ms(t); };
+    const rows = [
+      ['Emoji images', String(entries.length)],
+      ['Rows painted (device / server)', `${mark('paint')} / ${mark('rows')}`],
+      ['First asked / last answered', entries.length ? `${ms(Math.min(...entries.map(e => e.startTime)))} / ${ms(Math.max(...entries.map(e => e.responseEnd)))}` : '–'],
+      ['Through the worker', String(entries.filter(e => e.workerStart > 0).length)],
+      ['Answered by a cache (0 B)', String(entries.filter(e => e.transferSize === 0).length)],
+    ];
+    replace($('.emoji-timing-summary'), rows.map(([label, value]) => el('div', { class: 'notification-row' }, el('span', { class: 'notification-label' }, label), el('span', { class: 'notification-value' }, value))));
+    const slowest = [...entries].sort((a, b) => b.responseEnd - a.responseEnd).slice(0, 30);   // the last to answer first
+    replace($('.emoji-timing-list'), slowest.length ? slowest.map(e => el('div', { class: 'cache-entry', title: e.name },
+      el('span', { class: 'cache-entry-name' }, e.name.split('/').pop()),
+      el('span', { class: 'cache-entry-size' }, `${ms(e.startTime)} → ${e.responseStart ? `${ms(e.responseStart)} → ` : ''}${ms(e.responseEnd)}${e.workerStart > 0 ? ' · worker' : ''}${e.transferSize === 0 ? ' · 0 B' : ` · ${size(e.transferSize)}`}`)))
+      : [el('span', { class: 'form-hint' }, 'No emoji images loaded in this page yet')]);
+  }
   async function cacheReport() {
     const note = $('.cache-note'), report = $('.cache-report');
     if (!('caches' in window)) { note.textContent = 'Cache Storage API is not available in this browser.'; return; }
