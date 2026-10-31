@@ -88,14 +88,11 @@ function emojiUrl(emoji) {
 
 // <img class="emoji" ...>: the size classes are emoji-inline (names, 1em), emoji-text (1.2em), emoji-big
 // (emoji-only rows, 3em) and emoji-pill (18px). Eager by default so emoji never pop in while reading (MR-18).
-export function emojiImage(emoji, size = 'text', { lazy = false, picker = false } = {}) {
+export function emojiImage(emoji, size = 'text', { lazy = false } = {}) {
   const src = emojiUrl(emoji);
   if (!src) return document.createTextNode(emoji);
   // crossorigin: the CDN answers with CORS headers, so the service worker can store a real response, not an opaque one.
-  // The picker's grid leaves it out: its requests are then no-cors, and the worker leaves those to the browser's HTTP
-  // cache (service-worker.js, isPickerImage). The URL is the same as a row's, so an emoji picked there is in that cache
-  // when the row's request misses the worker's cache and goes to the network.
-  return el('img', { class: `emoji emoji-${size}`, src, alt: emoji, draggable: 'false', crossorigin: picker ? null : 'anonymous', loading: lazy ? 'lazy' : null, onerror: imageFailed });
+  return el('img', { class: `emoji emoji-${size}`, src, alt: emoji, draggable: 'false', crossorigin: 'anonymous', loading: lazy ? 'lazy' : null, onerror: imageFailed });
 }
 
 // An image that did not arrive (a poor connection, a short outage of the CDN, the device offline) would stay a
@@ -123,9 +120,9 @@ export function retryFailedImages() {
   failed.clear();
 }
 
-export function packImage(shortcode, size = 'text', { lazy = false, picker = false } = {}) {
+export function packImage(shortcode, size = 'text', { lazy = false } = {}) {
   const url = packs.get(shortcode);
-  return url ? el('img', { class: `emoji emoji-${size} emoji-custom`, src: url, alt: `:${shortcode}:`, draggable: 'false', crossorigin: picker ? null : 'anonymous', loading: lazy ? 'lazy' : null, onerror: imageFailed }) : null;
+  return url ? el('img', { class: `emoji emoji-${size} emoji-custom`, src: url, alt: `:${shortcode}:`, draggable: 'false', loading: lazy ? 'lazy' : null, onerror: imageFailed }) : null;
 }
 
 const SHORTCODE = /:([a-zA-Z0-9_-]+):/g;

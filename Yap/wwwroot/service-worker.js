@@ -11,15 +11,13 @@
 
 const BUILD = '{{build}}';
 const SHELL_CACHE = `yap-shell-${BUILD}`;
-// The emoji cache holds what conversations, names and reactions draw: a few hundred images, capped (prune). The
-// picker's grid is not in it. It asks for thousands of images over time (every emoji the person scrolls past), each
-// <img> a request of its own on the iPhone, and through the worker each one was a read of the storage, one after
-// another: the picker filled slowly and scrolled slower (2026-10-31). Its images load without crossorigin
-// (render/text.js), so their requests are no-cors, and the worker leaves them to the browser, whose HTTP cache holds
-// the CDN's one-year immutable answers and serves them in parallel. The URL is the same as a row's: an emoji picked
-// there is an HTTP cache hit when the row's request misses this cache and fetches. A query marker instead made the
-// picked emoji a stranger to the row, an empty box until the CDN answered. The caches of earlier builds (yap-emoji-v1,
-// yap-emoji-picker-v1) go at activate.
+// One emoji cache, cache-first, for every emoji image: the rows', the names', the reactions' and the picker's grid.
+// The emoji set itself bounds it (a few thousand small files), it is never pruned, and it is what lets the picker
+// work without a network. A repeated image is answered from the worker's memory (rememberedFirst), so a redraw of
+// the rows costs no storage read. Two detours of 2026-10-31 are gone: a cache of its own for the picker changed
+// nothing, and the picker bypassing the worker for the browser's HTTP cache left it to a cache the browser may drop;
+// both gave a picked emoji a path of its own, and the row drew an empty box until the CDN answered. The caches of
+// earlier builds (yap-emoji-v1, yap-emoji-picker-v1) go at activate.
 const EMOJI_CACHE = 'yap-emoji-v2';
 const MEDIA_CACHE = 'yap-media-v1';
 
@@ -53,7 +51,7 @@ self.addEventListener('fetch', event => {
     if (request.method !== 'GET') return;
     const url = new URL(request.url);
     if (url.origin !== self.location.origin) {
-        if (EMOJI_HOSTS.includes(url.host) && !isPickerImage(request)) event.respondWith(rememberedFirst(request));
+        if (EMOJI_HOSTS.includes(url.host)) event.respondWith(rememberedFirst(request));
         return;
     }
     if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/hub')) return;   // live data, never cached
@@ -67,15 +65,13 @@ self.addEventListener('fetch', event => {
         return;
     }
     if (isShellAsset(url.pathname)) { event.respondWith(cacheFirst(request, SHELL_CACHE)); return; }
-    if (EMOJI_PATHS.some(p => url.pathname.startsWith(p))) { if (!isPickerImage(request)) event.respondWith(rememberedFirst(request)); return; }
+    if (EMOJI_PATHS.some(p => url.pathname.startsWith(p))) { event.respondWith(rememberedFirst(request)); return; }
     // Content-addressed media. Profile pictures keep a stable URL and are left to the HTTP cache; range
     // requests cannot be served from the Cache API.
     if (MEDIA_PATHS.some(p => url.pathname.startsWith(p)) && !url.pathname.startsWith('/uploads/profiles/') && !request.headers.has('range')) {
         event.respondWith(cacheFirst(request, MEDIA_CACHE));
     }
 });
-
-const isPickerImage = request => request.mode === 'no-cors';   // the picker's grid loads without crossorigin; the rows' images are cors (EMOJI_CACHE comment)
 
 function isShellAsset(pathname) {
     return /\.(js|css|woff2|svg|png|webp|mp3)$/.test(pathname) && !MEDIA_PATHS.some(p => pathname.startsWith(p)) && !EMOJI_PATHS.some(p => pathname.startsWith(p));
@@ -100,7 +96,7 @@ async function cacheFirst(request, cacheName) {
     try {
         const response = await fetch(request);
         // a 206 range answer cannot be cached
-        if (response.status === 200 || response.type === 'opaque') cache.put(request, response.clone()).then(() => prune(cache, cacheName)).catch(() => {});
+        if (response.status === 200 || response.type === 'opaque') cache.put(request, response.clone()).catch(() => {});
         return response;
     } catch {
         return Response.error();
@@ -115,27 +111,15 @@ function open(name) {
     return opened.get(name);
 }
 
-// The emoji cache stays bounded: the Cache API lists entries in the order they were stored, so the oldest go first,
-// and an evicted image comes back from the network the next time something draws it. The check runs at the first
-// store of a worker's life and every fiftieth after it, because keys() reads the whole index.
-const LIMITS = { [EMOJI_CACHE]: { max: 400, keep: 300 } };
-let stores = 0;
-async function prune(cache, cacheName) {
-    const limit = LIMITS[cacheName];
-    if (!limit || stores++ % 50) return;
-    const keys = await cache.keys();
-    if (keys.length <= limit.max) return;
-    await Promise.all(keys.slice(0, keys.length - limit.keep).map(key => cache.delete(key)));
-}
-
-// The rows' emoji, answered from the worker's own memory after the first time. On the iPhone every <img> element is a
-// request of its own, the same emoji four times within a millisecond, and a cold open asked for 876 of them; each read
-// of the storage took about 3 ms and they ran one after another, 2.6 s until the last emoji showed (2026-10-31, the
-// Settings debug card). The first request of a URL reads the storage, or the network, once; the requests that follow,
-// concurrent or later, share its answer for the life of the worker. A failed answer is not kept: the next request
-// tries again.
+// Every emoji image, answered from the worker's own memory after the first time. On the iPhone every <img> element is
+// a request of its own, the same emoji four times within a millisecond, and a cold open asked for 876 of them; each
+// read of the storage took about 3 ms and they ran one after another, 2.6 s until the last emoji showed (2026-10-31,
+// the Settings debug card). The first request of a URL reads the storage, or the network, once; the requests that
+// follow, concurrent or later, share its answer for the life of the worker. A failed answer is not kept: the next
+// request tries again. The picker's grid passes through here too, each emoji once, so the memory fills as the
+// person scrolls; when it is full it starts over, and the rows read the storage once more.
 const remembered = new Map();   // url -> Promise<{ status, headers, body } | null>
-const REMEMBER_MAX = 400;       // a few kilobytes each; a room's emoji are a few dozen
+const REMEMBER_MAX = 1000;      // a few kilobytes each
 function rememberedFirst(request) {
     if (!remembered.has(request.url)) {
         if (remembered.size >= REMEMBER_MAX) remembered.clear();
