@@ -92,7 +92,10 @@ export function emojiImage(emoji, size = 'text', { lazy = false, picker = false 
   const src = emojiUrl(emoji);
   if (!src) return document.createTextNode(emoji);
   // crossorigin: the CDN answers with CORS headers, so the service worker can store a real response, not an opaque one.
-  return el('img', { class: `emoji emoji-${size}`, src: picker ? pickerUrl(src) : src, alt: emoji, draggable: 'false', crossorigin: 'anonymous', loading: lazy ? 'lazy' : null, onerror: imageFailed });
+  // The picker's grid leaves it out: its requests are then no-cors, and the worker leaves those to the browser's HTTP
+  // cache (service-worker.js, isPickerImage). The URL is the same as a row's, so an emoji picked there is in that cache
+  // when the row's request misses the worker's cache and goes to the network.
+  return el('img', { class: `emoji emoji-${size}`, src, alt: emoji, draggable: 'false', crossorigin: picker ? null : 'anonymous', loading: lazy ? 'lazy' : null, onerror: imageFailed });
 }
 
 // An image that did not arrive (a poor connection, a short outage of the CDN, the device offline) would stay a
@@ -122,13 +125,8 @@ export function retryFailedImages() {
 
 export function packImage(shortcode, size = 'text', { lazy = false, picker = false } = {}) {
   const url = packs.get(shortcode);
-  return url ? el('img', { class: `emoji emoji-${size} emoji-custom`, src: picker ? pickerUrl(url) : url, alt: `:${shortcode}:`, draggable: 'false', loading: lazy ? 'lazy' : null, onerror: imageFailed }) : null;
+  return url ? el('img', { class: `emoji emoji-${size} emoji-custom`, src: url, alt: `:${shortcode}:`, draggable: 'false', crossorigin: picker ? null : 'anonymous', loading: lazy ? 'lazy' : null, onerror: imageFailed }) : null;
 }
-
-// The picker's grid draws thousands of images over time. The worker keeps them in a cache of their own, so the cache
-// the rows read at a cold open stays small and opens fast (service-worker.js). The marker is a query, which the CDN
-// and the static files ignore; the same emoji in a row is a separate, unmarked fetch.
-const pickerUrl = url => `${url}${url.includes('?') ? '&' : '?'}picker`;
 
 const SHORTCODE = /:([a-zA-Z0-9_-]+):/g;
 

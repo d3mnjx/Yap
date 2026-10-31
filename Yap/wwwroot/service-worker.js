@@ -11,15 +11,16 @@
 
 const BUILD = '{{build}}';
 const SHELL_CACHE = `yap-shell-${BUILD}`;
-// Two emoji caches. The rows' cache holds what conversations, names and reactions draw: a few hundred images. The
-// picker's grid asks for thousands over time (every emoji the person scrolls past), so its images go to a cache of
-// their own, marked by a ?picker query on the URL (render/text.js). WebKit opens a cache by reading every record it
-// holds from disk, and the worker starts cold at every launch of the installed app: with one cache for both, a cold
-// open on the iPhone waited 1 to 2 seconds for the first emoji while the rows' cache was already the picker's flood
-// (2026-10-31). The rows' cache is opened at every cold start, so it is also capped (prune). The old yap-emoji-v1
-// goes at activate, and with it the entries of the Twemoji pin before 17.0.3.
+// The emoji cache holds what conversations, names and reactions draw: a few hundred images, capped (prune). The
+// picker's grid is not in it. It asks for thousands of images over time (every emoji the person scrolls past), each
+// <img> a request of its own on the iPhone, and through the worker each one was a read of the storage, one after
+// another: the picker filled slowly and scrolled slower (2026-10-31). Its images load without crossorigin
+// (render/text.js), so their requests are no-cors, and the worker leaves them to the browser, whose HTTP cache holds
+// the CDN's one-year immutable answers and serves them in parallel. The URL is the same as a row's: an emoji picked
+// there is an HTTP cache hit when the row's request misses this cache and fetches. A query marker instead made the
+// picked emoji a stranger to the row, an empty box until the CDN answered. The caches of earlier builds (yap-emoji-v1,
+// yap-emoji-picker-v1) go at activate.
 const EMOJI_CACHE = 'yap-emoji-v2';
-const PICKER_CACHE = 'yap-emoji-picker-v1';
 const MEDIA_CACHE = 'yap-media-v1';
 
 // What the shell needs to paint without a network, from one scan of wwwroot at startup. The page itself is stored
@@ -43,7 +44,7 @@ self.addEventListener('install', event => {
 
 self.addEventListener('activate', event => {
     event.waitUntil(caches.keys()
-        .then(names => Promise.all(names.filter(n => ![SHELL_CACHE, EMOJI_CACHE, PICKER_CACHE, MEDIA_CACHE].includes(n)).map(n => caches.delete(n))))
+        .then(names => Promise.all(names.filter(n => ![SHELL_CACHE, EMOJI_CACHE, MEDIA_CACHE].includes(n)).map(n => caches.delete(n))))
         .then(() => self.clients.claim()));
 });
 
@@ -52,7 +53,7 @@ self.addEventListener('fetch', event => {
     if (request.method !== 'GET') return;
     const url = new URL(request.url);
     if (url.origin !== self.location.origin) {
-        if (EMOJI_HOSTS.includes(url.host)) event.respondWith(emojiAnswer(request, url));
+        if (EMOJI_HOSTS.includes(url.host) && !isPickerImage(request)) event.respondWith(rememberedFirst(request));
         return;
     }
     if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/hub')) return;   // live data, never cached
@@ -66,7 +67,7 @@ self.addEventListener('fetch', event => {
         return;
     }
     if (isShellAsset(url.pathname)) { event.respondWith(cacheFirst(request, SHELL_CACHE)); return; }
-    if (EMOJI_PATHS.some(p => url.pathname.startsWith(p))) { event.respondWith(emojiAnswer(request, url)); return; }
+    if (EMOJI_PATHS.some(p => url.pathname.startsWith(p))) { if (!isPickerImage(request)) event.respondWith(rememberedFirst(request)); return; }
     // Content-addressed media. Profile pictures keep a stable URL and are left to the HTTP cache; range
     // requests cannot be served from the Cache API.
     if (MEDIA_PATHS.some(p => url.pathname.startsWith(p)) && !url.pathname.startsWith('/uploads/profiles/') && !request.headers.has('range')) {
@@ -74,7 +75,7 @@ self.addEventListener('fetch', event => {
     }
 });
 
-const emojiAnswer = (request, url) => url.searchParams.has('picker') ? cacheFirst(request, PICKER_CACHE) : rememberedFirst(request);
+const isPickerImage = request => request.mode === 'no-cors';   // the picker's grid loads without crossorigin; the rows' images are cors (EMOJI_CACHE comment)
 
 function isShellAsset(pathname) {
     return /\.(js|css|woff2|svg|png|webp|mp3)$/.test(pathname) && !MEDIA_PATHS.some(p => pathname.startsWith(p)) && !EMOJI_PATHS.some(p => pathname.startsWith(p));
@@ -114,10 +115,10 @@ function open(name) {
     return opened.get(name);
 }
 
-// The emoji caches stay bounded: the Cache API lists entries in the order they were stored, so the oldest go first,
+// The emoji cache stays bounded: the Cache API lists entries in the order they were stored, so the oldest go first,
 // and an evicted image comes back from the network the next time something draws it. The check runs at the first
 // store of a worker's life and every fiftieth after it, because keys() reads the whole index.
-const LIMITS = { [EMOJI_CACHE]: { max: 400, keep: 300 }, [PICKER_CACHE]: { max: 1500, keep: 1200 } };
+const LIMITS = { [EMOJI_CACHE]: { max: 400, keep: 300 } };
 let stores = 0;
 async function prune(cache, cacheName) {
     const limit = LIMITS[cacheName];
