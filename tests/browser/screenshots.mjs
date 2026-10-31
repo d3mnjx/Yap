@@ -162,10 +162,12 @@ async function sendFiles(page, files) {
 
 // A click on the quick reaction of the row's action bar. Dispatched, not clicked with the pointer: a hub event
 // redraws the row under the pointer, and the hover of the bar then comes and goes. The pictures need no hover here.
+// The quick reactions exist only once a pointer has entered the row (message.js fillQuick), so a pointerover first.
 async function react(page, needle, emoji) {
   const r = row(page, needle).last();
   const total = () => r.locator('.reaction-count').evaluateAll(cs => cs.reduce((n, c) => n + Number(c.textContent), 0));   // a second person on a pill adds no pill
   const before = await total();
+  await r.dispatchEvent('pointerover');
   await r.locator(`.message-actions .quick-reaction[title="${emoji}"]`).dispatchEvent('click');
   need(await waitTrue(async () => (await total()) > before, 5000), `no reaction ${emoji} on "${needle}"`);
 }
