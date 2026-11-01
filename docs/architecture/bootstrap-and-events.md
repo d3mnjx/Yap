@@ -13,7 +13,7 @@ The JSON shapes are in the [wire contract](wire-contract.md).
 
 The endpoint is anonymous. It reads the principal from the cookie.
 
-- Without a signed-in user, it returns a small document: the project name, the three text lists of the login page, and the emoji image rules (the texts draw emoji as images too). The login, verify and invite pages use these texts.
+- Without a signed-in user, it returns a small document: the project name and the three text lists of the login page. The login, verify and invite pages use these texts and set them as plain text. The emoji image rules are not in this answer: they would list every custom pack to anyone who asks.
 - With a signed-in user, it returns the full document. It also does three things on the side: it sets the cookie again (this extends the cookie's life, AU-18), it records the client's network address (smart login uses this, AU-09), and it records the address of the server as the client sees it (links use this, AU-15).
 
 The endpoint asks each service for its part and puts the parts in one object. This is data mapping, not a business rule, so the code is in the endpoint and not in a service.

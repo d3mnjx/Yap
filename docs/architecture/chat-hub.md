@@ -96,13 +96,7 @@ static DateTime Cutoff(Channel channel, Viewer viewer)
 ## Reactions, edits, deletes
 
 ```cs
-public HubError? React(Guid messageId, string emoji)
-{
-    if (emoji.Length is 0 or > 64) return new("Not an emoji.");
-    var error = chat.ToggleReaction(Me, messageId, emoji);               // MR-40, MR-45
-    if (error is null) users.RecordEmojiUse(Me, emoji);                  // MR-44, PK-07
-    return error;
-}
+public HubError? React(Guid messageId, string emoji) => chat.ToggleReaction(Me, MyName, messageId, emoji) is { } error ? new(error) : null;   // MR-40, MR-45
 
 public HubError? Edit(Guid messageId, string text) => chat.Edit(Me, messageId, text);   // MR-57, MR-61
 public HubError? Delete(Guid messageId) => chat.Delete(Me, messageId);                   // MR-64
@@ -113,7 +107,7 @@ public void EmojiUsed(string emoji) => users.RecordEmojiUse(Me, emoji);         
 
 ChatService holds the rules. Each rule is one or two lines:
 
-- A reaction toggles per person and per emoji. Every person who can see the message can react. This includes a read-only room (MR-45). The event carries the reactions of the message, grouped by emoji in first-use order, with usernames. The client resolves the display names for the tooltip (MR-38, MR-39).
+- A reaction toggles per person and per emoji. ChatService checks the emoji first: a string of 1 to 64 UTF-16 characters, with no allowlist. A system line refuses a reaction. Every person who can see the message can react. This includes a read-only room (MR-45). ChatService records the emoji use itself, for an added and for a removed reaction (MR-44, PK-07). The event carries the reactions of the message, grouped by emoji in first-use order, with usernames. The client resolves the display names for the tooltip (MR-38, MR-39).
 - An edit is permitted on the author's own text rows only (MR-57). Unchanged, empty or blank text changes nothing. The method returns `null` and raises no event (MR-61). Otherwise ChatService replaces the text, sets `Edited`, queues the link previews again (MR-22), and raises `messageEdited`.
 - A delete is permitted on the author's own rows only, media rows included (MR-64). ChatService removes the message from the list, decrements the GIF reference counts, and raises `messageDeleted`. Replies keep their rows. The client sets their quotes to "Original message unavailable" when it receives the event (MR-68). The server stores nothing about the deletion.
 - A pin is permitted for both people of a direct message; in a room for the admin, or for whoever the room's `PinPermission` and `Pinners` allow (MR-77, AD-37). The channel row holds up to six pins, newest first, each a copy of the author, text, time and media (every picture, video and GIF, the voice note, or the first link card: `Pin`), so a pin outlives the startup load window. Every change assigns a new list, raises `pins` with the whole list, and writes the channel row. An edit of a pinned message updates the copy; a delete removes the pin (SH-48). In a restricted room the list is filtered per reader by the history cutoff (TL-05). A pin also appends a system line to the conversation (MR-80): a `ChatMessage` with `Kind = Pin`, the pinner as author, the pinned message as `ReplyToMessageId` and no content. It is stored and broadcast like a message (`AddSystemLine`), but it increments no unread count, sends no push and gets no link card. The client writes its text from the kind. An unpin writes nothing.
