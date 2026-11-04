@@ -404,7 +404,7 @@ await step(15, 'A pin opens its pictures in the viewer over the panel and plays 
   await invoke('unpin', channelId, m['pin video']);
 });
 
-await step(16, 'A jump to a row that is not loaded shows a window around it; the pill, the arrow, a send and a reconnect lead back (SH-49, MR-34, TL-41, OF-08)', async (check) => {
+await step(16, 'A jump to a row that is not loaded shows a window around it; the pill, the end row, the arrow, a send and a reconnect lead back (SH-49, MR-34, TL-41, TL-42, OF-08)', async (check) => {
   await A.goto(BASE + '/lobby');
   await A.waitForSelector('.message-input', { timeout: 10000 });
   const channelId = await A.evaluate(async () => (await import('/js/store.js')).state.open.channelId);
@@ -434,6 +434,7 @@ await step(16, 'A jump to a row that is not loaded shows a window around it; the
   });
   const calls = () => A.evaluate(() => { const c = window.__calls; window.__calls = {}; return c; });
   const panel = A.locator('.pins-panel'), pill = A.locator('.new-messages-pill'), arrow = A.locator('.down-arrow');
+  const end = A.locator('.newer-messages'), goNewest = A.locator('.newer-messages-button');
   const atBottom = async () => { const s = await scrollInfo(A); return s.h - s.top - s.ch < 5; };
   const lit = text => waitTrue(async () => ((await row(A, text).first().getAttribute('class').catch(() => '')) ?? '').includes('highlight-message'), 3000, 50);
   const centred = text => row(A, text).evaluate(n => {
@@ -444,7 +445,7 @@ await step(16, 'A jump to a row that is not loaded shows a window around it; the
   const jumpToPin = async text => { await openPanel(); await A.locator('.pin-entry').filter({ hasText: text }).locator('.pin-time').click(); };
   const connection = () => A.evaluate(async () => (await import('/js/store.js')).state.connection);
 
-  // 1. The window: one around call, the target in the middle, the arrow as the way back.
+  // 1. The window: one around call, the target in the middle, the end row under the window's last row (TL-42).
   await calls();
   await jumpToPin('ws-050');
   const closed = await waitTrue(async () => (await panel.count()) === 0, 5000, 50);
@@ -452,9 +453,9 @@ await step(16, 'A jump to a row that is not loaded shows a window around it; the
   const off = await centred('ws-050');
   const c1 = await calls();
   const edges = { first: await row(A, 'ws-074').count(), after: await row(A, 'ws-075').count(), newest: await row(A, 'ws-149').count() };
-  const arrowShown = await waitTrue(async () => (await arrow.count()) === 1, 2000, 50);
-  check(closed && hl && Math.abs(off) <= 40 && c1.around === 1 && !c1.older && edges.first === 1 && edges.after === 0 && edges.newest === 0 && arrowShown,
-    `panel closed ${closed}; highlighted ${hl}; ${off} px from the middle; calls ${JSON.stringify(c1)}; ws-074 ${edges.first}, ws-075 ${edges.after}, ws-149 ${edges.newest}; arrow ${arrowShown}`);
+  const endShown = (await end.count()) === 1 && await end.evaluate(n => n.previousElementSibling?.textContent.includes('ws-074'));
+  check(closed && hl && Math.abs(off) <= 40 && c1.around === 1 && !c1.older && edges.first === 1 && edges.after === 0 && edges.newest === 0 && endShown,
+    `panel closed ${closed}; highlighted ${hl}; ${off} px from the middle; calls ${JSON.stringify(c1)}; ws-074 ${edges.first}, ws-075 ${edges.after}, ws-149 ${edges.newest}; end row under ws-074 ${endShown}`);
   await A.screenshot({ path: SHOTS + '16-window.png' });
 
   // 2. An older page goes above the window as usual (TL-06).
@@ -478,8 +479,8 @@ await step(16, 'A jump to a row that is not loaded shows a window around it; the
   const last4 = (await lastRow(A).locator('.message-content').innerText()).trim();
   await post('ws-live-2');
   const followed = await waitTrue(async () => (await row(A, 'ws-live-2').count()) === 1 && await atBottom(), 3000, 50) && (await pill.count()) === 0;
-  check(back && c4.openroom === 1 && last4 === 'ws-live-1' && (await row(A, 'ws-050').count()) === 0 && followed,
-    `at the bottom ${back}; calls ${JSON.stringify(c4)}; last row "${last4}"; window rows gone ${(await row(A, 'ws-050').count()) === 0}; the next message follows ${followed}`);
+  check(back && c4.openroom === 1 && last4 === 'ws-live-1' && (await row(A, 'ws-050').count()) === 0 && (await end.count()) === 0 && followed,
+    `at the bottom ${back}; calls ${JSON.stringify(c4)}; last row "${last4}"; window rows gone ${(await row(A, 'ws-050').count()) === 0}; end row gone ${(await end.count()) === 0}; the next message follows ${followed}`);
 
   // 5. A send in a window goes to the newest messages first (TL-14).
   await jumpToPin('ws-050');
@@ -490,22 +491,22 @@ await step(16, 'A jump to a row that is not loaded shows a window around it; the
   const c5 = await calls();
   check(sentBack && c5.openroom === 1 && (await row(A, 'ws-050').count()) === 0, `own message at the bottom ${sentBack}; calls ${JSON.stringify(c5)}`);
 
-  // 6. Offline in a window: the arrow names the reason, a send shows its pending row under the window at once
+  // 6. Offline in a window: Go to newest names the reason, a send shows its pending row under the window at once
   // (OF-08), and the reconnect goes to the newest messages, the message sent (TL-35).
   await jumpToPin('ws-050');
   await lit('ws-050');
   await ctxA.setOffline(true);
   const wentOff = await waitTrue(async () => (await connection()) === 'offline', 5000, 50);
-  await arrow.click();
-  const arrowReason = await waitTrue(async () => (await A.locator('.row-reason').filter({ hasText: 'Needs a connection' }).count()) === 1, 2000, 50);
+  await goNewest.click();
+  const newestReason = await waitTrue(async () => (await A.locator('.row-reason').filter({ hasText: 'Needs a connection' }).count()) === 1, 2000, 50);
   await send(A, 'ws-offline-send');
   const pendingShown = await waitTrue(async () => ((await row(A, 'ws-offline-send').getAttribute('class').catch(() => '')) ?? '').includes('pending'), 3000, 50);
   const windowStays = (await row(A, 'ws-050').count()) === 1;
   await ctxA.setOffline(false);
   const reconnected = await waitTrue(async () => (await connection()) === 'connected' && (await row(A, 'ws-050').count()) === 0 && await atBottom()
     && !((await row(A, 'ws-offline-send').getAttribute('class').catch(() => 'pending')) ?? '').includes('pending'), 15000, 100);
-  check(wentOff && arrowReason && pendingShown && windowStays && reconnected,
-    `offline ${wentOff}; the arrow says "Needs a connection" ${arrowReason}; pending row under the window ${pendingShown && windowStays}; after the reconnect the newest rows at the bottom, the message sent ${reconnected}`);
+  check(wentOff && newestReason && pendingShown && windowStays && reconnected,
+    `offline ${wentOff}; Go to newest says "Needs a connection" ${newestReason}; pending row under the window ${pendingShown && windowStays}; after the reconnect the newest rows at the bottom, the message sent ${reconnected}`);
 
   // 7. Offline, a pin that is not loaded names the reason, and the panel stays.
   await ctxA.setOffline(true);
@@ -532,7 +533,9 @@ await step(16, 'A jump to a row that is not loaded shows a window around it; the
   const stored = await A.evaluate(async id => (await (await import('/js/offline/snapshot.js')).loadTail(id))?.messages.map(m => m.text) ?? null, channelId);
   check(!!stored && stored.includes('ws-reply') && !stored.includes('ws-050'), `stored tail: ${stored?.length} rows, ends "${stored?.at(-1)}", holds ws-050 ${stored?.includes('ws-050')}`);
 
-  // The arrow is the way back too (TL-40).
+  // The arrow is the way back too (TL-40). It shows only more than a screen above the end of the window.
+  await scroller(A).evaluate(e => { e.scrollTop = 0; });
+  await waitTrue(async () => (await arrow.count()) === 1, 2000, 50);
   await calls();
   await arrow.click();
   const arrowBack = await waitTrue(async () => (await row(A, 'ws-reply').count()) === 1 && (await row(A, 'ws-050').count()) === 0 && await atBottom(), 5000, 50);

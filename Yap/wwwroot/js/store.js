@@ -112,7 +112,7 @@ export function closeOpen() {
 function openMessage(id) { return state.open?.messages.find(m => m.id === id); }
 
 // The one question about the window that other files ask. A window ends before the newest message: no follow, no
-// lobby lines, the arrow at any distance, and the way back is a fresh open (TL-41).
+// lobby lines, an end row under the last row, and the way back is a fresh open (TL-41, TL-42).
 export function atTail() { return !state.open?.hasNewer; }
 
 // A jump to a row that is not loaded (SH-49, MR-34, TL-41): the rows become the window around the target, and the

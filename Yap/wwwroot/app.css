@@ -402,6 +402,18 @@ img.emoji { display: block; width: 100%; height: 100%; object-fit: contain; }
 }
 .down-arrow:hover { color: var(--text-primary); background: var(--bg-hover); }
 
+/* The end of a window after a jump (TL-42): a row in the flow under the last message, a line with the text and the
+   button under it. The button wears the arrow's colours because it does what the arrow does. */
+.newer-messages { display: flex; flex-direction: column; align-items: center; gap: 0.625rem; padding: 1rem 1rem 1.25rem; }
+.newer-messages-line { display: flex; align-items: center; gap: 0.75rem; width: 100%; color: var(--text-muted); font-size: 0.8125rem; font-weight: 600; white-space: nowrap; }
+.newer-messages-line::before, .newer-messages-line::after { content: ''; flex: 1; height: 1px; background: var(--bg-muted); }
+.newer-messages-button {
+    display: flex; align-items: center; gap: 0.375rem; padding: 0.375rem 0.875rem;
+    background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--bg-muted); border-radius: 999px;
+    font-size: 0.875rem; font-weight: 600; cursor: pointer;
+}
+.newer-messages-button:hover { color: var(--text-primary); background: var(--bg-hover); }
+
 /* The connection dot before the status chip (SH-17) and its bubble (SH-18). */
 .connection-dot { width: 10px; height: 10px; border-radius: 50%; border: none; padding: 0; background: #f0a030; cursor: pointer; position: relative; animation: connection-pulse 1.2s ease-in-out infinite; }
 .connection-dot.offline { background: transparent; border: 2px solid #888; animation: none; }

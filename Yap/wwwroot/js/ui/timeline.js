@@ -1,6 +1,6 @@
-// The list of messages (timeline.md): the rows, the follow rule, the New messages pill, the down arrow, older
-// pages, the top note, the lobby lines. The rows themselves are drawn by ui/message.js. The timeline is the one
-// component that updates rows in place, because it can hold hundreds of them.
+// The list of messages (timeline.md): the rows, the follow rule, the New messages pill, the down arrow, the end of
+// a window, older pages, the top note, the lobby lines. The rows themselves are drawn by ui/message.js. The timeline
+// is the one component that updates rows in place, because it can hold hundreds of them.
 
 import { state, on, prependOlder, setWindow, atTail, roomById, dmByChannel, lobby } from '../store.js';
 import { clone, el, replace } from '../render/dom.js';
@@ -60,6 +60,7 @@ export function Timeline(root, { reopen }) {
     rows.clear();
     pendingNodes.forEach(n => n.remove()); pendingNodes = [];
     flow.querySelectorAll('.lobby-line').forEach(n => n.remove());
+    newer.remove();
     hidePill(); hideDown();
     landed = null;   // the rows it measured are gone (the still view, below)
     held = null;     // the row a jump held is gone too; a jump's reset holds its new target in centre()
@@ -74,6 +75,7 @@ export function Timeline(root, { reopen }) {
       prev = m;
     }
     for (const r of kept.values()) r.node.remove();   // the rows the new tail does not have
+    if (shownWindow) flow.insertBefore(newer, pendingNodes[0] ?? null);   // under the window's last row, above a pending row (TL-42)
     drawnFacts = rowFacts();   // what these rows were drawn with (redrawIfRowsChanged)
     // An older page still in flight belongs to the rows just removed: its answer is dropped (loadOlder), and
     // the spinner must not outlive the rows it was loading for. Without this, a reconnect that re-opened the
@@ -83,7 +85,7 @@ export function Timeline(root, { reopen }) {
     const jumped = target && rows.get(target);
     if (jumped) {
       centre(target, { animate: false });   // the rows are new: an animation from the old place has no meaning
-      syncDown();                           // the arrow is the way back, at any distance in a window (TL-40, TL-41)
+      syncDown();                           // the arrow is the way back while the end of the window is a screen away (TL-40)
       return;
     }
     if (same && !keptFollowing && !leftWindow) {   // a tail that replaces a window goes to the bottom, whatever the reader did meanwhile
@@ -424,9 +426,9 @@ export function Timeline(root, { reopen }) {
   }
   function hidePill() { pill?.remove(); pill = null; pillPick = ''; }
 
-  // TL-13, TL-40, TL-41: the pill and the arrow. At the tail, to the bottom. In a window the newest rows are not on
-  // screen: the conversation opens again (the path of a reconnect), and its reset goes to the bottom (leftWindow).
-  // The server marks the conversation read on that open, so the window needs no markRead of its own.
+  // TL-13, TL-40, TL-42: the pill, the arrow and the end row's button. At the tail, to the bottom. In a window the
+  // newest rows are not on screen: the conversation opens again (the path of a reconnect), and its reset goes to the
+  // bottom (leftWindow). The server marks the conversation read on that open, so the window needs no markRead of its own.
   function toBottom() {
     if (!atTail()) {
       if (state.connection !== 'connected') { overlays.reason(list.parentElement, 'Needs a connection'); return; }   // GEN-02; the reconnect's open goes to the bottom
@@ -438,10 +440,10 @@ export function Timeline(root, { reopen }) {
   // ---- the down arrow (TL-40) ----
   // The way back after a jump to a pinned message or a long read up: the view is more than a screen above the
   // bottom and there is no pill. The pill wins, because it also says that something new arrived. A few rows up
-  // show nothing: the person can scroll that far by hand. In a window the arrow shows at any distance: the bottom
-  // of the window is not the newest message, and scrolling there by hand does not lead back (TL-41).
+  // show nothing: the person can scroll that far by hand. A window has the same rule: its bottom is not the newest
+  // message, but the end row there says so and leads back (TL-42).
   function syncDown(distance = distanceFromBottom()) {
-    const hide = atTail() ? (following || pill || distance <= list.clientHeight) : !!pill;
+    const hide = following || pill || distance <= list.clientHeight;
     if (hide) { hideDown(); return; }
     if (down) return;
     down = clone('t-down-arrow');
@@ -450,6 +452,12 @@ export function Timeline(root, { reopen }) {
     place(down);
   }
   function hideDown() { down?.remove(); down = null; }
+
+  // ---- the end of a window (TL-42) ----
+  // A row in the flow, under the window's last message: the rows stop before the newest message, and a scroll to the
+  // bottom looked like the end of the conversation. One node for the life of the timeline; reset() places or removes it.
+  const newer = clone('t-newer-messages');
+  newer.querySelector('button').addEventListener('click', toBottom);
 
   // ---- the loading pill (TL-06) ----
   // Over the top of the list like the catching-up pill, outside the scroller. A row in the flow moved the first rows

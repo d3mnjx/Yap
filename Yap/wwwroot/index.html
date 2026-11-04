@@ -407,6 +407,13 @@
     <template id="t-down-arrow">
         <button class="down-arrow" type="button" aria-label="Scroll to bottom" title="Scroll to bottom"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button>
     </template>
+    <!-- The end of a window after a jump (TL-42): the last row of the list while the rows stop before the newest message. -->
+    <template id="t-newer-messages">
+        <div class="newer-messages">
+            <div class="newer-messages-line">There are newer messages</div>
+            <button class="newer-messages-button" type="button">Go to newest<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button>
+        </div>
+    </template>
 
     <!-- ---- one message row (MR-01 anatomy). The row keeps every part in the DOM; CSS and `hidden` decide what shows. ---- -->
     <template id="t-message">

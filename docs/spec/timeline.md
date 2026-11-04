@@ -120,11 +120,13 @@ The timeline is the scrolling list of messages in a conversation. The oldest loa
 
 ### Down arrow
 
-**TL-40** While the view does not follow and the bottom is more than one screen height away, a round button with a down arrow shows in the bottom right corner above the typing strip. Within one screen of the bottom it does not show. It does not show while the New messages pill is shown: the pill says more and does the same. A tap scrolls to the bottom and turns the follow on. The arrow is hidden when the follow resumes and when the conversation changes. Like the pill, it never covers the draft. In a window after a jump ([TL-41](#TL-41)) the arrow shows at any distance from the bottom, and a tap opens the conversation again at the newest messages.
+**TL-40** While the view does not follow and the bottom is more than one screen height away, a round button with a down arrow shows in the bottom right corner above the typing strip. Within one screen of the bottom it does not show. It does not show while the New messages pill is shown: the pill says more and does the same. A tap scrolls to the bottom and turns the follow on. The arrow is hidden when the follow resumes and when the conversation changes. Like the pill, it never covers the draft. In a window after a jump ([TL-41](#TL-41)) the same rule applies to the bottom of the window, and a tap opens the conversation again at the newest messages.
 
 ### Jump to a message
 
-**TL-41** A tap on a pinned message ([SH-49](frame.md#SH-49)) or a reply quote ([MR-34](message-row.md#MR-34)) goes to the message. A loaded row scrolls into view, centred. Any other row comes in a window of 50 messages around it, after one answer from the server at any distance. The window replaces the loaded rows, and the message shows centred and highlighted. The message stays centred while the pictures and videos around it load, until the person scrolls, clicks or presses a key in the list. In a window the view does not follow, a scroll up loads older pages as usual, a message from someone else shows the pill and no row, and the down arrow shows at any distance. A tap on the pill or the arrow, a send, and a reconnect open the conversation again at the newest messages, with the view at the bottom. Without a connection a tap on the pill or the arrow shows "Needs a connection", and a send shows its pending row under the window; the reconnect then opens the newest messages. A window that reaches the newest message is the normal list.
+**TL-41** A tap on a pinned message ([SH-49](frame.md#SH-49)) or a reply quote ([MR-34](message-row.md#MR-34)) goes to the message. A loaded row scrolls into view, centred. Any other row comes in a window of 50 messages around it, after one answer from the server at any distance. The window replaces the loaded rows, and the message shows centred and highlighted. The message stays centred while the pictures and videos around it load, until the person scrolls, clicks or presses a key in the list. In a window the view does not follow, a scroll up loads older pages as usual, a message from someone else shows the pill and no row, and an end row follows the last row ([TL-42](#TL-42)). A tap on the pill, the arrow or the end row's button, a send, and a reconnect open the conversation again at the newest messages, with the view at the bottom. Without a connection such a tap shows "Needs a connection", and a send shows its pending row under the window; the reconnect then opens the newest messages. A window that reaches the newest message is the normal list.
+
+**TL-42** The last row of a window is an end row. It shows the text "There are newer messages" between two lines, and a "Go to newest" button with a down arrow under the text. The end row scrolls with the messages, so a scroll to the bottom of the window ends on it. A tap on the button does the same as a tap on the down arrow. A pending row of a send without a connection shows under the end row. A window that reaches the newest message has no end row.
 
 ## States
 
@@ -148,9 +150,10 @@ The timeline is the scrolling list of messages in a conversation. The oldest loa
 | Scroll back within 80 px of the bottom | mouse, touch, keyboard | Follow on; pill and arrow hidden. |
 | Pill tap | mouse, touch | Bottom; follow on; pill hidden. |
 | Down arrow tap | mouse, touch | Bottom; follow on; arrow hidden. |
-| Jump to a row that is not loaded | all | A window of 50 messages, the target centred and highlighted; the down arrow shows. |
+| Jump to a row that is not loaded | all | A window of 50 messages, the target centred and highlighted; the down arrow shows while the end of the window is more than one screen away. |
+| Scroll to the bottom of a window | mouse, touch, keyboard | The end row: "There are newer messages" and the "Go to newest" button. |
 | New message from someone else, in a window | all | The pill; no row. |
-| Pill, arrow, send or reconnect, in a window | all | The newest messages after one answer from the server, view at the bottom, follow on. |
+| Pill, arrow, Go to newest, send or reconnect, in a window | all | The newest messages after one answer from the server, view at the bottom, follow on. |
 | Return to the tab, following | all | View goes back to the bottom. |
 | Return to the tab, not following | all | View unchanged; pill if messages arrived. |
 | Conversation switched | all | New header and messages together; pill hidden; the old pending rows leave the screen but stay in the queue; picker and viewer closed. |

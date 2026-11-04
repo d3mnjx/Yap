@@ -15,8 +15,8 @@ server, runs its steps, prints PASS or FAIL for each step, and stops the server 
   keys on a GIF favourite star, an emoji pick at the 4000-character limit with Edit on a failed row, a rename
   of the open room, the media of a pin: the gallery viewer over the pins panel, its close order, its close on an
   unpin, and a video that plays in the entry, and the jump to a message that is not loaded: the window around it
-  with one server call, an older page above it, the pill, and the way back by the pill, the arrow, a send and a
-  reconnect.
+  with one server call, an older page above it, the pill, the end row under it, and the way back by the pill, the
+  end row's button, the arrow, a send and a reconnect.
 - `pages.mjs` checks the pages of step 5: the login rules, Settings (themes, text size, profile, the login link,
   the retired secret code, sessions, mutes, time and date), the verification and link pages, an account switch that
   reaches the other tab of the device, Admin (users, invites, registration and approval, bot, debug, the
