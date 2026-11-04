@@ -61,13 +61,13 @@ public sealed class Session
 }
 
 /// <summary>
-/// The waits the diagnostics table shows (AD-26). The client measures five of them: Send from the tap to its
+/// The waits the diagnostics table shows (AD-26). The client measures six of them: Send from the tap to its
 /// own message rendered, Open from the tap on a conversation and Start from the page load to the server's rows
-/// on screen, Older from the scroll to the older rows in place, and Reconnect from the loss of the connection to
-/// the room back in sync. Rtt is the client's own heartbeat round trip. Post is the server's time inside a
+/// on screen, Older from the scroll to the older rows in place, Reconnect from the loss of the connection to
+/// the room back in sync, and Jump from the tap on a pin or a quote to the window on screen (TL-41). Rtt is the client's own heartbeat round trip. Post is the server's time inside a
 /// message send, the one request that does not go over the hub.
 /// </summary>
-public enum Wait { Rtt, Send, Post, Open, Older, Start, Reconnect }
+public enum Wait { Rtt, Send, Post, Open, Older, Start, Reconnect, Jump }
 
 /// <summary>One wait reported by the client: its name as the client spells it, and the milliseconds.</summary>
 public sealed record WaitSample(string Name, int Ms);

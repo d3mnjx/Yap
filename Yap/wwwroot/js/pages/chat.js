@@ -38,7 +38,8 @@ export function mount(root, params) {
   const timelineRoot = el('div', { class: 'timeline-root', style: { display: 'contents' } });
   const composerRoot = el('div', { class: 'composer-root', style: { display: 'contents' } });
   root.replaceChildren(timelineRoot, composerRoot);
-  const unmounts = [Timeline(timelineRoot), Composer(composerRoot)];
+  // The timeline's way back from a window (TL-41) is the open of a reconnect. A function, because `open` comes below.
+  const unmounts = [Timeline(timelineRoot, { reopen: () => open() }), Composer(composerRoot)];
 
   const target = resolve(params);
   if (!target) {

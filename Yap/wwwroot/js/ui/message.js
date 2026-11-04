@@ -58,7 +58,7 @@ export function renderRow(m, { header }) {
       quote.prepend(avatar(m.replyTo.username, ru?.avatarUrl, 'small', displayName(m.replyTo.username)));
       replace(quote.querySelector('.reply-author'), inline(displayName(m.replyTo.username)));
       replace(quote.querySelector('.reply-text'), m.replyTo.text ? inline(m.replyTo.text, 'inline') : [m.replyTo.voice ? 'Voice message' : 'Click to see attachment']);   // MR-32
-      quote.addEventListener('click', () => jumpTo(m.replyTo.id));
+      quote.addEventListener('click', async () => { const reason = await jumpTo(m.replyTo.id); if (reason) overlays.reason(quote, reason); });   // MR-34, TL-41
     }
   } else quote.remove();
 

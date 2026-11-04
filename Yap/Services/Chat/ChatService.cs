@@ -423,11 +423,40 @@ public class ChatService
                 if (end < 0) end = all.FindIndex(m => m.Timestamp >= cursor.Timestamp);
                 if (end < 0) end = all.Count;
             }
-            var first = cutoff is { } c ? all.FindIndex(m => m.Timestamp >= c) : 0;   // the oldest message the viewer may see
-            if (first < 0) first = all.Count;
+            var first = FirstVisible(all, cutoff);
             var start = Math.Max(first, end - count);
             var page = start < end ? all.GetRange(start, end - start) : [];
             return (page, start > first, first > 0);
+        }
+    }
+
+    // The oldest message the viewer may see (TL-05), or all.Count when the cutoff hides every message. Call under the lock.
+    private static int FirstVisible(List<ChatMessage> all, DateTime? cutoff)
+    {
+        var first = cutoff is { } c ? all.FindIndex(m => m.Timestamp >= c) : 0;
+        return first < 0 ? all.Count : first;
+    }
+
+    private const int Before = 25, After = 24;   // one page around the target: the window replaces the rows, and a page is what they hold after an open (TL-41)
+
+    /// <summary>SH-49, MR-34, TL-41: the messages around one message, inside the viewer's history cutoff (TL-05). HasNewer
+    /// false means the window reaches the newest message, and the client treats it as a tail.</summary>
+    public (List<ChatMessage> Messages, bool HasMore, bool HasNewer, string? Error) Around(Guid channelId, Guid messageId, Guid viewerId)
+    {
+        if (!_channels.TryGetValue(channelId, out var channel) || !channel.CanAccess(viewerId) || !_channelMessages.TryGetValue(channelId, out var all))
+            return ([], false, false, "Message not found.");
+        var cutoff = Cutoff(channel, viewerId);
+        lock (LockOf(channelId))
+        {
+            var index = all.FindIndex(m => m.Id == messageId);
+            // A delete removes the pin too (Delete), so a pin whose message is not in memory points before the startup
+            // load (SH-48): the reader learns that, instead of "not found".
+            if (index < 0) return ([], false, false, channel.Pins.Any(p => p.MessageId == messageId) ? "Too old to load" : "Message not found.");
+            var first = FirstVisible(all, cutoff);
+            if (index < first) return ([], false, false, "Message not found.");   // behind the cutoff: the same answer as an unknown id, so the refusal tells nothing about the hidden part
+            var start = Math.Max(first, index - Before);
+            var end = Math.Min(all.Count, index + 1 + After);
+            return (all.GetRange(start, end - start), start > first, end < all.Count, null);
         }
     }
 

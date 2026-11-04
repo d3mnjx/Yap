@@ -227,6 +227,108 @@ public class ChatTests : IClassFixture<YapFactory>
         await readerHub.DisposeAsync();
     }
 
+    // A room of generated messages, and every message the hub gives this connection, oldest first: the tail and the older pages.
+    private async Task<(Channel Room, List<MessageDto> All)> RoomWithMessages(HubConnection hub, string name, int count, TimeSpan span, HistoryLimit limit = HistoryLimit.Unlimited)
+    {
+        var chat = _app.Service<ChatService>();
+        var owner = await _app.AdminAsync();
+        var ownerId = _app.Service<Yap.Services.Accounts.UserService>().GetByUsername(owner.Username)!.Id;
+        var (room, error) = chat.CreateRoom(ownerId, name, null, ChannelPermission.Everyone, limit, sinceJoined: false);
+        Assert.Null(error);
+        chat.GenerateTestMessages(room!.Id, ownerId, owner.Username, count, span);
+        return (room, await Readable(hub, room.Id));
+    }
+
+    private static async Task<List<MessageDto>> Readable(HubConnection hub, Guid roomId)
+    {
+        var tail = await hub.InvokeAsync<Conversation>("OpenRoom", roomId);
+        var all = tail.Messages.ToList();
+        for (var more = tail.HasMore; more && all.Count > 0;)
+        {
+            var page = await hub.InvokeAsync<Page>("Older", roomId, all[0].Timestamp, all[0].Id);
+            all.InsertRange(0, page.Messages);
+            more = page.HasMore;
+        }
+        return all;
+    }
+
+    [Fact(DisplayName = "SH-49, TL-41: around returns 25 messages before the target and 24 after it")]
+    public async Task Around_returns_the_target_in_the_middle()
+    {
+        var hub = await (await _app.AdminAsync()).ConnectAsync();
+        var (room, all) = await RoomWithMessages(hub, "around_middle", 200, TimeSpan.FromHours(5));
+        Assert.Equal(200, all.Count);
+
+        var window = await hub.InvokeAsync<Window>("Around", room.Id, all[100].Id);
+        Assert.Null(window.Error);
+        Assert.Equal(50, window.Messages.Count);
+        Assert.Equal(all[100].Id, window.Messages[25].Id);
+        Assert.Equal(all.Skip(75).Take(50).Select(m => m.Id), window.Messages.Select(m => m.Id));
+        Assert.True(window.HasMore);
+        Assert.True(window.HasNewer);
+        await hub.DisposeAsync();
+    }
+
+    [Fact(DisplayName = "SH-49, TL-41: near the oldest message the window has no more; near the newest it is a tail")]
+    public async Task Around_near_the_ends()
+    {
+        var hub = await (await _app.AdminAsync()).ConnectAsync();
+        var (room, all) = await RoomWithMessages(hub, "around_ends", 200, TimeSpan.FromHours(5));
+
+        var early = await hub.InvokeAsync<Window>("Around", room.Id, all[3].Id);
+        Assert.Equal(28, early.Messages.Count);   // 3 before, the target, 24 after
+        Assert.Equal(all[3].Id, early.Messages[3].Id);
+        Assert.False(early.HasMore);
+        Assert.True(early.HasNewer);
+
+        var late = await hub.InvokeAsync<Window>("Around", room.Id, all[190].Id);
+        Assert.Equal(35, late.Messages.Count);    // 25 before, the target, the 9 newest
+        Assert.Equal(all[^1].Id, late.Messages[^1].Id);
+        Assert.True(late.HasMore);
+        Assert.False(late.HasNewer);
+        await hub.DisposeAsync();
+    }
+
+    [Fact(DisplayName = "SH-49, TL-05: around keeps to the reader's history cutoff")]
+    public async Task Around_respects_the_cutoff()
+    {
+        var admin = await (await _app.AdminAsync()).ConnectAsync();
+        var (room, all) = await RoomWithMessages(admin, "around_cutoff", 120, TimeSpan.FromDays(3), HistoryLimit.OneDay);
+        await admin.DisposeAsync();
+
+        var reader = await (await _app.SignInAsync("reader_around")).ConnectAsync();
+        var visible = await Readable(reader, room.Id);
+        Assert.True(visible.Count < all.Count);
+
+        var hidden = await reader.InvokeAsync<Window>("Around", room.Id, all[0].Id);
+        Assert.Equal("Message not found.", hidden.Error);
+        Assert.Empty(hidden.Messages);
+
+        var oldest = await reader.InvokeAsync<Window>("Around", room.Id, visible[0].Id);
+        Assert.Null(oldest.Error);
+        Assert.Equal(visible[0].Id, oldest.Messages[0].Id);   // nothing from behind the cutoff fills the 25 before
+        Assert.False(oldest.HasMore);
+        await reader.DisposeAsync();
+    }
+
+    [Fact(DisplayName = "SH-48, SH-49: an unknown id is not found; a pin whose message is not in memory is too old to load")]
+    public async Task Around_of_an_unknown_id()
+    {
+        var hub = await (await _app.AdminAsync()).ConnectAsync();
+        var (room, _) = await RoomWithMessages(hub, "around_unknown", 10, TimeSpan.FromHours(1));
+
+        var unknown = await hub.InvokeAsync<Window>("Around", room.Id, Guid.NewGuid());
+        Assert.Equal("Message not found.", unknown.Error);
+
+        // A pin from before the startup load: the channel keeps it while the message stays in the database (SH-48).
+        var gone = Guid.NewGuid();
+        room.Pins = [new Pin(gone, "someone", "old news", DateTime.UtcNow.AddYears(-1), [], "someone", DateTime.UtcNow.AddYears(-1))];
+        var old = await hub.InvokeAsync<Window>("Around", room.Id, gone);
+        Assert.Equal("Too old to load", old.Error);
+        Assert.Empty(old.Messages);
+        await hub.DisposeAsync();
+    }
+
     [Fact(DisplayName = "NT-01, NT-03, NT-06: a direct message counts for the other person until they open it")]
     public async Task Unread_counts_and_mark_read()
     {

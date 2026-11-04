@@ -106,6 +106,16 @@ public sealed class ChatHub(ChatService chat, PresenceService presence, UserServ
         return new Page(messages.Select(m => map.From(m, Me)).ToList(), hasMore);
     }
 
+    /// <summary>SH-49, MR-34: the rows around one message, at any distance (TL-41). The client reads the open conversation
+    /// already, so there is no group to join. A refusal comes in Error. A new name: a tab of an older build never calls it (SH-50).</summary>
+    public Window Around(Guid channelId, Guid messageId)
+    {
+        var (messages, hasMore, hasNewer, error) = chat.Around(channelId, messageId, Me);
+        if (error is not null) return new Window([], false, false, error);
+        chat.EnsurePreviews(messages);   // the cards arrive by the "previews" message (MR-22)
+        return new Window(messages.Select(m => map.From(m, Me)).ToList(), hasMore, hasNewer);
+    }
+
     /// <summary>The client calls this when the page is visible, the person is not away and the view is at the bottom (NT-07).</summary>
     public void MarkRead(Guid channelId) => chat.MarkRead(Me, channelId, "read", Context.ConnectionId);
 

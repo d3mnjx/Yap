@@ -52,15 +52,15 @@ The timeline is the scrolling list of messages in a conversation. The oldest loa
 
 **TL-12** While the view does not follow, the list keeps its position for all content that arrives. This includes new messages, reactions, edits, deletions, and images that load above or below. The row that the user reads stays in the same position.
 
-**TL-13** The follow resumes when the user scrolls back to within 80 px of the bottom, or taps the New messages pill or the down arrow.
+**TL-13** The follow resumes when the user scrolls back to within 80 px of the bottom, or taps the New messages pill or the down arrow. In a window after a jump ([TL-41](#TL-41)) the bottom of the list is not the newest message, and a scroll there does not turn the follow on.
 
-**TL-14** When the user sends a message, the view always goes to the bottom, with the pending row in view. The send also turns the follow on.
+**TL-14** When the user sends a message, the view always goes to the bottom, with the pending row in view. The send also turns the follow on. In a window after a jump ([TL-41](#TL-41)) the conversation opens again first, at the newest messages.
 
 **TL-15** When the user returns to the tab or the app, the view goes back to the bottom only if it was following. Otherwise the view stays in its position, and the pill shows if messages arrived.
 
 ### New messages pill
 
-**TL-16** When a message from someone else arrives while the view does not follow, the pill shows centred above the typing strip. It never covers the draft. Reactions, edits, link cards, lobby join and leave lines, system lines (MR-80) and the user's own messages do not make the pill show.
+**TL-16** When a message from someone else arrives while the view does not follow, the pill shows centred above the typing strip. It never covers the draft. Reactions, edits, link cards, lobby join and leave lines, system lines (MR-80) and the user's own messages do not make the pill show. In a window after a jump ([TL-41](#TL-41)) a new message from someone else shows the pill and no row; a tap on the pill opens the conversation again at the newest messages.
 
 **TL-17** The pill shows a random phrase from the configured list and a down chevron. When no list is configured, the phrase is "New messages". The phrase does not change while the pill is shown.
 
@@ -90,7 +90,7 @@ The timeline is the scrolling list of messages in a conversation. The oldest loa
 
 **TL-28** The viewer does not move the focus when it opens or closes. The phone keyboard and the list position do not change.
 
-**TL-29** The viewer has no caption and no video. A conversation switch closes it. If the message is deleted while the viewer is open, the viewer closes. A viewer opened from a pin also closes when the pin goes.
+**TL-29** The viewer has no caption and no video. A conversation switch closes it, and so does a jump that replaces the rows ([TL-41](#TL-41)). If the message is deleted while the viewer is open, the viewer closes. A viewer opened from a pin also closes when the pin goes.
 
 ### Media in the list
 
@@ -106,7 +106,7 @@ The timeline is the scrolling list of messages in a conversation. The oldest loa
 
 **TL-34** Without a connection, the list shows the last messages that it had for the conversation. The user can read and scroll them. The user cannot get older messages that were not loaded. The top of the list shows "Needs a connection", and the pill of TL-39 floats over it. While a connection is on its way, the top of the list shows nothing, and the pill alone says "Catching up…".
 
-**TL-35** When the connection returns, the newest messages load again and the loaded rows are updated. When more messages arrived than one page holds, the missing messages load as the user scrolls up. If the view did not follow, it stays where it is. If the view followed, it stays at the bottom.
+**TL-35** When the connection returns, the newest messages load again and the loaded rows are updated. When more messages arrived than one page holds, the missing messages load as the user scrolls up. If the view did not follow, it stays where it is. If the view followed, it stays at the bottom. In a window after a jump ([TL-41](#TL-41)) the view goes to the newest messages at the bottom.
 
 **TL-39** While the messages on screen are the device's copy and the server has not answered yet (an open from the stored copy, or a connection that returns), a small "Catching up…" pill with a spinner floats over the top of the list. It takes no space of its own, so no row moves when it comes or goes, and a fast answer never shows it (the same 400 ms rule as the loading line). It ends when the server's messages are on screen, not when the connection is back. Without a connection, or after a failed try, it reads "No connection. Showing older messages." with no spinner. With reduced motion the spinner is still. When the connection goes away, the messages on screen count as the device's copy, and the pill shows at once.
 
@@ -120,7 +120,11 @@ The timeline is the scrolling list of messages in a conversation. The oldest loa
 
 ### Down arrow
 
-**TL-40** While the view does not follow and the bottom is more than one screen height away, a round button with a down arrow shows in the bottom right corner above the typing strip. Within one screen of the bottom it does not show. It does not show while the New messages pill is shown: the pill says more and does the same. A tap scrolls to the bottom and turns the follow on. The arrow is hidden when the follow resumes and when the conversation changes. Like the pill, it never covers the draft.
+**TL-40** While the view does not follow and the bottom is more than one screen height away, a round button with a down arrow shows in the bottom right corner above the typing strip. Within one screen of the bottom it does not show. It does not show while the New messages pill is shown: the pill says more and does the same. A tap scrolls to the bottom and turns the follow on. The arrow is hidden when the follow resumes and when the conversation changes. Like the pill, it never covers the draft. In a window after a jump ([TL-41](#TL-41)) the arrow shows at any distance from the bottom, and a tap opens the conversation again at the newest messages.
+
+### Jump to a message
+
+**TL-41** A tap on a pinned message ([SH-49](frame.md#SH-49)) or a reply quote ([MR-34](message-row.md#MR-34)) goes to the message. A loaded row scrolls into view, centred. Any other row comes in a window of 50 messages around it, after one answer from the server at any distance. The window replaces the loaded rows, and the message shows centred and highlighted. In a window the view does not follow, a scroll up loads older pages as usual, a message from someone else shows the pill and no row, and the down arrow shows at any distance. A tap on the pill or the arrow, a send, and a reconnect open the conversation again at the newest messages, with the view at the bottom. Without a connection a tap on the pill or the arrow shows "Needs a connection", and a send shows its pending row under the window; the reconnect then opens the newest messages. A window that reaches the newest message is the normal list.
 
 ## States
 
@@ -144,6 +148,9 @@ The timeline is the scrolling list of messages in a conversation. The oldest loa
 | Scroll back within 80 px of the bottom | mouse, touch, keyboard | Follow on; pill and arrow hidden. |
 | Pill tap | mouse, touch | Bottom; follow on; pill hidden. |
 | Down arrow tap | mouse, touch | Bottom; follow on; arrow hidden. |
+| Jump to a row that is not loaded | all | A window of 50 messages, the target centred and highlighted; the down arrow shows. |
+| New message from someone else, in a window | all | The pill; no row. |
+| Pill, arrow, send or reconnect, in a window | all | The newest messages after one answer from the server, view at the bottom, follow on. |
 | Return to the tab, following | all | View goes back to the bottom. |
 | Return to the tab, not following | all | View unchanged; pill if messages arrived. |
 | Conversation switched | all | New header and messages together; pill hidden; the old pending rows leave the screen but stay in the queue; picker and viewer closed. |

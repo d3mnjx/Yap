@@ -8,7 +8,8 @@ export const state = {
   user: null, config: null, texts: null,
   rooms: [], users: {}, presence: {}, dms: [], unread: {}, mutes: null, emoji: null, favoriteGifIds: new Set(),
   emojiImages: null,            // where emoji pictures come from (render/text.js useImages); part of the bootstrap, so the stored copy paints with it
-  open: null,                   // { channelId, partner, messages, hasMore, restricted, typists: { username: expiresAt }, pins }
+  open: null,                   // { channelId, partner, messages, hasMore, hasNewer, restricted, typists: { username: expiresAt }, pins }
+                                // hasNewer: the rows are a window that ends before the newest message (TL-41); a tail has false
   pending: [],                  // outbox rows of the open conversation, drawn as faded rows (OF-08)
   drafts: {},                   // conversation key (offline/snapshot.js keyOf) -> { text, replyToId }
   registrations: [],            // admins: the waiting list (AD-11)
@@ -72,7 +73,7 @@ export function setConnectionFailed(value) {
 
 // ---- the open conversation ----
 // 'messages' listeners receive a detail that says what changed, so the timeline can update one row
-// instead of redrawing hundreds: { type: 'reset' | 'add' | 'replace' | 'remove' | 'older', ... }.
+// instead of redrawing hundreds: { type: 'reset' | 'add' | 'replace' | 'remove' | 'older' | 'window' | 'missed', ... }.
 
 // fromDevice: the rows are the device's stored copy, not yet confirmed by the server (TL-39).
 export function setOpen(conversation, partner = null, { fromDevice = false } = {}) {
@@ -92,7 +93,7 @@ export function setOpen(conversation, partner = null, { fromDevice = false } = {
   }
   // The typists of the open answer typed within the last 3 s; they expire here like any other (the server
   // sends no 'off' for a typist whose 3 s already passed).
-  state.open = { ...conversation, messages, hasMore, partner, fromDevice, typists: Object.fromEntries((conversation.typists ?? []).map(u => [u, Date.now() + 3500])),
+  state.open = { ...conversation, messages, hasMore, hasNewer: false, partner, fromDevice, typists: Object.fromEntries((conversation.typists ?? []).map(u => [u, Date.now() + 3500])),
                  pins: conversation.pins ?? [] };   // a tail stored before pins existed has none
   changed('open');
   changed('messages', { type: 'reset' });
@@ -109,6 +110,22 @@ export function closeOpen() {
 }
 
 function openMessage(id) { return state.open?.messages.find(m => m.id === id); }
+
+// The one question about the window that other files ask. A window ends before the newest message: no follow, no
+// lobby lines, the arrow at any distance, and the way back is a fresh open (TL-41).
+export function atTail() { return !state.open?.hasNewer; }
+
+// A jump to a row that is not loaded (SH-49, MR-34, TL-41): the rows become the window around the target, and the
+// timeline centres it. The loaded rows go. The way back is a fresh open (chat.js), and setOpen keeps the window rows
+// when the new tail reaches into them. hasNewer false: the window reaches the newest message and is a tail.
+export function setWindow(around, target) {
+  const open = state.open;
+  if (!open) return;
+  open.messages = around.messages;
+  open.hasMore = around.hasMore;
+  open.hasNewer = around.hasNewer;
+  changed('messages', { type: 'window', target });
+}
 
 // ---- pins (SH-47 to SH-49, MR-77) ----
 
@@ -189,6 +206,9 @@ export function addMessage(m) {
     changed('pending');
   }
   if (openMessage(m.id)) { replaceMessage(m); return; }        // the POST answer and the hub event are the same confirmation
+  // A window ends before this message (TL-41): the pill says so, and the fresh open brings it. After the two checks
+  // above: the sender's pending row leaves in both cases, and a message the window carries is replaced, not missed.
+  if (open.hasNewer) { changed('messages', { type: 'missed', message: m }); return; }
   const last = open.messages.at(-1);
   if (!last || last.timestamp <= m.timestamp) open.messages.push(m);
   else open.messages.splice(open.messages.findIndex(x => x.timestamp > m.timestamp), 0, m);

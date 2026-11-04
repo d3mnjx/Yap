@@ -169,8 +169,8 @@ export function openGallery(images, startIndex = 0, { ownerId = null, onClose = 
   return close;
 }
 
-// A deleted message or a switch closes the viewer (TL-29).
+// A deleted message, a switch or a jump that replaces the rows closes the viewer (TL-29, TL-41).
 on('messages', detail => {
   if (!current) return;
-  if (detail?.type === 'reset' || (detail?.type === 'remove' && detail.id === current.messageId)) current.close();
+  if (detail?.type === 'reset' || detail?.type === 'window' || (detail?.type === 'remove' && detail.id === current.messageId)) current.close();
 });

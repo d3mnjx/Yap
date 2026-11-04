@@ -106,7 +106,7 @@ A message row is one message as it appears in the conversation. The row shows wh
 
 **MR-33** A curved connector joins the avatar of the quote to the avatar of the reply. A reply always starts a group, so it always has a header.
 
-**MR-34** A tap or click on the quote scrolls the list to the original message, centred, and tints the original for two seconds. When the original is not loaded yet, it is loaded first.
+**MR-34** A tap or click on the quote scrolls the list to the original message, centred, and tints the original for two seconds. When the original is not loaded yet, it shows in a window of messages around it ([TL-41](timeline.md#TL-41)). A refusal shows its reason at the quote for two seconds, with the texts of [SH-49](frame.md#SH-49).
 
 **MR-35** When the original message is deleted, the quote shows "Original message unavailable". The quote shows the same text for an original older than the messages the server loaded at its start ([AD-03](admin.md#AD-03)). The connector stays. A tap on the quote does nothing.
 
@@ -198,7 +198,7 @@ A message row is one message as it appears in the conversation. The row shows wh
 
 ### System lines and bot rows
 
-**MR-73** In the lobby, a centred italic line appears when a person joins or leaves. The [presence page](presence.md#PR-17) specifies when it appears. The line shows a random text from the configured lists, with the username of the person. Invisible people get no line. The line is not stored, so a reload removes it.
+**MR-73** In the lobby, a centred italic line appears when a person joins or leaves. The [presence page](presence.md#PR-17) specifies when it appears. The line shows a random text from the configured lists, with the username of the person. Invisible people get no line. The line is not stored, so a reload removes it. A window after a jump ([TL-41](timeline.md#TL-41)) gets no lines: they belong after the newest message.
 
 **MR-80** When a person pins a message, a centred italic line "{name} pinned a message" appears at the end of the conversation, for everyone who can read it. The line is stored with the messages: a person who opens the conversation later finds it at its place in time, and it loads with older messages. The name is the pinner's display name. The line counts as unread for nobody, and it sends no notification and no sound ([NT-02](notifications.md#NT-02)). It cannot be edited, quoted or pinned, and it takes no reactions (MR-45). The message after it starts a new group with a header. An unpin shows no line.
 

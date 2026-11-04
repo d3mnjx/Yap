@@ -6,7 +6,7 @@
 // reach the disk a moment later, so an offline reload shows what the page last showed.
 
 import * as db from './db.js';
-import { state, on } from '../store.js';
+import { state, on, atTail } from '../store.js';
 
 const BOOTSTRAP = 'bootstrap';
 const tail = key => `tail:${key}`;
@@ -54,8 +54,9 @@ let tailTimer = 0, bootTimer = 0, draftTimer = 0;
 
 function queueTail() {
   clearTimeout(tailTimer);
-  // the empty placeholder shown while the first answer loads (TL-02) must not replace a stored tail
-  tailTimer = setTimeout(() => { if (state.open?.messages && !state.open.loading) saveTail(keyOf(state.open), state.open); }, 800);
+  // the empty placeholder shown while the first answer loads (TL-02) must not replace a stored tail, and neither must a
+  // window after a jump (OF-14, TL-41): the stored copy is always the newest messages
+  tailTimer = setTimeout(() => { if (state.open?.messages && !state.open.loading && atTail()) saveTail(keyOf(state.open), state.open); }, 800);
 }
 
 // The bootstrap document, rebuilt from the store: the same shape the server sends.

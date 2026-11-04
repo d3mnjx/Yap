@@ -38,7 +38,7 @@ Yap runs in the browser and can also be installed as an app on a phone or a desk
 
 ### The promise and its limits
 
-**OF-14** Reading without a connection shows what the device already has. Yap does not download in advance any conversation that the user did not open.
+**OF-14** Reading without a connection shows what the device already has. Yap does not download in advance any conversation that the user did not open. The device keeps the newest messages of a conversation, never a window after a jump ([TL-41](timeline.md#TL-41)).
 
 **OF-15** Sending later is best effort. A message is lost with no indication when the device loses its storage or when another account signs in on the device. In every other case, a message that cannot be sent shows as failed.
 

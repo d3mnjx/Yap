@@ -74,13 +74,14 @@ export function openPins(anchor, onClose) {
     entry?.querySelectorAll('.pin-shot')[index]?.focus({ preventScroll: true });
   }
 
-  // SH-49: the panel stays while older pages load; it closes once the row is on screen.
+  // SH-49: the panel stays while the window around the row loads (TL-41); it closes once the row is on screen, or
+  // stays and names the reason of a refusal.
   async function jump(node, p) {
     if (node.classList.contains('jumping')) return;
     node.classList.add('jumping');
-    const found = await jumpTo(p.messageId);
+    const reason = await jumpTo(p.messageId);
     node.classList.remove('jumping');
-    if (found) close(); else overlays.reason(node, 'Not in the loaded history');
+    if (reason) overlays.reason(node, reason); else close();
   }
 
   async function unpinNow(node, p) {

@@ -2,7 +2,7 @@
 // pages, the top note, the lobby lines. The rows themselves are drawn by ui/message.js. The timeline is the one
 // component that updates rows in place, because it can hold hundreds of them.
 
-import { state, on, prependOlder, roomById, dmByChannel, lobby } from '../store.js';
+import { state, on, prependOlder, setWindow, atTail, roomById, dmByChannel, lobby } from '../store.js';
 import { clone, el, replace } from '../render/dom.js';
 import { inline, pick } from '../render/text.js';
 import { messageTime } from '../render/time.js';
@@ -12,7 +12,8 @@ import { renderRow, needsHeader, rowReplaced, touchScrolled, redrawStars } from 
 
 let current = null;   // the mounted instance, for jumpTo
 
-export function Timeline(root) {
+// reopen: the chat page's open, the one a reconnect runs. In a window it is the way back to the newest messages (TL-41).
+export function Timeline(root, { reopen }) {
   const list = clone('t-messages');
   const flow = list.querySelector('.messages-flow');
   const top = flow.querySelector('.messages-top');
@@ -33,6 +34,7 @@ export function Timeline(root) {
   let stale = false;               // the rows on screen are the device's copy, or older than the connection (TL-39)
   let unread = false;              // the server counted a message in the open conversation and markRead has not answered yet (NT-07)
   let shownChannel = null;         // the channel the rows belong to
+  let shownWindow = false;         // the rows on screen are a window that ends before the newest message (TL-41)
   let drawnFacts = '';             // what the rows were drawn with: the people and the quick reactions (redrawIfRowsChanged)
 
   // ---- drawing ----
@@ -43,9 +45,12 @@ export function Timeline(root) {
   const unchanged = (r, m, prev) => r.node.classList.contains('has-header') === needsHeader(prev, m) && JSON.stringify(r.message) === JSON.stringify(m);
 
   // A reset for the same conversation (a reconnect, TL-35) keeps the view where it is; a new one opens at the bottom (TL-01).
-  function reset() {
+  // A jump (TL-41) names its target: the new rows are a window, and the view goes to the target instead.
+  function reset(target = null) {
     const same = state.open && state.open.channelId === shownChannel;
     const keptTop = list.scrollTop, keptFollowing = following;
+    const leftWindow = shownWindow && atTail();   // the rows before this reset were a window: the kept place belongs to them (TL-41)
+    shownWindow = !atTail();
     // The rows of the same conversation whose message did not change stay: the node moves into the new order instead
     // of being drawn again. At every open the server's rows follow the device's copy, nearly always the same fifty,
     // and drawing them again asked for every emoji image once more; on the iPhone every <img> is a request of its
@@ -74,7 +79,13 @@ export function Timeline(root) {
     // conversation while a page was loading showed "loading older" for ever (the token was never released).
     loadToken++; loading = false;
     renderTop();
-    if (same && !keptFollowing) {
+    const jumped = target && rows.get(target);
+    if (jumped) {
+      centre(jumped.node, { animate: false });   // the rows are new: an animation from the old place has no meaning
+      syncDown();                           // the arrow is the way back, at any distance in a window (TL-40, TL-41)
+      return;
+    }
+    if (same && !keptFollowing && !leftWindow) {   // a tail that replaces a window goes to the bottom, whatever the reader did meanwhile
       following = false; list.scrollTop = keptTop;
       syncDown();   // the same value as before gives no scroll event, so the arrow is checked here (TL-40)
       if (nearTop()) loadOlder();   // still at the top after a reconnect (the 100 px floor): the page the person waited for (TL-06)
@@ -127,6 +138,8 @@ export function Timeline(root) {
     if (!state.open) { reset(); return; }
     switch (detail?.type) {
       case 'reset': reset(); break;
+      case 'window': reset(detail.target); break;     // a jump (TL-41); the kept map keeps rows of the same message
+      case 'missed': arrived(detail.message); break;  // a window ends before it: the follow is off, so the pill shows for someone else's message (TL-16)
       case 'add': {
         const m = detail.message;
         const index = state.open.messages.indexOf(m);
@@ -177,6 +190,10 @@ export function Timeline(root) {
 
   // The pending rows: a send goes to the bottom (TL-14); progress and other tabs do not move the view (TL-12).
   function onPending(detail) {
+    // A send in a window goes to the present first (TL-14, TL-41): the reset of the fresh open draws the pending row at
+    // the bottom. Without a connection there is no open: the row shows under the window at once (OF-08), and the
+    // reconnect's open brings the present. Other changes draw here as usual: a failed row from before the jump stays.
+    if (detail?.type === 'queued' && !atTail() && state.connection === 'connected') { reopen(); return; }
     pendingNodes.forEach(n => n.remove()); pendingNodes = [];
     let prev = state.open?.messages.at(-1) ?? null;
     for (const m of state.pending) { flow.append(makeRow(m, prev)); prev = m; }
@@ -288,7 +305,7 @@ export function Timeline(root) {
     lastTop = list.scrollTop;
     const distance = distanceFromBottom();
     if (up && distance > 80) following = false;                               // only an upward scroll stops the follow (TL-11)
-    else if (distance <= 80 && !following) { following = true; hidePill(); markReadIfSeen(); }   // TL-13
+    else if (distance <= 80 && !following && atTail()) { following = true; hidePill(); markReadIfSeen(); }   // TL-13; a window's last row is not the newest (TL-41)
     syncDown(distance);                                                       // TL-40
     if (nearTop(up)) loadOlder();                                             // TL-06
     moved(list.scrollTop);                                                    // the still view (TL-06)
@@ -399,21 +416,34 @@ export function Timeline(root) {
     pill = clone('t-pill');
     pillPick ||= pick(state.texts?.pillTexts, 'New messages');   // the phrase does not change while shown (TL-17)
     pill.querySelector('.pill-text').textContent = pillPick;
-    pill.addEventListener('click', () => { following = true; scrollToBottom(); hidePill(); markReadIfSeen(); });
+    pill.addEventListener('click', toBottom);
     list.parentElement.append(pill);
     place(pill);
   }
   function hidePill() { pill?.remove(); pill = null; pillPick = ''; }
 
+  // TL-13, TL-40, TL-41: the pill and the arrow. At the tail, to the bottom. In a window the newest rows are not on
+  // screen: the conversation opens again (the path of a reconnect), and its reset goes to the bottom (leftWindow).
+  // The server marks the conversation read on that open, so the window needs no markRead of its own.
+  function toBottom() {
+    if (!atTail()) {
+      if (state.connection !== 'connected') { overlays.reason(list.parentElement, 'Needs a connection'); return; }   // GEN-02; the reconnect's open goes to the bottom
+      reopen(); return;
+    }
+    following = true; scrollToBottom(); hidePill(); hideDown(); markReadIfSeen();
+  }
+
   // ---- the down arrow (TL-40) ----
   // The way back after a jump to a pinned message or a long read up: the view is more than a screen above the
   // bottom and there is no pill. The pill wins, because it also says that something new arrived. A few rows up
-  // show nothing: the person can scroll that far by hand.
+  // show nothing: the person can scroll that far by hand. In a window the arrow shows at any distance: the bottom
+  // of the window is not the newest message, and scrolling there by hand does not lead back (TL-41).
   function syncDown(distance = distanceFromBottom()) {
-    if (following || pill || distance <= list.clientHeight) { hideDown(); return; }
+    const hide = atTail() ? (following || pill || distance <= list.clientHeight) : !!pill;
+    if (hide) { hideDown(); return; }
     if (down) return;
     down = clone('t-down-arrow');
-    down.addEventListener('click', () => { following = true; scrollToBottom(); hideDown(); markReadIfSeen(); });
+    down.addEventListener('click', toBottom);
     list.parentElement.append(down);
     place(down);
   }
@@ -458,7 +488,7 @@ export function Timeline(root) {
   // ---- lobby lines (MR-73) ----
   function onPresence(detail) {
     if (!detail?.changes) return;                          // a bootstrap replaces the map without a detail
-    if (!state.open || state.open.channelId !== lobby()?.id) return;
+    if (!state.open || state.open.channelId !== lobby()?.id || !atTail()) return;   // a line belongs after the newest message, not under a window (TL-41)
     let added = false;
     for (const { username, kind } of detail.changes) {    // one tick of changes, a line per join or leave (MR-73)
       if (kind !== 'join' && kind !== 'leave') continue;
@@ -480,26 +510,53 @@ export function Timeline(root) {
     }
   }, 60_000);
 
-  // ---- jump to a message (MR-34) ----
+  // ---- jump to a message (MR-34, SH-49, TL-41) ----
+  // A loaded row scrolls into view. Any other row comes in a window around it, one round trip at any distance, and
+  // the window replaces the rows. Returns the reason of a refusal, or null.
+  let jumpToken = 0;
   async function jumpTo(id) {
-    for (let tries = 0; tries < 20 && !rows.has(id) && state.open?.hasMore; tries++) {
-      await loadOlder();
-      await new Promise(r => setTimeout(r, 50));
-    }
+    const token = ++jumpToken;                         // every tap counts, a loaded row too: an older answer must not move the view after it
     const r = rows.get(id);
-    if (!r) return false;   // older than the loaded history, or gone: the caller says so (SH-49)
+    if (r) { centre(r.node, { animate: true }); return null; }
+    const open = state.open;
+    if (!open) return 'Not available';
+    if (state.connection !== 'connected') return 'Needs a connection';   // TL-34
+    const startedAt = performance.now();
+    const around = await hub.invoke('around', open.channelId, id);
+    if (token !== jumpToken) return null;              // a later jump won; it answers for its own tap
+    if (state.open !== open) return 'Try again';       // a reconnect or a switch replaced the rows meanwhile
+    if (around?.error) return around.error;            // GEN-02: "Too old to load", "Message not found.", "Needs a connection"
+    setWindow(around, id);                             // the 'window' change draws the rows and centres the target
+    // AD-26: the timeout after the frame callback runs after the paint, so the wait ends with the rows on screen
+    requestAnimationFrame(() => setTimeout(() => hub.report('jump', performance.now() - startedAt)));
+    return null;
+  }
+
+  // The row in the middle of the view, highlighted (MR-34). The follow stops: the reader is at the row, not at the
+  // newest message.
+  function centre(node, { animate }) {
     following = false;
-    const target = r.node.offsetTop - list.offsetTop - list.clientHeight / 2 + r.node.offsetHeight / 2;
+    cancelAnimationFrame(scrollFrame); scrollFrame = 0;   // a bottom scroll queued for an earlier row must not undo this
+    const highlight = () => { node.classList.add('highlight-message'); setTimeout(() => node.classList.remove('highlight-message'), 2000); };
+    const target = node.offsetTop - list.offsetTop - list.clientHeight / 2 + node.offsetHeight / 2;
+    if (!animate) {
+      const top = Math.round(Math.max(0, Math.min(target, list.scrollHeight - list.clientHeight)));
+      // A jump is no scroll up by the reader: with lastTop here, the scroll event keeps the 100 px floor of nearTop and
+      // asks for no older page two screens early. placeTop marks the write as the handler's own for the still view.
+      lastTop = top;
+      placeTop(top);
+      highlight();
+      return;
+    }
     const start = list.scrollTop, distance = target - start, t0 = performance.now();
     const ease = t => 1 - Math.pow(1 - t, 3);
     const step = now => {
       const k = Math.min((now - t0) / 600, 1);
       list.scrollTop = start + distance * ease(k);
       if (k < 1) requestAnimationFrame(step);
-      else { r.node.classList.add('highlight-message'); setTimeout(() => r.node.classList.remove('highlight-message'), 2000); }
+      else highlight();
     };
     requestAnimationFrame(step);
-    return true;
   }
 
   const offs = [
@@ -521,4 +578,4 @@ export function Timeline(root) {
   };
 }
 
-export function jumpTo(id) { return current?.jumpTo(id) ?? Promise.resolve(false); }
+export function jumpTo(id) { return current?.jumpTo(id) ?? Promise.resolve('Not available'); }

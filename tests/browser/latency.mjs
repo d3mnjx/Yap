@@ -1,6 +1,6 @@
 // AD-26 end to end: the waits a person feels reach the admin's latency table. One person, one tab: a reload
-// (start), a tap on a room (open), the older page (older), a text send (send and post), an offline/online
-// pair (reconnect). Then the Diagnostics tab. Run from tests/browser: node latency.mjs -- --port=5098
+// (start), a tap on a room (open), the older page (older), a text send (send and post), a tap on a pin that is not
+// loaded (jump), an offline/online pair (reconnect). Then the Diagnostics tab. Run from tests/browser: node latency.mjs -- --port=5098
 
 import { chromium } from 'playwright';
 import { BASE, SHOTS, sleep, waitTrue, step, finish, startServer, signIn, watchContext, watchPage } from './lib.mjs';
@@ -53,6 +53,19 @@ await step(1, 'Sign in, history, reload, a room tap, older, send, reconnect', as
   const sent = await waitTrue(async () => (await A.locator('.message-content', { hasText: 'latency check' }).count()) > 0, 5000, 100);
   check(sent, 'own message rendered');
 
+  // Jump: a pin of the oldest message, which no page loaded, comes in a window around it (TL-41).
+  const pinned = await A.evaluate(async () => {
+    const hub = await import('/js/hub.js'), { state } = await import('/js/store.js');
+    const id = state.open.channelId;
+    let oldest = state.open.messages[0], more = state.open.hasMore;
+    while (more) { const p = await hub.invoke('older', id, oldest.timestamp, oldest.id); if (!p.messages?.length) break; oldest = p.messages[0]; more = p.hasMore; }
+    return !state.open.messages.some(m => m.id === oldest.id) && (await hub.invoke('pin', id, oldest.id)) == null;
+  });
+  await A.locator('.pins-button').click();
+  await A.locator('.pin-entry .pin-time').first().click();
+  const jumped = await waitTrue(async () => (await A.locator('.highlight-message').count()) > 0, 5000, 50);
+  check(pinned && jumped, `the oldest message pinned, not loaded: ${pinned}; highlighted in its window: ${jumped}`);
+
   // Reconnect: the offline event closes the connection; navigator.onLine stays true, so the retry loop reconnects
   // after its first 1 s delay, and the online event finds the connection already up.
   await A.evaluate(() => window.dispatchEvent(new Event('offline')));
@@ -70,7 +83,7 @@ await step(2, 'The samples reach the server, per person and per connection', asy
   const me = d.users.find(u => u.username === 'boss');
   check(!!me, `users with samples: ${JSON.stringify(d.users.map(u => u.username))}`);
   const stats = me?.latency?.stats ?? {};
-  for (const name of ['rtt', 'send', 'post', 'open', 'older', 'start', 'reconnect']) check(name in stats, `${name}: ${JSON.stringify(stats[name] ?? null)}`);
+  for (const name of ['rtt', 'send', 'post', 'open', 'older', 'jump', 'start', 'reconnect']) check(name in stats, `${name}: ${JSON.stringify(stats[name] ?? null)}`);
   const conn = d.sessions.find(s => s.username === 'boss' && s.connected);
   const keys = Object.keys(conn?.latency?.stats ?? {});
   check(!!conn && keys.includes('rtt') && !keys.includes('post'), `live connection stats: ${JSON.stringify(keys)}; userId ${conn?.userId}`);
@@ -82,12 +95,12 @@ await step(3, 'The Diagnostics tab shows the table per person', async (check) =>
   const card = A.locator('.page-admin .diag-chart-card', { hasText: 'Latency by user' });
   await card.waitFor({ timeout: 10000 });
   const headers = (await card.locator('thead th').allInnerTexts()).map(t => t.trim().toLowerCase());   // the CSS uppercases them
-  check(headers.length === 10 && headers[0] === 'who' && headers.at(-1) === 'slow calls', `headers: ${JSON.stringify(headers)}`);
+  check(headers.length === 11 && headers[0] === 'who' && headers.at(-1) === 'slow calls', `headers: ${JSON.stringify(headers)}`);
   const first = (await card.locator('tbody tr td:first-child').allInnerTexts()).map(t => t.trim());
   check(first[0] === 'boss', `first column: ${JSON.stringify(first)}`);
   check((await card.locator('tbody td.diag-indent').count()) >= 1, `connection rows: ${await card.locator('tbody td.diag-indent').count()}`);
   const cells = (await card.locator('tbody tr').first().locator('td').allInnerTexts()).map(t => t.trim());
-  check(cells.slice(2, 9).every(c => c !== '—'), `boss row: ${JSON.stringify(cells)}`);
+  check(cells.slice(2, 10).every(c => c !== '—'), `boss row: ${JSON.stringify(cells)}`);
   const second = (await card.locator('tbody tr').nth(1).locator('td').allInnerTexts()).map(t => t.trim());
   check(second[4] === '—', `a connection row has no server send: ${JSON.stringify(second)}`);
   await card.screenshot({ path: SHOTS + '99-latency-by-user.png' });

@@ -164,7 +164,7 @@ public sealed class PresenceService(UserService users, LoadCounters load, ILogge
     // so a client can write neither.
     private static readonly Dictionary<string, Wait> ClientWaits = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["send"] = Wait.Send, ["open"] = Wait.Open, ["older"] = Wait.Older, ["start"] = Wait.Start, ["reconnect"] = Wait.Reconnect,
+        ["send"] = Wait.Send, ["open"] = Wait.Open, ["older"] = Wait.Older, ["start"] = Wait.Start, ["reconnect"] = Wait.Reconnect, ["jump"] = Wait.Jump,
     };
     private const double MaxSampleMs = 600_000;   // ten minutes; a longer "wait" is a bug or a forged number
 

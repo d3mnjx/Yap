@@ -256,7 +256,7 @@ export function send(method, ...args) {
 
 // ---- the heartbeat (PR-10, PR-13, AD-25, AD-26) ----
 // Every 10 s while visible, every 60 s while hidden. Carries the idle time, the last round trip, and the waits
-// the client measured since the last beat: send, open, older, start, reconnect (AD-26).
+// the client measured since the last beat: send, open, older, start, reconnect, jump (AD-26).
 
 let lastInputAt = Date.now();
 let lastRttMs = null;

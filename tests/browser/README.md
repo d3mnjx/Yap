@@ -13,15 +13,17 @@ server, runs its steps, prints PASS or FAIL for each step, and stops the server 
 - `features.mjs` checks replies, link cards, the image gallery, emoji sizes, pack emoji, older pages, the
   New messages pill, typing in a DM, Shift+Enter, two GIF files in one pick, the automatic read while Away, the
   keys on a GIF favourite star, an emoji pick at the 4000-character limit with Edit on a failed row, a rename
-  of the open room, and the media of a pin: the gallery viewer over the pins panel, its close order, its close on an
-  unpin, and a video that plays in the entry.
+  of the open room, the media of a pin: the gallery viewer over the pins panel, its close order, its close on an
+  unpin, and a video that plays in the entry, and the jump to a message that is not loaded: the window around it
+  with one server call, an older page above it, the pill, and the way back by the pill, the arrow, a send and a
+  reconnect.
 - `pages.mjs` checks the pages of step 5: the login rules, Settings (themes, text size, profile, the login link,
   the retired secret code, sessions, mutes, time and date), the verification and link pages, an account switch that
   reaches the other tab of the device, Admin (users, invites, registration and approval, bot, debug, the
   persistence-only tabs, GIFs, diagnostics), Create Channel / Channel Settings (with `/lobby` after a reorder),
   the keyboard on the sidebar rows and the + button, and the notification choices at 20 px on a 320 px phone.
 - `latency.mjs` checks the latency table of the admin's Diagnostics tab (AD-26): one person loads a room, taps
-  a room, loads an older page, sends a text, loses and regains the connection, and every wait shows up on
+  a room, loads an older page, sends a text, jumps to a pin that is not loaded, loses and regains the connection, and every wait shows up on
   the person and on the connection.
 - `load.mjs` prints the load and the resume of one person on a slow link (900 ms round trip, 1 Mbit/s): the six
   phases of the boot report (AD-41) for a cold load and a warm load, the files answered by a cache, and the time

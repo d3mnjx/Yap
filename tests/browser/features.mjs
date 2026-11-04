@@ -1,7 +1,7 @@
 // The feature run of the chat client: replies, link cards, the image gallery, emoji sizes and pack emoji,
 // older pages and the top note, the New messages pill, typing in a DM, Shift+Enter, the keys on a GIF star, the
-// emoji pick at the limit with Edit on a failed row, a rename of the open room, and the media of a pin (the viewer over
-// the pins panel, a video that plays in the entry).
+// emoji pick at the limit with Edit on a failed row, a rename of the open room, the media of a pin (the viewer over
+// the pins panel, a video that plays in the entry), and the jump to a row that is not loaded (the window, TL-41).
 // Run: npm run features (see README.md). Screenshots go to shots/.
 
 import { chromium } from 'playwright';
@@ -402,6 +402,154 @@ await step(15, 'A pin opens its pictures in the viewer over the panel and plays 
   const jumped = await waitTrue(async () => (await panel.count()) === 0, 5000, 50);
   check(jumped, `a tap on the header jumps, and the panel closes ${jumped}`);
   await invoke('unpin', channelId, m['pin video']);
+});
+
+await step(16, 'A jump to a row that is not loaded shows a window around it; the pill, the arrow, a send and a reconnect lead back (SH-49, MR-34, TL-41, OF-08)', async (check) => {
+  await A.goto(BASE + '/lobby');
+  await A.waitForSelector('.message-input', { timeout: 10000 });
+  const channelId = await A.evaluate(async () => (await import('/js/store.js')).state.open.channelId);
+  const invoke = (...args) => A.evaluate(async args => (await import('/js/hub.js')).invoke(...args), args);
+  const post = (text, extra = {}) => api(B, 'POST', `/api/channels/${channelId}/messages`, { clientId: crypto.randomUUID(), text, ...extra });
+  // Three digits: "ws-5" would also match the rows "ws-50" and "ws-150"
+  const ids = [];
+  for (let i = 0; i < 150; i++) ids.push((await post(`ws-${String(i).padStart(3, '0')}`)).id);
+  check((await invoke('pin', channelId, ids[50])) == null, 'ws-050 pinned');
+  // A took all 150 live: a fresh open leaves the newest 50, and ws-050 is not loaded.
+  await A.goto(BASE + '/lobby');
+  await A.waitForSelector('.message-input', { timeout: 10000 });
+  const fresh = await waitTrue(() => A.evaluate(async () => { const s = (await import('/js/store.js')).state; return s.connection === 'connected' && !s.open?.fromDevice && !s.open?.loading; }), 10000, 100);
+  check(fresh && (await row(A, 'ws-149').count()) === 1 && (await row(A, 'ws-050').count()) === 0, `a fresh open ${fresh}: ws-149 loaded, ws-050 not`);
+
+  // The hub methods page A calls, by name: SignalR's JSON frames go through the socket's send.
+  await A.evaluate(() => {
+    window.__calls = {};
+    const send = WebSocket.prototype.send;
+    WebSocket.prototype.send = function (data) {
+      if (typeof data === 'string') for (const f of data.split('\x1e')) {
+        const t = /"target":"(\w+)"/.exec(f)?.[1]?.toLowerCase();
+        if (t) window.__calls[t] = (window.__calls[t] ?? 0) + 1;
+      }
+      return send.call(this, data);
+    };
+  });
+  const calls = () => A.evaluate(() => { const c = window.__calls; window.__calls = {}; return c; });
+  const panel = A.locator('.pins-panel'), pill = A.locator('.new-messages-pill'), arrow = A.locator('.down-arrow');
+  const atBottom = async () => { const s = await scrollInfo(A); return s.h - s.top - s.ch < 5; };
+  const lit = text => waitTrue(async () => ((await row(A, text).first().getAttribute('class').catch(() => '')) ?? '').includes('highlight-message'), 3000, 50);
+  const centred = text => row(A, text).evaluate(n => {
+    const l = n.closest('.messages').getBoundingClientRect(), r = n.getBoundingClientRect();
+    return Math.round((r.top + r.bottom) / 2 - (l.top + l.bottom) / 2);
+  });
+  const openPanel = async () => { await A.locator('.pins-button').click(); await panel.waitFor({ state: 'visible', timeout: 3000 }); };
+  const jumpToPin = async text => { await openPanel(); await A.locator('.pin-entry').filter({ hasText: text }).locator('.pin-time').click(); };
+  const connection = () => A.evaluate(async () => (await import('/js/store.js')).state.connection);
+
+  // 1. The window: one around call, the target in the middle, the arrow as the way back.
+  await calls();
+  await jumpToPin('ws-050');
+  const closed = await waitTrue(async () => (await panel.count()) === 0, 5000, 50);
+  const hl = await lit('ws-050');
+  const off = await centred('ws-050');
+  const c1 = await calls();
+  const edges = { first: await row(A, 'ws-074').count(), after: await row(A, 'ws-075').count(), newest: await row(A, 'ws-149').count() };
+  const arrowShown = await waitTrue(async () => (await arrow.count()) === 1, 2000, 50);
+  check(closed && hl && Math.abs(off) <= 40 && c1.around === 1 && !c1.older && edges.first === 1 && edges.after === 0 && edges.newest === 0 && arrowShown,
+    `panel closed ${closed}; highlighted ${hl}; ${off} px from the middle; calls ${JSON.stringify(c1)}; ws-074 ${edges.first}, ws-075 ${edges.after}, ws-149 ${edges.newest}; arrow ${arrowShown}`);
+  await A.screenshot({ path: SHOTS + '16-window.png' });
+
+  // 2. An older page goes above the window as usual (TL-06).
+  const n2 = await countRows(A);
+  await scroller(A).evaluate(e => { e.scrollTop = 0; });
+  const more = await waitTrue(async () => (await countRows(A)) > n2, 5000, 50);
+  const c2 = await calls();
+  check(more && c2.older >= 1 && (await row(A, 'ws-050').count()) === 1, `rows ${n2} -> ${await countRows(A)}; calls ${JSON.stringify(c2)}`);
+
+  // 3. A message from B: the pill, and no row under the window.
+  await post('ws-live-1');
+  const pillShown = await waitTrue(async () => (await pill.count()) === 1, 3000, 50);
+  await sleep(200);
+  check(pillShown && (await row(A, 'ws-live-1').count()) === 0 && (await arrow.count()) === 0, `pill ${pillShown}; row ws-live-1 ${await row(A, 'ws-live-1').count()}; arrow ${await arrow.count()} (the pill wins)`);
+
+  // 4. The pill opens the conversation again: the newest rows at the bottom, the follow on.
+  await calls();
+  await pill.click();
+  const back = await waitTrue(async () => (await row(A, 'ws-live-1').count()) === 1 && await atBottom(), 5000, 50);
+  const c4 = await calls();
+  const last4 = (await lastRow(A).locator('.message-content').innerText()).trim();
+  await post('ws-live-2');
+  const followed = await waitTrue(async () => (await row(A, 'ws-live-2').count()) === 1 && await atBottom(), 3000, 50) && (await pill.count()) === 0;
+  check(back && c4.openroom === 1 && last4 === 'ws-live-1' && (await row(A, 'ws-050').count()) === 0 && followed,
+    `at the bottom ${back}; calls ${JSON.stringify(c4)}; last row "${last4}"; window rows gone ${(await row(A, 'ws-050').count()) === 0}; the next message follows ${followed}`);
+
+  // 5. A send in a window goes to the newest messages first (TL-14).
+  await jumpToPin('ws-050');
+  await lit('ws-050');
+  await calls();
+  await send(A, 'ws-own-send');
+  const sentBack = await waitTrue(async () => (await row(A, 'ws-own-send').count()) === 1 && !((await row(A, 'ws-own-send').getAttribute('class')) ?? '').includes('pending') && await atBottom(), 5000, 50);
+  const c5 = await calls();
+  check(sentBack && c5.openroom === 1 && (await row(A, 'ws-050').count()) === 0, `own message at the bottom ${sentBack}; calls ${JSON.stringify(c5)}`);
+
+  // 6. Offline in a window: the arrow names the reason, a send shows its pending row under the window at once
+  // (OF-08), and the reconnect goes to the newest messages, the message sent (TL-35).
+  await jumpToPin('ws-050');
+  await lit('ws-050');
+  await ctxA.setOffline(true);
+  const wentOff = await waitTrue(async () => (await connection()) === 'offline', 5000, 50);
+  await arrow.click();
+  const arrowReason = await waitTrue(async () => (await A.locator('.row-reason').filter({ hasText: 'Needs a connection' }).count()) === 1, 2000, 50);
+  await send(A, 'ws-offline-send');
+  const pendingShown = await waitTrue(async () => ((await row(A, 'ws-offline-send').getAttribute('class').catch(() => '')) ?? '').includes('pending'), 3000, 50);
+  const windowStays = (await row(A, 'ws-050').count()) === 1;
+  await ctxA.setOffline(false);
+  const reconnected = await waitTrue(async () => (await connection()) === 'connected' && (await row(A, 'ws-050').count()) === 0 && await atBottom()
+    && !((await row(A, 'ws-offline-send').getAttribute('class').catch(() => 'pending')) ?? '').includes('pending'), 15000, 100);
+  check(wentOff && arrowReason && pendingShown && windowStays && reconnected,
+    `offline ${wentOff}; the arrow says "Needs a connection" ${arrowReason}; pending row under the window ${pendingShown && windowStays}; after the reconnect the newest rows at the bottom, the message sent ${reconnected}`);
+
+  // 7. Offline, a pin that is not loaded names the reason, and the panel stays.
+  await ctxA.setOffline(true);
+  await waitTrue(async () => (await connection()) === 'offline', 5000, 50);
+  await jumpToPin('ws-050');
+  const reason = await waitTrue(async () => (await A.locator('.pin-entry .row-reason').filter({ hasText: 'Needs a connection' }).count()) === 1, 2000, 50);
+  check(reason && await panel.isVisible(), `"Needs a connection" at the entry ${reason}; panel open ${await panel.isVisible()}`);
+  await A.keyboard.press('Escape');
+  await ctxA.setOffline(false);
+  await waitTrue(async () => (await connection()) === 'connected' && await atBottom(), 15000, 100);
+
+  // 8. A reply quote jumps the same way (MR-34).
+  await post('ws-reply', { replyToId: ids[50] });
+  await waitTrue(async () => (await row(A, 'ws-reply').count()) === 1, 5000, 50);
+  await sleep(1200);   // the device stores this tail: the store's write waits for 800 ms without a change
+  await calls();
+  await row(A, 'ws-reply').locator('.reply-preview').click();
+  const quoteJump = await lit('ws-050');
+  const c8 = await calls();
+  check(quoteJump && c8.around === 1 && !c8.older, `quote: ws-050 highlighted ${quoteJump}; calls ${JSON.stringify(c8)}`);
+
+  // 9. The device keeps the newest rows, never the window (OF-14).
+  await sleep(1200);
+  const stored = await A.evaluate(async id => (await (await import('/js/offline/snapshot.js')).loadTail(id))?.messages.map(m => m.text) ?? null, channelId);
+  check(!!stored && stored.includes('ws-reply') && !stored.includes('ws-050'), `stored tail: ${stored?.length} rows, ends "${stored?.at(-1)}", holds ws-050 ${stored?.includes('ws-050')}`);
+
+  // The arrow is the way back too (TL-40).
+  await calls();
+  await arrow.click();
+  const arrowBack = await waitTrue(async () => (await row(A, 'ws-reply').count()) === 1 && (await row(A, 'ws-050').count()) === 0 && await atBottom(), 5000, 50);
+  const c9 = await calls();
+  check(arrowBack && c9.openroom === 1, `the arrow leads to the newest rows ${arrowBack}; calls ${JSON.stringify(c9)}`);
+
+  // 10. A loaded row scrolls with the animation and asks the server for nothing. ws-120 is in the tail, far enough
+  // above the bottom to be centred.
+  check((await invoke('pin', channelId, ids[120])) == null && (await row(A, 'ws-120').count()) === 1, 'ws-120 pinned and loaded');
+  await sleep(500);
+  await calls();
+  await jumpToPin('ws-120');
+  const loadedHl = await lit('ws-120');
+  const c10 = await calls();
+  check(loadedHl && !c10.around && Math.abs(await centred('ws-120')) <= 40, `highlighted ${loadedHl}; calls ${JSON.stringify(c10)}; ${await centred('ws-120')} px from the middle`);
+  await invoke('unpin', channelId, ids[50]);
+  await invoke('unpin', channelId, ids[120]);
 });
 
 await finish(browser, server);

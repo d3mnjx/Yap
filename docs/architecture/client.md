@@ -151,7 +151,7 @@ export const state = {
   connection: 'connecting',    // 'connecting' | 'connected' | 'reconnecting' | 'offline' | 'signedOut'
   user: null, config: null, texts: null,
   rooms: [], users: {}, presence: {}, dms: [], unread: {}, mutes: null, emoji: null, favoriteGifIds: new Set(),
-  open: null,                  // { channelId, messages: [], hasMore, restricted, typists: [], following: true }
+  open: null,                  // { channelId, messages: [], hasMore, hasNewer, restricted, typists: [], following: true }
   pending: [],                 // outbox rows of the open conversation, drawn as faded rows
   drafts: {},                  // conversation key -> { text, replyToId }; a room by its id, a direct message by 'dm:' and the partner
 };
@@ -178,6 +178,8 @@ export function applyBootstrap(doc) {    // replaces the shared data as a whole;
 ```
 
 The part names are the field names of the bootstrap document, plus `connection`, `open`, `pending` and `drafts`. There is no diffing. A component that listens to `rooms` redraws its room list. A room list has at most a few dozen rows, so a full redraw is cheap. The message list is the one component that updates rows in place, because it can hold hundreds of rows. The timeline page describes that.
+
+`open.messages` is one range of the conversation with no gap. After an open it ends at the newest message (a tail). After a jump to a row that is not loaded (`setWindow`, TL-41) it is the window from the hub's `around`, and `open.hasNewer` is true. Other modules ask `atTail()` and do not read the field. In a window the store inserts no live message: `addMessage` signals `{ type: 'missed' }` and the timeline shows the pill. Edits, reactions, cards and deletes reach only the rows of the window. The way back is a fresh open (the chat page's `open`, the same as after a reconnect), and `setOpen` always makes a tail. The device stores no window (OF-14).
 
 ## The hub module
 
