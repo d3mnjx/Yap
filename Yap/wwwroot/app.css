@@ -349,11 +349,31 @@ html, body {
    in the parent's layout, so the component CSS sees the sibling structure it was written for. */
 .header-title, .status-menu, .composer, .more-menu-layer { display: contents; }
 
-/* Emoji images in text (MR-16, MR-38): the four sizes the old server renderer wrote as inline styles. */
-img.emoji { display: inline-block; height: 1.2em; width: 1.2em; vertical-align: -0.2em; object-fit: contain; }
-img.emoji-inline { height: 1em; width: 1em; vertical-align: -0.15em; }
-img.emoji-big { height: 3em; width: 3em; vertical-align: -0.4em; }
-img.emoji-pill { height: 18px; width: 18px; vertical-align: -3px; }
+/* Emoji images in text (MR-16, MR-38): the four sizes the old server renderer wrote as inline styles, on the slot that
+   render/text.js puts around every emoji image (its only maker). The slot is an inline block with hidden overflow, so
+   its baseline is its bottom edge whatever the image's state (CSS 2.1, 10.8.1), and the same vertical-align puts that
+   edge where a bare image's sat. An inline grid took the image's own baseline instead, and a failed image has one
+   inside its box (the alt text's), which lifted the glyph about a line's ascent above the text. */
+.emoji-slot { --emoji-size: 1.2em; display: inline-block; position: relative; width: var(--emoji-size); height: var(--emoji-size); overflow: hidden; vertical-align: -0.2em; }
+.emoji-slot-inline { --emoji-size: 1em; vertical-align: -0.15em; }
+.emoji-slot-big { --emoji-size: 3em; vertical-align: -0.4em; }
+.emoji-slot-pill { --emoji-size: 18px; vertical-align: -3px; }
+img.emoji { display: block; width: 100%; height: 100%; object-fit: contain; }
+
+/* The device's own emoji in place of an image that is still on its way (MR-15): text.js sets data-glyph and adds
+   .loaded at the image's load. The glyph stays hidden for the first second. A stored image answers long before that,
+   so a stored row never flashes the device's font (the iPhone's cold open answered every stored image within 0.7 s,
+   performance-notes.md), and a slow link or no network shows the emoji instead of an empty box. The image stays hidden
+   until it has loaded, so neither a broken picture nor its alt text paints over the glyph. At 0.75 of the box, the
+   glyph fits inside it in every emoji font. */
+.emoji-slot[data-glyph]:not(.loaded) > img { visibility: hidden; }
+.emoji-slot[data-glyph]:not(.loaded)::before {
+  content: attr(data-glyph);
+  position: absolute; inset: 0; overflow: hidden;
+  font-size: calc(var(--emoji-size) * 0.75); line-height: 1.333; text-align: center;
+  visibility: hidden; animation: emoji-glyph 0s 1s forwards;
+}
+@keyframes emoji-glyph { to { visibility: visible; } }
 
 /* A pending row is a full row, faded, until the server accepts it (MR-69). A failed row shows its reason (MR-71). */
 .message-group.pending { opacity: 0.55; }

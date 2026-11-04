@@ -86,14 +86,20 @@ function emojiUrl(emoji) {
   return `${images.twemojiBase}/${twemojiName(emoji)}.svg`;
 }
 
-// <img class="emoji" ...>: the size classes are emoji-inline (names, 1em), emoji-text (1.2em), emoji-big
-// (emoji-only rows, 3em) and emoji-pill (18px). Eager by default so emoji never pop in while reading (MR-18).
+// <span class="emoji-slot"><img class="emoji" ...></span>: the size classes are emoji-inline (names, 1em), emoji-text
+// (1.2em), emoji-big (emoji-only rows, 3em) and emoji-pill (18px). The slot carries the size too (emoji-slot-big), because
+// app.css sizes the image and the glyph from the slot. Eager by default so emoji never pop in while reading (MR-18).
+// data-glyph is the device's own emoji. The slot draws it in place of an image that is still on its way after a second
+// (app.css): on a slow link, or with no network at all, the row shows the emoji instead of an empty box (MR-15). The
+// image's load hides the glyph for good: Twemoji's SVGs have clear corners, and the glyph would show through them.
 export function emojiImage(emoji, size = 'text', { lazy = false } = {}) {
   const src = emojiUrl(emoji);
   if (!src) return document.createTextNode(emoji);
   // crossorigin: the CDN answers with CORS headers, so the service worker can store a real response, not an opaque one.
-  return el('img', { class: `emoji emoji-${size}`, src, alt: emoji, draggable: 'false', crossorigin: 'anonymous', loading: lazy ? 'lazy' : null, onerror: imageFailed });
+  const img = el('img', { class: `emoji emoji-${size}`, src, alt: emoji, draggable: 'false', crossorigin: 'anonymous', loading: lazy ? 'lazy' : null, onerror: imageFailed, onload: imageLoaded });
+  return el('span', { class: `emoji-slot emoji-slot-${size}`, 'data-glyph': emoji }, img);
 }
+function imageLoaded(event) { event.target.parentElement.classList.add('loaded'); }
 
 // An image that did not arrive (a poor connection, a short outage of the CDN, the device offline) would stay a
 // broken picture or a grey box for as long as the row is on screen: the browser never retries an <img> on its own.
@@ -120,9 +126,13 @@ export function retryFailedImages() {
   failed.clear();
 }
 
+// The same slot as emojiImage, for the layout; a pack image has no glyph of the device's own, so the slot stays empty
+// while the image is on its way.
 export function packImage(shortcode, size = 'text', { lazy = false } = {}) {
   const url = packs.get(shortcode);
-  return url ? el('img', { class: `emoji emoji-${size} emoji-custom`, src: url, alt: `:${shortcode}:`, draggable: 'false', loading: lazy ? 'lazy' : null, onerror: imageFailed }) : null;
+  if (!url) return null;
+  const img = el('img', { class: `emoji emoji-${size} emoji-custom`, src: url, alt: `:${shortcode}:`, draggable: 'false', loading: lazy ? 'lazy' : null, onerror: imageFailed });
+  return el('span', { class: `emoji-slot emoji-slot-${size}` }, img);
 }
 
 const SHORTCODE = /:([a-zA-Z0-9_-]+):/g;

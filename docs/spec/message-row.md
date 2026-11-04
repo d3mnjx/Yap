@@ -58,7 +58,7 @@ A message row is one message as it appears in the conversation. The row shows wh
 
 ### Emoji
 
-**MR-15** Emoji in text show as images from one image set, so every reader sees the same image. The device's own emoji glyphs are not used. A skin tone variant, a flag, a keycap or a joined sequence shows as one image. If the device does not load an emoji image, Yap loads the image again, as for a gallery image (MR-24).
+**MR-15** Emoji in text show as images from one image set, so every reader sees the same image. A skin tone variant, a flag, a keycap or a joined sequence shows as one image. The device's own emoji glyph stands in only for an image that has not arrived after a second, also without a connection, and the image replaces it when it arrives. If the device does not load an emoji image, Yap loads the image again, as for a gallery image (MR-24).
 
 **MR-16** In mixed text, an emoji is 1.2 times the text size. When a message contains only emoji and whitespace, the emoji are 3 times the text size. A link or any other text in the message prevents this larger size.
 

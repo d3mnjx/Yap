@@ -1,7 +1,11 @@
 # Emoji warm-up: implementation plan
 
-Written 2026-11-04. Status: plan only, nothing is built. The code facts below come from a read of the
-code on this date, at commit 9d7d8b63.
+Written 2026-11-04. Status: set aside the same day, nothing is built. The empty box is covered since
+2026-11-04 by the device's own emoji, drawn after one second in place of an image that is still on its
+way (`render/text.js` emojiImage, app.css `.emoji-slot`, MR-15). That covers every emoji, the phone
+keyboard's included, at no network cost. Revisit this plan only if the shared picture without a
+connection matters for the listed emoji. The code facts below come from a read of the code on this
+date, at commit 9d7d8b63.
 
 ## 1. The goal
 

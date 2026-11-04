@@ -116,6 +116,20 @@ await step(4, 'Emoji-only and mixed', async (check) => {
   const cls = await r2.last().locator('.message-content img').evaluateAll(e => e.map(i => i.className));
   const only = (await r2.last().locator('.message-content').getAttribute('class'));
   check(cls.includes('emoji emoji-text') && !only.includes('emoji-only'), `mixed: imgs ${JSON.stringify(cls)}, content class "${only}"`);
+  // MR-15: a slot whose image arrived is .loaded and draws no glyph. An image that never arrives (U+1F000 is an astral
+  // code point the set lacks, so its request fails) shows the device's own emoji after a second, over the hidden image,
+  // and the slot keeps the text's line: its top is the text's top, as for the loaded one.
+  const loaded = await waitTrue(async () => (await r2.last().locator('.emoji-slot.loaded img').count()) === 1, 5000);
+  const noGlyph = await r2.last().locator('.emoji-slot').first().evaluate(s => getComputedStyle(s, '::before').content);
+  check(loaded && noGlyph === 'none', `loaded slot: ${loaded}, glyph content ${noGlyph}`);
+  await send(A, 'cold 🀀');
+  const slot = row(A, 'cold').last().locator('.emoji-slot');
+  await slot.waitFor({ timeout: 5000 });
+  const shown = await waitTrue(() => slot.evaluate(s => getComputedStyle(s, '::before').visibility === 'visible' && getComputedStyle(s.firstChild).visibility === 'hidden'), 3000);
+  check(shown && (await slot.getAttribute('data-glyph')) === '🀀', `glyph after a second: ${shown}, slot class "${await slot.getAttribute('class')}", data-glyph ${await slot.getAttribute('data-glyph')}`);
+  const above = s => s.evaluate(s => { const text = document.createRange(); text.selectNode(s.previousSibling); return text.getBoundingClientRect().top - s.getBoundingClientRect().top; });
+  const [cold, hi] = [await above(slot), await above(r2.last().locator('.emoji-slot').first())];
+  check(Math.abs(cold - hi) < 0.5, `the failed image's slot keeps the line like a loaded one: above its text by ${cold} and ${hi}`);
 });
 
 await step(5, 'Pack emoji', async (check) => {

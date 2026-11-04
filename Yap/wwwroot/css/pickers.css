@@ -321,10 +321,9 @@
     transform: scale(1.1);
 }
 
-/* Override inline 18px from forceSmall */
-.emoji-btn .emoji {
-    width: 40px !important;
-    height: 40px !important;
+/* The cell's image and its glyph take their size from the slot (app.css). */
+.emoji-btn .emoji-slot {
+    --emoji-size: 40px;
 }
 
 .emoji-empty {
@@ -351,9 +350,8 @@
         height: 36px;
     }
 
-    .emoji-btn .emoji {
-        width: 28px !important;
-        height: 28px !important;
+    .emoji-btn .emoji-slot {
+        --emoji-size: 28px;
     }
 }
 

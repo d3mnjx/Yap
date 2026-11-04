@@ -133,7 +133,7 @@ The emoji picker and the GIF picker open from the input box. The emoji picker pu
 
 ### Without a connection
 
-**PK-49** Without a connection, the emoji picker works fully for the draft. A reaction pick needs a connection, as the [message row page](message-row.md#MR-75) says. In the GIF picker, Recent, Favorites, Server library and the Browse tiles show the data that was last loaded. Search, the trending grid, "Load more", the upload button and the star show "Needs a connection". A tap on a card queues the GIF as a message, the same as any other message.
+**PK-49** Without a connection, the emoji picker works fully for the draft. A cell whose image the device never saw shows the device's own emoji, as the [message row page](message-row.md#MR-15) says. A reaction pick needs a connection, as the [message row page](message-row.md#MR-75) says. In the GIF picker, Recent, Favorites, Server library and the Browse tiles show the data that was last loaded. Search, the trending grid, "Load more", the upload button and the star show "Needs a connection". A tap on a card queues the GIF as a message, the same as any other message.
 
 ## States
 

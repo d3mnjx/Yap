@@ -52,7 +52,7 @@ This page holds the rules that every component follows. A component page can mak
 
 **GEN-19** Yap shows a person by display name. When the person has no display name, Yap shows the username.
 
-**GEN-20** Emoji show as images from one set, so everyone sees the same picture.
+**GEN-20** Emoji show as images from one set, so everyone sees the same picture. An image that has not arrived after a second shows as the device's own emoji until it arrives.
 
 **GEN-21** Drafts and unsent messages are kept through a reload, a new version and the error screen.
 
