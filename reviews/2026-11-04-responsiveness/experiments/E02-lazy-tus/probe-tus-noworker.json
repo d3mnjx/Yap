@@ -1,0 +1,191 @@
+[
+ {
+  "side": "A",
+  "rep": 1,
+  "rows": 17428.5,
+  "open": {
+   "requests": 62,
+   "kb": 877.427734375,
+   "tusLines": 1,
+   "pageTusRequests": 1
+  },
+  "first": {
+   "controlled": false,
+   "tusBefore": true,
+   "postStart": 11.099999964237213,
+   "postEnd": 942.6999999880791,
+   "confirmed": 3840.599999964237,
+   "scriptStart": null,
+   "scriptEnd": null,
+   "scriptTransfer": null,
+   "scriptWorker": null,
+   "failed": false,
+   "scriptRequested": false,
+   "scriptFromWorker": null,
+   "scriptCrossed": false,
+   "linesBeforePost": 2,
+   "lines": [
+    "POST /api/tus",
+    "GET /notif.mp3"
+   ]
+  }
+ },
+ {
+  "side": "B",
+  "rep": 1,
+  "rows": 16926.69999998808,
+  "open": {
+   "requests": 61,
+   "kb": 846.5205078125,
+   "tusLines": 0,
+   "pageTusRequests": 0
+  },
+  "first": {
+   "controlled": false,
+   "tusBefore": false,
+   "postStart": 1182.2000000476837,
+   "postEnd": 2115.400000035763,
+   "confirmed": 5012.200000047684,
+   "scriptStart": 5,
+   "scriptEnd": 1173.9000000357628,
+   "scriptTransfer": 32612,
+   "scriptWorker": false,
+   "failed": false,
+   "scriptRequested": true,
+   "scriptFromWorker": false,
+   "scriptCrossed": true,
+   "linesBeforePost": 3,
+   "lines": [
+    "GET /lib/tus.min.js?v=2026-11-04-1155",
+    "GET /notif.mp3",
+    "POST /api/tus"
+   ]
+  }
+ },
+ {
+  "side": "B",
+  "rep": 2,
+  "rows": 17170.69999998808,
+  "open": {
+   "requests": 62,
+   "kb": 847.3857421875,
+   "tusLines": 0,
+   "pageTusRequests": 0
+  },
+  "first": {
+   "controlled": false,
+   "tusBefore": false,
+   "postStart": 1180,
+   "postEnd": 2093.300000011921,
+   "confirmed": 4903,
+   "scriptStart": 5.400000035762787,
+   "scriptEnd": 1174.7000000476837,
+   "scriptTransfer": 32612,
+   "scriptWorker": false,
+   "failed": false,
+   "scriptRequested": true,
+   "scriptFromWorker": false,
+   "scriptCrossed": true,
+   "linesBeforePost": 3,
+   "lines": [
+    "GET /lib/tus.min.js?v=2026-11-04-1155",
+    "GET /notif.mp3",
+    "POST /api/tus"
+   ]
+  }
+ },
+ {
+  "side": "A",
+  "rep": 2,
+  "rows": 17524.5,
+  "open": {
+   "requests": 63,
+   "kb": 878.29296875,
+   "tusLines": 1,
+   "pageTusRequests": 1
+  },
+  "first": {
+   "controlled": false,
+   "tusBefore": true,
+   "postStart": 8.100000023841858,
+   "postEnd": 925.1000000238419,
+   "confirmed": 3678,
+   "scriptStart": null,
+   "scriptEnd": null,
+   "scriptTransfer": null,
+   "scriptWorker": null,
+   "failed": false,
+   "scriptRequested": false,
+   "scriptFromWorker": null,
+   "scriptCrossed": false,
+   "linesBeforePost": 2,
+   "lines": [
+    "POST /api/tus",
+    "GET /notif.mp3"
+   ]
+  }
+ },
+ {
+  "side": "A",
+  "rep": 3,
+  "rows": 17485.69999998808,
+  "open": {
+   "requests": 64,
+   "kb": 880.0068359375,
+   "tusLines": 1,
+   "pageTusRequests": 1
+  },
+  "first": {
+   "controlled": false,
+   "tusBefore": true,
+   "postStart": 6.700000047683716,
+   "postEnd": 920.4000000357628,
+   "confirmed": 3714.7000000476837,
+   "scriptStart": null,
+   "scriptEnd": null,
+   "scriptTransfer": null,
+   "scriptWorker": null,
+   "failed": false,
+   "scriptRequested": false,
+   "scriptFromWorker": null,
+   "scriptCrossed": false,
+   "linesBeforePost": 2,
+   "lines": [
+    "POST /api/tus",
+    "GET /notif.mp3"
+   ]
+  }
+ },
+ {
+  "side": "B",
+  "rep": 3,
+  "rows": 16889.599999964237,
+  "open": {
+   "requests": 63,
+   "kb": 848.1650390625,
+   "tusLines": 0,
+   "pageTusRequests": 0
+  },
+  "first": {
+   "controlled": false,
+   "tusBefore": false,
+   "postStart": 1179.5,
+   "postEnd": 2093.300000011921,
+   "confirmed": 4846.899999976158,
+   "scriptStart": 5.399999976158142,
+   "scriptEnd": 1174.5,
+   "scriptTransfer": 32612,
+   "scriptWorker": false,
+   "failed": false,
+   "scriptRequested": true,
+   "scriptFromWorker": false,
+   "scriptCrossed": true,
+   "linesBeforePost": 3,
+   "lines": [
+    "GET /lib/tus.min.js?v=2026-11-04-1155",
+    "GET /notif.mp3",
+    "POST /api/tus"
+   ]
+  }
+ }
+]

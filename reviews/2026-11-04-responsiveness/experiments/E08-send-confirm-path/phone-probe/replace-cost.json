@@ -1,0 +1,122 @@
+[
+ {
+  "redrawMs": 2.399999976158142,
+  "layoutMs": 4.199999988079071,
+  "baselineMs": 0.20000004768371582,
+  "rows": 1
+ },
+ {
+  "redrawMs": 2.199999988079071,
+  "layoutMs": 1.699999988079071,
+  "baselineMs": 0.10000002384185791,
+  "rows": 1
+ },
+ {
+  "redrawMs": 2.400000035762787,
+  "layoutMs": 5.199999988079071,
+  "baselineMs": 0,
+  "rows": 1
+ },
+ {
+  "redrawMs": 3,
+  "layoutMs": 4.599999964237213,
+  "baselineMs": 0,
+  "rows": 1
+ },
+ {
+  "redrawMs": 2.5,
+  "layoutMs": 4.299999952316284,
+  "baselineMs": 0,
+  "rows": 1
+ },
+ {
+  "redrawMs": 2,
+  "layoutMs": 3.700000047683716,
+  "baselineMs": 0.5,
+  "rows": 1
+ },
+ {
+  "redrawMs": 3,
+  "layoutMs": 3.099999964237213,
+  "baselineMs": 0,
+  "rows": 1
+ },
+ {
+  "redrawMs": 3,
+  "layoutMs": 5.899999976158142,
+  "baselineMs": 0,
+  "rows": 1
+ },
+ {
+  "redrawMs": 1.899999976158142,
+  "layoutMs": 5.5,
+  "baselineMs": 0.10000002384185791,
+  "rows": 1
+ },
+ {
+  "redrawMs": 3.900000035762787,
+  "layoutMs": 6.599999964237213,
+  "baselineMs": 0,
+  "rows": 1
+ },
+ {
+  "redrawMs": 1.899999976158142,
+  "layoutMs": 3.600000023841858,
+  "baselineMs": 0.10000002384185791,
+  "rows": 1
+ },
+ {
+  "redrawMs": 3.100000023841858,
+  "layoutMs": 4.5,
+  "baselineMs": 0,
+  "rows": 1
+ },
+ {
+  "redrawMs": 2.800000011920929,
+  "layoutMs": 3.600000023841858,
+  "baselineMs": 0.09999996423721313,
+  "rows": 1
+ },
+ {
+  "redrawMs": 2.199999988079071,
+  "layoutMs": 3.600000023841858,
+  "baselineMs": 0,
+  "rows": 1
+ },
+ {
+  "redrawMs": 2.800000011920929,
+  "layoutMs": 4.300000011920929,
+  "baselineMs": 0.09999996423721313,
+  "rows": 1
+ },
+ {
+  "redrawMs": 1.800000011920929,
+  "layoutMs": 4.599999964237213,
+  "baselineMs": 0,
+  "rows": 1
+ },
+ {
+  "redrawMs": 2.600000023841858,
+  "layoutMs": 4.5,
+  "baselineMs": 0,
+  "rows": 1
+ },
+ {
+  "redrawMs": 2.699999988079071,
+  "layoutMs": 4.699999988079071,
+  "baselineMs": 0.30000001192092896,
+  "rows": 1
+ },
+ {
+  "redrawMs": 2.399999976158142,
+  "layoutMs": 4.399999976158142,
+  "baselineMs": 0,
+  "rows": 1
+ },
+ {
+  "redrawMs": 2.199999988079071,
+  "layoutMs": 3.800000011920929,
+  "baselineMs": 0.699999988079071,
+  "rows": 1
+ }
+]

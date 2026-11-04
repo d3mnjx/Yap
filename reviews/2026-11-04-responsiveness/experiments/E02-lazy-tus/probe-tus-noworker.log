@@ -1,0 +1,35 @@
+A: /home/agent/yap-perf/harness on http://127.0.0.1:5323 (PID 619016), proxy http://127.0.0.1:5423
+B: /home/agent/yap-perf/exp/02-lazy-tus on http://127.0.0.1:5324 (PID 619085), proxy http://127.0.0.1:5424
+
+## Part 1: the signed-in shell, curl
+
+## Part 2: the attach, far (900 ms round trip, 1 Mbit/s)
+A#1 open up to the attach: 62 requests crossed, tus.min.js crossed 1x, page requested it 1x
+A#1 rows 17429 ms
+  first page: click->POST 11 ms, ->POST end 943, ->confirmed 3841; controlled false, tus before true; script entry none, from worker null; crossed the proxy false; proxy lines before the POST 2
+B#1 open up to the attach: 61 requests crossed, tus.min.js crossed 0x, page requested it 0x
+B#1 rows 16927 ms
+  first page: click->POST 1182 ms, ->POST end 2115, ->confirmed 5012; controlled false, tus before false; script entry 5..1174 ms, transfer 32612 B, from worker false; crossed the proxy true; proxy lines before the POST 3
+B#2 open up to the attach: 62 requests crossed, tus.min.js crossed 0x, page requested it 0x
+B#2 rows 17171 ms
+  first page: click->POST 1180 ms, ->POST end 2093, ->confirmed 4903; controlled false, tus before false; script entry 5..1175 ms, transfer 32612 B, from worker false; crossed the proxy true; proxy lines before the POST 3
+A#2 open up to the attach: 63 requests crossed, tus.min.js crossed 1x, page requested it 1x
+A#2 rows 17525 ms
+  first page: click->POST 8 ms, ->POST end 925, ->confirmed 3678; controlled false, tus before true; script entry none, from worker null; crossed the proxy false; proxy lines before the POST 2
+A#3 open up to the attach: 64 requests crossed, tus.min.js crossed 1x, page requested it 1x
+A#3 rows 17486 ms
+  first page: click->POST 7 ms, ->POST end 920, ->confirmed 3715; controlled false, tus before true; script entry none, from worker null; crossed the proxy false; proxy lines before the POST 2
+B#3 open up to the attach: 63 requests crossed, tus.min.js crossed 0x, page requested it 0x
+B#3 rows 16890 ms
+  first page: click->POST 1180 ms, ->POST end 2093, ->confirmed 4847; controlled false, tus before false; script entry 5..1175 ms, transfer 32612 B, from worker false; crossed the proxy true; proxy lines before the POST 3
+
+## Medians (ms, page clock, from the Send click)
+| attach | metric | A | B | B - A |
+| --- | --- | --: | --: | --: |
+| first | postStart | 8 | 1180 | 1172 |
+| first | postEnd | 925 | 2093 | 1168 |
+| first | confirmed | 3715 | 4903 | 1188 |
+first A: tus.min.js crossed the proxy in 0/3; page requested it in 0/3; from the worker in 0/3; page controlled at attach in 0/3
+first B: tus.min.js crossed the proxy in 3/3; page requested it in 3/3; from the worker in 0/3; page controlled at attach in 0/3
+server A: PID 619016 stopped
+server B: PID 619085 stopped

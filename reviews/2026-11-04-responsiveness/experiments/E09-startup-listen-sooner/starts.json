@@ -1,0 +1,1150 @@
+{
+  "experiment": "E09 startup-listen-sooner",
+  "at": "2026-11-04T11:53:34.660Z",
+  "wallMs": 419917,
+  "config": {
+    "a": {
+      "key": "A",
+      "dir": "/home/agent/yap-perf/harness",
+      "port": 5351,
+      "dll": "/home/agent/yap-perf/harness/Yap/bin/Debug/net10.0/Yap.dll",
+      "wwwroot": "/home/agent/yap-perf/harness/Yap/wwwroot",
+      "repoData": "/home/agent/yap-perf/harness/Yap/Data"
+    },
+    "b": {
+      "key": "B",
+      "dir": "/home/agent/yap-perf/exp/09-startup-listen-sooner",
+      "port": 5352,
+      "dll": "/home/agent/yap-perf/exp/09-startup-listen-sooner/Yap/bin/Debug/net10.0/Yap.dll",
+      "wwwroot": "/home/agent/yap-perf/exp/09-startup-listen-sooner/Yap/wwwroot",
+      "repoData": "/home/agent/yap-perf/exp/09-startup-listen-sooner/Yap/Data"
+    },
+    "n": 10,
+    "warmup": 1,
+    "pollMs": 20,
+    "attemptMs": 1000,
+    "holdMs": 15000,
+    "serverArgs": [
+      "--ChatSettings:Persistence:Enabled=true",
+      "--ChatSettings:Persistence:Load:MaxMessagesPerChannel=0",
+      "--ChatSettings:Persistence:Load:MaxDays=0",
+      "--ChatSettings:UploadsPath=uploads",
+      "--ChatSettings:WelcomePageEnabled=false",
+      "--Logging:LogLevel:Microsoft.Hosting.Lifetime=Information",
+      "--Logging:LogLevel:Yap.Services.Admin.UserActionLogService=Information"
+    ],
+    "inflated": {
+      "seedRows": 50702,
+      "inserted": 200000,
+      "rows": 250702,
+      "bytes": 90460160,
+      "madeAt": "2026-11-04T11:51:57.735Z"
+    }
+  },
+  "summary": {
+    "loginMs": {
+      "A": {
+        "n": 10,
+        "median": 3400,
+        "min": 3182,
+        "max": 3873
+      },
+      "B": {
+        "n": 10,
+        "median": 2249,
+        "min": 2018,
+        "max": 3068
+      },
+      "deltaMs": -1151,
+      "deltaPct": -33.9
+    },
+    "shellMs": {
+      "A": {
+        "n": 10,
+        "median": 3400,
+        "min": 3182,
+        "max": 3873
+      },
+      "B": {
+        "n": 10,
+        "median": 2249.5,
+        "min": 2019,
+        "max": 3068
+      },
+      "deltaMs": -1150.5,
+      "deltaPct": -33.8
+    },
+    "bootstrapMs": {
+      "A": {
+        "n": 10,
+        "median": 3484,
+        "min": 3245,
+        "max": 3933
+      },
+      "B": {
+        "n": 10,
+        "median": 2371.5,
+        "min": 2081,
+        "max": 3181
+      },
+      "deltaMs": -1112.5,
+      "deltaPct": -31.9
+    },
+    "listenLineMs": {
+      "A": {
+        "n": 10,
+        "median": 3280,
+        "min": 3060,
+        "max": 3757
+      },
+      "B": {
+        "n": 10,
+        "median": 2122,
+        "min": 1905,
+        "max": 2893
+      },
+      "deltaMs": -1158,
+      "deltaPct": -35.3
+    },
+    "cleanupLineMs": {
+      "A": {
+        "n": 10,
+        "median": 3051,
+        "min": 2840,
+        "max": 3541
+      },
+      "B": {
+        "n": 10,
+        "median": 2916,
+        "min": 2580,
+        "max": 3727
+      },
+      "deltaMs": -135,
+      "deltaPct": -4.4
+    },
+    "cleanupAfterListenMs": {
+      "A": {
+        "n": 10,
+        "median": -224.5,
+        "min": -275,
+        "max": -213
+      },
+      "B": {
+        "n": 10,
+        "median": 751.5,
+        "min": 675,
+        "max": 836
+      },
+      "deltaMs": 976,
+      "deltaPct": -434.7
+    },
+    "stopMs": {
+      "A": {
+        "n": 10,
+        "median": 52,
+        "min": 44,
+        "max": 139
+      },
+      "B": {
+        "n": 10,
+        "median": 45.5,
+        "min": 41,
+        "max": 77
+      },
+      "deltaMs": -6.5,
+      "deltaPct": -12.5
+    }
+  },
+  "samples": [
+    {
+      "label": "warmup1-A",
+      "side": "A",
+      "warmup": true,
+      "port": 5351,
+      "loginMs": 3135,
+      "shellMs": 3135,
+      "bootstrapMs": 3203,
+      "listenLineMs": 3030,
+      "cleanupLineMs": 2816,
+      "cleanupAfterListenMs": -214,
+      "cleanupText": "Action log cleanup: deleted 200000 old + 47641 excess entries",
+      "requestMs": {
+        "login": 98,
+        "shell": 100,
+        "bootstrap": 168
+      },
+      "attempts": {
+        "login": 147,
+        "shell": 146,
+        "bootstrap": 146
+      },
+      "timeouts": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "non200": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "bootstrapUser": "ada",
+      "rowsBefore": 250702,
+      "rowsAtAnswer": 3065,
+      "rowsAtHold": 3065,
+      "rowsAfterExit": 3065,
+      "stopMs": 55,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "issues": [],
+      "log": "/home/agent/yap-perf/results/E09-startup-listen-sooner/logs/warmup1-A.log"
+    },
+    {
+      "label": "warmup1-B",
+      "side": "B",
+      "warmup": true,
+      "port": 5352,
+      "loginMs": 2099,
+      "shellMs": 2099,
+      "bootstrapMs": 2158,
+      "listenLineMs": 1970,
+      "cleanupLineMs": 2634,
+      "cleanupAfterListenMs": 664,
+      "cleanupText": "Action log cleanup: deleted 200000 old + 47641 excess entries",
+      "requestMs": {
+        "login": 111,
+        "shell": 110,
+        "bootstrap": 169
+      },
+      "attempts": {
+        "login": 96,
+        "shell": 96,
+        "bootstrap": 96
+      },
+      "timeouts": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "non200": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "bootstrapUser": "ada",
+      "rowsBefore": 250702,
+      "rowsAtAnswer": 250702,
+      "rowsAtHold": 3065,
+      "rowsAfterExit": 3065,
+      "stopMs": 42,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "issues": [],
+      "log": "/home/agent/yap-perf/results/E09-startup-listen-sooner/logs/warmup1-B.log"
+    },
+    {
+      "label": "01-A1",
+      "side": "A",
+      "warmup": false,
+      "port": 5351,
+      "loginMs": 3612,
+      "shellMs": 3613,
+      "bootstrapMs": 3685,
+      "listenLineMs": 3496,
+      "cleanupLineMs": 3283,
+      "cleanupAfterListenMs": -213,
+      "cleanupText": "Action log cleanup: deleted 200000 old + 47641 excess entries",
+      "requestMs": {
+        "login": 115,
+        "shell": 115,
+        "bootstrap": 187
+      },
+      "attempts": {
+        "login": 168,
+        "shell": 168,
+        "bootstrap": 168
+      },
+      "timeouts": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "non200": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "bootstrapUser": "ada",
+      "rowsBefore": 250702,
+      "rowsAtAnswer": 3065,
+      "rowsAtHold": 3065,
+      "rowsAfterExit": 3065,
+      "stopMs": 44,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "issues": [],
+      "log": "/home/agent/yap-perf/results/E09-startup-listen-sooner/logs/01-A1.log"
+    },
+    {
+      "label": "02-B1",
+      "side": "B",
+      "warmup": false,
+      "port": 5352,
+      "loginMs": 2139,
+      "shellMs": 2139,
+      "bootstrapMs": 2196,
+      "listenLineMs": 2012,
+      "cleanupLineMs": 2760,
+      "cleanupAfterListenMs": 748,
+      "cleanupText": "Action log cleanup: deleted 200000 old + 47641 excess entries",
+      "requestMs": {
+        "login": 115,
+        "shell": 115,
+        "bootstrap": 172
+      },
+      "attempts": {
+        "login": 99,
+        "shell": 98,
+        "bootstrap": 98
+      },
+      "timeouts": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "non200": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "bootstrapUser": "ada",
+      "rowsBefore": 250702,
+      "rowsAtAnswer": 250702,
+      "rowsAtHold": 3065,
+      "rowsAfterExit": 3065,
+      "stopMs": 57,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "issues": [],
+      "log": "/home/agent/yap-perf/results/E09-startup-listen-sooner/logs/02-B1.log"
+    },
+    {
+      "label": "03-B2",
+      "side": "B",
+      "warmup": false,
+      "port": 5352,
+      "loginMs": 2035,
+      "shellMs": 2034,
+      "bootstrapMs": 2110,
+      "listenLineMs": 1905,
+      "cleanupLineMs": 2580,
+      "cleanupAfterListenMs": 675,
+      "cleanupText": "Action log cleanup: deleted 200000 old + 47641 excess entries",
+      "requestMs": {
+        "login": 112,
+        "shell": 111,
+        "bootstrap": 187
+      },
+      "attempts": {
+        "login": 93,
+        "shell": 93,
+        "bootstrap": 93
+      },
+      "timeouts": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "non200": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "bootstrapUser": "ada",
+      "rowsBefore": 250702,
+      "rowsAtAnswer": 250702,
+      "rowsAtHold": 3065,
+      "rowsAfterExit": 3065,
+      "stopMs": 65,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "issues": [],
+      "log": "/home/agent/yap-perf/results/E09-startup-listen-sooner/logs/03-B2.log"
+    },
+    {
+      "label": "04-A2",
+      "side": "A",
+      "warmup": false,
+      "port": 5351,
+      "loginMs": 3182,
+      "shellMs": 3182,
+      "bootstrapMs": 3245,
+      "listenLineMs": 3060,
+      "cleanupLineMs": 2840,
+      "cleanupAfterListenMs": -220,
+      "cleanupText": "Action log cleanup: deleted 200000 old + 47641 excess entries",
+      "requestMs": {
+        "login": 107,
+        "shell": 108,
+        "bootstrap": 171
+      },
+      "attempts": {
+        "login": 150,
+        "shell": 149,
+        "bootstrap": 149
+      },
+      "timeouts": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "non200": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "bootstrapUser": "ada",
+      "rowsBefore": 250702,
+      "rowsAtAnswer": 3064,
+      "rowsAtHold": 3065,
+      "rowsAfterExit": 3065,
+      "stopMs": 49,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "issues": [],
+      "log": "/home/agent/yap-perf/results/E09-startup-listen-sooner/logs/04-A2.log"
+    },
+    {
+      "label": "05-A3",
+      "side": "A",
+      "warmup": false,
+      "port": 5351,
+      "loginMs": 3339,
+      "shellMs": 3339,
+      "bootstrapMs": 3464,
+      "listenLineMs": 3212,
+      "cleanupLineMs": 2937,
+      "cleanupAfterListenMs": -275,
+      "cleanupText": "Action log cleanup: deleted 200000 old + 47641 excess entries",
+      "requestMs": {
+        "login": 130,
+        "shell": 130,
+        "bootstrap": 255
+      },
+      "attempts": {
+        "login": 155,
+        "shell": 155,
+        "bootstrap": 155
+      },
+      "timeouts": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "non200": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "bootstrapUser": "ada",
+      "rowsBefore": 250702,
+      "rowsAtAnswer": 3064,
+      "rowsAtHold": 3065,
+      "rowsAfterExit": 3065,
+      "stopMs": 139,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "issues": [],
+      "log": "/home/agent/yap-perf/results/E09-startup-listen-sooner/logs/05-A3.log"
+    },
+    {
+      "label": "06-B3",
+      "side": "B",
+      "warmup": false,
+      "port": 5352,
+      "loginMs": 3068,
+      "shellMs": 3068,
+      "bootstrapMs": 3181,
+      "listenLineMs": 2893,
+      "cleanupLineMs": 3727,
+      "cleanupAfterListenMs": 834,
+      "cleanupText": "Action log cleanup: deleted 200000 old + 47641 excess entries",
+      "requestMs": {
+        "login": 157,
+        "shell": 157,
+        "bootstrap": 270
+      },
+      "attempts": {
+        "login": 140,
+        "shell": 140,
+        "bootstrap": 140
+      },
+      "timeouts": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "non200": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "bootstrapUser": "ada",
+      "rowsBefore": 250702,
+      "rowsAtAnswer": 250702,
+      "rowsAtHold": 3065,
+      "rowsAfterExit": 3065,
+      "stopMs": 44,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "issues": [],
+      "log": "/home/agent/yap-perf/results/E09-startup-listen-sooner/logs/06-B3.log"
+    },
+    {
+      "label": "07-B4",
+      "side": "B",
+      "warmup": false,
+      "port": 5352,
+      "loginMs": 2287,
+      "shellMs": 2288,
+      "bootstrapMs": 2424,
+      "listenLineMs": 2153,
+      "cleanupLineMs": 2956,
+      "cleanupAfterListenMs": 803,
+      "cleanupText": "Action log cleanup: deleted 200000 old + 47641 excess entries",
+      "requestMs": {
+        "login": 124,
+        "shell": 124,
+        "bootstrap": 261
+      },
+      "attempts": {
+        "login": 105,
+        "shell": 105,
+        "bootstrap": 105
+      },
+      "timeouts": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "non200": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "bootstrapUser": "ada",
+      "rowsBefore": 250702,
+      "rowsAtAnswer": 250702,
+      "rowsAtHold": 3065,
+      "rowsAfterExit": 3065,
+      "stopMs": 44,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "issues": [],
+      "log": "/home/agent/yap-perf/results/E09-startup-listen-sooner/logs/07-B4.log"
+    },
+    {
+      "label": "08-A4",
+      "side": "A",
+      "warmup": false,
+      "port": 5351,
+      "loginMs": 3265,
+      "shellMs": 3266,
+      "bootstrapMs": 3331,
+      "listenLineMs": 3153,
+      "cleanupLineMs": 2923,
+      "cleanupAfterListenMs": -230,
+      "cleanupText": "Action log cleanup: deleted 200000 old + 47641 excess entries",
+      "requestMs": {
+        "login": 106,
+        "shell": 105,
+        "bootstrap": 171
+      },
+      "attempts": {
+        "login": 154,
+        "shell": 154,
+        "bootstrap": 154
+      },
+      "timeouts": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "non200": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "bootstrapUser": "ada",
+      "rowsBefore": 250702,
+      "rowsAtAnswer": 3064,
+      "rowsAtHold": 3065,
+      "rowsAfterExit": 3065,
+      "stopMs": 45,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "issues": [],
+      "log": "/home/agent/yap-perf/results/E09-startup-listen-sooner/logs/08-A4.log"
+    },
+    {
+      "label": "09-A5",
+      "side": "A",
+      "warmup": false,
+      "port": 5351,
+      "loginMs": 3873,
+      "shellMs": 3873,
+      "bootstrapMs": 3933,
+      "listenLineMs": 3757,
+      "cleanupLineMs": 3541,
+      "cleanupAfterListenMs": -216,
+      "cleanupText": "Action log cleanup: deleted 200000 old + 47641 excess entries",
+      "requestMs": {
+        "login": 115,
+        "shell": 114,
+        "bootstrap": 175
+      },
+      "attempts": {
+        "login": 183,
+        "shell": 183,
+        "bootstrap": 183
+      },
+      "timeouts": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "non200": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "bootstrapUser": "ada",
+      "rowsBefore": 250702,
+      "rowsAtAnswer": 3065,
+      "rowsAtHold": 3065,
+      "rowsAfterExit": 3065,
+      "stopMs": 53,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "issues": [],
+      "log": "/home/agent/yap-perf/results/E09-startup-listen-sooner/logs/09-A5.log"
+    },
+    {
+      "label": "10-B5",
+      "side": "B",
+      "warmup": false,
+      "port": 5352,
+      "loginMs": 2211,
+      "shellMs": 2211,
+      "bootstrapMs": 2319,
+      "listenLineMs": 2091,
+      "cleanupLineMs": 2876,
+      "cleanupAfterListenMs": 785,
+      "cleanupText": "Action log cleanup: deleted 200000 old + 47641 excess entries",
+      "requestMs": {
+        "login": 121,
+        "shell": 121,
+        "bootstrap": 229
+      },
+      "attempts": {
+        "login": 102,
+        "shell": 102,
+        "bootstrap": 102
+      },
+      "timeouts": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "non200": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "bootstrapUser": "ada",
+      "rowsBefore": 250702,
+      "rowsAtAnswer": 250702,
+      "rowsAtHold": 3065,
+      "rowsAfterExit": 3065,
+      "stopMs": 77,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "issues": [],
+      "log": "/home/agent/yap-perf/results/E09-startup-listen-sooner/logs/10-B5.log"
+    },
+    {
+      "label": "11-B6",
+      "side": "B",
+      "warmup": false,
+      "port": 5352,
+      "loginMs": 2978,
+      "shellMs": 2977,
+      "bootstrapMs": 3041,
+      "listenLineMs": 2827,
+      "cleanupLineMs": 3663,
+      "cleanupAfterListenMs": 836,
+      "cleanupText": "Action log cleanup: deleted 200000 old + 47641 excess entries",
+      "requestMs": {
+        "login": 139,
+        "shell": 145,
+        "bootstrap": 202
+      },
+      "attempts": {
+        "login": 138,
+        "shell": 137,
+        "bootstrap": 138
+      },
+      "timeouts": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "non200": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "bootstrapUser": "ada",
+      "rowsBefore": 250702,
+      "rowsAtAnswer": 250702,
+      "rowsAtHold": 3065,
+      "rowsAfterExit": 3065,
+      "stopMs": 42,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "issues": [],
+      "log": "/home/agent/yap-perf/results/E09-startup-listen-sooner/logs/11-B6.log"
+    },
+    {
+      "label": "12-A6",
+      "side": "A",
+      "warmup": false,
+      "port": 5351,
+      "loginMs": 3485,
+      "shellMs": 3485,
+      "bootstrapMs": 3552,
+      "listenLineMs": 3364,
+      "cleanupLineMs": 3135,
+      "cleanupAfterListenMs": -229,
+      "cleanupText": "Action log cleanup: deleted 200000 old + 47641 excess entries",
+      "requestMs": {
+        "login": 106,
+        "shell": 105,
+        "bootstrap": 169
+      },
+      "attempts": {
+        "login": 165,
+        "shell": 165,
+        "bootstrap": 165
+      },
+      "timeouts": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "non200": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "bootstrapUser": "ada",
+      "rowsBefore": 250702,
+      "rowsAtAnswer": 3064,
+      "rowsAtHold": 3065,
+      "rowsAfterExit": 3065,
+      "stopMs": 55,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "issues": [],
+      "log": "/home/agent/yap-perf/results/E09-startup-listen-sooner/logs/12-A6.log"
+    },
+    {
+      "label": "13-A7",
+      "side": "A",
+      "warmup": false,
+      "port": 5351,
+      "loginMs": 3562,
+      "shellMs": 3563,
+      "bootstrapMs": 3630,
+      "listenLineMs": 3425,
+      "cleanupLineMs": 3189,
+      "cleanupAfterListenMs": -236,
+      "cleanupText": "Action log cleanup: deleted 200000 old + 47641 excess entries",
+      "requestMs": {
+        "login": 132,
+        "shell": 132,
+        "bootstrap": 199
+      },
+      "attempts": {
+        "login": 166,
+        "shell": 166,
+        "bootstrap": 166
+      },
+      "timeouts": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "non200": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "bootstrapUser": "ada",
+      "rowsBefore": 250702,
+      "rowsAtAnswer": 3065,
+      "rowsAtHold": 3065,
+      "rowsAfterExit": 3065,
+      "stopMs": 51,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "issues": [],
+      "log": "/home/agent/yap-perf/results/E09-startup-listen-sooner/logs/13-A7.log"
+    },
+    {
+      "label": "14-B7",
+      "side": "B",
+      "warmup": false,
+      "port": 5352,
+      "loginMs": 2018,
+      "shellMs": 2019,
+      "bootstrapMs": 2081,
+      "listenLineMs": 1908,
+      "cleanupLineMs": 2606,
+      "cleanupAfterListenMs": 698,
+      "cleanupText": "Action log cleanup: deleted 200000 old + 47641 excess entries",
+      "requestMs": {
+        "login": 106,
+        "shell": 94,
+        "bootstrap": 156
+      },
+      "attempts": {
+        "login": 94,
+        "shell": 94,
+        "bootstrap": 94
+      },
+      "timeouts": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "non200": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "bootstrapUser": "ada",
+      "rowsBefore": 250702,
+      "rowsAtAnswer": 250702,
+      "rowsAtHold": 3065,
+      "rowsAfterExit": 3065,
+      "stopMs": 42,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "issues": [],
+      "log": "/home/agent/yap-perf/results/E09-startup-listen-sooner/logs/14-B7.log"
+    },
+    {
+      "label": "15-B8",
+      "side": "B",
+      "warmup": false,
+      "port": 5352,
+      "loginMs": 2098,
+      "shellMs": 2097,
+      "bootstrapMs": 2162,
+      "listenLineMs": 1989,
+      "cleanupLineMs": 2744,
+      "cleanupAfterListenMs": 755,
+      "cleanupText": "Action log cleanup: deleted 200000 old + 47641 excess entries",
+      "requestMs": {
+        "login": 108,
+        "shell": 107,
+        "bootstrap": 171
+      },
+      "attempts": {
+        "login": 97,
+        "shell": 97,
+        "bootstrap": 97
+      },
+      "timeouts": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "non200": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "bootstrapUser": "ada",
+      "rowsBefore": 250702,
+      "rowsAtAnswer": 250702,
+      "rowsAtHold": 3065,
+      "rowsAfterExit": 3065,
+      "stopMs": 41,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "issues": [],
+      "log": "/home/agent/yap-perf/results/E09-startup-listen-sooner/logs/15-B8.log"
+    },
+    {
+      "label": "16-A8",
+      "side": "A",
+      "warmup": false,
+      "port": 5351,
+      "loginMs": 3275,
+      "shellMs": 3275,
+      "bootstrapMs": 3343,
+      "listenLineMs": 3164,
+      "cleanupLineMs": 2946,
+      "cleanupAfterListenMs": -218,
+      "cleanupText": "Action log cleanup: deleted 200000 old + 47641 excess entries",
+      "requestMs": {
+        "login": 110,
+        "shell": 98,
+        "bootstrap": 165
+      },
+      "attempts": {
+        "login": 155,
+        "shell": 155,
+        "bootstrap": 155
+      },
+      "timeouts": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "non200": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "bootstrapUser": "ada",
+      "rowsBefore": 250702,
+      "rowsAtAnswer": 3064,
+      "rowsAtHold": 3065,
+      "rowsAfterExit": 3065,
+      "stopMs": 64,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "issues": [],
+      "log": "/home/agent/yap-perf/results/E09-startup-listen-sooner/logs/16-A8.log"
+    },
+    {
+      "label": "17-A9",
+      "side": "A",
+      "warmup": false,
+      "port": 5351,
+      "loginMs": 3361,
+      "shellMs": 3361,
+      "bootstrapMs": 3432,
+      "listenLineMs": 3243,
+      "cleanupLineMs": 3003,
+      "cleanupAfterListenMs": -240,
+      "cleanupText": "Action log cleanup: deleted 200000 old + 47641 excess entries",
+      "requestMs": {
+        "login": 104,
+        "shell": 110,
+        "bootstrap": 175
+      },
+      "attempts": {
+        "login": 159,
+        "shell": 158,
+        "bootstrap": 158
+      },
+      "timeouts": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "non200": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "bootstrapUser": "ada",
+      "rowsBefore": 250702,
+      "rowsAtAnswer": 3064,
+      "rowsAtHold": 3065,
+      "rowsAfterExit": 3065,
+      "stopMs": 67,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "issues": [],
+      "log": "/home/agent/yap-perf/results/E09-startup-listen-sooner/logs/17-A9.log"
+    },
+    {
+      "label": "18-B9",
+      "side": "B",
+      "warmup": false,
+      "port": 5352,
+      "loginMs": 2425,
+      "shellMs": 2425,
+      "bootstrapMs": 2503,
+      "listenLineMs": 2298,
+      "cleanupLineMs": 3021,
+      "cleanupAfterListenMs": 723,
+      "cleanupText": "Action log cleanup: deleted 200000 old + 47641 excess entries",
+      "requestMs": {
+        "login": 122,
+        "shell": 122,
+        "bootstrap": 201
+      },
+      "attempts": {
+        "login": 112,
+        "shell": 111,
+        "bootstrap": 111
+      },
+      "timeouts": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "non200": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "bootstrapUser": "ada",
+      "rowsBefore": 250702,
+      "rowsAtAnswer": 250702,
+      "rowsAtHold": 3065,
+      "rowsAfterExit": 3065,
+      "stopMs": 47,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "issues": [],
+      "log": "/home/agent/yap-perf/results/E09-startup-listen-sooner/logs/18-B9.log"
+    },
+    {
+      "label": "19-B10",
+      "side": "B",
+      "warmup": false,
+      "port": 5352,
+      "loginMs": 2550,
+      "shellMs": 2549,
+      "bootstrapMs": 2610,
+      "listenLineMs": 2421,
+      "cleanupLineMs": 3117,
+      "cleanupAfterListenMs": 696,
+      "cleanupText": "Action log cleanup: deleted 200000 old + 47641 excess entries",
+      "requestMs": {
+        "login": 116,
+        "shell": 116,
+        "bootstrap": 176
+      },
+      "attempts": {
+        "login": 119,
+        "shell": 119,
+        "bootstrap": 119
+      },
+      "timeouts": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "non200": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "bootstrapUser": "ada",
+      "rowsBefore": 250702,
+      "rowsAtAnswer": 250702,
+      "rowsAtHold": 3065,
+      "rowsAfterExit": 3065,
+      "stopMs": 66,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "issues": [],
+      "log": "/home/agent/yap-perf/results/E09-startup-listen-sooner/logs/19-B10.log"
+    },
+    {
+      "label": "20-A10",
+      "side": "A",
+      "warmup": false,
+      "port": 5351,
+      "loginMs": 3439,
+      "shellMs": 3439,
+      "bootstrapMs": 3504,
+      "listenLineMs": 3317,
+      "cleanupLineMs": 3099,
+      "cleanupAfterListenMs": -218,
+      "cleanupText": "Action log cleanup: deleted 200000 old + 47641 excess entries",
+      "requestMs": {
+        "login": 107,
+        "shell": 107,
+        "bootstrap": 172
+      },
+      "attempts": {
+        "login": 163,
+        "shell": 163,
+        "bootstrap": 163
+      },
+      "timeouts": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "non200": {
+        "login": 0,
+        "shell": 0,
+        "bootstrap": 0
+      },
+      "bootstrapUser": "ada",
+      "rowsBefore": 250702,
+      "rowsAtAnswer": 3064,
+      "rowsAtHold": 3065,
+      "rowsAfterExit": 3065,
+      "stopMs": 51,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "issues": [],
+      "log": "/home/agent/yap-perf/results/E09-startup-listen-sooner/logs/20-A10.log"
+    }
+  ]
+}

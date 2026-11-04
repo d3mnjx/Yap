@@ -1,0 +1,7234 @@
+{
+ "sides": [
+  {
+   "key": "A",
+   "label": "main",
+   "dir": "/home/agent/yap-perf/harness",
+   "commit": "cb074cfa Tests: perf.mjs measures how responsive Yap feels, build A against build B"
+  },
+  {
+   "key": "B",
+   "label": "E02-lazy-tus",
+   "dir": "/home/agent/yap-perf/exp/02-lazy-tus",
+   "commit": "fdb8b933 Upload: tus.min.js loads at the first upload, not as a script tag in the page"
+  }
+ ],
+ "n": 5,
+ "plan": {
+  "far": [
+   "cold-open",
+   "warm-open"
+  ],
+  "near": [
+   "cold-open",
+   "warm-open"
+  ],
+  "lan": [
+   "cold-open",
+   "warm-open"
+  ]
+ },
+ "wallMs": 254979,
+ "records": [
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "html ms",
+   "value": 1240.6
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "scripts ms",
+   "value": 13865.8
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "bootstrap ms",
+   "value": 14890.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "paint ms",
+   "value": 18469.2
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "socket ms",
+   "value": 17088.3
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "rows ms",
+   "value": 18469.2
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "KB",
+   "value": 814.7
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "wire KB",
+   "value": 1006.2
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "html ms",
+   "value": 1198.7
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "scripts ms",
+   "value": 12951.6
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "bootstrap ms",
+   "value": 13972.3
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "paint ms",
+   "value": 17814.3
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "socket ms",
+   "value": 16231.2
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "rows ms",
+   "value": 17814.3
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "KB",
+   "value": 783.5
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "wire KB",
+   "value": 1006.8
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "heap MB",
+   "value": 1.8
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "html ms",
+   "value": 1191.4
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "scripts ms",
+   "value": 12832.5
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "bootstrap ms",
+   "value": 13867.3
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "paint ms",
+   "value": 17732.8
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "socket ms",
+   "value": 16151.7
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "rows ms",
+   "value": 17732.8
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "KB",
+   "value": 783.5
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "wire KB",
+   "value": 1006.8
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "heap MB",
+   "value": 1.8
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "html ms",
+   "value": 1194.4
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "scripts ms",
+   "value": 13740.5
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "bootstrap ms",
+   "value": 14763.6
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "paint ms",
+   "value": 18353.2
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "socket ms",
+   "value": 16962.1
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "rows ms",
+   "value": 18353.2
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "KB",
+   "value": 814.7
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "wire KB",
+   "value": 1006.2
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "html ms",
+   "value": 1192.7
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "scripts ms",
+   "value": 13723.3
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "bootstrap ms",
+   "value": 14753.7
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "paint ms",
+   "value": 18252.4
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "socket ms",
+   "value": 16950.3
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "rows ms",
+   "value": 18252.4
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "KB",
+   "value": 814.7
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "wire KB",
+   "value": 1006.2
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "html ms",
+   "value": 1195.1
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "scripts ms",
+   "value": 12969.8
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "bootstrap ms",
+   "value": 13998.2
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "paint ms",
+   "value": 17836.7
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "socket ms",
+   "value": 16456.4
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "rows ms",
+   "value": 17836.8
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "KB",
+   "value": 783.5
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "wire KB",
+   "value": 1006.8
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "heap MB",
+   "value": 1.8
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "html ms",
+   "value": 1190.5
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "scripts ms",
+   "value": 12895.4
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "bootstrap ms",
+   "value": 13919.3
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "paint ms",
+   "value": 17792.7
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "socket ms",
+   "value": 16208.7
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "rows ms",
+   "value": 17792.7
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "KB",
+   "value": 783.5
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "wire KB",
+   "value": 1006.8
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "heap MB",
+   "value": 1.8
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "html ms",
+   "value": 1193.1
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "scripts ms",
+   "value": 13474.5
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "bootstrap ms",
+   "value": 14497.8
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "paint ms",
+   "value": 18083.3
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "socket ms",
+   "value": 16696.7
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "rows ms",
+   "value": 18083.3
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "KB",
+   "value": 814.7
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "wire KB",
+   "value": 1006.2
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "html ms",
+   "value": 1190.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "scripts ms",
+   "value": 13445
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "bootstrap ms",
+   "value": 14466.8
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "paint ms",
+   "value": 18050.3
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "socket ms",
+   "value": 16663.5
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "rows ms",
+   "value": 18050.3
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "KB",
+   "value": 814.7
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "wire KB",
+   "value": 1006.2
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "html ms",
+   "value": 1190.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "scripts ms",
+   "value": 13059.1
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "bootstrap ms",
+   "value": 14083.1
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "paint ms",
+   "value": 17944.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "socket ms",
+   "value": 16540.5
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "rows ms",
+   "value": 17944.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "KB",
+   "value": 783.5
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "wire KB",
+   "value": 1006.8
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 1
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 55
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "heap MB",
+   "value": 1.8
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "html ms",
+   "value": 3.7
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "scripts ms",
+   "value": 53.7
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "bootstrap ms",
+   "value": 3038.6
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "paint ms",
+   "value": 116.3
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "socket ms",
+   "value": 1878.2
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "rows ms",
+   "value": 3035.2
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "cached",
+   "value": 59
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "wire requests",
+   "value": 3
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "wire KB",
+   "value": 35.7
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "heap MB",
+   "value": 2
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "html ms",
+   "value": 2.5
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "scripts ms",
+   "value": 51.5
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "bootstrap ms",
+   "value": 3028.5
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "paint ms",
+   "value": 86
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "socket ms",
+   "value": 1871.9
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "rows ms",
+   "value": 3025.4
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "cached",
+   "value": 58
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "wire requests",
+   "value": 3
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "wire KB",
+   "value": 35.7
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "heap MB",
+   "value": 1.8
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "html ms",
+   "value": 2.3
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "scripts ms",
+   "value": 22
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "bootstrap ms",
+   "value": 3003.1
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "paint ms",
+   "value": 64.4
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "socket ms",
+   "value": 1847.7
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "rows ms",
+   "value": 3000.3
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "cached",
+   "value": 58
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "wire requests",
+   "value": 3
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "wire KB",
+   "value": 35.7
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "html ms",
+   "value": 2.2
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "scripts ms",
+   "value": 29.6
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "bootstrap ms",
+   "value": 3010.1
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "paint ms",
+   "value": 62.8
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "socket ms",
+   "value": 1849.3
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "rows ms",
+   "value": 3007.1
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "cached",
+   "value": 59
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "wire requests",
+   "value": 3
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "wire KB",
+   "value": 35.7
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "heap MB",
+   "value": 2.1
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "html ms",
+   "value": 1.8
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "scripts ms",
+   "value": 19.2
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "bootstrap ms",
+   "value": 3002
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "paint ms",
+   "value": 55
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "socket ms",
+   "value": 1840.2
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "rows ms",
+   "value": 2997.2
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "cached",
+   "value": 59
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "wire requests",
+   "value": 3
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "wire KB",
+   "value": 35.7
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "heap MB",
+   "value": 2.1
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "html ms",
+   "value": 3.3
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "scripts ms",
+   "value": 32.9
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "bootstrap ms",
+   "value": 3017.9
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "paint ms",
+   "value": 69.8
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "socket ms",
+   "value": 1852.6
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "rows ms",
+   "value": 3012.4
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "cached",
+   "value": 58
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "wire requests",
+   "value": 3
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "wire KB",
+   "value": 35.7
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "html ms",
+   "value": 3.6
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "scripts ms",
+   "value": 26.6
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "bootstrap ms",
+   "value": 3010.4
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "paint ms",
+   "value": 72.8
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "socket ms",
+   "value": 1850.3
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "rows ms",
+   "value": 3006.1
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "cached",
+   "value": 58
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "wire requests",
+   "value": 3
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "wire KB",
+   "value": 35.7
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "html ms",
+   "value": 2.8
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "scripts ms",
+   "value": 30.6
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "bootstrap ms",
+   "value": 3009.8
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "paint ms",
+   "value": 65.1
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "socket ms",
+   "value": 1849.1
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "rows ms",
+   "value": 3006.7
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "cached",
+   "value": 59
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "wire requests",
+   "value": 3
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "wire KB",
+   "value": 35.7
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "heap MB",
+   "value": 2.1
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "html ms",
+   "value": 3
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "scripts ms",
+   "value": 54.2
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "bootstrap ms",
+   "value": 3044.4
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "paint ms",
+   "value": 90.9
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "socket ms",
+   "value": 1876.8
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "rows ms",
+   "value": 3040.8
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "cached",
+   "value": 59
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "wire requests",
+   "value": 3
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "wire KB",
+   "value": 35.7
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "heap MB",
+   "value": 2.1
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "html ms",
+   "value": 2.5
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "scripts ms",
+   "value": 25.7
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "bootstrap ms",
+   "value": 3005.3
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "paint ms",
+   "value": 63.9
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "socket ms",
+   "value": 1844
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "rows ms",
+   "value": 3001.8
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "cached",
+   "value": 58
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "wire requests",
+   "value": 3
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "wire KB",
+   "value": 35.7
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "heap MB",
+   "value": 3.3
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "html ms",
+   "value": 80.4
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "scripts ms",
+   "value": 1000
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "bootstrap ms",
+   "value": 1126.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "paint ms",
+   "value": 1409.4
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "socket ms",
+   "value": 1268.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "rows ms",
+   "value": 1409.4
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "KB",
+   "value": 814.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "wire KB",
+   "value": 1006.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "html ms",
+   "value": 82.6
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "scripts ms",
+   "value": 1012.4
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "bootstrap ms",
+   "value": 1139.8
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "paint ms",
+   "value": 1439.3
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "socket ms",
+   "value": 1297.1
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "rows ms",
+   "value": 1439.3
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "KB",
+   "value": 783.5
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "wire KB",
+   "value": 1006.5
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "heap MB",
+   "value": 1.8
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "html ms",
+   "value": 81.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "scripts ms",
+   "value": 991.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "bootstrap ms",
+   "value": 1071.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "paint ms",
+   "value": 1352.8
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "socket ms",
+   "value": 1215.6
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "rows ms",
+   "value": 1352.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "KB",
+   "value": 783.5
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "wire KB",
+   "value": 1007.1
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "heap MB",
+   "value": 1.8
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "html ms",
+   "value": 81.3
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "scripts ms",
+   "value": 961
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "bootstrap ms",
+   "value": 1083.4
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "paint ms",
+   "value": 1361.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "socket ms",
+   "value": 1223.5
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "rows ms",
+   "value": 1361.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "cached",
+   "value": 1
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "KB",
+   "value": 769.6
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "wire KB",
+   "value": 1006.5
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "html ms",
+   "value": 78.2
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "scripts ms",
+   "value": 927.1
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "bootstrap ms",
+   "value": 1045.6
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "paint ms",
+   "value": 1329.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "socket ms",
+   "value": 1189.8
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "rows ms",
+   "value": 1329.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "KB",
+   "value": 814.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "wire KB",
+   "value": 1006.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "html ms",
+   "value": 81.2
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "scripts ms",
+   "value": 979.6
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "bootstrap ms",
+   "value": 1058.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "paint ms",
+   "value": 1340.2
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "socket ms",
+   "value": 1198.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "rows ms",
+   "value": 1340.2
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "KB",
+   "value": 783.5
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "wire requests",
+   "value": 71
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "wire KB",
+   "value": 1006.3
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "heap MB",
+   "value": 1.8
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "html ms",
+   "value": 80.5
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "scripts ms",
+   "value": 911.1
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "bootstrap ms",
+   "value": 1030.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "paint ms",
+   "value": 1317.5
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "socket ms",
+   "value": 1180.3
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "rows ms",
+   "value": 1317.5
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "KB",
+   "value": 783.5
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "wire KB",
+   "value": 1007.1
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "heap MB",
+   "value": 1.8
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "html ms",
+   "value": 77.6
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "scripts ms",
+   "value": 1009.4
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "bootstrap ms",
+   "value": 1090.2
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "paint ms",
+   "value": 1382.8
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "socket ms",
+   "value": 1240.4
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "rows ms",
+   "value": 1382.8
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "KB",
+   "value": 814.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "wire KB",
+   "value": 1006.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "html ms",
+   "value": 79.2
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "scripts ms",
+   "value": 991
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "bootstrap ms",
+   "value": 1117.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "paint ms",
+   "value": 1396.5
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "socket ms",
+   "value": 1258.4
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "rows ms",
+   "value": 1396.5
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "cached",
+   "value": 1
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "KB",
+   "value": 769.6
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "wire KB",
+   "value": 1006.5
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "html ms",
+   "value": 82.8
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "scripts ms",
+   "value": 933.1
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "bootstrap ms",
+   "value": 1015.5
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "paint ms",
+   "value": 1330.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "socket ms",
+   "value": 1160.2
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "rows ms",
+   "value": 1330.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "KB",
+   "value": 783.5
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "wire KB",
+   "value": 1013.2
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 1
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 53
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "heap MB",
+   "value": 1.8
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "html ms",
+   "value": 11.2
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "scripts ms",
+   "value": 112.6
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "bootstrap ms",
+   "value": 434.5
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "paint ms",
+   "value": 209.9
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "socket ms",
+   "value": 301.4
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "rows ms",
+   "value": 414.1
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "cached",
+   "value": 59
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "wire requests",
+   "value": 2
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "wire KB",
+   "value": 28.5
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 1
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 67
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "html ms",
+   "value": 7
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "scripts ms",
+   "value": 79.2
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "bootstrap ms",
+   "value": 358.7
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "paint ms",
+   "value": 127.4
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "socket ms",
+   "value": 216.8
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "rows ms",
+   "value": 354
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "cached",
+   "value": 58
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "wire requests",
+   "value": 2
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "wire KB",
+   "value": 28.7
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "heap MB",
+   "value": 1.8
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "html ms",
+   "value": 3.6
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "scripts ms",
+   "value": 29.4
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "bootstrap ms",
+   "value": 294.9
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "paint ms",
+   "value": 76.8
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "socket ms",
+   "value": 163.2
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "rows ms",
+   "value": 291.5
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "cached",
+   "value": 58
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "wire requests",
+   "value": 2
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "wire KB",
+   "value": 28.7
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "html ms",
+   "value": 3.4
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "scripts ms",
+   "value": 31.3
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "bootstrap ms",
+   "value": 300.8
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "paint ms",
+   "value": 70.7
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "socket ms",
+   "value": 165.4
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "rows ms",
+   "value": 297.6
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "cached",
+   "value": 59
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "wire requests",
+   "value": 2
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "wire KB",
+   "value": 28.7
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "heap MB",
+   "value": 2.1
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "html ms",
+   "value": 2.2
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "scripts ms",
+   "value": 24.7
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "bootstrap ms",
+   "value": 284.4
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "paint ms",
+   "value": 61
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "socket ms",
+   "value": 156.9
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "rows ms",
+   "value": 281.5
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "cached",
+   "value": 59
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "wire requests",
+   "value": 2
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "wire KB",
+   "value": 28.7
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "heap MB",
+   "value": 2.1
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "html ms",
+   "value": 2.5
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "scripts ms",
+   "value": 25.7
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "bootstrap ms",
+   "value": 298
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "paint ms",
+   "value": 58.7
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "socket ms",
+   "value": 159.4
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "rows ms",
+   "value": 293.8
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "cached",
+   "value": 58
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "wire requests",
+   "value": 2
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "wire KB",
+   "value": 28.7
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "html ms",
+   "value": 3.1
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "scripts ms",
+   "value": 22.3
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "bootstrap ms",
+   "value": 293.8
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "paint ms",
+   "value": 63.6
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "socket ms",
+   "value": 160.3
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "rows ms",
+   "value": 290.8
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "cached",
+   "value": 58
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "wire requests",
+   "value": 2
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "wire KB",
+   "value": 28.7
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "html ms",
+   "value": 2.2
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "scripts ms",
+   "value": 24.9
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "bootstrap ms",
+   "value": 287.6
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "paint ms",
+   "value": 57.2
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "socket ms",
+   "value": 157.8
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "rows ms",
+   "value": 284.8
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "cached",
+   "value": 59
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "wire requests",
+   "value": 2
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "wire KB",
+   "value": 28.7
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "heap MB",
+   "value": 2.1
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "html ms",
+   "value": 2.2
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "scripts ms",
+   "value": 23.8
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "bootstrap ms",
+   "value": 288.4
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "paint ms",
+   "value": 64.2
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "socket ms",
+   "value": 161.3
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "rows ms",
+   "value": 285.3
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "cached",
+   "value": 59
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "wire requests",
+   "value": 2
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "wire KB",
+   "value": 28.7
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "heap MB",
+   "value": 2.1
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "html ms",
+   "value": 5.6
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "scripts ms",
+   "value": 25.1
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "bootstrap ms",
+   "value": 289.7
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "paint ms",
+   "value": 67.7
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "socket ms",
+   "value": 159.8
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "rows ms",
+   "value": 286.3
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "cached",
+   "value": 58
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "wire requests",
+   "value": 2
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "wire KB",
+   "value": 28.7
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "html ms",
+   "value": 4.3
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "scripts ms",
+   "value": 81.1
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "bootstrap ms",
+   "value": 97.8
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "paint ms",
+   "value": 158.7
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "socket ms",
+   "value": 127.5
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "rows ms",
+   "value": 158.7
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "KB",
+   "value": 814.7
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "html ms",
+   "value": 4.2
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "scripts ms",
+   "value": 80.2
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "bootstrap ms",
+   "value": 98
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "paint ms",
+   "value": 161.3
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "socket ms",
+   "value": 127
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "rows ms",
+   "value": 161.3
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "KB",
+   "value": 783.5
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "heap MB",
+   "value": 1.7
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "html ms",
+   "value": 4.2
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "scripts ms",
+   "value": 75.1
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "bootstrap ms",
+   "value": 90.9
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "paint ms",
+   "value": 156.1
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "socket ms",
+   "value": 120
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "rows ms",
+   "value": 156.1
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "KB",
+   "value": 783.5
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "heap MB",
+   "value": 1.7
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "html ms",
+   "value": 3.8
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "scripts ms",
+   "value": 74.5
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "bootstrap ms",
+   "value": 92.8
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "paint ms",
+   "value": 167.3
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "socket ms",
+   "value": 125
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "rows ms",
+   "value": 167.3
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "KB",
+   "value": 814.7
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "html ms",
+   "value": 3
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "scripts ms",
+   "value": 75
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "bootstrap ms",
+   "value": 91.4
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "paint ms",
+   "value": 155.2
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "socket ms",
+   "value": 119.6
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "rows ms",
+   "value": 155.2
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "KB",
+   "value": 814.7
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "html ms",
+   "value": 3.1
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "scripts ms",
+   "value": 75.8
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "bootstrap ms",
+   "value": 97.2
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "paint ms",
+   "value": 173.1
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "socket ms",
+   "value": 137.7
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "rows ms",
+   "value": 173.1
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "KB",
+   "value": 783.5
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "html ms",
+   "value": 4.8
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "scripts ms",
+   "value": 78.9
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "bootstrap ms",
+   "value": 96.7
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "paint ms",
+   "value": 172.9
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "socket ms",
+   "value": 130.1
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "rows ms",
+   "value": 172.9
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "KB",
+   "value": 783.5
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "heap MB",
+   "value": 1.7
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "html ms",
+   "value": 3.2
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "scripts ms",
+   "value": 106.7
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "bootstrap ms",
+   "value": 125.9
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "paint ms",
+   "value": 222.9
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "socket ms",
+   "value": 168.8
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "rows ms",
+   "value": 222.9
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "KB",
+   "value": 814.7
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "heap MB",
+   "value": 2
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "html ms",
+   "value": 3.6
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "scripts ms",
+   "value": 77.3
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "bootstrap ms",
+   "value": 98.5
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "paint ms",
+   "value": 177.2
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "socket ms",
+   "value": 138.7
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "rows ms",
+   "value": 177.2
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "KB",
+   "value": 814.7
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "heap MB",
+   "value": 2
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "html ms",
+   "value": 3.6
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "scripts ms",
+   "value": 97.1
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "bootstrap ms",
+   "value": 118.2
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "paint ms",
+   "value": 229.6
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "socket ms",
+   "value": 167.4
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "rows ms",
+   "value": 229.6
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "KB",
+   "value": 783.5
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "heap MB",
+   "value": 1.8
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "html ms",
+   "value": 4.4
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "scripts ms",
+   "value": 70.9
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "bootstrap ms",
+   "value": 154.3
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "paint ms",
+   "value": 107.2
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "socket ms",
+   "value": 85.8
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "rows ms",
+   "value": 139.2
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "cached",
+   "value": 59
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "html ms",
+   "value": 2.8
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "scripts ms",
+   "value": 61.1
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "bootstrap ms",
+   "value": 153.2
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "paint ms",
+   "value": 120.8
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "socket ms",
+   "value": 82.1
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "rows ms",
+   "value": 120.8
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "requests",
+   "value": 58
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "cached",
+   "value": 57
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 1,
+   "metric": "heap MB",
+   "value": 1.8
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "html ms",
+   "value": 2.4
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "scripts ms",
+   "value": 25.5
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "bootstrap ms",
+   "value": 86.1
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "paint ms",
+   "value": 58.1
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "socket ms",
+   "value": 37.4
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "rows ms",
+   "value": 75.8
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "cached",
+   "value": 58
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 2,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "html ms",
+   "value": 2.3
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "scripts ms",
+   "value": 27.7
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "bootstrap ms",
+   "value": 101
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "paint ms",
+   "value": 66.9
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "socket ms",
+   "value": 39.6
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "rows ms",
+   "value": 90.1
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "cached",
+   "value": 59
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "heap MB",
+   "value": 2.1
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "html ms",
+   "value": 3.2
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "scripts ms",
+   "value": 38.1
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "bootstrap ms",
+   "value": 114.5
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "paint ms",
+   "value": 97
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "socket ms",
+   "value": 47.3
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "rows ms",
+   "value": 97
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "cached",
+   "value": 59
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "heap MB",
+   "value": 2.1
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "html ms",
+   "value": 2.8
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "scripts ms",
+   "value": 33.2
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "bootstrap ms",
+   "value": 126.7
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "paint ms",
+   "value": 113.7
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "socket ms",
+   "value": 52.5
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "rows ms",
+   "value": 113.7
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "cached",
+   "value": 58
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 3,
+   "metric": "heap MB",
+   "value": 1.8
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "html ms",
+   "value": 2.7
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "scripts ms",
+   "value": 25.5
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "bootstrap ms",
+   "value": 89.4
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "paint ms",
+   "value": 60.8
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "socket ms",
+   "value": 37.6
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "rows ms",
+   "value": 78.9
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "cached",
+   "value": 58
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 4,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "html ms",
+   "value": 5.7
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "scripts ms",
+   "value": 27.1
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "bootstrap ms",
+   "value": 106.3
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "paint ms",
+   "value": 64.5
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "socket ms",
+   "value": 37.8
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "rows ms",
+   "value": 91.9
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "cached",
+   "value": 59
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "heap MB",
+   "value": 2.1
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "html ms",
+   "value": 3.1
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "scripts ms",
+   "value": 50.1
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "bootstrap ms",
+   "value": 117.6
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "paint ms",
+   "value": 87.7
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "socket ms",
+   "value": 63
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "rows ms",
+   "value": 107
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "cached",
+   "value": 59
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "heap MB",
+   "value": 2.1
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "html ms",
+   "value": 2.2
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "scripts ms",
+   "value": 24.6
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "bootstrap ms",
+   "value": 89.2
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "paint ms",
+   "value": 61.8
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "socket ms",
+   "value": 37.9
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "rows ms",
+   "value": 79.5
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "requests",
+   "value": 59
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "cached",
+   "value": 58
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "KB",
+   "value": 2.9
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "warm-open",
+   "side": "B",
+   "label": "E02-lazy-tus",
+   "rep": 5,
+   "metric": "heap MB",
+   "value": 1.9
+  }
+ ]
+}

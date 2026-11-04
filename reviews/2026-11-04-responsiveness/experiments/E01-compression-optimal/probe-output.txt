@@ -1,0 +1,20 @@
+server: /home/agent/yap-perf/harness/Yap/bin/Debug/net10.0/Yap.dll on http://127.0.0.1:5313, root /tmp/claude-1000/-d-PROJECTS-Yap/6e990ba7-f0bf-4ee7-802f-7a4cb4edeb8e/scratchpad/measure-01-compression-optimal/probe-roots/root-QoJdEj, up after 870 ms
+server: /home/agent/yap-perf/exp/01-compression-optimal/Yap/bin/Debug/net10.0/Yap.dll on http://127.0.0.1:5314, root /tmp/claude-1000/-d-PROJECTS-Yap/6e990ba7-f0bf-4ee7-802f-7a4cb4edeb8e/scratchpad/measure-01-compression-optimal/probe-roots/root-uQgsxM, up after 634 ms
+Bytes downloaded (curl -s -H "Accept-Encoding: <enc>" -o /dev/null -w "%{size_download} %{http_code}")
+
+| path | status A/B | identity bytes | br A (Fastest) | br B (Optimal) | br delta | gzip A | gzip B |
+| --- | --- | --: | --: | --: | --: | --: | --: |
+| /app.css | 200/200 | 27302 | 10328 | 8922 | -1406 (-13.6%) | 12161 | 8795 |
+| /js/main.js | 200/200 | 9362 | 4093 | 3673 | -420 (-10.3%) | 5034 | 3639 |
+| /lib/signalr.min.js | 200/200 | 47953 | 18230 | 14370 | -3860 (-21.2%) | 19843 | 14077 |
+| /login | 200/200 | 102599 | 34576 | 22391 | -12185 (-35.2%) | 32701 | 22804 |
+| total | | 187216 | 67227 | 49356 | -17871 (-26.6%) | 69739 | 49315 |
+
+Request time on loopback, ms (curl time_total; 200 requests per cell, A and B alternating, after 50 warm-up requests per path)
+
+| path | encoding | A median | B median | delta | A p90 | B p90 |
+| --- | --- | --: | --: | --: | --: | --: |
+| /login | br | 1.51 | 2.00 | +0.49 | 3.88 | 4.65 |
+| /login | identity | 0.96 | 0.86 | -0.09 | 1.92 | 1.61 |
+| /app.css | br | 0.54 | 0.77 | +0.23 | 0.81 | 1.04 |
+| /app.css | identity | 0.40 | 0.39 | -0.01 | 0.64 | 0.53 |

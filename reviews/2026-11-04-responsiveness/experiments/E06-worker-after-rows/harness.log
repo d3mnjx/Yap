@@ -1,0 +1,285 @@
+server: /home/agent/yap-perf/harness/Yap/bin/Debug/net10.0/Yap.dll on http://127.0.0.1:5331, root /home/agent/yap-perf/runs/root-Amc26R, up after 4145 ms
+server: /home/agent/yap-perf/exp/06-worker-after-rows/Yap/bin/Debug/net10.0/Yap.dll on http://127.0.0.1:5332, root /home/agent/yap-perf/runs/root-ZDi1wS, up after 3376 ms
+
+== far (900 ms round trip, 1 Mbit/s)
+  far cold-open A#1: html ms 1201, scripts ms 13445, bootstrap ms 14473, paint ms 18081
+  far cold-open B#1: html ms 1193, scripts ms 13705, bootstrap ms 14718, paint ms 17709
+  far cold-open B#2: html ms 1190, scripts ms 13449, bootstrap ms 14434, paint ms 17423
+  far cold-open A#2: html ms 1191, scripts ms 13692, bootstrap ms 14715, paint ms 18292
+  far cold-open A#3: html ms 1189, scripts ms 13403, bootstrap ms 14427, paint ms 18036
+  far cold-open B#3: html ms 1190, scripts ms 13429, bootstrap ms 14451, paint ms 17443
+  far cold-open B#4: html ms 1188, scripts ms 13507, bootstrap ms 14532, paint ms 17531
+  far cold-open A#4: html ms 1197, scripts ms 13480, bootstrap ms 14500, paint ms 18004
+  far cold-open A#5: html ms 1190, scripts ms 13513, bootstrap ms 14539, paint ms 18129
+  far cold-open B#5: html ms 1194, scripts ms 13407, bootstrap ms 14428, paint ms 17422
+  (cold-open: 2 min 59 s)
+  far warm-open A#1: html ms 4.5, scripts ms 62.6, bootstrap ms 3041, paint ms 106
+  far warm-open B#1: html ms 2.6, scripts ms 48, bootstrap ms 3028, paint ms 76.4
+  far warm-open B#2: html ms 2.5, scripts ms 24, bootstrap ms 2997, paint ms 56
+  far warm-open A#2: html ms 2.5, scripts ms 28.9, bootstrap ms 3017, paint ms 68.6
+  far warm-open A#3: html ms 6.6, scripts ms 28.9, bootstrap ms 3019, paint ms 80.4
+  far warm-open B#3: html ms 2.8, scripts ms 51.7, bootstrap ms 3026, paint ms 88.8
+  far warm-open B#4: html ms 2.7, scripts ms 20.6, bootstrap ms 3006, paint ms 63
+  far warm-open A#4: html ms 2.5, scripts ms 59.1, bootstrap ms 3050, paint ms 107
+  far warm-open A#5: html ms 4, scripts ms 40, bootstrap ms 3021, paint ms 97.1
+  far warm-open B#5: html ms 6.6, scripts ms 35, bootstrap ms 3022, paint ms 87.8
+  (warm-open: 0 min 33 s)
+
+== near (60 ms round trip, 20 Mbit/s)
+  near cold-open A#1: html ms 80.5, scripts ms 961, bootstrap ms 1098, paint ms 1399
+  near cold-open B#1: html ms 84.1, scripts ms 991, bootstrap ms 1084, paint ms 1372
+  near cold-open B#2: html ms 82.8, scripts ms 955, bootstrap ms 1038, paint ms 1326
+  near cold-open A#2: html ms 79.2, scripts ms 1023, bootstrap ms 1145, paint ms 1428
+  near cold-open A#3: html ms 83.6, scripts ms 984, bootstrap ms 1103, paint ms 1389
+  near cold-open B#3: html ms 79.7, scripts ms 917, bootstrap ms 1045, paint ms 1329
+  near cold-open B#4: html ms 80.9, scripts ms 987, bootstrap ms 1111, paint ms 1393
+  near cold-open A#4: html ms 79.1, scripts ms 1019, bootstrap ms 1138, paint ms 1456
+  near cold-open A#5: html ms 78.3, scripts ms 981, bootstrap ms 1063, paint ms 1361
+  near cold-open B#5: html ms 81.6, scripts ms 898, bootstrap ms 982, paint ms 1260
+  (cold-open: 0 min 15 s)
+  near warm-open A#1: html ms 4.4, scripts ms 63.8, bootstrap ms 342, paint ms 104
+  near warm-open B#1: html ms 2.4, scripts ms 61.8, bootstrap ms 327, paint ms 93.1
+  near warm-open B#2: html ms 2.3, scripts ms 29.2, bootstrap ms 292, paint ms 61.4
+  near warm-open A#2: html ms 2.5, scripts ms 30.5, bootstrap ms 299, paint ms 60.3
+  near warm-open A#3: html ms 2.1, scripts ms 18.4, bootstrap ms 290, paint ms 52.3
+  near warm-open B#3: html ms 2.5, scripts ms 25.8, bootstrap ms 293, paint ms 55.9
+  near warm-open B#4: html ms 2.1, scripts ms 29, bootstrap ms 293, paint ms 60.8
+  near warm-open A#4: html ms 2.4, scripts ms 27.3, bootstrap ms 292, paint ms 58.1
+  near warm-open A#5: html ms 4.6, scripts ms 27.2, bootstrap ms 300, paint ms 70.3
+  near warm-open B#5: html ms 2.7, scripts ms 35.8, bootstrap ms 299, paint ms 82.6
+  (warm-open: 0 min 6 s)
+
+== lan (no proxy: the server and the page)
+  lan cold-open A#1: html ms 3.8, scripts ms 76.5, bootstrap ms 93.5, paint ms 149
+  lan cold-open B#1: html ms 4, scripts ms 62.9, bootstrap ms 78.2, paint ms 133
+  lan cold-open B#2: html ms 4.5, scripts ms 78.8, bootstrap ms 93.6, paint ms 150
+  lan cold-open A#2: html ms 3.6, scripts ms 79.7, bootstrap ms 98.1, paint ms 163
+  lan cold-open A#3: html ms 3.5, scripts ms 82.5, bootstrap ms 97.7, paint ms 164
+  lan cold-open B#3: html ms 2.9, scripts ms 65.9, bootstrap ms 79.7, paint ms 133
+  lan cold-open B#4: html ms 3.5, scripts ms 66.1, bootstrap ms 81.2, paint ms 139
+  lan cold-open A#4: html ms 3.7, scripts ms 72.6, bootstrap ms 89.9, paint ms 148
+  lan cold-open A#5: html ms 3.3, scripts ms 70.7, bootstrap ms 86.5, paint ms 152
+  lan cold-open B#5: html ms 3.2, scripts ms 66.4, bootstrap ms 78.7, paint ms 135
+  (cold-open: 0 min 2 s)
+  lan warm-open A#1: html ms 2.2, scripts ms 59.1, bootstrap ms 133, paint ms 93.5
+  lan warm-open B#1: html ms 2.4, scripts ms 59.9, bootstrap ms 162, paint ms 142
+  lan warm-open B#2: html ms 6, scripts ms 65.2, bootstrap ms 143, paint ms 108
+  lan warm-open A#2: html ms 2.4, scripts ms 28.5, bootstrap ms 135, paint ms 90
+  lan warm-open A#3: html ms 4.3, scripts ms 46.4, bootstrap ms 124, paint ms 93.7
+  lan warm-open B#3: html ms 4.1, scripts ms 32.8, bootstrap ms 139, paint ms 93.6
+  lan warm-open B#4: html ms 4.7, scripts ms 27.1, bootstrap ms 109, paint ms 72.7
+  lan warm-open A#4: html ms 2.7, scripts ms 26.2, bootstrap ms 95.4, paint ms 64.7
+  lan warm-open A#5: html ms 2.3, scripts ms 26.2, bootstrap ms 70.1, paint ms 66.4
+  lan warm-open B#5: html ms 2.7, scripts ms 28.5, bootstrap ms 95.4, paint ms 66.6
+  (warm-open: 0 min 4 s)
+
+# Yap responsiveness: A = main, B = E06-worker-after-rows
+
+2026-11-04 11:52 UTC. Wall time 4 min 15 s. 5 repetitions.
+
+- A (main): /home/agent/yap-perf/harness, cb074cfa Tests: perf.mjs measures how responsive Yap feels, build A against build B; the server answered 4145 ms after its start (the seed loads into memory first).
+- B (E06-worker-after-rows): /home/agent/yap-perf/exp/06-worker-after-rows, 273573e8 Worker: a first visit registers it after the hub's first sync, not at script start; the server answered 3376 ms after its start (the seed loads into memory first).
+- Seed: 50000 messages, 2814 reactions, 50 pictures, 20 GIFs (/home/agent/yap-perf/seed, built 2026-11-04T09:55:06.645Z). The person: ada.
+- Times in ms. Opens: phases from the navigation start; the other journeys: from the click, the key or the scroll, in the page's clock.
+
+## far (900 ms round trip, 1 Mbit/s)
+
+Journeys: cold-open, warm-open.
+
+| journey | metric | A: main | B: E06-worker-after-rows | Δ | Δ % |
+| --- | --- | --: | --: | --: | --: |
+| cold-open | html ms | 1191 | 1190 | -0.7 | -0.1% |
+| cold-open | scripts ms | 13480 | 13449 | -30.2 | -0.2% |
+| cold-open | bootstrap ms | 14500 | 14451 | -48.9 | -0.3% |
+| cold-open | paint ms | 18081 | 17443 | -638 | -3.5% |
+| cold-open | socket ms | 16705 | 16277 | -428 | -2.6% |
+| cold-open | rows ms | 18081 | 17443 | -638 | -3.5% |
+| cold-open | requests | 60 | 60 | +0 | +0.0% |
+| cold-open | cached | 0 | 0 | +0 | — |
+| cold-open | KB | 815 | 815 | +0.4 | +0.0% |
+| cold-open | wire requests | 72 | 63 | -9 | -12.5% |
+| cold-open | wire KB | 1006 | 879 | -127 | -12.6% |
+| cold-open | long tasks | 0 | 0 | +0 | — |
+| cold-open | long task ms | 0 | 0 | +0 | — |
+| cold-open | heap MB | 1.9 | 1.9 | +0 | +0.0% |
+| warm-open | html ms | 4 | 2.7 | -1.3 | -32.5% |
+| warm-open | scripts ms | 40 | 35 | -5 | -12.5% |
+| warm-open | bootstrap ms | 3021 | 3022 | +0.7 | +0.0% |
+| warm-open | paint ms | 97.1 | 76.4 | -20.7 | -21.3% |
+| warm-open | socket ms | 1864 | 1866 | +1.4 | +0.1% |
+| warm-open | rows ms | 3018 | 3019 | +0.8 | +0.0% |
+| warm-open | requests | 60 | 60 | +0 | +0.0% |
+| warm-open | cached | 59 | 59 | +0 | +0.0% |
+| warm-open | KB | 2.9 | 2.9 | +0 | +0.0% |
+| warm-open | wire requests | 3 | 3 | +0 | +0.0% |
+| warm-open | wire KB | 35.7 | 35.7 | +0 | +0.0% |
+| warm-open | long tasks | 0 | 0 | +0 | — |
+| warm-open | long task ms | 0 | 0 | +0 | — |
+| warm-open | heap MB | 2.2 | 2.1 | -0.1 | -4.5% |
+
+Spread (far): min and max of every sample, n samples per side.
+
+| journey | metric | A min | A max | B min | B max | n |
+| --- | --- | --: | --: | --: | --: | --: |
+| cold-open | html ms | 1189 | 1201 | 1188 | 1194 | 5/5 |
+| cold-open | scripts ms | 13403 | 13692 | 13407 | 13705 | 5/5 |
+| cold-open | bootstrap ms | 14427 | 14715 | 14428 | 14718 | 5/5 |
+| cold-open | paint ms | 18004 | 18292 | 17422 | 17709 | 5/5 |
+| cold-open | socket ms | 16659 | 16912 | 16254 | 16544 | 5/5 |
+| cold-open | rows ms | 18004 | 18292 | 17422 | 17709 | 5/5 |
+| cold-open | requests | 60 | 60 | 60 | 60 | 5/5 |
+| cold-open | cached | 0 | 0 | 0 | 0 | 5/5 |
+| cold-open | KB | 815 | 815 | 815 | 815 | 5/5 |
+| cold-open | wire requests | 72 | 72 | 63 | 63 | 5/5 |
+| cold-open | wire KB | 1005 | 1006 | 878 | 879 | 5/5 |
+| cold-open | long tasks | 0 | 0 | 0 | 0 | 5/5 |
+| cold-open | long task ms | 0 | 0 | 0 | 0 | 5/5 |
+| cold-open | heap MB | 1.9 | 1.9 | 1.9 | 1.9 | 5/5 |
+| warm-open | html ms | 2.5 | 6.6 | 2.5 | 6.6 | 5/5 |
+| warm-open | scripts ms | 28.9 | 62.6 | 20.6 | 51.7 | 5/5 |
+| warm-open | bootstrap ms | 3017 | 3050 | 2997 | 3028 | 5/5 |
+| warm-open | paint ms | 68.6 | 107 | 56 | 88.8 | 5/5 |
+| warm-open | socket ms | 1854 | 1884 | 1842 | 1871 | 5/5 |
+| warm-open | rows ms | 3014 | 3043 | 2994 | 3025 | 5/5 |
+| warm-open | requests | 60 | 60 | 60 | 60 | 5/5 |
+| warm-open | cached | 59 | 59 | 59 | 59 | 5/5 |
+| warm-open | KB | 2.9 | 2.9 | 2.9 | 2.9 | 5/5 |
+| warm-open | wire requests | 3 | 3 | 3 | 3 | 5/5 |
+| warm-open | wire KB | 35.7 | 35.7 | 35.7 | 35.7 | 5/5 |
+| warm-open | long tasks | 0 | 0 | 0 | 0 | 5/5 |
+| warm-open | long task ms | 0 | 0 | 0 | 0 | 5/5 |
+| warm-open | heap MB | 2.1 | 2.2 | 2 | 2.1 | 5/5 |
+
+## near (60 ms round trip, 20 Mbit/s)
+
+Journeys: cold-open, warm-open.
+
+| journey | metric | A: main | B: E06-worker-after-rows | Δ | Δ % |
+| --- | --- | --: | --: | --: | --: |
+| cold-open | html ms | 79.2 | 81.6 | +2.4 | +3.0% |
+| cold-open | scripts ms | 984 | 955 | -28.7 | -2.9% |
+| cold-open | bootstrap ms | 1103 | 1045 | -57.4 | -5.2% |
+| cold-open | paint ms | 1399 | 1329 | -70 | -5.0% |
+| cold-open | socket ms | 1258 | 1184 | -73.9 | -5.9% |
+| cold-open | rows ms | 1399 | 1329 | -69.9 | -5.0% |
+| cold-open | requests | 60 | 60 | +0 | +0.0% |
+| cold-open | cached | 0 | 0 | +0 | — |
+| cold-open | KB | 815 | 815 | +0.4 | +0.0% |
+| cold-open | wire requests | 72 | 63 | -9 | -12.5% |
+| cold-open | wire KB | 1007 | 879 | -127 | -12.7% |
+| cold-open | long tasks | 0 | 0 | +0 | — |
+| cold-open | long task ms | 0 | 0 | +0 | — |
+| cold-open | heap MB | 1.9 | 1.9 | +0 | +0.0% |
+| warm-open | html ms | 2.5 | 2.4 | -0.1 | -4.0% |
+| warm-open | scripts ms | 27.3 | 29.2 | +1.9 | +7.0% |
+| warm-open | bootstrap ms | 299 | 293 | -6.1 | -2.0% |
+| warm-open | paint ms | 60.3 | 61.4 | +1.1 | +1.8% |
+| warm-open | socket ms | 161 | 162 | +0.4 | +0.2% |
+| warm-open | rows ms | 296 | 290 | -6.2 | -2.1% |
+| warm-open | requests | 60 | 60 | +0 | +0.0% |
+| warm-open | cached | 59 | 59 | +0 | +0.0% |
+| warm-open | KB | 2.9 | 2.9 | +0 | +0.0% |
+| warm-open | wire requests | 2 | 2 | +0 | +0.0% |
+| warm-open | wire KB | 28.7 | 28.7 | +0 | +0.0% |
+| warm-open | long tasks | 0 | 0 | +0 | — |
+| warm-open | long task ms | 0 | 0 | +0 | — |
+| warm-open | heap MB | 2.1 | 2.2 | +0.1 | +4.8% |
+
+Spread (near): min and max of every sample, n samples per side.
+
+| journey | metric | A min | A max | B min | B max | n |
+| --- | --- | --: | --: | --: | --: | --: |
+| cold-open | html ms | 78.3 | 83.6 | 79.7 | 84.1 | 5/5 |
+| cold-open | scripts ms | 961 | 1023 | 898 | 991 | 5/5 |
+| cold-open | bootstrap ms | 1063 | 1145 | 982 | 1111 | 5/5 |
+| cold-open | paint ms | 1361 | 1456 | 1260 | 1393 | 5/5 |
+| cold-open | socket ms | 1210 | 1286 | 1126 | 1250 | 5/5 |
+| cold-open | rows ms | 1361 | 1456 | 1260 | 1393 | 5/5 |
+| cold-open | requests | 60 | 60 | 60 | 60 | 5/5 |
+| cold-open | cached | 0 | 1 | 0 | 0 | 5/5 |
+| cold-open | KB | 770 | 815 | 815 | 815 | 5/5 |
+| cold-open | wire requests | 72 | 72 | 62 | 63 | 5/5 |
+| cold-open | wire KB | 1007 | 1007 | 879 | 879 | 5/5 |
+| cold-open | long tasks | 0 | 0 | 0 | 0 | 5/5 |
+| cold-open | long task ms | 0 | 0 | 0 | 0 | 5/5 |
+| cold-open | heap MB | 1.9 | 1.9 | 1.9 | 1.9 | 5/5 |
+| warm-open | html ms | 2.1 | 4.6 | 2.1 | 2.7 | 5/5 |
+| warm-open | scripts ms | 18.4 | 63.8 | 25.8 | 61.8 | 5/5 |
+| warm-open | bootstrap ms | 290 | 342 | 292 | 327 | 5/5 |
+| warm-open | paint ms | 52.3 | 104 | 55.9 | 93.1 | 5/5 |
+| warm-open | socket ms | 159 | 206 | 156 | 193 | 5/5 |
+| warm-open | rows ms | 287 | 339 | 289 | 324 | 5/5 |
+| warm-open | requests | 60 | 60 | 60 | 60 | 5/5 |
+| warm-open | cached | 59 | 59 | 59 | 59 | 5/5 |
+| warm-open | KB | 2.9 | 2.9 | 2.9 | 2.9 | 5/5 |
+| warm-open | wire requests | 2 | 2 | 2 | 2 | 5/5 |
+| warm-open | wire KB | 28.7 | 28.7 | 28.7 | 28.7 | 5/5 |
+| warm-open | long tasks | 0 | 0 | 0 | 0 | 5/5 |
+| warm-open | long task ms | 0 | 0 | 0 | 0 | 5/5 |
+| warm-open | heap MB | 1.9 | 2.1 | 2.1 | 2.2 | 5/5 |
+
+## lan (no proxy: the server and the page)
+
+Journeys: cold-open, warm-open.
+
+| journey | metric | A: main | B: E06-worker-after-rows | Δ | Δ % |
+| --- | --- | --: | --: | --: | --: |
+| cold-open | html ms | 3.6 | 3.5 | -0.1 | -2.8% |
+| cold-open | scripts ms | 76.5 | 66.1 | -10.4 | -13.6% |
+| cold-open | bootstrap ms | 93.5 | 79.7 | -13.8 | -14.8% |
+| cold-open | paint ms | 152 | 135 | -17.3 | -11.4% |
+| cold-open | socket ms | 121 | 105 | -16.8 | -13.8% |
+| cold-open | rows ms | 152 | 135 | -17.3 | -11.4% |
+| cold-open | requests | 60 | 60 | +0 | +0.0% |
+| cold-open | cached | 0 | 0 | +0 | — |
+| cold-open | KB | 815 | 815 | +0.4 | +0.0% |
+| cold-open | long tasks | 0 | 0 | +0 | — |
+| cold-open | long task ms | 0 | 0 | +0 | — |
+| cold-open | heap MB | 1.9 | 1.9 | +0 | +0.0% |
+| warm-open | html ms | 2.4 | 4.1 | +1.7 | +70.8% |
+| warm-open | scripts ms | 28.5 | 32.8 | +4.3 | +15.1% |
+| warm-open | bootstrap ms | 124 | 139 | +14.7 | +11.9% |
+| warm-open | paint ms | 90 | 93.6 | +3.6 | +4.0% |
+| warm-open | socket ms | 47.8 | 73.6 | +25.8 | +54.0% |
+| warm-open | rows ms | 113 | 123 | +10.1 | +8.9% |
+| warm-open | requests | 60 | 60 | +0 | +0.0% |
+| warm-open | cached | 59 | 59 | +0 | +0.0% |
+| warm-open | KB | 2.9 | 2.9 | +0 | +0.0% |
+| warm-open | long tasks | 0 | 0 | +0 | — |
+| warm-open | long task ms | 0 | 0 | +0 | — |
+| warm-open | heap MB | 2.1 | 2.1 | +0 | +0.0% |
+
+Spread (lan): min and max of every sample, n samples per side.
+
+| journey | metric | A min | A max | B min | B max | n |
+| --- | --- | --: | --: | --: | --: | --: |
+| cold-open | html ms | 3.3 | 3.8 | 2.9 | 4.5 | 5/5 |
+| cold-open | scripts ms | 70.7 | 82.5 | 62.9 | 78.8 | 5/5 |
+| cold-open | bootstrap ms | 86.5 | 98.1 | 78.2 | 93.6 | 5/5 |
+| cold-open | paint ms | 148 | 164 | 133 | 150 | 5/5 |
+| cold-open | socket ms | 120 | 134 | 101 | 124 | 5/5 |
+| cold-open | rows ms | 148 | 164 | 133 | 150 | 5/5 |
+| cold-open | requests | 60 | 60 | 60 | 60 | 5/5 |
+| cold-open | cached | 0 | 0 | 0 | 0 | 5/5 |
+| cold-open | KB | 815 | 815 | 815 | 815 | 5/5 |
+| cold-open | long tasks | 0 | 0 | 0 | 0 | 5/5 |
+| cold-open | long task ms | 0 | 0 | 0 | 0 | 5/5 |
+| cold-open | heap MB | 1.9 | 1.9 | 1.9 | 1.9 | 5/5 |
+| warm-open | html ms | 2.2 | 4.3 | 2.4 | 6 | 5/5 |
+| warm-open | scripts ms | 26.2 | 59.1 | 27.1 | 65.2 | 5/5 |
+| warm-open | bootstrap ms | 70.1 | 135 | 95.4 | 162 | 5/5 |
+| warm-open | paint ms | 64.7 | 93.7 | 66.6 | 142 | 5/5 |
+| warm-open | socket ms | 33.6 | 72.8 | 42.9 | 86.2 | 5/5 |
+| warm-open | rows ms | 85.6 | 120 | 85.5 | 142 | 5/5 |
+| warm-open | requests | 60 | 60 | 59 | 60 | 5/5 |
+| warm-open | cached | 59 | 59 | 58 | 59 | 5/5 |
+| warm-open | KB | 2.9 | 2.9 | 2.9 | 2.9 | 5/5 |
+| warm-open | long tasks | 0 | 0 | 0 | 1 | 5/5 |
+| warm-open | long task ms | 0 | 0 | 0 | 52 | 5/5 |
+| warm-open | heap MB | 1.9 | 2.1 | 1.9 | 2.1 | 5/5 |
+
+All runs ended.
+
+browser log: 0 distinct lines (0 page errors) in /home/agent/yap-perf/results/E06-worker-after-rows/browser-log.txt
+report: /home/agent/yap-perf/results/E06-worker-after-rows/report.md
+wall time 4 min 15 s

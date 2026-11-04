@@ -1,0 +1,16 @@
+
+lan picker-reaction
+  A: cells built per page [5040,5040,5040,5040,5040]; open 1 28.4 ms, later opens 49.6 ms, open 1 / later 0.57
+  B: cells built per page [1008,1008,1008,1008,1008]; open 1 32 ms, later opens 7.5 ms, open 1 / later 4.27
+
+lan phone-picker-reaction
+  A: cells built per page [5040,5040,5040,5040,5040]; open 1 137.5 ms, later opens 422.7 ms, open 1 / later 0.33
+  B: cells built per page [1008,1008,1008,1008,1008]; open 1 135.8 ms, later opens 48.5 ms, open 1 / later 2.80
+
+near picker-reaction
+  A: cells built per page [5040,5040,5040,5040,5040]; open 1 27.2 ms, later opens 48.8 ms, open 1 / later 0.56
+  B: cells built per page [1008,1008,1008,1008,1008]; open 1 25.4 ms, later opens 8 ms, open 1 / later 3.17
+
+near phone-picker-reaction
+  A: cells built per page [5040,5040,5040,5040,5040]; open 1 149.9 ms, later opens 338 ms, open 1 / later 0.44
+  B: cells built per page [1008,1008,1008,1008,1008]; open 1 128.7 ms, later opens 54.7 ms, open 1 / later 2.35

@@ -1,0 +1,18 @@
+server: /home/agent/yap-perf/harness/Yap/bin/Debug/net10.0/Yap.dll on http://127.0.0.1:5333, root /home/agent/yap-perf/runs/root-aUhHKv, up after 4318 ms
+server: /home/agent/yap-perf/exp/06-worker-after-rows/Yap/bin/Debug/net10.0/Yap.dll on http://127.0.0.1:5334, root /home/agent/yap-perf/runs/root-hFFevk, up after 3376 ms
+
+== A (/home/agent/yap-perf/harness)
+marks: html 1195, scripts 13441, bootstrap 14469, paint 17960, socket 16662, rows 17960
+worker script request (proxy): 13449 ms
+first install fetch (worker's own entries): 14415 ms /login; worker entries 66, 9 over the network, 117 KB
+first install request on the wire (proxy, a path the page never asked for): 14416 ms GET /login HTTP/1.1; 9 such lines
+wire at rows: 1006.2 KB, 72 requests; at rows + 20 s: 1012.9 KB, 72 requests
+controller at the end: http://127.0.0.1:5433/service-worker.js?v=2026-11-04-0917; registration {"active":"activated","installing":false,"waiting":false}
+
+== B (/home/agent/yap-perf/exp/06-worker-after-rows)
+marks: html 1190, scripts 13508, bootstrap 14521, paint 17518, socket 16351, rows 17518
+worker script request (proxy): 17530 ms
+first install fetch (worker's own entries): 18534 ms /js/api.js?v=2026-11-04-1148; worker entries 66, 9 over the network, 117 KB
+first install request on the wire (proxy, a path the page never asked for): 18540 ms GET /login HTTP/1.1; 9 such lines
+wire at rows: 879.3 KB, 63 requests; at rows + 20 s: 1013.3 KB, 72 requests
+controller at the end: http://127.0.0.1:5434/service-worker.js?v=2026-11-04-1148; registration {"active":"activated","installing":false,"waiting":false}

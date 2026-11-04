@@ -1,0 +1,290 @@
+[
+ {
+  "side": "A",
+  "rep": 1,
+  "rows": 18068.5,
+  "open": {
+   "requests": 72,
+   "kb": 1006.1650390625,
+   "tusLines": 1,
+   "pageTusRequests": 1
+  },
+  "first": {
+   "controlled": false,
+   "tusBefore": true,
+   "postStart": 14.399999976158142,
+   "postEnd": 953.5999999642372,
+   "confirmed": 3824,
+   "scriptStart": null,
+   "scriptEnd": null,
+   "scriptTransfer": null,
+   "scriptWorker": null,
+   "failed": false,
+   "scriptRequested": false,
+   "scriptFromWorker": null,
+   "scriptCrossed": false,
+   "linesBeforePost": 1,
+   "lines": [
+    "POST /api/tus"
+   ]
+  },
+  "warm": {
+   "controlled": true,
+   "tusBefore": true,
+   "postStart": 3.400000035762787,
+   "postEnd": 919.1000000238419,
+   "confirmed": 3711.5,
+   "scriptStart": null,
+   "scriptEnd": null,
+   "scriptTransfer": null,
+   "scriptWorker": null,
+   "failed": false,
+   "scriptRequested": false,
+   "scriptFromWorker": null,
+   "scriptCrossed": false,
+   "linesBeforePost": 1,
+   "lines": [
+    "POST /api/tus"
+   ]
+  }
+ },
+ {
+  "side": "B",
+  "rep": 1,
+  "rows": 17997.900000035763,
+  "open": {
+   "requests": 72,
+   "kb": 1006.78515625,
+   "tusLines": 1,
+   "pageTusRequests": 0
+  },
+  "first": {
+   "controlled": false,
+   "tusBefore": false,
+   "postStart": 16.399999976158142,
+   "postEnd": 946.5999999642372,
+   "confirmed": 3832.2999999523163,
+   "scriptStart": 5,
+   "scriptEnd": 7,
+   "scriptTransfer": 0,
+   "scriptWorker": false,
+   "failed": false,
+   "scriptRequested": true,
+   "scriptFromWorker": false,
+   "scriptCrossed": false,
+   "linesBeforePost": 1,
+   "lines": [
+    "POST /api/tus"
+   ]
+  },
+  "warm": {
+   "controlled": true,
+   "tusBefore": false,
+   "postStart": 8.300000011920929,
+   "postEnd": 924.2000000476837,
+   "confirmed": 3765.900000035763,
+   "scriptStart": 2.800000011920929,
+   "scriptEnd": 4.400000035762787,
+   "scriptTransfer": 0,
+   "scriptWorker": true,
+   "failed": false,
+   "scriptRequested": true,
+   "scriptFromWorker": true,
+   "scriptCrossed": false,
+   "linesBeforePost": 0,
+   "lines": []
+  }
+ },
+ {
+  "side": "B",
+  "rep": 2,
+  "rows": 17958.399999976158,
+  "open": {
+   "requests": 74,
+   "kb": 1008.4296875,
+   "tusLines": 1,
+   "pageTusRequests": 0
+  },
+  "first": {
+   "controlled": false,
+   "tusBefore": false,
+   "postStart": 14.700000047683716,
+   "postEnd": 929.8000000119209,
+   "confirmed": 3723.800000011921,
+   "scriptStart": 4.600000023841858,
+   "scriptEnd": 6.300000011920929,
+   "scriptTransfer": 0,
+   "scriptWorker": false,
+   "failed": false,
+   "scriptRequested": true,
+   "scriptFromWorker": false,
+   "scriptCrossed": false,
+   "linesBeforePost": 1,
+   "lines": [
+    "POST /api/tus"
+   ]
+  },
+  "warm": {
+   "controlled": true,
+   "tusBefore": false,
+   "postStart": 11.199999988079071,
+   "postEnd": 925.5999999642372,
+   "confirmed": 3717.899999976158,
+   "scriptStart": 5.099999964237213,
+   "scriptEnd": 8.300000011920929,
+   "scriptTransfer": 0,
+   "scriptWorker": true,
+   "failed": false,
+   "scriptRequested": true,
+   "scriptFromWorker": true,
+   "scriptCrossed": false,
+   "linesBeforePost": 1,
+   "lines": [
+    "POST /api/tus"
+   ]
+  }
+ },
+ {
+  "side": "A",
+  "rep": 2,
+  "rows": 18126.69999998808,
+  "open": {
+   "requests": 74,
+   "kb": 1007.8095703125,
+   "tusLines": 1,
+   "pageTusRequests": 1
+  },
+  "first": {
+   "controlled": false,
+   "tusBefore": true,
+   "postStart": 9.5,
+   "postEnd": 921.6999999880791,
+   "confirmed": 3686.599999964237,
+   "scriptStart": null,
+   "scriptEnd": null,
+   "scriptTransfer": null,
+   "scriptWorker": null,
+   "failed": false,
+   "scriptRequested": false,
+   "scriptFromWorker": null,
+   "scriptCrossed": false,
+   "linesBeforePost": 1,
+   "lines": [
+    "POST /api/tus"
+   ]
+  },
+  "warm": {
+   "controlled": true,
+   "tusBefore": true,
+   "postStart": 3.399999976158142,
+   "postEnd": 916.8000000119209,
+   "confirmed": 3705.399999976158,
+   "scriptStart": null,
+   "scriptEnd": null,
+   "scriptTransfer": null,
+   "scriptWorker": null,
+   "failed": false,
+   "scriptRequested": false,
+   "scriptFromWorker": null,
+   "scriptCrossed": false,
+   "linesBeforePost": 1,
+   "lines": [
+    "POST /api/tus"
+   ]
+  }
+ },
+ {
+  "side": "A",
+  "rep": 3,
+  "rows": 18037.899999976158,
+  "open": {
+   "requests": 75,
+   "kb": 1008.8017578125,
+   "tusLines": 1,
+   "pageTusRequests": 1
+  },
+  "first": {
+   "controlled": false,
+   "tusBefore": true,
+   "postStart": 10.100000023841858,
+   "postEnd": 965.3000000119209,
+   "confirmed": 3721.600000023842,
+   "scriptStart": null,
+   "scriptEnd": null,
+   "scriptTransfer": null,
+   "scriptWorker": null,
+   "failed": false,
+   "scriptRequested": false,
+   "scriptFromWorker": null,
+   "scriptCrossed": false,
+   "linesBeforePost": 0,
+   "lines": []
+  },
+  "warm": {
+   "controlled": true,
+   "tusBefore": true,
+   "postStart": 3.700000047683716,
+   "postEnd": 918.3000000119209,
+   "confirmed": 3709.7000000476837,
+   "scriptStart": null,
+   "scriptEnd": null,
+   "scriptTransfer": null,
+   "scriptWorker": null,
+   "failed": false,
+   "scriptRequested": false,
+   "scriptFromWorker": null,
+   "scriptCrossed": false,
+   "linesBeforePost": 1,
+   "lines": [
+    "POST /api/tus"
+   ]
+  }
+ },
+ {
+  "side": "B",
+  "rep": 3,
+  "rows": 17781.80000001192,
+  "open": {
+   "requests": 75,
+   "kb": 1009.421875,
+   "tusLines": 1,
+   "pageTusRequests": 0
+  },
+  "first": {
+   "controlled": false,
+   "tusBefore": false,
+   "postStart": 28.30000001192093,
+   "postEnd": 1281.2000000476837,
+   "confirmed": 4079.800000011921,
+   "scriptStart": 8.300000011920929,
+   "scriptEnd": 9.900000035762787,
+   "scriptTransfer": 0,
+   "scriptWorker": false,
+   "failed": false,
+   "scriptRequested": true,
+   "scriptFromWorker": false,
+   "scriptCrossed": false,
+   "linesBeforePost": 1,
+   "lines": [
+    "GET /uploads/a85fbb2a-4fed-4ac2-86cf-19cabf4b117e_800px.webp"
+   ]
+  },
+  "warm": {
+   "controlled": true,
+   "tusBefore": false,
+   "postStart": 13.100000023841858,
+   "postEnd": 928.1000000238419,
+   "confirmed": 3725.5,
+   "scriptStart": 3,
+   "scriptEnd": 4.899999976158142,
+   "scriptTransfer": 0,
+   "scriptWorker": true,
+   "failed": false,
+   "scriptRequested": true,
+   "scriptFromWorker": true,
+   "scriptCrossed": false,
+   "linesBeforePost": 0,
+   "lines": []
+  }
+ }
+]

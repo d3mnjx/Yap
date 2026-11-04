@@ -1,0 +1,56 @@
+server: /home/agent/yap-perf/harness/Yap/bin/Debug/net10.0/Yap.dll on http://127.0.0.1:5343, root /home/agent/yap-perf/runs/root-5HJiMj, up after 3132 ms
+
+== A: server pid 614739 on http://127.0.0.1:5343
+A: port 5343 listener after stop: ''
+precache: 66 URLs; watched: /emoji_selection_color.png, /emoji_selection_greys.png, /notif.mp3
+rows 18080 ms; click 38120 ms; controlled at click: true
+wire at rows: 1005 KB, 72 requests; total to the end: 1218 KB, 104 requests
+worker fetches: 250, first at 14453 ms, last end 38645 ms, 296 KB transferred
+Playwright requests (at = ms from navigation start):
+   14458 before rows  worker /emoji_selection_color.png  status 200 fromWorker false content-length 45887 body -214
+   14458 before rows  worker /emoji_selection_greys.png  status 200 fromWorker false content-length 39111 body -214
+   14458 before rows  worker /notif.mp3  status 200 fromWorker false content-length 43860 body 43860
+   14535 before rows  page   /emoji_selection_color.png  status 200 fromWorker false content-length 45887 body 45887
+   14535 before rows  page   /emoji_selection_greys.png  status 200 fromWorker false content-length 39111 body 39111
+   38168 after  rows  page   /notif.mp3  status 200 fromWorker true content-length 43860 body -215 range bytes=0-
+page resource timing:
+   14532..16177 before rows  /emoji_selection_color.png  transfer 46187 body 45887 css
+   14532..16492 before rows  /emoji_selection_greys.png  transfer 39411 body 39111 css
+   38166..38168 after  rows  /notif.mp3  transfer 0 body 43860 audio via worker
+worker resource timing:
+   14455..16177 before rows  /emoji_selection_color.png  transfer 0 body 45887
+   14455..16492 before rows  /emoji_selection_greys.png  transfer 0 body 39111
+   14455..17839 before rows  /notif.mp3  transfer 44160 body 43860
+crossed the proxy:
+   14544 before rows  GET /emoji_selection_color.png HTTP/1.1
+   14544 before rows  GET /emoji_selection_greys.png HTTP/1.1
+   16497 before rows  GET /notif.mp3 HTTP/1.1
+server: /home/agent/yap-perf/exp/05-sprites-webp-mp3/Yap/bin/Debug/net10.0/Yap.dll on http://127.0.0.1:5344, root /home/agent/yap-perf/runs/root-WKJbnw, up after 3135 ms
+
+== B: server pid 615655 on http://127.0.0.1:5344
+B: port 5344 listener after stop: ''
+precache: 66 URLs; watched: /emoji_selection_color.webp, /emoji_selection_greys.webp, /notif.mp3
+rows 17979 ms; click 38008 ms; controlled at click: true
+wire at rows: 943 KB, 72 requests; total to the end: 1155 KB, 104 requests
+worker fetches: 250, first at 14466 ms, last end 38488 ms, 285 KB transferred
+Playwright requests (at = ms from navigation start):
+   14471 before rows  worker /emoji_selection_color.webp  status 200 fromWorker false content-length 19040 body -215
+   14472 before rows  worker /emoji_selection_greys.webp  status 200 fromWorker false content-length 12508 body -215
+   14472 before rows  worker /notif.mp3  status 200 fromWorker false content-length 32435 body 32435
+   14577 before rows  page   /emoji_selection_color.webp  status 200 fromWorker false content-length 19040 body 19040
+   14577 before rows  page   /emoji_selection_greys.webp  status 200 fromWorker false content-length 12508 body 12508
+   38066 after  rows  page   /notif.mp3  status 200 fromWorker true content-length 32435 body -215 range bytes=0-
+page resource timing:
+   14573..15980 before rows  /emoji_selection_color.webp  transfer 19340 body 19040 css
+   14574..16082 before rows  /emoji_selection_greys.webp  transfer 12808 body 12508 css
+   38066..38067 after  rows  /notif.mp3  transfer 0 body 32435 audio via worker
+worker resource timing:
+   14469..15980 before rows  /emoji_selection_color.webp  transfer 0 body 19040
+   14469..16082 before rows  /emoji_selection_greys.webp  transfer 0 body 12508
+   14469..17253 before rows  /notif.mp3  transfer 32735 body 32435
+crossed the proxy:
+   14587 before rows  GET /emoji_selection_color.webp HTTP/1.1
+   14587 before rows  GET /emoji_selection_greys.webp HTTP/1.1
+   16100 before rows  GET /notif.mp3 HTTP/1.1
+
+json: /tmp/claude-1000/-d-PROJECTS-Yap/6e990ba7-f0bf-4ee7-802f-7a4cb4edeb8e/scratchpad/measure-05-sprites/probe-sprites.json

@@ -1,0 +1,350 @@
+{
+ "sides": {
+  "A": {
+   "pid": "614739",
+   "precache": {
+    "count": 66,
+    "watched": [
+     "/emoji_selection_color.png",
+     "/emoji_selection_greys.png",
+     "/notif.mp3"
+    ],
+    "has": {
+     "/emoji_selection_color.png": true,
+     "/emoji_selection_greys.png": true,
+     "/emoji_selection_color.webp": false,
+     "/emoji_selection_greys.webp": false,
+     "/notif.mp3": true
+    }
+   },
+   "navToNodeStartMs": 1,
+   "rowsMs": 18080,
+   "controlledAtClick": true,
+   "clickMs": 38120,
+   "wireAtRowsKB": 1005,
+   "wireAtRowsRequests": 72,
+   "wireTotalKB": 1218,
+   "wireTotalRequests": 104,
+   "workerFetches": 250,
+   "workerFirstMs": 14453,
+   "workerLastEndMs": 38645,
+   "workerTransferKB": 296,
+   "events": [
+    {
+     "url": "/emoji_selection_color.png",
+     "by": "worker",
+     "at": 14458,
+     "beforeRows": true,
+     "range": null,
+     "status": 200,
+     "fromWorker": false,
+     "contentLength": 45887,
+     "responseBody": -214
+    },
+    {
+     "url": "/emoji_selection_greys.png",
+     "by": "worker",
+     "at": 14458,
+     "beforeRows": true,
+     "range": null,
+     "status": 200,
+     "fromWorker": false,
+     "contentLength": 39111,
+     "responseBody": -214
+    },
+    {
+     "url": "/notif.mp3",
+     "by": "worker",
+     "at": 14458,
+     "beforeRows": true,
+     "range": null,
+     "status": 200,
+     "fromWorker": false,
+     "contentLength": 43860,
+     "responseBody": 43860
+    },
+    {
+     "url": "/emoji_selection_color.png",
+     "by": "page",
+     "at": 14535,
+     "beforeRows": true,
+     "range": null,
+     "status": 200,
+     "fromWorker": false,
+     "contentLength": 45887,
+     "responseBody": 45887
+    },
+    {
+     "url": "/emoji_selection_greys.png",
+     "by": "page",
+     "at": 14535,
+     "beforeRows": true,
+     "range": null,
+     "status": 200,
+     "fromWorker": false,
+     "contentLength": 39111,
+     "responseBody": 39111
+    },
+    {
+     "url": "/notif.mp3",
+     "by": "page",
+     "at": 38168,
+     "beforeRows": false,
+     "range": "bytes=0-",
+     "status": 200,
+     "fromWorker": true,
+     "contentLength": 43860,
+     "responseBody": -215
+    }
+   ],
+   "pageEntries": [
+    {
+     "url": "/emoji_selection_color.png",
+     "start": 14532,
+     "end": 16177,
+     "transfer": 46187,
+     "body": 45887,
+     "initiator": "css",
+     "viaWorker": false,
+     "beforeRows": true
+    },
+    {
+     "url": "/emoji_selection_greys.png",
+     "start": 14532,
+     "end": 16492,
+     "transfer": 39411,
+     "body": 39111,
+     "initiator": "css",
+     "viaWorker": false,
+     "beforeRows": true
+    },
+    {
+     "url": "/notif.mp3",
+     "start": 38166,
+     "end": 38168,
+     "transfer": 0,
+     "body": 43860,
+     "initiator": "audio",
+     "viaWorker": true,
+     "beforeRows": false
+    }
+   ],
+   "workerEntries": [
+    {
+     "url": "/emoji_selection_color.png",
+     "start": 14455,
+     "end": 16177,
+     "transfer": 0,
+     "body": 45887,
+     "beforeRows": true
+    },
+    {
+     "url": "/emoji_selection_greys.png",
+     "start": 14455,
+     "end": 16492,
+     "transfer": 0,
+     "body": 39111,
+     "beforeRows": true
+    },
+    {
+     "url": "/notif.mp3",
+     "start": 14455,
+     "end": 17839,
+     "transfer": 44160,
+     "body": 43860,
+     "beforeRows": true
+    }
+   ],
+   "crossed": [
+    {
+     "at": 14544,
+     "beforeRows": true,
+     "line": "GET /emoji_selection_color.png HTTP/1.1"
+    },
+    {
+     "at": 14544,
+     "beforeRows": true,
+     "line": "GET /emoji_selection_greys.png HTTP/1.1"
+    },
+    {
+     "at": 16497,
+     "beforeRows": true,
+     "line": "GET /notif.mp3 HTTP/1.1"
+    }
+   ]
+  },
+  "B": {
+   "pid": "615655",
+   "precache": {
+    "count": 66,
+    "watched": [
+     "/emoji_selection_color.webp",
+     "/emoji_selection_greys.webp",
+     "/notif.mp3"
+    ],
+    "has": {
+     "/emoji_selection_color.png": false,
+     "/emoji_selection_greys.png": false,
+     "/emoji_selection_color.webp": true,
+     "/emoji_selection_greys.webp": true,
+     "/notif.mp3": true
+    }
+   },
+   "navToNodeStartMs": 2,
+   "rowsMs": 17979,
+   "controlledAtClick": true,
+   "clickMs": 38008,
+   "wireAtRowsKB": 943,
+   "wireAtRowsRequests": 72,
+   "wireTotalKB": 1155,
+   "wireTotalRequests": 104,
+   "workerFetches": 250,
+   "workerFirstMs": 14466,
+   "workerLastEndMs": 38488,
+   "workerTransferKB": 285,
+   "events": [
+    {
+     "url": "/emoji_selection_color.webp",
+     "by": "worker",
+     "at": 14471,
+     "beforeRows": true,
+     "range": null,
+     "status": 200,
+     "fromWorker": false,
+     "contentLength": 19040,
+     "responseBody": -215
+    },
+    {
+     "url": "/emoji_selection_greys.webp",
+     "by": "worker",
+     "at": 14472,
+     "beforeRows": true,
+     "range": null,
+     "status": 200,
+     "fromWorker": false,
+     "contentLength": 12508,
+     "responseBody": -215
+    },
+    {
+     "url": "/notif.mp3",
+     "by": "worker",
+     "at": 14472,
+     "beforeRows": true,
+     "range": null,
+     "status": 200,
+     "fromWorker": false,
+     "contentLength": 32435,
+     "responseBody": 32435
+    },
+    {
+     "url": "/emoji_selection_color.webp",
+     "by": "page",
+     "at": 14577,
+     "beforeRows": true,
+     "range": null,
+     "status": 200,
+     "fromWorker": false,
+     "contentLength": 19040,
+     "responseBody": 19040
+    },
+    {
+     "url": "/emoji_selection_greys.webp",
+     "by": "page",
+     "at": 14577,
+     "beforeRows": true,
+     "range": null,
+     "status": 200,
+     "fromWorker": false,
+     "contentLength": 12508,
+     "responseBody": 12508
+    },
+    {
+     "url": "/notif.mp3",
+     "by": "page",
+     "at": 38066,
+     "beforeRows": false,
+     "range": "bytes=0-",
+     "status": 200,
+     "fromWorker": true,
+     "contentLength": 32435,
+     "responseBody": -215
+    }
+   ],
+   "pageEntries": [
+    {
+     "url": "/emoji_selection_color.webp",
+     "start": 14573,
+     "end": 15980,
+     "transfer": 19340,
+     "body": 19040,
+     "initiator": "css",
+     "viaWorker": false,
+     "beforeRows": true
+    },
+    {
+     "url": "/emoji_selection_greys.webp",
+     "start": 14574,
+     "end": 16082,
+     "transfer": 12808,
+     "body": 12508,
+     "initiator": "css",
+     "viaWorker": false,
+     "beforeRows": true
+    },
+    {
+     "url": "/notif.mp3",
+     "start": 38066,
+     "end": 38067,
+     "transfer": 0,
+     "body": 32435,
+     "initiator": "audio",
+     "viaWorker": true,
+     "beforeRows": false
+    }
+   ],
+   "workerEntries": [
+    {
+     "url": "/emoji_selection_color.webp",
+     "start": 14469,
+     "end": 15980,
+     "transfer": 0,
+     "body": 19040,
+     "beforeRows": true
+    },
+    {
+     "url": "/emoji_selection_greys.webp",
+     "start": 14469,
+     "end": 16082,
+     "transfer": 0,
+     "body": 12508,
+     "beforeRows": true
+    },
+    {
+     "url": "/notif.mp3",
+     "start": 14469,
+     "end": 17253,
+     "transfer": 32735,
+     "body": 32435,
+     "beforeRows": true
+    }
+   ],
+   "crossed": [
+    {
+     "at": 14587,
+     "beforeRows": true,
+     "line": "GET /emoji_selection_color.webp HTTP/1.1"
+    },
+    {
+     "at": 14587,
+     "beforeRows": true,
+     "line": "GET /emoji_selection_greys.webp HTTP/1.1"
+    },
+    {
+     "at": 16100,
+     "beforeRows": true,
+     "line": "GET /notif.mp3 HTTP/1.1"
+    }
+   ]
+  }
+ }
+}

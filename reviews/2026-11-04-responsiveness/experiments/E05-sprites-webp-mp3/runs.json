@@ -1,0 +1,3630 @@
+{
+ "sides": [
+  {
+   "key": "A",
+   "label": "main",
+   "dir": "/home/agent/yap-perf/harness",
+   "commit": "cb074cfa Tests: perf.mjs measures how responsive Yap feels, build A against build B"
+  },
+  {
+   "key": "B",
+   "label": "E05-sprites-mp3",
+   "dir": "/home/agent/yap-perf/exp/05-sprites-webp-mp3",
+   "commit": "e46721a3 Emoji-toggle sprites as lossless WebP, notif.mp3 without its cover art"
+  }
+ ],
+ "n": 5,
+ "plan": {
+  "far": [
+   "cold-open",
+   "picker-emoji"
+  ],
+  "near": [
+   "cold-open",
+   "picker-emoji"
+  ]
+ },
+ "wallMs": 471932,
+ "records": [
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "html ms",
+   "value": 1191.7
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "scripts ms",
+   "value": 13459
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "bootstrap ms",
+   "value": 14485.6
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "paint ms",
+   "value": 18110.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "socket ms",
+   "value": 16726.7
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "rows ms",
+   "value": 18110.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "KB",
+   "value": 814.7
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "wire KB",
+   "value": 1006.2
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "html ms",
+   "value": 1197.5
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "scripts ms",
+   "value": 13675.6
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "bootstrap ms",
+   "value": 14697.4
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "paint ms",
+   "value": 18063
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "socket ms",
+   "value": 16895.3
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "rows ms",
+   "value": 18063
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "KB",
+   "value": 762.5
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "wire KB",
+   "value": 943.4
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "html ms",
+   "value": 1188.8
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "scripts ms",
+   "value": 13448
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "bootstrap ms",
+   "value": 14471.5
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "paint ms",
+   "value": 17843.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "socket ms",
+   "value": 16669.4
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "rows ms",
+   "value": 17843.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "KB",
+   "value": 762.5
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "wire KB",
+   "value": 943.4
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "html ms",
+   "value": 1188.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "scripts ms",
+   "value": 13497.3
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "bootstrap ms",
+   "value": 14519.2
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "paint ms",
+   "value": 18124.1
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "socket ms",
+   "value": 16746.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "rows ms",
+   "value": 18124.2
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "KB",
+   "value": 814.7
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "wire KB",
+   "value": 1006.2
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "html ms",
+   "value": 1192.3
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "scripts ms",
+   "value": 13658.1
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "bootstrap ms",
+   "value": 14705.8
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "paint ms",
+   "value": 18176.8
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "socket ms",
+   "value": 16883.8
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "rows ms",
+   "value": 18176.8
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "KB",
+   "value": 814.7
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "wire KB",
+   "value": 1006.2
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "html ms",
+   "value": 1190.4
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "scripts ms",
+   "value": 13525.5
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "bootstrap ms",
+   "value": 14547.8
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "paint ms",
+   "value": 17947.4
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "socket ms",
+   "value": 16783.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "rows ms",
+   "value": 17947.4
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "KB",
+   "value": 762.5
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "wire KB",
+   "value": 943.4
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "html ms",
+   "value": 1189
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "scripts ms",
+   "value": 13449.4
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "bootstrap ms",
+   "value": 14470.3
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "paint ms",
+   "value": 17849.6
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "socket ms",
+   "value": 16669.4
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "rows ms",
+   "value": 17849.6
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "KB",
+   "value": 762.5
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "wire KB",
+   "value": 942.4
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "html ms",
+   "value": 1199.3
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "scripts ms",
+   "value": 13423.2
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "bootstrap ms",
+   "value": 14447.7
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "paint ms",
+   "value": 18064.4
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "socket ms",
+   "value": 16683.8
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "rows ms",
+   "value": 18064.4
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "KB",
+   "value": 814.7
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "wire KB",
+   "value": 1006.2
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "html ms",
+   "value": 1190.2
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "scripts ms",
+   "value": 13481.2
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "bootstrap ms",
+   "value": 14502.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "paint ms",
+   "value": 17996.1
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "socket ms",
+   "value": 16698.6
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "rows ms",
+   "value": 17996.1
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "KB",
+   "value": 814.7
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "wire KB",
+   "value": 1006.2
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "html ms",
+   "value": 1190.6
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "scripts ms",
+   "value": 13535.4
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "bootstrap ms",
+   "value": 14557.6
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "paint ms",
+   "value": 17923.3
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "socket ms",
+   "value": 16758.2
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "rows ms",
+   "value": 17923.3
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "KB",
+   "value": 762.5
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "wire KB",
+   "value": 943.4
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "far",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "first: grid ms",
+   "value": 37.8
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "first: images ms",
+   "value": 8664.6
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "first: requests in 2 s",
+   "value": 408
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "again: grid ms",
+   "value": 24.3
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "again: images ms",
+   "value": 531.2
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "again: requests in 2 s",
+   "value": 434
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "first: grid ms",
+   "value": 23.8
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "first: images ms",
+   "value": 8648.4
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "first: requests in 2 s",
+   "value": 408
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "again: grid ms",
+   "value": 21.5
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "again: images ms",
+   "value": 544.2
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "again: requests in 2 s",
+   "value": 434
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "first: grid ms",
+   "value": 27.6
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "first: images ms",
+   "value": 8649.5
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "first: requests in 2 s",
+   "value": 408
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "again: grid ms",
+   "value": 23.4
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "again: images ms",
+   "value": 506
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "again: requests in 2 s",
+   "value": 434
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "first: grid ms",
+   "value": 24.7
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "first: images ms",
+   "value": 8648.6
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "first: requests in 2 s",
+   "value": 408
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "again: grid ms",
+   "value": 41.4
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "again: images ms",
+   "value": 549.1
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "again: requests in 2 s",
+   "value": 434
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "first: grid ms",
+   "value": 26.6
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "first: images ms",
+   "value": 8646.9
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "first: requests in 2 s",
+   "value": 408
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "again: grid ms",
+   "value": 21.7
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "again: images ms",
+   "value": 507.6
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "again: requests in 2 s",
+   "value": 434
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "first: grid ms",
+   "value": 32.4
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "first: images ms",
+   "value": 8648.6
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "first: requests in 2 s",
+   "value": 408
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "again: grid ms",
+   "value": 21
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "again: images ms",
+   "value": 591.9
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "again: requests in 2 s",
+   "value": 434
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "first: grid ms",
+   "value": 29
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "first: images ms",
+   "value": 8662.4
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "first: requests in 2 s",
+   "value": 408
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "again: grid ms",
+   "value": 20.9
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "again: images ms",
+   "value": 549.9
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "again: requests in 2 s",
+   "value": 434
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "first: grid ms",
+   "value": 40.8
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "first: images ms",
+   "value": 8665.1
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "first: requests in 2 s",
+   "value": 408
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "again: grid ms",
+   "value": 20.6
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "again: images ms",
+   "value": 514.6
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "again: requests in 2 s",
+   "value": 434
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "first: grid ms",
+   "value": 24.9
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "first: images ms",
+   "value": 8649.1
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "first: requests in 2 s",
+   "value": 408
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "again: grid ms",
+   "value": 19.4
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "again: images ms",
+   "value": 542.6
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "again: requests in 2 s",
+   "value": 434
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "first: grid ms",
+   "value": 23.4
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "first: images ms",
+   "value": 8648.4
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "first: requests in 2 s",
+   "value": 408
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "again: grid ms",
+   "value": 21.7
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "again: images ms",
+   "value": 515.7
+  },
+  {
+   "profile": "far",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "again: requests in 2 s",
+   "value": 434
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "html ms",
+   "value": 79.8
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "scripts ms",
+   "value": 960.8
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "bootstrap ms",
+   "value": 1088
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "paint ms",
+   "value": 1368
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "socket ms",
+   "value": 1230.8
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "rows ms",
+   "value": 1368
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "KB",
+   "value": 814.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "wire KB",
+   "value": 1006.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "html ms",
+   "value": 79.4
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "scripts ms",
+   "value": 940.2
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "bootstrap ms",
+   "value": 1025.8
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "paint ms",
+   "value": 1304.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "socket ms",
+   "value": 1169.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "rows ms",
+   "value": 1304.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "KB",
+   "value": 762.5
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "wire KB",
+   "value": 943.3
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "html ms",
+   "value": 80.6
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "scripts ms",
+   "value": 929.3
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "bootstrap ms",
+   "value": 1048.1
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "paint ms",
+   "value": 1322.4
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "socket ms",
+   "value": 1187.5
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "rows ms",
+   "value": 1322.4
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "KB",
+   "value": 762.5
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "wire KB",
+   "value": 943.3
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "html ms",
+   "value": 78.3
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "scripts ms",
+   "value": 990.2
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "bootstrap ms",
+   "value": 1108.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "paint ms",
+   "value": 1388.4
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "socket ms",
+   "value": 1248.1
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "rows ms",
+   "value": 1388.4
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "KB",
+   "value": 814.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "wire KB",
+   "value": 1006.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "html ms",
+   "value": 79.5
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "scripts ms",
+   "value": 1002.4
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "bootstrap ms",
+   "value": 1085.2
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "paint ms",
+   "value": 1380.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "socket ms",
+   "value": 1238.3
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "rows ms",
+   "value": 1380.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "KB",
+   "value": 814.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "wire KB",
+   "value": 1006.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "html ms",
+   "value": 78.2
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "scripts ms",
+   "value": 919.8
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "bootstrap ms",
+   "value": 1042.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "paint ms",
+   "value": 1341.3
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "socket ms",
+   "value": 1186.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "rows ms",
+   "value": 1341.3
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "KB",
+   "value": 762.5
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "wire KB",
+   "value": 943.3
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "html ms",
+   "value": 78.8
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "scripts ms",
+   "value": 970
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "bootstrap ms",
+   "value": 1053
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "paint ms",
+   "value": 1332.1
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "socket ms",
+   "value": 1194
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "rows ms",
+   "value": 1332.1
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "KB",
+   "value": 762.5
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "wire KB",
+   "value": 943.3
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "html ms",
+   "value": 77.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "scripts ms",
+   "value": 972.4
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "bootstrap ms",
+   "value": 1052.5
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "paint ms",
+   "value": 1332.3
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "socket ms",
+   "value": 1195
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "rows ms",
+   "value": 1332.4
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "KB",
+   "value": 814.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "wire KB",
+   "value": 1006.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "html ms",
+   "value": 77.3
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "scripts ms",
+   "value": 1043.2
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "bootstrap ms",
+   "value": 1167.6
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "paint ms",
+   "value": 1465.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "socket ms",
+   "value": 1316
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "rows ms",
+   "value": 1465.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "KB",
+   "value": 814.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "wire KB",
+   "value": 1006.7
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "html ms",
+   "value": 77.3
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "scripts ms",
+   "value": 969
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "bootstrap ms",
+   "value": 1048.1
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "paint ms",
+   "value": 1331.2
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "socket ms",
+   "value": 1186.8
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "rows ms",
+   "value": 1331.2
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "requests",
+   "value": 60
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "cached",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "KB",
+   "value": 762.5
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "wire requests",
+   "value": 72
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "wire KB",
+   "value": 942
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "cold-open",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "heap MB",
+   "value": 1.9
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "first: grid ms",
+   "value": 25.5
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "first: images ms",
+   "value": 969.3
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "first: requests in 2 s",
+   "value": 435
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "again: grid ms",
+   "value": 20.3
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "again: images ms",
+   "value": 542.2
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "again: requests in 2 s",
+   "value": 434
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "first: grid ms",
+   "value": 24.8
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "first: images ms",
+   "value": 917
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "first: requests in 2 s",
+   "value": 435
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "again: grid ms",
+   "value": 23.8
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "again: images ms",
+   "value": 487.6
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 1,
+   "metric": "again: requests in 2 s",
+   "value": 434
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "first: grid ms",
+   "value": 24.2
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "first: images ms",
+   "value": 925.9
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "first: requests in 2 s",
+   "value": 435
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "again: grid ms",
+   "value": 27
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "again: images ms",
+   "value": 594.7
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 2,
+   "metric": "again: requests in 2 s",
+   "value": 434
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "first: grid ms",
+   "value": 22.1
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "first: images ms",
+   "value": 956.6
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "first: requests in 2 s",
+   "value": 435
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "again: grid ms",
+   "value": 21.9
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "again: images ms",
+   "value": 561.1
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "again: requests in 2 s",
+   "value": 434
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "first: grid ms",
+   "value": 34.8
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "first: images ms",
+   "value": 1011.6
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "first: requests in 2 s",
+   "value": 434
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "again: grid ms",
+   "value": 21.3
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "again: images ms",
+   "value": 493.6
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "again: requests in 2 s",
+   "value": 433
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "first: grid ms",
+   "value": 22.1
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "first: images ms",
+   "value": 947.5
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "first: requests in 2 s",
+   "value": 435
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "again: grid ms",
+   "value": 21.8
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "again: images ms",
+   "value": 527.2
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 3,
+   "metric": "again: requests in 2 s",
+   "value": 434
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "first: grid ms",
+   "value": 27.9
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "first: images ms",
+   "value": 1138.2
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "first: requests in 2 s",
+   "value": 435
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "again: grid ms",
+   "value": 20.5
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "again: images ms",
+   "value": 567.1
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 4,
+   "metric": "again: requests in 2 s",
+   "value": 434
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "first: grid ms",
+   "value": 24
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "first: images ms",
+   "value": 894.3
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "first: requests in 2 s",
+   "value": 435
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "again: grid ms",
+   "value": 20.2
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "again: images ms",
+   "value": 535.7
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "again: requests in 2 s",
+   "value": 434
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "first: grid ms",
+   "value": 28.4
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "first: images ms",
+   "value": 1035.8
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "first: requests in 2 s",
+   "value": 435
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "again: grid ms",
+   "value": 21.1
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "again: images ms",
+   "value": 495.3
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "again: requests in 2 s",
+   "value": 434
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "first: grid ms",
+   "value": 24.5
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "first: images ms",
+   "value": 986
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "first: requests in 2 s",
+   "value": 435
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "again: grid ms",
+   "value": 28.5
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "again: images ms",
+   "value": 552.6
+  },
+  {
+   "profile": "near",
+   "journey": "picker-emoji",
+   "side": "B",
+   "label": "E05-sprites-mp3",
+   "rep": 5,
+   "metric": "again: requests in 2 s",
+   "value": 434
+  }
+ ]
+}

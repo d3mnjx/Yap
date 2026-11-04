@@ -1,0 +1,28 @@
+server: /home/agent/yap-perf/harness/Yap/bin/Debug/net10.0/Yap.dll on http://127.0.0.1:5353, root /home/agent/yap-perf/runs/root-QvIx1c, up after 3138 ms
+server: /home/agent/yap-perf/exp/07-reaction-picker-once/Yap/bin/Debug/net10.0/Yap.dll on http://127.0.0.1:5354, root /home/agent/yap-perf/runs/root-DYbTtR, up after 3383 ms
+counter A#1: 59.2, 180.9, 43.4, 65.8, 44.7
+counter B#1: 40.2, 7.7, 12.9, 7.4, 9.2
+counter B#2: 39.8, 8.0, 7.5, 8.1, 7.3
+counter A#2: 42.9, 131.1, 41.8, 46.7, 46.6
+counter A#3: 26.7, 138.2, 43.1, 49.1, 48.4
+counter B#3: 39.6, 12.0, 6.8, 9.2, 8.1
+plain A#1: 43.6, 128.2, 45.9, 44.3, 61.7
+plain B#1: 25.7, 7.5, 7.7, 7.9, 7.7
+plain B#2: 24.9, 7.3, 16.3, 17.5, 7.0
+plain A#2: 26.8, 155.1, 44.6, 46.7, 44.8
+plain A#3: 24.8, 116.3, 46.3, 49.8, 46.2
+plain B#3: 43.1, 7.5, 7.3, 7.5, 7.2
+no-cdn A#1: 42.1, 130.6, 161.0, 130.6, 20.6
+no-cdn B#1: 33.5, 8.9, 7.9, 8.5, 8.2
+no-cdn B#2: 29.5, 8.7, 9.9, 16.2, 9.7
+no-cdn A#2: 29.2, 210.2, 150.9, 195.9, 187.3
+no-cdn A#3: 52.8, 130.2, 167.1, 24.6, 191.5
+no-cdn B#3: 27.3, 8.4, 8.2, 8.5, 8.6
+
+variant side: median of open 1 | median of open 2 | median of opens 3-5 | median of opens 2-5 (per page, then over pages)
+counter A: 42.9 | 138.2 | 46.6 | 48.7
+counter B: 39.8 | 8.0 | 8.1 | 8.4
+plain A: 26.8 | 128.2 | 45.9 | 48.1
+plain B: 25.7 | 7.5 | 7.7 | 7.7
+no-cdn A: 42.1 | 130.6 | 167.1 | 148.7
+no-cdn B: 29.5 | 8.7 | 8.5 | 8.4

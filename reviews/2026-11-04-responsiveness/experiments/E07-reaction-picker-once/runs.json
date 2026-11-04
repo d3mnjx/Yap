@@ -1,0 +1,3270 @@
+{
+ "sides": [
+  {
+   "key": "A",
+   "label": "main",
+   "dir": "/home/agent/yap-perf/harness",
+   "commit": "345de009 Tests: picker-reaction times five reaction picker opens on one page, and counts the cells they build"
+  },
+  {
+   "key": "B",
+   "label": "E07-reaction-picker",
+   "dir": "/home/agent/yap-perf/exp/07-reaction-picker-once",
+   "commit": "c4ffb2fa Reactions: the emoji picker is built once per page and moves to the row of each open"
+  }
+ ],
+ "n": 5,
+ "plan": {
+  "lan": [
+   "picker-reaction",
+   "phone-picker-reaction"
+  ],
+  "near": [
+   "picker-reaction",
+   "phone-picker-reaction"
+  ]
+ },
+ "wallMs": 757418,
+ "records": [
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "open 1: grid",
+   "value": 25.9
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "open 2: grid",
+   "value": 111.3
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "open 3: grid",
+   "value": 53.1
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "open 4: grid",
+   "value": 46.9
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "open 5: grid",
+   "value": 49.3
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "later opens: grid",
+   "value": 51.2
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "cells built",
+   "value": 5040
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 2
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 164
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "open 1: grid",
+   "value": 42.5
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "open 2: grid",
+   "value": 6.9
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "open 3: grid",
+   "value": 7.6
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "open 4: grid",
+   "value": 7.1
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "open 5: grid",
+   "value": 8.4
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "later opens: grid",
+   "value": 7.4
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "cells built",
+   "value": 1008
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 1
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 75
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "open 1: grid",
+   "value": 32
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "open 2: grid",
+   "value": 7
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "open 3: grid",
+   "value": 7.8
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "open 4: grid",
+   "value": 8.7
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "open 5: grid",
+   "value": 8.2
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "later opens: grid",
+   "value": 8
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "cells built",
+   "value": 1008
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 1
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 63
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "open 1: grid",
+   "value": 25.9
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "open 2: grid",
+   "value": 107.1
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "open 3: grid",
+   "value": 61.9
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "open 4: grid",
+   "value": 54.5
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "open 5: grid",
+   "value": 47.2
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "later opens: grid",
+   "value": 58.2
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "cells built",
+   "value": 5040
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 3
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 210
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "open 1: grid",
+   "value": 28.4
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "open 2: grid",
+   "value": 129.6
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "open 3: grid",
+   "value": 47.6
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "open 4: grid",
+   "value": 47.8
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "open 5: grid",
+   "value": 48
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "later opens: grid",
+   "value": 47.9
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "cells built",
+   "value": 5040
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 2
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 193
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "open 1: grid",
+   "value": 25.6
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "open 2: grid",
+   "value": 7.6
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "open 3: grid",
+   "value": 8
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "open 4: grid",
+   "value": 8.4
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "open 5: grid",
+   "value": 8.3
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "later opens: grid",
+   "value": 8.2
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "cells built",
+   "value": 1008
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "open 1: grid",
+   "value": 24.2
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "open 2: grid",
+   "value": 7.4
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "open 3: grid",
+   "value": 7.6
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "open 4: grid",
+   "value": 7.6
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "open 5: grid",
+   "value": 7
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "later opens: grid",
+   "value": 7.5
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "cells built",
+   "value": 1008
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "open 1: grid",
+   "value": 40.5
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "open 2: grid",
+   "value": 137.4
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "open 3: grid",
+   "value": 46.4
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "open 4: grid",
+   "value": 47.5
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "open 5: grid",
+   "value": 47.4
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "later opens: grid",
+   "value": 47.5
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "cells built",
+   "value": 5040
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 2
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 187
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "open 1: grid",
+   "value": 31.1
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "open 2: grid",
+   "value": 111.9
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "open 3: grid",
+   "value": 49.4
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "open 4: grid",
+   "value": 45.6
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "open 5: grid",
+   "value": 49.8
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "later opens: grid",
+   "value": 49.6
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "cells built",
+   "value": 5040
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 2
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 174
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "open 1: grid",
+   "value": 59.1
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "open 2: grid",
+   "value": 7.4
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "open 3: grid",
+   "value": 7
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "open 4: grid",
+   "value": 6.7
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "open 5: grid",
+   "value": 7
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "later opens: grid",
+   "value": 7
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "cells built",
+   "value": 1008
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 2
+  },
+  {
+   "profile": "lan",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 129
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "open 1: grid",
+   "value": 147.8
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "open 2: grid",
+   "value": 1137.9
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "open 3: grid",
+   "value": 293.4
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "open 4: grid",
+   "value": 313.5
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "open 5: grid",
+   "value": 288.1
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "later opens: grid",
+   "value": 303.5
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "cells built",
+   "value": 5040
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 10
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 2509
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "open 1: grid",
+   "value": 143.6
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "open 2: grid",
+   "value": 48.6
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "open 3: grid",
+   "value": 66.8
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "open 4: grid",
+   "value": 44.2
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "open 5: grid",
+   "value": 48.3
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "later opens: grid",
+   "value": 48.5
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "cells built",
+   "value": 1008
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 7
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 812
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "open 1: grid",
+   "value": 164.9
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "open 2: grid",
+   "value": 40.4
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "open 3: grid",
+   "value": 46.5
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "open 4: grid",
+   "value": 52.2
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "open 5: grid",
+   "value": 49.2
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "later opens: grid",
+   "value": 47.8
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "cells built",
+   "value": 1008
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 7
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 748
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "open 1: grid",
+   "value": 137.5
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "open 2: grid",
+   "value": 1478.7
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "open 3: grid",
+   "value": 415.5
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "open 4: grid",
+   "value": 322.9
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "open 5: grid",
+   "value": 429.9
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "later opens: grid",
+   "value": 422.7
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "cells built",
+   "value": 5040
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 10
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 3129
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "open 1: grid",
+   "value": 150.9
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "open 2: grid",
+   "value": 1047.9
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "open 3: grid",
+   "value": 745.4
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "open 4: grid",
+   "value": 491.6
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "open 5: grid",
+   "value": 323.7
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "later opens: grid",
+   "value": 618.5
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "cells built",
+   "value": 5040
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 12
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 3443
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "open 1: grid",
+   "value": 133.6
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "open 2: grid",
+   "value": 39.5
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "open 3: grid",
+   "value": 65.1
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "open 4: grid",
+   "value": 36.8
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "open 5: grid",
+   "value": 46.6
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "later opens: grid",
+   "value": 43.1
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "cells built",
+   "value": 1008
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 7
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 694
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "open 1: grid",
+   "value": 135.8
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "open 2: grid",
+   "value": 49.7
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "open 3: grid",
+   "value": 63.8
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "open 4: grid",
+   "value": 75.1
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "open 5: grid",
+   "value": 61.1
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "later opens: grid",
+   "value": 62.5
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "cells built",
+   "value": 1008
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 9
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 1068
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "open 1: grid",
+   "value": 134.9
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "open 2: grid",
+   "value": 1090.8
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "open 3: grid",
+   "value": 497.8
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "open 4: grid",
+   "value": 362.2
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "open 5: grid",
+   "value": 322.6
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "later opens: grid",
+   "value": 430
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "cells built",
+   "value": 5040
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 12
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 3046
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "open 1: grid",
+   "value": 114
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "open 2: grid",
+   "value": 901.6
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "open 3: grid",
+   "value": 296.1
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "open 4: grid",
+   "value": 336.1
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "open 5: grid",
+   "value": 265.1
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "later opens: grid",
+   "value": 316.1
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "cells built",
+   "value": 5040
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 12
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 2623
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "open 1: grid",
+   "value": 131
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "open 2: grid",
+   "value": 47.8
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "open 3: grid",
+   "value": 51.6
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "open 4: grid",
+   "value": 63.4
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "open 5: grid",
+   "value": 49.7
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "later opens: grid",
+   "value": 50.7
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "cells built",
+   "value": 1008
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 8
+  },
+  {
+   "profile": "lan",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 846
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "open 1: grid",
+   "value": 27.2
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "open 2: grid",
+   "value": 102.7
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "open 3: grid",
+   "value": 46.6
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "open 4: grid",
+   "value": 44.7
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "open 5: grid",
+   "value": 51.1
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "later opens: grid",
+   "value": 48.8
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "cells built",
+   "value": 5040
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 3
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 218
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "open 1: grid",
+   "value": 25.4
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "open 2: grid",
+   "value": 9.9
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "open 3: grid",
+   "value": 7.7
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "open 4: grid",
+   "value": 10.7
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "open 5: grid",
+   "value": 8
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "later opens: grid",
+   "value": 8.9
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "cells built",
+   "value": 1008
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 0
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "open 1: grid",
+   "value": 37.6
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "open 2: grid",
+   "value": 7.6
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "open 3: grid",
+   "value": 12.7
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "open 4: grid",
+   "value": 9.9
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "open 5: grid",
+   "value": 8
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "later opens: grid",
+   "value": 9
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "cells built",
+   "value": 1008
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 1
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 54
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "open 1: grid",
+   "value": 25.7
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "open 2: grid",
+   "value": 170.7
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "open 3: grid",
+   "value": 73.6
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "open 4: grid",
+   "value": 47.1
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "open 5: grid",
+   "value": 51.7
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "later opens: grid",
+   "value": 62.7
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "cells built",
+   "value": 5040
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 3
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 309
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "open 1: grid",
+   "value": 30.9
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "open 2: grid",
+   "value": 95.1
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "open 3: grid",
+   "value": 46.6
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "open 4: grid",
+   "value": 46.2
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "open 5: grid",
+   "value": 46.7
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "later opens: grid",
+   "value": 46.7
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "cells built",
+   "value": 5040
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 1
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 94
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "open 1: grid",
+   "value": 23.7
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "open 2: grid",
+   "value": 6.2
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "open 3: grid",
+   "value": 8
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "open 4: grid",
+   "value": 8
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "open 5: grid",
+   "value": 7.7
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "later opens: grid",
+   "value": 7.8
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "cells built",
+   "value": 1008
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 1
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 58
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "open 1: grid",
+   "value": 24.7
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "open 2: grid",
+   "value": 7.6
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "open 3: grid",
+   "value": 7.6
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "open 4: grid",
+   "value": 8.4
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "open 5: grid",
+   "value": 8.4
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "later opens: grid",
+   "value": 8
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "cells built",
+   "value": 1008
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 1
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 76
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "open 1: grid",
+   "value": 28.5
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "open 2: grid",
+   "value": 135.6
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "open 3: grid",
+   "value": 45.6
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "open 4: grid",
+   "value": 47
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "open 5: grid",
+   "value": 45.6
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "later opens: grid",
+   "value": 46.3
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "cells built",
+   "value": 5040
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 2
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 207
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "open 1: grid",
+   "value": 26.8
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "open 2: grid",
+   "value": 138.8
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "open 3: grid",
+   "value": 44.5
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "open 4: grid",
+   "value": 49.3
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "open 5: grid",
+   "value": 58.5
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "later opens: grid",
+   "value": 53.9
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "cells built",
+   "value": 5040
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 2
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 191
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "open 1: grid",
+   "value": 26
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "open 2: grid",
+   "value": 7.7
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "open 3: grid",
+   "value": 7.6
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "open 4: grid",
+   "value": 7.4
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "open 5: grid",
+   "value": 7.5
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "later opens: grid",
+   "value": 7.6
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "cells built",
+   "value": 1008
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 1
+  },
+  {
+   "profile": "near",
+   "journey": "picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 64
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "open 1: grid",
+   "value": 149.9
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "open 2: grid",
+   "value": 1075.9
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "open 3: grid",
+   "value": 422.3
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "open 4: grid",
+   "value": 339.2
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "open 5: grid",
+   "value": 386
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "later opens: grid",
+   "value": 404.2
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "cells built",
+   "value": 5040
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 13
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 3089
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "open 1: grid",
+   "value": 149
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "open 2: grid",
+   "value": 56
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "open 3: grid",
+   "value": 48.2
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "open 4: grid",
+   "value": 50.2
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "open 5: grid",
+   "value": 50
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "later opens: grid",
+   "value": 50.1
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "cells built",
+   "value": 1008
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "long tasks",
+   "value": 7
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 1,
+   "metric": "long task ms",
+   "value": 858
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "open 1: grid",
+   "value": 123.2
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "open 2: grid",
+   "value": 60.3
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "open 3: grid",
+   "value": 59.9
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "open 4: grid",
+   "value": 51.7
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "open 5: grid",
+   "value": 55.5
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "later opens: grid",
+   "value": 57.7
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "cells built",
+   "value": 1008
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 6
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 776
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "open 1: grid",
+   "value": 142.4
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "open 2: grid",
+   "value": 893.6
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "open 3: grid",
+   "value": 356
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "open 4: grid",
+   "value": 519.3
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "open 5: grid",
+   "value": 311.5
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "later opens: grid",
+   "value": 437.7
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "cells built",
+   "value": 5040
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long tasks",
+   "value": 11
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "long task ms",
+   "value": 2779
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "open 1: grid",
+   "value": 167.7
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "open 2: grid",
+   "value": 713.7
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "open 3: grid",
+   "value": 351.6
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "open 4: grid",
+   "value": 324.4
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "open 5: grid",
+   "value": 310.6
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "later opens: grid",
+   "value": 338
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "cells built",
+   "value": 5040
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 10
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 2345
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "open 1: grid",
+   "value": 128.7
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "open 2: grid",
+   "value": 41
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "open 3: grid",
+   "value": 47.8
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "open 4: grid",
+   "value": 45.3
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "open 5: grid",
+   "value": 52.3
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "later opens: grid",
+   "value": 46.6
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "cells built",
+   "value": 1008
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "long tasks",
+   "value": 8
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 3,
+   "metric": "long task ms",
+   "value": 766
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "open 1: grid",
+   "value": 122.4
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "open 2: grid",
+   "value": 50.6
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "open 3: grid",
+   "value": 74.2
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "open 4: grid",
+   "value": 58.7
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "open 5: grid",
+   "value": 46.3
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "later opens: grid",
+   "value": 54.7
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "cells built",
+   "value": 1008
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 8
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 809
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "open 1: grid",
+   "value": 208.3
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "open 2: grid",
+   "value": 1045
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "open 3: grid",
+   "value": 332
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "open 4: grid",
+   "value": 258.4
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "open 5: grid",
+   "value": 326.5
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "later opens: grid",
+   "value": 329.3
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "cells built",
+   "value": 5040
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long tasks",
+   "value": 10
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "long task ms",
+   "value": 2644
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "open 1: grid",
+   "value": 148.7
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "open 2: grid",
+   "value": 867.7
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "open 3: grid",
+   "value": 268.8
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "open 4: grid",
+   "value": 335
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "open 5: grid",
+   "value": 315.2
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "later opens: grid",
+   "value": 325.1
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "cells built",
+   "value": 5040
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 13
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 2573
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "open 1: grid",
+   "value": 136.6
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "open 2: grid",
+   "value": 66.4
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "open 3: grid",
+   "value": 65.9
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "open 4: grid",
+   "value": 66.5
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "open 5: grid",
+   "value": 60.6
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "later opens: grid",
+   "value": 66.1
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "cells built",
+   "value": 1008
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "long tasks",
+   "value": 7
+  },
+  {
+   "profile": "near",
+   "journey": "phone-picker-reaction",
+   "side": "B",
+   "label": "E07-reaction-picker",
+   "rep": 5,
+   "metric": "long task ms",
+   "value": 853
+  }
+ ]
+}

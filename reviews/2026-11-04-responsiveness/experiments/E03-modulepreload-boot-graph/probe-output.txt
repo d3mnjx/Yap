@@ -1,0 +1,8 @@
+server: /home/agent/yap-perf/harness/Yap/bin/Debug/net10.0/Yap.dll on http://127.0.0.1:5323, root /home/agent/yap-perf/runs/root-7k5q41, up after 3389 ms
+  /js/pages/admin.js?v=2026-11-04-0917: HTTP/1.1 200 OK; Cache-Control: public, max-age=31536000, immutable
+A /home/agent/yap-perf/harness (port 5323): GET / as ada -> 200, 102545 B; rel="modulepreload" 42; import map 43 entries; worker list 43 js modules
+server: /home/agent/yap-perf/exp/03-modulepreload-boot-graph/Yap/bin/Debug/net10.0/Yap.dll on http://127.0.0.1:5324, root /home/agent/yap-perf/runs/root-wZQK6x, up after 2865 ms
+  /js/pages/admin.js?v=2026-11-04-1147: HTTP/1.1 200 OK; Cache-Control: public, max-age=31536000, immutable
+B /home/agent/yap-perf/exp/03-modulepreload-boot-graph (port 5324): GET / as ada -> 200, 102058 B; rel="modulepreload" 36; import map 43 entries; worker list 43 js modules
+preloaded on A, not on B (6): /js/pages/admin.js, /js/pages/channel-settings.js, /js/pages/settings-debug.js, /js/pages/settings.js, /js/ui/gif-library.js, /js/ui/tooltip.js
+preloaded on B, not on A (0): none

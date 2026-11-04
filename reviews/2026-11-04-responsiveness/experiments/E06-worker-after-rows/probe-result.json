@@ -1,0 +1,2904 @@
+{
+ "A": {
+  "side": "A",
+  "dir": "/home/agent/yap-perf/harness",
+  "port": 5333,
+  "marks": {
+   "html": 1196,
+   "scripts": 13418.699999988079,
+   "bootstrap": 14493.899999976158,
+   "paint": 18142.30000001192,
+   "socket": 16738.399999976158,
+   "rows": 18142.30000001192
+  },
+  "controller": "http://127.0.0.1:5433/service-worker.js?v=2026-11-04-0917",
+  "registration": {
+   "active": "activated",
+   "installing": false,
+   "waiting": false
+  },
+  "rowsWallClockInPage": 18169.5,
+  "wireAtRowsKB": 1005,
+  "wireRequestsAtRows": 72,
+  "wireAtEndKB": 1011.9,
+  "wireRequestsAtEnd": 72,
+  "proxyLines": [
+   {
+    "at": 2.5,
+    "line": "GET / HTTP/1.1"
+   },
+   {
+    "at": 967.5,
+    "line": "GET /app.css?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 967.5,
+    "line": "GET /themes.css?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 967.5,
+    "line": "GET /themes/teahouse.css?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 967.5,
+    "line": "GET /css/frame.css?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 967.5,
+    "line": "GET /css/pickers.css?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 1200.5,
+    "line": "GET /css/timeline.css?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 1959.5,
+    "line": "GET /css/composer.css?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 2026.5,
+    "line": "GET /css/message.css?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 2057.5,
+    "line": "GET /css/pages.css?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 2149.5,
+    "line": "GET /fonts/InterVariable.woff2 HTTP/1.1"
+   },
+   {
+    "at": 2196.5,
+    "line": "GET /js/api.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 2243.5,
+    "line": "GET /js/hub.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 2982.5,
+    "line": "GET /js/main.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 3075.5,
+    "line": "GET /js/notify.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 3229.5,
+    "line": "GET /js/offline/db.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 6049.5,
+    "line": "GET /js/offline/outbox.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 6063.5,
+    "line": "GET /js/offline/snapshot.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 6131.5,
+    "line": "GET /js/pages/admin.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 6166.5,
+    "line": "GET /js/pages/channel-settings.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 6176.5,
+    "line": "GET /js/pages/chat.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 6186.5,
+    "line": "GET /js/pages/invite.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 6971.5,
+    "line": "GET /js/pages/login.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 6987.5,
+    "line": "GET /js/pages/settings-debug.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 7288.5,
+    "line": "GET /js/pages/settings.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 7312.5,
+    "line": "GET /js/pages/verify.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 7348.5,
+    "line": "GET /js/push.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 7368.5,
+    "line": "GET /js/pwa.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 7913.5,
+    "line": "GET /js/render/avatar.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 7949.5,
+    "line": "GET /js/render/dom.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 8319.5,
+    "line": "GET /js/render/text.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 8360.5,
+    "line": "GET /js/render/time.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 8375.5,
+    "line": "GET /js/router.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 8375.5,
+    "line": "GET /js/scene.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 8832.5,
+    "line": "GET /js/sender.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 8867.5,
+    "line": "GET /js/session.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 9269.5,
+    "line": "GET /js/store.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 9288.5,
+    "line": "GET /js/ui/composer.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 9303.5,
+    "line": "GET /js/ui/confirm.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 9314.5,
+    "line": "GET /js/ui/emoji-picker.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 9785.5,
+    "line": "GET /js/ui/frame.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 9806.5,
+    "line": "GET /js/ui/gallery.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 10246.5,
+    "line": "GET /js/ui/gif-library.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 10349.5,
+    "line": "GET /js/ui/gif-picker.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 10380.5,
+    "line": "GET /js/ui/message.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 10380.5,
+    "line": "GET /js/ui/overlays.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 10824.5,
+    "line": "GET /js/ui/pins.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 10855.5,
+    "line": "GET /js/ui/recorder.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 11198.5,
+    "line": "GET /js/ui/timeline.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 11310.5,
+    "line": "GET /js/ui/tooltip.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 11401.5,
+    "line": "GET /js/ui/voice.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 11421.5,
+    "line": "GET /js/update.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 11766.5,
+    "line": "GET /js/upload.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 11840.5,
+    "line": "GET /lib/signalr.min.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 12215.5,
+    "line": "GET /lib/tus.min.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 13430.5,
+    "line": "GET /service-worker.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 13435.5,
+    "line": "GET /api/bootstrap HTTP/1.1"
+   },
+   {
+    "at": 14454.5,
+    "line": "GET /login HTTP/1.1"
+   },
+   {
+    "at": 14454.5,
+    "line": "GET /js/data/emoji-list.js?v=2026-11-04-0917 HTTP/1.1"
+   },
+   {
+    "at": 14551.5,
+    "line": "GET /images/turqline01_3px.png HTTP/1.1"
+   },
+   {
+    "at": 14551.5,
+    "line": "GET /hub?device=7b507132-ce04-4102-ac9b-20fb17695c2d HTTP/1.1"
+   },
+   {
+    "at": 14576.5,
+    "line": "GET /emoji_selection_color.png HTTP/1.1"
+   },
+   {
+    "at": 14576.5,
+    "line": "GET /emoji_selection_greys.png HTTP/1.1"
+   },
+   {
+    "at": 14721.5,
+    "line": "GET /icon.svg HTTP/1.1"
+   },
+   {
+    "at": 16158.5,
+    "line": "GET /icon-192.png HTTP/1.1"
+   },
+   {
+    "at": 16533.5,
+    "line": "GET /icon-512.png HTTP/1.1"
+   },
+   {
+    "at": 16533.5,
+    "line": "GET /notif.mp3 HTTP/1.1"
+   },
+   {
+    "at": 16742.5,
+    "line": "GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1"
+   },
+   {
+    "at": 17129.5,
+    "line": "GET /images/purpleline01_3px.png HTTP/1.1"
+   },
+   {
+    "at": 17567.5,
+    "line": "GET /images/bot-avatar.svg HTTP/1.1"
+   },
+   {
+    "at": 17881.5,
+    "line": "GET /images/klipy-attribution.svg HTTP/1.1"
+   },
+   {
+    "at": 18150.5,
+    "line": "GET /emoji-packs/wechat/teary.png HTTP/1.1"
+   }
+  ],
+  "pageResources": [
+   {
+    "name": "http://127.0.0.1:5433/app.css?v=2026-11-04-0917",
+    "start": 961.1999999880791,
+    "end": 1958.800000011921,
+    "initiator": "link",
+    "transfer": 10628
+   },
+   {
+    "name": "http://127.0.0.1:5433/themes.css?v=2026-11-04-0917",
+    "start": 961.5,
+    "end": 2022.800000011921,
+    "initiator": "link",
+    "transfer": 7766
+   },
+   {
+    "name": "http://127.0.0.1:5433/themes/teahouse.css?v=2026-11-04-0917",
+    "start": 961.5,
+    "end": 2054.699999988079,
+    "initiator": "link",
+    "transfer": 4041
+   },
+   {
+    "name": "http://127.0.0.1:5433/css/frame.css?v=2026-11-04-0917",
+    "start": 961.5999999642372,
+    "end": 2149.300000011921,
+    "initiator": "link",
+    "transfer": 11761
+   },
+   {
+    "name": "http://127.0.0.1:5433/css/pickers.css?v=2026-11-04-0917",
+    "start": 961.5999999642372,
+    "end": 2193.599999964237,
+    "initiator": "link",
+    "transfer": 5554
+   },
+   {
+    "name": "http://127.0.0.1:5433/css/timeline.css?v=2026-11-04-0917",
+    "start": 961.5999999642372,
+    "end": 2239.099999964237,
+    "initiator": "link",
+    "transfer": 5560
+   },
+   {
+    "name": "http://127.0.0.1:5433/css/composer.css?v=2026-11-04-0917",
+    "start": 961.6999999880791,
+    "end": 2979.5,
+    "initiator": "link",
+    "transfer": 8356
+   },
+   {
+    "name": "http://127.0.0.1:5433/css/message.css?v=2026-11-04-0917",
+    "start": 961.8000000119209,
+    "end": 3071.5,
+    "initiator": "link",
+    "transfer": 11620
+   },
+   {
+    "name": "http://127.0.0.1:5433/css/pages.css?v=2026-11-04-0917",
+    "start": 961.8000000119209,
+    "end": 3226.099999964237,
+    "initiator": "link",
+    "transfer": 24800
+   },
+   {
+    "name": "http://127.0.0.1:5433/fonts/InterVariable.woff2",
+    "start": 961.8000000119209,
+    "end": 6047,
+    "initiator": "link",
+    "transfer": 352540
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/api.js?v=2026-11-04-0917",
+    "start": 961.8999999761581,
+    "end": 6059.300000011921,
+    "initiator": "other",
+    "transfer": 1171
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/hub.js?v=2026-11-04-0917",
+    "start": 961.8999999761581,
+    "end": 6127.699999988079,
+    "initiator": "other",
+    "transfer": 8672
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/main.js?v=2026-11-04-0917",
+    "start": 962,
+    "end": 6162.599999964237,
+    "initiator": "other",
+    "transfer": 4393
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/notify.js?v=2026-11-04-0917",
+    "start": 962,
+    "end": 6176.099999964237,
+    "initiator": "other",
+    "transfer": 1751
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/offline/db.js?v=2026-11-04-0917",
+    "start": 962.0999999642372,
+    "end": 6186.800000011921,
+    "initiator": "other",
+    "transfer": 1176
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/offline/outbox.js?v=2026-11-04-0917",
+    "start": 962.1999999880791,
+    "end": 6968,
+    "initiator": "other",
+    "transfer": 1291
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/offline/snapshot.js?v=2026-11-04-0917",
+    "start": 962.1999999880791,
+    "end": 6985.699999988079,
+    "initiator": "other",
+    "transfer": 2219
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/pages/admin.js?v=2026-11-04-0917",
+    "start": 962.3000000119209,
+    "end": 7285.099999964237,
+    "initiator": "other",
+    "transfer": 30700
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/pages/channel-settings.js?v=2026-11-04-0917",
+    "start": 962.3000000119209,
+    "end": 7313,
+    "initiator": "other",
+    "transfer": 3441
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/pages/chat.js?v=2026-11-04-0917",
+    "start": 962.3000000119209,
+    "end": 7348.5,
+    "initiator": "other",
+    "transfer": 4018
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/pages/invite.js?v=2026-11-04-0917",
+    "start": 962.3999999761581,
+    "end": 7364.899999976158,
+    "initiator": "other",
+    "transfer": 2495
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/pages/login.js?v=2026-11-04-0917",
+    "start": 962.3999999761581,
+    "end": 7909.399999976158,
+    "initiator": "other",
+    "transfer": 4018
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/pages/settings-debug.js?v=2026-11-04-0917",
+    "start": 962.5,
+    "end": 7945.5,
+    "initiator": "other",
+    "transfer": 4316
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/pages/settings.js?v=2026-11-04-0917",
+    "start": 1159.5999999642372,
+    "end": 8319.300000011921,
+    "initiator": "script",
+    "transfer": 15667
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/pages/verify.js?v=2026-11-04-0917",
+    "start": 1159.699999988079,
+    "end": 8375.5,
+    "initiator": "script",
+    "transfer": 1215
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/push.js?v=2026-11-04-0917",
+    "start": 1159.800000011921,
+    "end": 8358.300000011921,
+    "initiator": "script",
+    "transfer": 3409
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/pwa.js?v=2026-11-04-0917",
+    "start": 1159.8999999761581,
+    "end": 8370.800000011921,
+    "initiator": "script",
+    "transfer": 1620
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/render/avatar.js?v=2026-11-04-0917",
+    "start": 1160,
+    "end": 8828.899999976158,
+    "initiator": "script",
+    "transfer": 1373
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/render/dom.js?v=2026-11-04-0917",
+    "start": 1160.0999999642372,
+    "end": 8865.599999964237,
+    "initiator": "script",
+    "transfer": 1350
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/render/text.js?v=2026-11-04-0917",
+    "start": 1160.199999988079,
+    "end": 9266.699999988079,
+    "initiator": "script",
+    "transfer": 4936
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/render/time.js?v=2026-11-04-0917",
+    "start": 1160.199999988079,
+    "end": 9288.5,
+    "initiator": "script",
+    "transfer": 2595
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/router.js?v=2026-11-04-0917",
+    "start": 1160.3999999761581,
+    "end": 9303.399999976158,
+    "initiator": "script",
+    "transfer": 1815
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/scene.js?v=2026-11-04-0917",
+    "start": 1160.5,
+    "end": 9313.699999988079,
+    "initiator": "script",
+    "transfer": 1220
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/sender.js?v=2026-11-04-0917",
+    "start": 1160.5999999642372,
+    "end": 9786,
+    "initiator": "script",
+    "transfer": 5981
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/session.js?v=2026-11-04-0917",
+    "start": 1160.699999988079,
+    "end": 9806.899999976158,
+    "initiator": "script",
+    "transfer": 2660
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/store.js?v=2026-11-04-0917",
+    "start": 1160.699999988079,
+    "end": 10245.199999988079,
+    "initiator": "script",
+    "transfer": 8825
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/ui/confirm.js?v=2026-11-04-0917",
+    "start": 1160.800000011921,
+    "end": 10346.699999988079,
+    "initiator": "script",
+    "transfer": 1363
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/ui/composer.js?v=2026-11-04-0917",
+    "start": 1160.800000011921,
+    "end": 10375.399999976158,
+    "initiator": "script",
+    "transfer": 11128
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/ui/emoji-picker.js?v=2026-11-04-0917",
+    "start": 1160.8999999761581,
+    "end": 10379.099999964237,
+    "initiator": "script",
+    "transfer": 3935
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/ui/frame.js?v=2026-11-04-0917",
+    "start": 1161,
+    "end": 10823.399999976158,
+    "initiator": "script",
+    "transfer": 10729
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/ui/gallery.js?v=2026-11-04-0917",
+    "start": 1161,
+    "end": 10855.5,
+    "initiator": "script",
+    "transfer": 4304
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/ui/gif-library.js?v=2026-11-04-0917",
+    "start": 1161.0999999642372,
+    "end": 11193.699999988079,
+    "initiator": "script",
+    "transfer": 5165
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/ui/gif-picker.js?v=2026-11-04-0917",
+    "start": 1161.0999999642372,
+    "end": 11306.699999988079,
+    "initiator": "script",
+    "transfer": 6403
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/ui/message.js?v=2026-11-04-0917",
+    "start": 1161.199999988079,
+    "end": 11400.099999964237,
+    "initiator": "script",
+    "transfer": 11792
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/ui/overlays.js?v=2026-11-04-0917",
+    "start": 1161.300000011921,
+    "end": 11417.099999964237,
+    "initiator": "script",
+    "transfer": 1954
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/ui/pins.js?v=2026-11-04-0917",
+    "start": 1161.300000011921,
+    "end": 11766.5,
+    "initiator": "script",
+    "transfer": 3997
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/ui/recorder.js?v=2026-11-04-0917",
+    "start": 1161.300000011921,
+    "end": 11835.5,
+    "initiator": "script",
+    "transfer": 2754
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/ui/timeline.js?v=2026-11-04-0917",
+    "start": 1161.3999999761581,
+    "end": 12211,
+    "initiator": "script",
+    "transfer": 12358
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/ui/tooltip.js?v=2026-11-04-0917",
+    "start": 1161.5,
+    "end": 12274.300000011921,
+    "initiator": "script",
+    "transfer": 1418
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/update.js?v=2026-11-04-0917",
+    "start": 1161.5999999642372,
+    "end": 12354,
+    "initiator": "script",
+    "transfer": 2143
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/ui/voice.js?v=2026-11-04-0917",
+    "start": 1161.5999999642372,
+    "end": 12376,
+    "initiator": "script",
+    "transfer": 3495
+   },
+   {
+    "name": "http://127.0.0.1:5433/js/upload.js?v=2026-11-04-0917",
+    "start": 1161.5999999642372,
+    "end": 12706.399999976158,
+    "initiator": "script",
+    "transfer": 3435
+   },
+   {
+    "name": "http://127.0.0.1:5433/lib/signalr.min.js?v=2026-11-04-0917",
+    "start": 1197.699999988079,
+    "end": 12891.800000011921,
+    "initiator": "script",
+    "transfer": 18530
+   },
+   {
+    "name": "http://127.0.0.1:5433/lib/tus.min.js?v=2026-11-04-0917",
+    "start": 1199.699999988079,
+    "end": 13411.899999976158,
+    "initiator": "script",
+    "transfer": 32612
+   },
+   {
+    "name": "http://127.0.0.1:5433/api/bootstrap",
+    "start": 13429.099999964237,
+    "end": 14493.099999964237,
+    "initiator": "fetch",
+    "transfer": 6983
+   },
+   {
+    "name": "http://127.0.0.1:5433/images/turqline01_3px.png",
+    "start": 14543.699999988079,
+    "end": 15817.099999964237,
+    "initiator": "img",
+    "transfer": 1341
+   },
+   {
+    "name": "http://127.0.0.1:5433/emoji_selection_color.png",
+    "start": 14556.099999964237,
+    "end": 16532,
+    "initiator": "css",
+    "transfer": 46187
+   },
+   {
+    "name": "http://127.0.0.1:5433/emoji_selection_greys.png",
+    "start": 14556.300000011921,
+    "end": 16150,
+    "initiator": "css",
+    "transfer": 39411
+   },
+   {
+    "name": "https://cdn.jsdelivr.net/gh/jdecked/twemoji@17.0.3/assets/svg/1f451.svg",
+    "start": 14572,
+    "end": 14651.5,
+    "initiator": "img",
+    "transfer": 779
+   },
+   {
+    "name": "https://cdn.jsdelivr.net/gh/jdecked/twemoji@17.0.3/assets/svg/1f916.svg",
+    "start": 14572.399999976158,
+    "end": 14653.5,
+    "initiator": "img",
+    "transfer": 982
+   },
+   {
+    "name": "http://127.0.0.1:5433/api/bootstrap?emojiStamp=b15a0f3de181880f",
+    "start": 16739.30000001192,
+    "end": 18101.30000001192,
+    "initiator": "fetch",
+    "transfer": 2991
+   },
+   {
+    "name": "https://cdn.jsdelivr.net/gh/jdecked/twemoji@17.0.3/assets/svg/1f327.svg",
+    "start": 18142.899999976158,
+    "end": 18212.30000001192,
+    "initiator": "img",
+    "transfer": 720
+   },
+   {
+    "name": "https://cdn.jsdelivr.net/gh/jdecked/twemoji@17.0.3/assets/svg/1f355.svg",
+    "start": 18143.399999976158,
+    "end": 18176.80000001192,
+    "initiator": "img",
+    "transfer": 862
+   },
+   {
+    "name": "https://cdn.jsdelivr.net/gh/jdecked/twemoji@17.0.3/assets/svg/1f44d.svg",
+    "start": 18143.899999976158,
+    "end": 18216.599999964237,
+    "initiator": "img",
+    "transfer": 983
+   },
+   {
+    "name": "http://127.0.0.1:5433/emoji-packs/wechat/teary.png",
+    "start": 18144.399999976158,
+    "end": 19149.899999976158,
+    "initiator": "img",
+    "transfer": 6039
+   },
+   {
+    "name": "https://cdn.jsdelivr.net/gh/jdecked/twemoji@17.0.3/assets/svg/1f440.svg",
+    "start": 18144.599999964237,
+    "end": 18178.399999976158,
+    "initiator": "img",
+    "transfer": 721
+   },
+   {
+    "name": "https://cdn.jsdelivr.net/gh/jdecked/twemoji@17.0.3/assets/svg/2764.svg",
+    "start": 18144.899999976158,
+    "end": 18180.899999976158,
+    "initiator": "img",
+    "transfer": 534
+   }
+  ],
+  "worker": {
+   "url": "http://127.0.0.1:5433/service-worker.js?v=2026-11-04-0917",
+   "timeOriginInPage": 14421.5,
+   "entries": [
+    {
+     "name": "http://127.0.0.1:5433/login",
+     "start": 30.900000035762787,
+     "end": 1377,
+     "initiator": "fetch",
+     "transfer": 34876,
+     "body": 34576,
+     "startInPage": 14452.4,
+     "endInPage": 15798.5
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/api.js?v=2026-11-04-0917",
+     "start": 31.30000001192093,
+     "end": 71.10000002384186,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 871,
+     "startInPage": 14452.8,
+     "endInPage": 14492.6
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/data/emoji-list.js?v=2026-11-04-0917",
+     "start": 31.600000023841858,
+     "end": 1132.6000000238419,
+     "initiator": "fetch",
+     "transfer": 19233,
+     "body": 18933,
+     "startInPage": 14453.1,
+     "endInPage": 15554.1
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/hub.js?v=2026-11-04-0917",
+     "start": 31.80000001192093,
+     "end": 96.20000004768372,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 8372,
+     "startInPage": 14453.3,
+     "endInPage": 14517.7
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/main.js?v=2026-11-04-0917",
+     "start": 32.10000002384186,
+     "end": 126.5,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 4093,
+     "startInPage": 14453.6,
+     "endInPage": 14548
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/notify.js?v=2026-11-04-0917",
+     "start": 32.10000002384186,
+     "end": 128.80000001192093,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 1451,
+     "startInPage": 14453.6,
+     "endInPage": 14550.3
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/offline/db.js?v=2026-11-04-0917",
+     "start": 32.200000047683716,
+     "end": 151.30000001192093,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 876,
+     "startInPage": 14453.7,
+     "endInPage": 14572.8
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/offline/outbox.js?v=2026-11-04-0917",
+     "start": 32.5,
+     "end": 154.70000004768372,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 991,
+     "startInPage": 14454,
+     "endInPage": 14576.2
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/offline/snapshot.js?v=2026-11-04-0917",
+     "start": 32.700000047683716,
+     "end": 158.10000002384186,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 1919,
+     "startInPage": 14454.2,
+     "endInPage": 14579.6
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/pages/admin.js?v=2026-11-04-0917",
+     "start": 32.90000003576279,
+     "end": 160,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 30400,
+     "startInPage": 14454.4,
+     "endInPage": 14581.5
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/pages/channel-settings.js?v=2026-11-04-0917",
+     "start": 33,
+     "end": 160.9000000357628,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 3141,
+     "startInPage": 14454.5,
+     "endInPage": 14582.4
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/pages/chat.js?v=2026-11-04-0917",
+     "start": 33.200000047683716,
+     "end": 171.5,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 3718,
+     "startInPage": 14454.7,
+     "endInPage": 14593
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/pages/invite.js?v=2026-11-04-0917",
+     "start": 33.40000003576279,
+     "end": 199.30000001192093,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 2195,
+     "startInPage": 14454.9,
+     "endInPage": 14620.8
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/pages/login.js?v=2026-11-04-0917",
+     "start": 33.700000047683716,
+     "end": 208.9000000357628,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 3718,
+     "startInPage": 14455.2,
+     "endInPage": 14630.4
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/pages/settings-debug.js?v=2026-11-04-0917",
+     "start": 33.80000001192093,
+     "end": 213,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 4016,
+     "startInPage": 14455.3,
+     "endInPage": 14634.5
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/pages/settings.js?v=2026-11-04-0917",
+     "start": 34.200000047683716,
+     "end": 214.70000004768372,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 15367,
+     "startInPage": 14455.7,
+     "endInPage": 14636.2
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/pages/verify.js?v=2026-11-04-0917",
+     "start": 34.30000001192093,
+     "end": 221.20000004768372,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 915,
+     "startInPage": 14455.8,
+     "endInPage": 14642.7
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/push.js?v=2026-11-04-0917",
+     "start": 34.40000003576279,
+     "end": 232.4000000357628,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 3109,
+     "startInPage": 14455.9,
+     "endInPage": 14653.9
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/pwa.js?v=2026-11-04-0917",
+     "start": 34.40000003576279,
+     "end": 233.80000001192093,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 1320,
+     "startInPage": 14455.9,
+     "endInPage": 14655.3
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/render/avatar.js?v=2026-11-04-0917",
+     "start": 34.700000047683716,
+     "end": 235.5,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 1073,
+     "startInPage": 14456.2,
+     "endInPage": 14657
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/render/dom.js?v=2026-11-04-0917",
+     "start": 35.10000002384186,
+     "end": 237.20000004768372,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 1050,
+     "startInPage": 14456.6,
+     "endInPage": 14658.7
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/render/text.js?v=2026-11-04-0917",
+     "start": 35.5,
+     "end": 238.20000004768372,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 4636,
+     "startInPage": 14457,
+     "endInPage": 14659.7
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/render/time.js?v=2026-11-04-0917",
+     "start": 35.80000001192093,
+     "end": 239.30000001192093,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 2295,
+     "startInPage": 14457.3,
+     "endInPage": 14660.8
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/router.js?v=2026-11-04-0917",
+     "start": 35.80000001192093,
+     "end": 240.30000001192093,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 1515,
+     "startInPage": 14457.3,
+     "endInPage": 14661.8
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/scene.js?v=2026-11-04-0917",
+     "start": 36,
+     "end": 241.4000000357628,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 920,
+     "startInPage": 14457.5,
+     "endInPage": 14662.9
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/sender.js?v=2026-11-04-0917",
+     "start": 36,
+     "end": 242.60000002384186,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 5681,
+     "startInPage": 14457.5,
+     "endInPage": 14664.1
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/session.js?v=2026-11-04-0917",
+     "start": 36,
+     "end": 243.5,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 2360,
+     "startInPage": 14457.5,
+     "endInPage": 14665
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/store.js?v=2026-11-04-0917",
+     "start": 36.200000047683716,
+     "end": 244.4000000357628,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 8525,
+     "startInPage": 14457.7,
+     "endInPage": 14665.9
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/ui/composer.js?v=2026-11-04-0917",
+     "start": 36.30000001192093,
+     "end": 245.4000000357628,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 10828,
+     "startInPage": 14457.8,
+     "endInPage": 14666.9
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/ui/confirm.js?v=2026-11-04-0917",
+     "start": 36.40000003576279,
+     "end": 246.9000000357628,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 1063,
+     "startInPage": 14457.9,
+     "endInPage": 14668.4
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/ui/emoji-picker.js?v=2026-11-04-0917",
+     "start": 36.60000002384186,
+     "end": 248,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 3635,
+     "startInPage": 14458.1,
+     "endInPage": 14669.5
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/ui/frame.js?v=2026-11-04-0917",
+     "start": 36.80000001192093,
+     "end": 249.10000002384186,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 10429,
+     "startInPage": 14458.3,
+     "endInPage": 14670.6
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/ui/gallery.js?v=2026-11-04-0917",
+     "start": 37,
+     "end": 250,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 4004,
+     "startInPage": 14458.5,
+     "endInPage": 14671.5
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/ui/gif-library.js?v=2026-11-04-0917",
+     "start": 37.10000002384186,
+     "end": 250.9000000357628,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 4865,
+     "startInPage": 14458.6,
+     "endInPage": 14672.4
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/ui/gif-picker.js?v=2026-11-04-0917",
+     "start": 37.200000047683716,
+     "end": 252.60000002384186,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 6103,
+     "startInPage": 14458.7,
+     "endInPage": 14674.1
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/ui/message.js?v=2026-11-04-0917",
+     "start": 37.700000047683716,
+     "end": 255,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 11492,
+     "startInPage": 14459.2,
+     "endInPage": 14676.5
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/ui/overlays.js?v=2026-11-04-0917",
+     "start": 37.90000003576279,
+     "end": 256.7000000476837,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 1654,
+     "startInPage": 14459.4,
+     "endInPage": 14678.2
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/ui/pins.js?v=2026-11-04-0917",
+     "start": 38.200000047683716,
+     "end": 259.5,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 3697,
+     "startInPage": 14459.7,
+     "endInPage": 14681
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/ui/recorder.js?v=2026-11-04-0917",
+     "start": 38.30000001192093,
+     "end": 262.10000002384186,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 2454,
+     "startInPage": 14459.8,
+     "endInPage": 14683.6
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/ui/timeline.js?v=2026-11-04-0917",
+     "start": 38.40000003576279,
+     "end": 264.10000002384186,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 12058,
+     "startInPage": 14459.9,
+     "endInPage": 14685.6
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/ui/tooltip.js?v=2026-11-04-0917",
+     "start": 38.700000047683716,
+     "end": 265.7000000476837,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 1118,
+     "startInPage": 14460.2,
+     "endInPage": 14687.2
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/ui/voice.js?v=2026-11-04-0917",
+     "start": 38.700000047683716,
+     "end": 267.7000000476837,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 3195,
+     "startInPage": 14460.2,
+     "endInPage": 14689.2
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/update.js?v=2026-11-04-0917",
+     "start": 38.90000003576279,
+     "end": 270.5,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 1843,
+     "startInPage": 14460.4,
+     "endInPage": 14692
+    },
+    {
+     "name": "http://127.0.0.1:5433/js/upload.js?v=2026-11-04-0917",
+     "start": 39.10000002384186,
+     "end": 272.10000002384186,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 3135,
+     "startInPage": 14460.6,
+     "endInPage": 14693.6
+    },
+    {
+     "name": "http://127.0.0.1:5433/lib/signalr.min.js?v=2026-11-04-0917",
+     "start": 39.5,
+     "end": 273.5,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 18230,
+     "startInPage": 14461,
+     "endInPage": 14695
+    },
+    {
+     "name": "http://127.0.0.1:5433/lib/tus.min.js?v=2026-11-04-0917",
+     "start": 39.5,
+     "end": 275.30000001192093,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 32312,
+     "startInPage": 14461,
+     "endInPage": 14696.8
+    },
+    {
+     "name": "http://127.0.0.1:5433/app.css?v=2026-11-04-0917",
+     "start": 39.700000047683716,
+     "end": 282.5,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 10328,
+     "startInPage": 14461.2,
+     "endInPage": 14704
+    },
+    {
+     "name": "http://127.0.0.1:5433/themes.css?v=2026-11-04-0917",
+     "start": 39.700000047683716,
+     "end": 290.30000001192093,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 7466,
+     "startInPage": 14461.2,
+     "endInPage": 14711.8
+    },
+    {
+     "name": "http://127.0.0.1:5433/css/composer.css?v=2026-11-04-0917",
+     "start": 39.80000001192093,
+     "end": 291.30000001192093,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 8056,
+     "startInPage": 14461.3,
+     "endInPage": 14712.8
+    },
+    {
+     "name": "http://127.0.0.1:5433/css/frame.css?v=2026-11-04-0917",
+     "start": 39.80000001192093,
+     "end": 292.7000000476837,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 11461,
+     "startInPage": 14461.3,
+     "endInPage": 14714.2
+    },
+    {
+     "name": "http://127.0.0.1:5433/css/message.css?v=2026-11-04-0917",
+     "start": 39.90000003576279,
+     "end": 293.4000000357628,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 11320,
+     "startInPage": 14461.4,
+     "endInPage": 14714.9
+    },
+    {
+     "name": "http://127.0.0.1:5433/css/pages.css?v=2026-11-04-0917",
+     "start": 40.10000002384186,
+     "end": 294.4000000357628,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 24500,
+     "startInPage": 14461.6,
+     "endInPage": 14715.9
+    },
+    {
+     "name": "http://127.0.0.1:5433/css/pickers.css?v=2026-11-04-0917",
+     "start": 40.30000001192093,
+     "end": 295.9000000357628,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 5254,
+     "startInPage": 14461.8,
+     "endInPage": 14717.4
+    },
+    {
+     "name": "http://127.0.0.1:5433/css/timeline.css?v=2026-11-04-0917",
+     "start": 40.5,
+     "end": 296.7000000476837,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 5260,
+     "startInPage": 14462,
+     "endInPage": 14718.2
+    },
+    {
+     "name": "http://127.0.0.1:5433/themes/teahouse.css?v=2026-11-04-0917",
+     "start": 40.700000047683716,
+     "end": 297.60000002384186,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 3741,
+     "startInPage": 14462.2,
+     "endInPage": 14719.1
+    },
+    {
+     "name": "http://127.0.0.1:5433/fonts/InterVariable.woff2",
+     "start": 41.10000002384186,
+     "end": 298.5,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 352240,
+     "startInPage": 14462.6,
+     "endInPage": 14720
+    },
+    {
+     "name": "http://127.0.0.1:5433/icon.svg",
+     "start": 41.30000001192093,
+     "end": 2109.900000035763,
+     "initiator": "fetch",
+     "transfer": 556,
+     "body": 256,
+     "startInPage": 14462.8,
+     "endInPage": 16531.4
+    },
+    {
+     "name": "http://127.0.0.1:5433/emoji_selection_color.png",
+     "start": 41.40000003576279,
+     "end": 2111,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 45887,
+     "startInPage": 14462.9,
+     "endInPage": 16532.5
+    },
+    {
+     "name": "http://127.0.0.1:5433/emoji_selection_greys.png",
+     "start": 41.80000001192093,
+     "end": 1728.800000011921,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 39111,
+     "startInPage": 14463.3,
+     "endInPage": 16150.3
+    },
+    {
+     "name": "http://127.0.0.1:5433/icon-192.png",
+     "start": 41.90000003576279,
+     "end": 2704.5,
+     "initiator": "fetch",
+     "transfer": 7977,
+     "body": 7677,
+     "startInPage": 14463.4,
+     "endInPage": 17126
+    },
+    {
+     "name": "http://127.0.0.1:5433/icon-512.png",
+     "start": 42.200000047683716,
+     "end": 3118.5,
+     "initiator": "fetch",
+     "transfer": 10971,
+     "body": 10671,
+     "startInPage": 14463.7,
+     "endInPage": 17540
+    },
+    {
+     "name": "http://127.0.0.1:5433/notif.mp3",
+     "start": 42.5,
+     "end": 3458.400000035763,
+     "initiator": "fetch",
+     "transfer": 44160,
+     "body": 43860,
+     "startInPage": 14464,
+     "endInPage": 17879.9
+    },
+    {
+     "name": "http://127.0.0.1:5433/images/purpleline01_3px.png",
+     "start": 42.700000047683716,
+     "end": 3695.900000035763,
+     "initiator": "fetch",
+     "transfer": 1390,
+     "body": 1090,
+     "startInPage": 14464.2,
+     "endInPage": 18117.4
+    },
+    {
+     "name": "http://127.0.0.1:5433/images/turqline01_3px.png",
+     "start": 44.30000001192093,
+     "end": 3143,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 1041,
+     "startInPage": 14465.8,
+     "endInPage": 17564.5
+    },
+    {
+     "name": "http://127.0.0.1:5433/images/bot-avatar.svg",
+     "start": 44.60000002384186,
+     "end": 4055.800000011921,
+     "initiator": "fetch",
+     "transfer": 567,
+     "body": 267,
+     "startInPage": 14466.1,
+     "endInPage": 18477.3
+    },
+    {
+     "name": "http://127.0.0.1:5433/images/klipy-attribution.svg",
+     "start": 44.80000001192093,
+     "end": 4373.200000047684,
+     "initiator": "fetch",
+     "transfer": 563,
+     "body": 263,
+     "startInPage": 14466.3,
+     "endInPage": 18794.7
+    }
+   ]
+  }
+ },
+ "B": {
+  "side": "B",
+  "dir": "/home/agent/yap-perf/exp/06-worker-after-rows",
+  "port": 5334,
+  "marks": {
+   "html": 1190.3999999761581,
+   "scripts": 13459.699999988079,
+   "bootstrap": 14484.5,
+   "paint": 17443.899999976158,
+   "socket": 16315.399999976158,
+   "rows": 17443.899999976158
+  },
+  "controller": "http://127.0.0.1:5434/service-worker.js?v=2026-11-04-1148",
+  "registration": {
+   "active": "activated",
+   "installing": false,
+   "waiting": false
+  },
+  "rowsWallClockInPage": 17453.6,
+  "wireAtRowsKB": 877.1,
+  "wireRequestsAtRows": 62,
+  "wireAtEndKB": 1011.9,
+  "wireRequestsAtEnd": 72,
+  "proxyLines": [
+   {
+    "at": 3.6,
+    "line": "GET / HTTP/1.1"
+   },
+   {
+    "at": 954.6,
+    "line": "GET /app.css?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 954.6,
+    "line": "GET /themes.css?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 954.6,
+    "line": "GET /themes/teahouse.css?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 954.6,
+    "line": "GET /css/frame.css?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 954.6,
+    "line": "GET /css/pickers.css?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 1191.6,
+    "line": "GET /css/timeline.css?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 1946.6,
+    "line": "GET /css/composer.css?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 2008.6,
+    "line": "GET /css/message.css?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 2040.6,
+    "line": "GET /css/pages.css?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 2132.6,
+    "line": "GET /fonts/InterVariable.woff2 HTTP/1.1"
+   },
+   {
+    "at": 2183.6,
+    "line": "GET /js/api.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 2245.6,
+    "line": "GET /js/hub.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 2928.6,
+    "line": "GET /js/main.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 3055.6,
+    "line": "GET /js/notify.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 3214.6,
+    "line": "GET /js/offline/db.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 6036.6,
+    "line": "GET /js/offline/outbox.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 6046.6,
+    "line": "GET /js/offline/snapshot.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 6154.6,
+    "line": "GET /js/pages/admin.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 6159.6,
+    "line": "GET /js/pages/channel-settings.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 6168.6,
+    "line": "GET /js/pages/chat.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 6219.6,
+    "line": "GET /js/pages/invite.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 6952.6,
+    "line": "GET /js/pages/login.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 6972.6,
+    "line": "GET /js/pages/settings-debug.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 7314.6,
+    "line": "GET /js/pages/settings.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 7340.6,
+    "line": "GET /js/pages/verify.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 7370.6,
+    "line": "GET /js/push.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 7391.6,
+    "line": "GET /js/pwa.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 7896.6,
+    "line": "GET /js/render/avatar.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 7932.6,
+    "line": "GET /js/render/dom.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 8345.6,
+    "line": "GET /js/render/text.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 8354.6,
+    "line": "GET /js/render/time.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 8386.6,
+    "line": "GET /js/router.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 8401.6,
+    "line": "GET /js/scene.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 8858.6,
+    "line": "GET /js/sender.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 8895.6,
+    "line": "GET /js/session.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 9297.6,
+    "line": "GET /js/store.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 9313.6,
+    "line": "GET /js/ui/composer.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 9339.6,
+    "line": "GET /js/ui/confirm.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 9371.6,
+    "line": "GET /js/ui/emoji-picker.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 9812.6,
+    "line": "GET /js/ui/frame.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 9837.6,
+    "line": "GET /js/ui/gallery.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 10275.6,
+    "line": "GET /js/ui/gif-library.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 10366.6,
+    "line": "GET /js/ui/gif-picker.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 10377.6,
+    "line": "GET /js/ui/message.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 10408.6,
+    "line": "GET /js/ui/overlays.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 10810.6,
+    "line": "GET /js/ui/pins.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 10891.6,
+    "line": "GET /js/ui/recorder.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 11241.6,
+    "line": "GET /js/ui/timeline.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 11370.6,
+    "line": "GET /js/ui/tooltip.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 11461.6,
+    "line": "GET /js/ui/voice.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 11482.6,
+    "line": "GET /js/update.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 11749.6,
+    "line": "GET /js/upload.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 11825.6,
+    "line": "GET /lib/signalr.min.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 12290.6,
+    "line": "GET /lib/tus.min.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 13467.6,
+    "line": "GET /api/bootstrap HTTP/1.1"
+   },
+   {
+    "at": 14500.6,
+    "line": "GET /hub?device=6d6aa79b-637f-44d0-98a3-d8ab15a157d7 HTTP/1.1"
+   },
+   {
+    "at": 14505.6,
+    "line": "GET /images/turqline01_3px.png HTTP/1.1"
+   },
+   {
+    "at": 14536.6,
+    "line": "GET /emoji_selection_color.png HTTP/1.1"
+   },
+   {
+    "at": 14536.6,
+    "line": "GET /emoji_selection_greys.png HTTP/1.1"
+   },
+   {
+    "at": 16316.6,
+    "line": "GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1"
+   },
+   {
+    "at": 17453.6,
+    "line": "GET /emoji-packs/wechat/teary.png HTTP/1.1"
+   },
+   {
+    "at": 17463.6,
+    "line": "GET /service-worker.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 18471.6,
+    "line": "GET /login HTTP/1.1"
+   },
+   {
+    "at": 18471.6,
+    "line": "GET /js/data/emoji-list.js?v=2026-11-04-1148 HTTP/1.1"
+   },
+   {
+    "at": 18545.6,
+    "line": "GET /icon.svg HTTP/1.1"
+   },
+   {
+    "at": 19538.6,
+    "line": "GET /icon-192.png HTTP/1.1"
+   },
+   {
+    "at": 19814.6,
+    "line": "GET /icon-512.png HTTP/1.1"
+   },
+   {
+    "at": 19819.6,
+    "line": "GET /notif.mp3 HTTP/1.1"
+   },
+   {
+    "at": 20517.6,
+    "line": "GET /images/purpleline01_3px.png HTTP/1.1"
+   },
+   {
+    "at": 20815.6,
+    "line": "GET /images/bot-avatar.svg HTTP/1.1"
+   },
+   {
+    "at": 21167.6,
+    "line": "GET /images/klipy-attribution.svg HTTP/1.1"
+   }
+  ],
+  "pageResources": [
+   {
+    "name": "http://127.0.0.1:5434/app.css?v=2026-11-04-1148",
+    "start": 947.8000000119209,
+    "end": 1943.5999999642372,
+    "initiator": "link",
+    "transfer": 10628
+   },
+   {
+    "name": "http://127.0.0.1:5434/themes.css?v=2026-11-04-1148",
+    "start": 949.3999999761581,
+    "end": 2005.5,
+    "initiator": "link",
+    "transfer": 7766
+   },
+   {
+    "name": "http://127.0.0.1:5434/themes/teahouse.css?v=2026-11-04-1148",
+    "start": 950,
+    "end": 2038.3999999761581,
+    "initiator": "link",
+    "transfer": 4041
+   },
+   {
+    "name": "http://127.0.0.1:5434/css/frame.css?v=2026-11-04-1148",
+    "start": 950.1999999880791,
+    "end": 2131.099999964237,
+    "initiator": "link",
+    "transfer": 11761
+   },
+   {
+    "name": "http://127.0.0.1:5434/css/pickers.css?v=2026-11-04-1148",
+    "start": 950.8999999761581,
+    "end": 2180.599999964237,
+    "initiator": "link",
+    "transfer": 5554
+   },
+   {
+    "name": "http://127.0.0.1:5434/css/timeline.css?v=2026-11-04-1148",
+    "start": 951.3999999761581,
+    "end": 2245.399999976158,
+    "initiator": "link",
+    "transfer": 5560
+   },
+   {
+    "name": "http://127.0.0.1:5434/css/composer.css?v=2026-11-04-1148",
+    "start": 952.3999999761581,
+    "end": 2927.300000011921,
+    "initiator": "link",
+    "transfer": 8356
+   },
+   {
+    "name": "http://127.0.0.1:5434/css/message.css?v=2026-11-04-1148",
+    "start": 952.8000000119209,
+    "end": 3055.899999976158,
+    "initiator": "link",
+    "transfer": 11620
+   },
+   {
+    "name": "http://127.0.0.1:5434/css/pages.css?v=2026-11-04-1148",
+    "start": 953.3999999761581,
+    "end": 3213.399999976158,
+    "initiator": "link",
+    "transfer": 24800
+   },
+   {
+    "name": "http://127.0.0.1:5434/fonts/InterVariable.woff2",
+    "start": 953.5999999642372,
+    "end": 6033.899999976158,
+    "initiator": "link",
+    "transfer": 352540
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/api.js?v=2026-11-04-1148",
+    "start": 1039.699999988079,
+    "end": 6043.899999976158,
+    "initiator": "script",
+    "transfer": 1171
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/hub.js?v=2026-11-04-1148",
+    "start": 1039.8999999761581,
+    "end": 6155.399999976158,
+    "initiator": "script",
+    "transfer": 8672
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/main.js?v=2026-11-04-1148",
+    "start": 1040,
+    "end": 6153.300000011921,
+    "initiator": "script",
+    "transfer": 4798
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/notify.js?v=2026-11-04-1148",
+    "start": 1040.0999999642372,
+    "end": 6168.800000011921,
+    "initiator": "script",
+    "transfer": 1751
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/offline/db.js?v=2026-11-04-1148",
+    "start": 1040.0999999642372,
+    "end": 6215.399999976158,
+    "initiator": "script",
+    "transfer": 1176
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/offline/outbox.js?v=2026-11-04-1148",
+    "start": 1040.199999988079,
+    "end": 6952.399999976158,
+    "initiator": "script",
+    "transfer": 1291
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/offline/snapshot.js?v=2026-11-04-1148",
+    "start": 1040.300000011921,
+    "end": 6969.699999988079,
+    "initiator": "script",
+    "transfer": 2219
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/pages/admin.js?v=2026-11-04-1148",
+    "start": 1040.3999999761581,
+    "end": 7309.399999976158,
+    "initiator": "script",
+    "transfer": 30700
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/pages/channel-settings.js?v=2026-11-04-1148",
+    "start": 1040.3999999761581,
+    "end": 7338,
+    "initiator": "script",
+    "transfer": 3441
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/pages/chat.js?v=2026-11-04-1148",
+    "start": 1040.3999999761581,
+    "end": 7370.699999988079,
+    "initiator": "script",
+    "transfer": 4018
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/pages/invite.js?v=2026-11-04-1148",
+    "start": 1040.5,
+    "end": 7390.099999964237,
+    "initiator": "script",
+    "transfer": 2495
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/pages/login.js?v=2026-11-04-1148",
+    "start": 1040.5,
+    "end": 7894.5,
+    "initiator": "script",
+    "transfer": 4018
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/pages/settings-debug.js?v=2026-11-04-1148",
+    "start": 1040.699999988079,
+    "end": 7929.399999976158,
+    "initiator": "script",
+    "transfer": 4316
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/pages/settings.js?v=2026-11-04-1148",
+    "start": 1040.699999988079,
+    "end": 8343.699999988079,
+    "initiator": "script",
+    "transfer": 15667
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/pages/verify.js?v=2026-11-04-1148",
+    "start": 1040.800000011921,
+    "end": 8354.099999964237,
+    "initiator": "script",
+    "transfer": 1215
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/push.js?v=2026-11-04-1148",
+    "start": 1040.800000011921,
+    "end": 8382.300000011921,
+    "initiator": "script",
+    "transfer": 3409
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/pwa.js?v=2026-11-04-1148",
+    "start": 1040.800000011921,
+    "end": 8398.399999976158,
+    "initiator": "script",
+    "transfer": 1620
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/render/avatar.js?v=2026-11-04-1148",
+    "start": 1040.8999999761581,
+    "end": 8855.300000011921,
+    "initiator": "script",
+    "transfer": 1373
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/render/dom.js?v=2026-11-04-1148",
+    "start": 1041,
+    "end": 8891.5,
+    "initiator": "script",
+    "transfer": 1350
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/render/text.js?v=2026-11-04-1148",
+    "start": 1041.0999999642372,
+    "end": 9294,
+    "initiator": "script",
+    "transfer": 4936
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/render/time.js?v=2026-11-04-1148",
+    "start": 1041.0999999642372,
+    "end": 9312.199999988079,
+    "initiator": "script",
+    "transfer": 2595
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/router.js?v=2026-11-04-1148",
+    "start": 1041.0999999642372,
+    "end": 9367.399999976158,
+    "initiator": "script",
+    "transfer": 1815
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/scene.js?v=2026-11-04-1148",
+    "start": 1041.199999988079,
+    "end": 9337.099999964237,
+    "initiator": "script",
+    "transfer": 1220
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/sender.js?v=2026-11-04-1148",
+    "start": 1041.300000011921,
+    "end": 9812.099999964237,
+    "initiator": "script",
+    "transfer": 5981
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/session.js?v=2026-11-04-1148",
+    "start": 1041.3999999761581,
+    "end": 9833.5,
+    "initiator": "script",
+    "transfer": 2660
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/store.js?v=2026-11-04-1148",
+    "start": 1041.3999999761581,
+    "end": 10274.599999964237,
+    "initiator": "script",
+    "transfer": 8825
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/ui/composer.js?v=2026-11-04-1148",
+    "start": 1041.3999999761581,
+    "end": 10362.800000011921,
+    "initiator": "script",
+    "transfer": 11128
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/ui/confirm.js?v=2026-11-04-1148",
+    "start": 1041.3999999761581,
+    "end": 10373.599999964237,
+    "initiator": "script",
+    "transfer": 1363
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/ui/emoji-picker.js?v=2026-11-04-1148",
+    "start": 1041.5,
+    "end": 10405.599999964237,
+    "initiator": "script",
+    "transfer": 3935
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/ui/frame.js?v=2026-11-04-1148",
+    "start": 1041.5999999642372,
+    "end": 10808.399999976158,
+    "initiator": "script",
+    "transfer": 10729
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/ui/gallery.js?v=2026-11-04-1148",
+    "start": 1041.699999988079,
+    "end": 10889.5,
+    "initiator": "script",
+    "transfer": 4304
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/ui/gif-library.js?v=2026-11-04-1148",
+    "start": 1041.699999988079,
+    "end": 11237.5,
+    "initiator": "script",
+    "transfer": 5165
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/ui/gif-picker.js?v=2026-11-04-1148",
+    "start": 1041.800000011921,
+    "end": 11367.5,
+    "initiator": "script",
+    "transfer": 6403
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/ui/message.js?v=2026-11-04-1148",
+    "start": 1041.8999999761581,
+    "end": 11459.599999964237,
+    "initiator": "script",
+    "transfer": 11792
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/ui/overlays.js?v=2026-11-04-1148",
+    "start": 1041.8999999761581,
+    "end": 11479.5,
+    "initiator": "script",
+    "transfer": 1954
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/ui/pins.js?v=2026-11-04-1148",
+    "start": 1042,
+    "end": 11749.399999976158,
+    "initiator": "script",
+    "transfer": 3997
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/ui/recorder.js?v=2026-11-04-1148",
+    "start": 1042,
+    "end": 11820.899999976158,
+    "initiator": "script",
+    "transfer": 2754
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/ui/tooltip.js?v=2026-11-04-1148",
+    "start": 1042.0999999642372,
+    "end": 12286.199999988079,
+    "initiator": "script",
+    "transfer": 1418
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/ui/timeline.js?v=2026-11-04-1148",
+    "start": 1042.0999999642372,
+    "end": 12287.300000011921,
+    "initiator": "script",
+    "transfer": 12358
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/ui/voice.js?v=2026-11-04-1148",
+    "start": 1042.199999988079,
+    "end": 12443.399999976158,
+    "initiator": "script",
+    "transfer": 3495
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/update.js?v=2026-11-04-1148",
+    "start": 1042.300000011921,
+    "end": 12414.5,
+    "initiator": "script",
+    "transfer": 2143
+   },
+   {
+    "name": "http://127.0.0.1:5434/js/upload.js?v=2026-11-04-1148",
+    "start": 1042.3999999761581,
+    "end": 12685.800000011921,
+    "initiator": "script",
+    "transfer": 3435
+   },
+   {
+    "name": "http://127.0.0.1:5434/lib/signalr.min.js?v=2026-11-04-1148",
+    "start": 1190.8999999761581,
+    "end": 12877.099999964237,
+    "initiator": "script",
+    "transfer": 18530
+   },
+   {
+    "name": "http://127.0.0.1:5434/lib/tus.min.js?v=2026-11-04-1148",
+    "start": 1191.800000011921,
+    "end": 13454.099999964237,
+    "initiator": "script",
+    "transfer": 32612
+   },
+   {
+    "name": "http://127.0.0.1:5434/api/bootstrap",
+    "start": 13462.5,
+    "end": 14483.399999976158,
+    "initiator": "fetch",
+    "transfer": 6984
+   },
+   {
+    "name": "http://127.0.0.1:5434/images/turqline01_3px.png",
+    "start": 14503.699999988079,
+    "end": 15423.899999976158,
+    "initiator": "img",
+    "transfer": 1341
+   },
+   {
+    "name": "http://127.0.0.1:5434/emoji_selection_color.png",
+    "start": 14528.599999964237,
+    "end": 15809.399999976158,
+    "initiator": "css",
+    "transfer": 46187
+   },
+   {
+    "name": "http://127.0.0.1:5434/emoji_selection_greys.png",
+    "start": 14528.899999976158,
+    "end": 16123.699999988079,
+    "initiator": "css",
+    "transfer": 39411
+   },
+   {
+    "name": "https://cdn.jsdelivr.net/gh/jdecked/twemoji@17.0.3/assets/svg/1f451.svg",
+    "start": 14546.399999976158,
+    "end": 14592.5,
+    "initiator": "img",
+    "transfer": 779
+   },
+   {
+    "name": "https://cdn.jsdelivr.net/gh/jdecked/twemoji@17.0.3/assets/svg/1f916.svg",
+    "start": 14546.699999988079,
+    "end": 14593.800000011921,
+    "initiator": "img",
+    "transfer": 982
+   },
+   {
+    "name": "http://127.0.0.1:5434/api/bootstrap?emojiStamp=b15a0f3de181880f",
+    "start": 16315.699999988079,
+    "end": 17452.19999998808,
+    "initiator": "fetch",
+    "transfer": 2993
+   },
+   {
+    "name": "https://cdn.jsdelivr.net/gh/jdecked/twemoji@17.0.3/assets/svg/1f327.svg",
+    "start": 17444.19999998808,
+    "end": 17470,
+    "initiator": "img",
+    "transfer": 720
+   },
+   {
+    "name": "https://cdn.jsdelivr.net/gh/jdecked/twemoji@17.0.3/assets/svg/1f355.svg",
+    "start": 17444.399999976158,
+    "end": 17474.69999998808,
+    "initiator": "img",
+    "transfer": 862
+   },
+   {
+    "name": "https://cdn.jsdelivr.net/gh/jdecked/twemoji@17.0.3/assets/svg/1f44d.svg",
+    "start": 17444.5,
+    "end": 17478.69999998808,
+    "initiator": "img",
+    "transfer": 983
+   },
+   {
+    "name": "https://cdn.jsdelivr.net/gh/jdecked/twemoji@17.0.3/assets/svg/1f440.svg",
+    "start": 17444.599999964237,
+    "end": 17488.5,
+    "initiator": "img",
+    "transfer": 721
+   },
+   {
+    "name": "http://127.0.0.1:5434/emoji-packs/wechat/teary.png",
+    "start": 17444.599999964237,
+    "end": 18409.80000001192,
+    "initiator": "img",
+    "transfer": 6039
+   },
+   {
+    "name": "https://cdn.jsdelivr.net/gh/jdecked/twemoji@17.0.3/assets/svg/2764.svg",
+    "start": 17444.69999998808,
+    "end": 17484.30000001192,
+    "initiator": "img",
+    "transfer": 534
+   }
+  ],
+  "worker": {
+   "url": "http://127.0.0.1:5434/service-worker.js?v=2026-11-04-1148",
+   "timeOriginInPage": 18463.7,
+   "entries": [
+    {
+     "name": "http://127.0.0.1:5434/login",
+     "start": 5.099999964237213,
+     "end": 1349.5999999642372,
+     "initiator": "fetch",
+     "transfer": 34874,
+     "body": 34574,
+     "startInPage": 18468.8,
+     "endInPage": 19813.3
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/api.js?v=2026-11-04-1148",
+     "start": 5.299999952316284,
+     "end": 6.799999952316284,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 871,
+     "startInPage": 18469,
+     "endInPage": 18470.5
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/hub.js?v=2026-11-04-1148",
+     "start": 5.299999952316284,
+     "end": 8.199999988079071,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 8372,
+     "startInPage": 18469,
+     "endInPage": 18471.9
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/data/emoji-list.js?v=2026-11-04-1148",
+     "start": 5.299999952316284,
+     "end": 1069.3999999761581,
+     "initiator": "fetch",
+     "transfer": 19233,
+     "body": 18933,
+     "startInPage": 18469,
+     "endInPage": 19533.1
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/main.js?v=2026-11-04-1148",
+     "start": 5.399999976158142,
+     "end": 9.399999976158142,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 4498,
+     "startInPage": 18469.1,
+     "endInPage": 18473.1
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/notify.js?v=2026-11-04-1148",
+     "start": 5.399999976158142,
+     "end": 10.599999964237213,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 1451,
+     "startInPage": 18469.1,
+     "endInPage": 18474.3
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/offline/db.js?v=2026-11-04-1148",
+     "start": 5.399999976158142,
+     "end": 12.199999988079071,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 876,
+     "startInPage": 18469.1,
+     "endInPage": 18475.9
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/offline/outbox.js?v=2026-11-04-1148",
+     "start": 5.399999976158142,
+     "end": 13.699999988079071,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 991,
+     "startInPage": 18469.1,
+     "endInPage": 18477.4
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/offline/snapshot.js?v=2026-11-04-1148",
+     "start": 5.399999976158142,
+     "end": 14.899999976158142,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 1919,
+     "startInPage": 18469.1,
+     "endInPage": 18478.6
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/pages/admin.js?v=2026-11-04-1148",
+     "start": 5.5,
+     "end": 16.299999952316284,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 30400,
+     "startInPage": 18469.2,
+     "endInPage": 18480
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/pages/channel-settings.js?v=2026-11-04-1148",
+     "start": 5.5,
+     "end": 17.599999964237213,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 3141,
+     "startInPage": 18469.2,
+     "endInPage": 18481.3
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/pages/chat.js?v=2026-11-04-1148",
+     "start": 5.5,
+     "end": 19,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 3718,
+     "startInPage": 18469.2,
+     "endInPage": 18482.7
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/pages/invite.js?v=2026-11-04-1148",
+     "start": 5.599999964237213,
+     "end": 20.19999998807907,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 2195,
+     "startInPage": 18469.3,
+     "endInPage": 18483.9
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/pages/login.js?v=2026-11-04-1148",
+     "start": 5.599999964237213,
+     "end": 21.599999964237213,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 3718,
+     "startInPage": 18469.3,
+     "endInPage": 18485.3
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/pages/settings-debug.js?v=2026-11-04-1148",
+     "start": 5.599999964237213,
+     "end": 22.899999976158142,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 4016,
+     "startInPage": 18469.3,
+     "endInPage": 18486.6
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/pages/settings.js?v=2026-11-04-1148",
+     "start": 5.599999964237213,
+     "end": 24.19999998807907,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 15367,
+     "startInPage": 18469.3,
+     "endInPage": 18487.9
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/pages/verify.js?v=2026-11-04-1148",
+     "start": 5.599999964237213,
+     "end": 25.399999976158142,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 915,
+     "startInPage": 18469.3,
+     "endInPage": 18489.1
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/push.js?v=2026-11-04-1148",
+     "start": 5.599999964237213,
+     "end": 26.599999964237213,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 3109,
+     "startInPage": 18469.3,
+     "endInPage": 18490.3
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/pwa.js?v=2026-11-04-1148",
+     "start": 5.699999988079071,
+     "end": 27.599999964237213,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 1320,
+     "startInPage": 18469.4,
+     "endInPage": 18491.3
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/render/avatar.js?v=2026-11-04-1148",
+     "start": 5.699999988079071,
+     "end": 28.599999964237213,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 1073,
+     "startInPage": 18469.4,
+     "endInPage": 18492.3
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/render/dom.js?v=2026-11-04-1148",
+     "start": 5.699999988079071,
+     "end": 29.599999964237213,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 1050,
+     "startInPage": 18469.4,
+     "endInPage": 18493.3
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/render/text.js?v=2026-11-04-1148",
+     "start": 5.699999988079071,
+     "end": 30.599999964237213,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 4636,
+     "startInPage": 18469.4,
+     "endInPage": 18494.3
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/render/time.js?v=2026-11-04-1148",
+     "start": 5.699999988079071,
+     "end": 31.5,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 2295,
+     "startInPage": 18469.4,
+     "endInPage": 18495.2
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/router.js?v=2026-11-04-1148",
+     "start": 5.799999952316284,
+     "end": 32.69999998807907,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 1515,
+     "startInPage": 18469.5,
+     "endInPage": 18496.4
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/scene.js?v=2026-11-04-1148",
+     "start": 5.799999952316284,
+     "end": 33.69999998807907,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 920,
+     "startInPage": 18469.5,
+     "endInPage": 18497.4
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/sender.js?v=2026-11-04-1148",
+     "start": 5.799999952316284,
+     "end": 35.09999996423721,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 5681,
+     "startInPage": 18469.5,
+     "endInPage": 18498.8
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/session.js?v=2026-11-04-1148",
+     "start": 5.799999952316284,
+     "end": 35.799999952316284,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 2360,
+     "startInPage": 18469.5,
+     "endInPage": 18499.5
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/store.js?v=2026-11-04-1148",
+     "start": 5.799999952316284,
+     "end": 36.89999997615814,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 8525,
+     "startInPage": 18469.5,
+     "endInPage": 18500.6
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/ui/composer.js?v=2026-11-04-1148",
+     "start": 5.799999952316284,
+     "end": 38.09999996423721,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 10828,
+     "startInPage": 18469.5,
+     "endInPage": 18501.8
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/ui/confirm.js?v=2026-11-04-1148",
+     "start": 5.799999952316284,
+     "end": 38.799999952316284,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 1063,
+     "startInPage": 18469.5,
+     "endInPage": 18502.5
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/ui/emoji-picker.js?v=2026-11-04-1148",
+     "start": 5.899999976158142,
+     "end": 39.69999998807907,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 3635,
+     "startInPage": 18469.6,
+     "endInPage": 18503.4
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/ui/frame.js?v=2026-11-04-1148",
+     "start": 5.899999976158142,
+     "end": 40.69999998807907,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 10429,
+     "startInPage": 18469.6,
+     "endInPage": 18504.4
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/ui/gallery.js?v=2026-11-04-1148",
+     "start": 5.899999976158142,
+     "end": 42.19999998807907,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 4004,
+     "startInPage": 18469.6,
+     "endInPage": 18505.9
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/ui/gif-library.js?v=2026-11-04-1148",
+     "start": 5.899999976158142,
+     "end": 43.09999996423721,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 4865,
+     "startInPage": 18469.6,
+     "endInPage": 18506.8
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/ui/gif-picker.js?v=2026-11-04-1148",
+     "start": 5.899999976158142,
+     "end": 44,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 6103,
+     "startInPage": 18469.6,
+     "endInPage": 18507.7
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/ui/message.js?v=2026-11-04-1148",
+     "start": 5.899999976158142,
+     "end": 45.39999997615814,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 11492,
+     "startInPage": 18469.6,
+     "endInPage": 18509.1
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/ui/overlays.js?v=2026-11-04-1148",
+     "start": 6,
+     "end": 46.59999996423721,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 1654,
+     "startInPage": 18469.7,
+     "endInPage": 18510.3
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/ui/pins.js?v=2026-11-04-1148",
+     "start": 6,
+     "end": 47.69999998807907,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 3697,
+     "startInPage": 18469.7,
+     "endInPage": 18511.4
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/ui/recorder.js?v=2026-11-04-1148",
+     "start": 6,
+     "end": 48.69999998807907,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 2454,
+     "startInPage": 18469.7,
+     "endInPage": 18512.4
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/ui/timeline.js?v=2026-11-04-1148",
+     "start": 6,
+     "end": 49.799999952316284,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 12058,
+     "startInPage": 18469.7,
+     "endInPage": 18513.5
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/ui/tooltip.js?v=2026-11-04-1148",
+     "start": 6.099999964237213,
+     "end": 50.799999952316284,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 1118,
+     "startInPage": 18469.8,
+     "endInPage": 18514.5
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/ui/voice.js?v=2026-11-04-1148",
+     "start": 6.099999964237213,
+     "end": 52,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 3195,
+     "startInPage": 18469.8,
+     "endInPage": 18515.7
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/update.js?v=2026-11-04-1148",
+     "start": 6.099999964237213,
+     "end": 53.299999952316284,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 1843,
+     "startInPage": 18469.8,
+     "endInPage": 18517
+    },
+    {
+     "name": "http://127.0.0.1:5434/js/upload.js?v=2026-11-04-1148",
+     "start": 6.099999964237213,
+     "end": 55,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 3135,
+     "startInPage": 18469.8,
+     "endInPage": 18518.7
+    },
+    {
+     "name": "http://127.0.0.1:5434/lib/signalr.min.js?v=2026-11-04-1148",
+     "start": 6.099999964237213,
+     "end": 56.39999997615814,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 18230,
+     "startInPage": 18469.8,
+     "endInPage": 18520.1
+    },
+    {
+     "name": "http://127.0.0.1:5434/lib/tus.min.js?v=2026-11-04-1148",
+     "start": 6.099999964237213,
+     "end": 57.799999952316284,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 32312,
+     "startInPage": 18469.8,
+     "endInPage": 18521.5
+    },
+    {
+     "name": "http://127.0.0.1:5434/app.css?v=2026-11-04-1148",
+     "start": 6.199999988079071,
+     "end": 62.89999997615814,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 10328,
+     "startInPage": 18469.9,
+     "endInPage": 18526.6
+    },
+    {
+     "name": "http://127.0.0.1:5434/themes.css?v=2026-11-04-1148",
+     "start": 6.199999988079071,
+     "end": 70,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 7466,
+     "startInPage": 18469.9,
+     "endInPage": 18533.7
+    },
+    {
+     "name": "http://127.0.0.1:5434/css/composer.css?v=2026-11-04-1148",
+     "start": 6.199999988079071,
+     "end": 70.89999997615814,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 8056,
+     "startInPage": 18469.9,
+     "endInPage": 18534.6
+    },
+    {
+     "name": "http://127.0.0.1:5434/css/frame.css?v=2026-11-04-1148",
+     "start": 6.199999988079071,
+     "end": 72.29999995231628,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 11461,
+     "startInPage": 18469.9,
+     "endInPage": 18536
+    },
+    {
+     "name": "http://127.0.0.1:5434/css/message.css?v=2026-11-04-1148",
+     "start": 6.199999988079071,
+     "end": 73.39999997615814,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 11320,
+     "startInPage": 18469.9,
+     "endInPage": 18537.1
+    },
+    {
+     "name": "http://127.0.0.1:5434/css/pages.css?v=2026-11-04-1148",
+     "start": 6.199999988079071,
+     "end": 74.59999996423721,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 24500,
+     "startInPage": 18469.9,
+     "endInPage": 18538.3
+    },
+    {
+     "name": "http://127.0.0.1:5434/css/pickers.css?v=2026-11-04-1148",
+     "start": 6.299999952316284,
+     "end": 75.79999995231628,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 5254,
+     "startInPage": 18470,
+     "endInPage": 18539.5
+    },
+    {
+     "name": "http://127.0.0.1:5434/css/timeline.css?v=2026-11-04-1148",
+     "start": 6.299999952316284,
+     "end": 77,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 5260,
+     "startInPage": 18470,
+     "endInPage": 18540.7
+    },
+    {
+     "name": "http://127.0.0.1:5434/themes/teahouse.css?v=2026-11-04-1148",
+     "start": 6.299999952316284,
+     "end": 78.29999995231628,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 3741,
+     "startInPage": 18470,
+     "endInPage": 18542
+    },
+    {
+     "name": "http://127.0.0.1:5434/fonts/InterVariable.woff2",
+     "start": 6.399999976158142,
+     "end": 79.39999997615814,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 352240,
+     "startInPage": 18470.1,
+     "endInPage": 18543.1
+    },
+    {
+     "name": "http://127.0.0.1:5434/emoji_selection_color.png",
+     "start": 6.399999976158142,
+     "end": 1071.8999999761581,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 45887,
+     "startInPage": 18470.1,
+     "endInPage": 19535.6
+    },
+    {
+     "name": "http://127.0.0.1:5434/emoji_selection_greys.png",
+     "start": 6.399999976158142,
+     "end": 1074.5,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 39111,
+     "startInPage": 18470.1,
+     "endInPage": 19538.2
+    },
+    {
+     "name": "http://127.0.0.1:5434/icon.svg",
+     "start": 6.399999976158142,
+     "end": 1354.5999999642372,
+     "initiator": "fetch",
+     "transfer": 556,
+     "body": 256,
+     "startInPage": 18470.1,
+     "endInPage": 19818.3
+    },
+    {
+     "name": "http://127.0.0.1:5434/icon-192.png",
+     "start": 6.399999976158142,
+     "end": 2051,
+     "initiator": "fetch",
+     "transfer": 7977,
+     "body": 7677,
+     "startInPage": 18470.1,
+     "endInPage": 20514.7
+    },
+    {
+     "name": "http://127.0.0.1:5434/icon-512.png",
+     "start": 6.399999976158142,
+     "end": 2349.099999964237,
+     "initiator": "fetch",
+     "transfer": 10971,
+     "body": 10671,
+     "startInPage": 18470.1,
+     "endInPage": 20812.8
+    },
+    {
+     "name": "http://127.0.0.1:5434/notif.mp3",
+     "start": 6.399999976158142,
+     "end": 2701,
+     "initiator": "fetch",
+     "transfer": 44160,
+     "body": 43860,
+     "startInPage": 18470.1,
+     "endInPage": 21164.7
+    },
+    {
+     "name": "http://127.0.0.1:5434/images/purpleline01_3px.png",
+     "start": 6.399999976158142,
+     "end": 2969.2999999523163,
+     "initiator": "fetch",
+     "transfer": 1390,
+     "body": 1090,
+     "startInPage": 18470.1,
+     "endInPage": 21433
+    },
+    {
+     "name": "http://127.0.0.1:5434/images/turqline01_3px.png",
+     "start": 6.5,
+     "end": 2350.5,
+     "initiator": "fetch",
+     "transfer": 0,
+     "body": 1041,
+     "startInPage": 18470.2,
+     "endInPage": 20814.2
+    },
+    {
+     "name": "http://127.0.0.1:5434/images/bot-avatar.svg",
+     "start": 6.5,
+     "end": 3263.699999988079,
+     "initiator": "fetch",
+     "transfer": 567,
+     "body": 267,
+     "startInPage": 18470.2,
+     "endInPage": 21727.4
+    },
+    {
+     "name": "http://127.0.0.1:5434/images/klipy-attribution.svg",
+     "start": 6.599999964237213,
+     "end": 3612.7999999523163,
+     "initiator": "fetch",
+     "transfer": 563,
+     "body": 263,
+     "startInPage": 18470.3,
+     "endInPage": 22076.5
+    }
+   ]
+  }
+ }
+}

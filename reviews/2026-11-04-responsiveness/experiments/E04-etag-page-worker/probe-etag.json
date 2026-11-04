@@ -1,0 +1,608 @@
+{
+ "steps": [
+  {
+   "side": "A",
+   "step": "open /",
+   "from": "blank",
+   "rowsMs": 18150,
+   "wireKB": 1391,
+   "downKB": 1349.9,
+   "wireRequests": 73,
+   "wireLines": [
+    "GET / HTTP/1.1",
+    "GET /app.css?v=2026-11-04-0917 HTTP/1.1",
+    "GET /themes.css?v=2026-11-04-0917 HTTP/1.1",
+    "GET /themes/teahouse.css?v=2026-11-04-0917 HTTP/1.1",
+    "GET /css/frame.css?v=2026-11-04-0917 HTTP/1.1",
+    "GET /css/pickers.css?v=2026-11-04-0917 HTTP/1.1",
+    "GET /css/timeline.css?v=2026-11-04-0917 HTTP/1.1",
+    "GET /css/composer.css?v=2026-11-04-0917 HTTP/1.1",
+    "GET /css/message.css?v=2026-11-04-0917 HTTP/1.1",
+    "GET /css/pages.css?v=2026-11-04-0917 HTTP/1.1",
+    "GET /fonts/InterVariable.woff2 HTTP/1.1",
+    "GET /js/api.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/hub.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/main.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/notify.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/offline/db.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/offline/outbox.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/offline/snapshot.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/pages/admin.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/pages/channel-settings.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/pages/chat.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/pages/invite.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/pages/login.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/pages/settings-debug.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/pages/settings.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/pages/verify.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/push.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/pwa.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/render/avatar.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/render/dom.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/render/text.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/render/time.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/router.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/scene.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/sender.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/session.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/store.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/ui/composer.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/ui/confirm.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/ui/emoji-picker.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/ui/frame.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/ui/gallery.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/ui/gif-library.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/ui/gif-picker.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/ui/message.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/ui/overlays.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/ui/pins.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/ui/recorder.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/ui/timeline.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/ui/tooltip.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/ui/voice.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/update.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /js/upload.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /lib/signalr.min.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /lib/tus.min.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /service-worker.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /api/bootstrap HTTP/1.1",
+    "GET /login HTTP/1.1",
+    "GET /js/data/emoji-list.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /hub?device=b41d49a0-9414-41d1-ba10-41e149cd93d4 HTTP/1.1",
+    "GET /images/turqline01_3px.png HTTP/1.1",
+    "GET /emoji_selection_color.png HTTP/1.1",
+    "GET /emoji_selection_greys.png HTTP/1.1",
+    "GET /icon.svg HTTP/1.1",
+    "GET /icon-192.png HTTP/1.1",
+    "GET /icon-512.png HTTP/1.1",
+    "GET /notif.mp3 HTTP/1.1",
+    "GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1",
+    "GET /fonts/InterVariable-Italic.woff2 HTTP/1.1",
+    "GET /images/purpleline01_3px.png HTTP/1.1",
+    "GET /images/bot-avatar.svg HTTP/1.1",
+    "GET /images/klipy-attribution.svg HTTP/1.1",
+    "GET /emoji-packs/wechat/teary.png HTTP/1.1"
+   ],
+   "serverRequests": 72,
+   "watched": [
+    "/ 200 (- B)",
+    "/service-worker.js?v=… 200 (- B)",
+    "/login 200 (- B)"
+   ]
+  },
+  {
+   "side": "A",
+   "step": "reload 1",
+   "from": "/lobby",
+   "rowsMs": 3049,
+   "wireKB": 35.7,
+   "downKB": 33.5,
+   "wireRequests": 3,
+   "wireLines": [
+    "GET /hub?device=b41d49a0-9414-41d1-ba10-41e149cd93d4 HTTP/1.1",
+    "GET /service-worker.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1"
+   ],
+   "serverRequests": 3,
+   "watched": [
+    "/service-worker.js?v=… 200 (- B)"
+   ]
+  },
+  {
+   "side": "A",
+   "step": "reload 2",
+   "from": "/lobby",
+   "rowsMs": 2994,
+   "wireKB": 35.7,
+   "downKB": 33.5,
+   "wireRequests": 3,
+   "wireLines": [
+    "GET /hub?device=b41d49a0-9414-41d1-ba10-41e149cd93d4 HTTP/1.1",
+    "GET /service-worker.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1"
+   ],
+   "serverRequests": 3,
+   "watched": [
+    "/service-worker.js?v=… 200 (- B)"
+   ]
+  },
+  {
+   "side": "A",
+   "step": "reload 3",
+   "from": "/lobby",
+   "rowsMs": 2992,
+   "wireKB": 35.7,
+   "downKB": 33.5,
+   "wireRequests": 3,
+   "wireLines": [
+    "GET /hub?device=b41d49a0-9414-41d1-ba10-41e149cd93d4 HTTP/1.1",
+    "GET /service-worker.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1"
+   ],
+   "serverRequests": 3,
+   "watched": [
+    "/service-worker.js?v=… 200 (- B)"
+   ]
+  },
+  {
+   "side": "A",
+   "step": "goto / 1",
+   "from": "/lobby",
+   "rowsMs": 4190,
+   "wireKB": 70.6,
+   "downKB": 67.7,
+   "wireRequests": 4,
+   "wireLines": [
+    "GET / HTTP/1.1",
+    "GET /hub?device=b41d49a0-9414-41d1-ba10-41e149cd93d4 HTTP/1.1",
+    "GET /service-worker.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1"
+   ],
+   "serverRequests": 4,
+   "watched": [
+    "/ 200 (- B)",
+    "/service-worker.js?v=… 200 (- B)"
+   ]
+  },
+  {
+   "side": "A",
+   "step": "goto / 2",
+   "from": "/lobby",
+   "rowsMs": 4165,
+   "wireKB": 70.6,
+   "downKB": 67.7,
+   "wireRequests": 4,
+   "wireLines": [
+    "GET / HTTP/1.1",
+    "GET /hub?device=b41d49a0-9414-41d1-ba10-41e149cd93d4 HTTP/1.1",
+    "GET /service-worker.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1"
+   ],
+   "serverRequests": 4,
+   "watched": [
+    "/ 200 (- B)",
+    "/service-worker.js?v=… 200 (- B)"
+   ]
+  },
+  {
+   "side": "A",
+   "step": "goto / 3",
+   "from": "/lobby",
+   "rowsMs": 4183,
+   "wireKB": 70.6,
+   "downKB": 67.7,
+   "wireRequests": 4,
+   "wireLines": [
+    "GET / HTTP/1.1",
+    "GET /hub?device=b41d49a0-9414-41d1-ba10-41e149cd93d4 HTTP/1.1",
+    "GET /service-worker.js?v=2026-11-04-0917 HTTP/1.1",
+    "GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1"
+   ],
+   "serverRequests": 4,
+   "watched": [
+    "/ 200 (- B)",
+    "/service-worker.js?v=… 200 (- B)"
+   ]
+  },
+  {
+   "side": "B",
+   "step": "open /",
+   "from": "blank",
+   "rowsMs": 18228,
+   "wireKB": 1374,
+   "downKB": 1331.5,
+   "wireRequests": 73,
+   "wireLines": [
+    "GET / HTTP/1.1",
+    "GET /app.css?v=2026-11-04-1156 HTTP/1.1",
+    "GET /themes.css?v=2026-11-04-1156 HTTP/1.1",
+    "GET /themes/teahouse.css?v=2026-11-04-1156 HTTP/1.1",
+    "GET /css/frame.css?v=2026-11-04-1156 HTTP/1.1",
+    "GET /css/pickers.css?v=2026-11-04-1156 HTTP/1.1",
+    "GET /css/timeline.css?v=2026-11-04-1156 HTTP/1.1",
+    "GET /css/composer.css?v=2026-11-04-1156 HTTP/1.1",
+    "GET /css/message.css?v=2026-11-04-1156 HTTP/1.1",
+    "GET /css/pages.css?v=2026-11-04-1156 HTTP/1.1",
+    "GET /fonts/InterVariable.woff2 HTTP/1.1",
+    "GET /js/api.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/hub.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/main.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/notify.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/offline/db.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/offline/outbox.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/offline/snapshot.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/pages/admin.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/pages/channel-settings.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/pages/chat.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/pages/invite.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/pages/login.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/pages/settings-debug.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/pages/settings.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/pages/verify.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/push.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/pwa.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/render/avatar.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/render/dom.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/render/text.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/render/time.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/router.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/scene.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/sender.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/session.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/store.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/ui/composer.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/ui/confirm.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/ui/emoji-picker.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/ui/frame.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/ui/gallery.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/ui/gif-library.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/ui/gif-picker.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/ui/message.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/ui/overlays.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/ui/pins.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/ui/recorder.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/ui/timeline.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/ui/tooltip.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/ui/voice.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/update.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /js/upload.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /lib/signalr.min.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /lib/tus.min.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /service-worker.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /api/bootstrap HTTP/1.1",
+    "GET /login HTTP/1.1",
+    "GET /js/data/emoji-list.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /hub?device=1dfe154b-d1d2-4bc3-9a12-b02a4b9ba40c HTTP/1.1",
+    "GET /images/turqline01_3px.png HTTP/1.1",
+    "GET /emoji_selection_color.png HTTP/1.1",
+    "GET /emoji_selection_greys.png HTTP/1.1",
+    "GET /icon.svg HTTP/1.1",
+    "GET /icon-192.png HTTP/1.1",
+    "GET /icon-512.png HTTP/1.1",
+    "GET /notif.mp3 HTTP/1.1",
+    "GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1",
+    "GET /fonts/InterVariable-Italic.woff2 HTTP/1.1",
+    "GET /images/purpleline01_3px.png HTTP/1.1",
+    "GET /images/bot-avatar.svg HTTP/1.1",
+    "GET /images/klipy-attribution.svg HTTP/1.1",
+    "GET /emoji-packs/wechat/teary.png HTTP/1.1"
+   ],
+   "serverRequests": 72,
+   "watched": [
+    "/ 200 (- B)",
+    "/service-worker.js?v=… 200 (- B)",
+    "/login 200 (- B)"
+   ]
+  },
+  {
+   "side": "B",
+   "step": "reload 1",
+   "from": "/lobby",
+   "rowsMs": 3034,
+   "wireKB": 29.4,
+   "downKB": 27.2,
+   "wireRequests": 3,
+   "wireLines": [
+    "GET /hub?device=1dfe154b-d1d2-4bc3-9a12-b02a4b9ba40c HTTP/1.1",
+    "GET /service-worker.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1"
+   ],
+   "serverRequests": 3,
+   "watched": [
+    "/service-worker.js?v=… 304"
+   ]
+  },
+  {
+   "side": "B",
+   "step": "reload 2",
+   "from": "/lobby",
+   "rowsMs": 2996,
+   "wireKB": 29.4,
+   "downKB": 27.2,
+   "wireRequests": 3,
+   "wireLines": [
+    "GET /hub?device=1dfe154b-d1d2-4bc3-9a12-b02a4b9ba40c HTTP/1.1",
+    "GET /service-worker.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1"
+   ],
+   "serverRequests": 3,
+   "watched": [
+    "/service-worker.js?v=… 304"
+   ]
+  },
+  {
+   "side": "B",
+   "step": "reload 3",
+   "from": "/lobby",
+   "rowsMs": 2994,
+   "wireKB": 29.4,
+   "downKB": 27.2,
+   "wireRequests": 3,
+   "wireLines": [
+    "GET /hub?device=1dfe154b-d1d2-4bc3-9a12-b02a4b9ba40c HTTP/1.1",
+    "GET /service-worker.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1"
+   ],
+   "serverRequests": 3,
+   "watched": [
+    "/service-worker.js?v=… 304"
+   ]
+  },
+  {
+   "side": "B",
+   "step": "goto / 1",
+   "from": "/lobby",
+   "rowsMs": 3875,
+   "wireKB": 30.3,
+   "downKB": 27.3,
+   "wireRequests": 4,
+   "wireLines": [
+    "GET / HTTP/1.1",
+    "GET /hub?device=1dfe154b-d1d2-4bc3-9a12-b02a4b9ba40c HTTP/1.1",
+    "GET /service-worker.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1"
+   ],
+   "serverRequests": 4,
+   "watched": [
+    "/ 304",
+    "/service-worker.js?v=… 304"
+   ]
+  },
+  {
+   "side": "B",
+   "step": "goto / 2",
+   "from": "/lobby",
+   "rowsMs": 3920,
+   "wireKB": 30.3,
+   "downKB": 27.3,
+   "wireRequests": 4,
+   "wireLines": [
+    "GET / HTTP/1.1",
+    "GET /hub?device=1dfe154b-d1d2-4bc3-9a12-b02a4b9ba40c HTTP/1.1",
+    "GET /service-worker.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1"
+   ],
+   "serverRequests": 4,
+   "watched": [
+    "/ 304",
+    "/service-worker.js?v=… 304"
+   ]
+  },
+  {
+   "side": "B",
+   "step": "goto / 3",
+   "from": "/lobby",
+   "rowsMs": 3907,
+   "wireKB": 30.3,
+   "downKB": 27.3,
+   "wireRequests": 4,
+   "wireLines": [
+    "GET / HTTP/1.1",
+    "GET /hub?device=1dfe154b-d1d2-4bc3-9a12-b02a4b9ba40c HTTP/1.1",
+    "GET /service-worker.js?v=2026-11-04-1156 HTTP/1.1",
+    "GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1"
+   ],
+   "serverRequests": 4,
+   "watched": [
+    "/ 304",
+    "/service-worker.js?v=… 304"
+   ]
+  }
+ ],
+ "raw": [
+  {
+   "side": "A",
+   "path": "/",
+   "accept": "gzip, deflate",
+   "first": {
+    "status": 200,
+    "encoding": "gzip",
+    "etag": null,
+    "bytes": 32701
+   },
+   "again": null
+  },
+  {
+   "side": "A",
+   "path": "/",
+   "accept": "gzip, deflate, br",
+   "first": {
+    "status": 200,
+    "encoding": "br",
+    "etag": null,
+    "bytes": 34576
+   },
+   "again": null
+  },
+  {
+   "side": "A",
+   "path": "/login",
+   "accept": "gzip, deflate",
+   "first": {
+    "status": 200,
+    "encoding": "gzip",
+    "etag": null,
+    "bytes": 32701
+   },
+   "again": null
+  },
+  {
+   "side": "A",
+   "path": "/login",
+   "accept": "gzip, deflate, br",
+   "first": {
+    "status": 200,
+    "encoding": "br",
+    "etag": null,
+    "bytes": 34576
+   },
+   "again": null
+  },
+  {
+   "side": "A",
+   "path": "/service-worker.js",
+   "accept": "gzip, deflate",
+   "first": {
+    "status": 200,
+    "encoding": "gzip",
+    "etag": null,
+    "bytes": 6843
+   },
+   "again": null
+  },
+  {
+   "side": "A",
+   "path": "/service-worker.js",
+   "accept": "gzip, deflate, br",
+   "first": {
+    "status": 200,
+    "encoding": "br",
+    "etag": null,
+    "bytes": 6368
+   },
+   "again": null
+  },
+  {
+   "side": "B",
+   "path": "/",
+   "accept": "gzip, deflate",
+   "first": {
+    "status": 200,
+    "encoding": "gzip",
+    "etag": "W/\"A3FB6A5DD8175EA9\"",
+    "bytes": 32709
+   },
+   "again": {
+    "status": 304,
+    "encoding": "identity",
+    "etag": "W/\"A3FB6A5DD8175EA9\"",
+    "bytes": 0
+   }
+  },
+  {
+   "side": "B",
+   "path": "/",
+   "accept": "gzip, deflate, br",
+   "first": {
+    "status": 200,
+    "encoding": "br",
+    "etag": "W/\"A3FB6A5DD8175EA9\"",
+    "bytes": 25673
+   },
+   "again": {
+    "status": 304,
+    "encoding": "identity",
+    "etag": "W/\"A3FB6A5DD8175EA9\"",
+    "bytes": 0
+   }
+  },
+  {
+   "side": "B",
+   "path": "/login",
+   "accept": "gzip, deflate",
+   "first": {
+    "status": 200,
+    "encoding": "gzip",
+    "etag": "W/\"A3FB6A5DD8175EA9\"",
+    "bytes": 32709
+   },
+   "again": {
+    "status": 304,
+    "encoding": "identity",
+    "etag": "W/\"A3FB6A5DD8175EA9\"",
+    "bytes": 0
+   }
+  },
+  {
+   "side": "B",
+   "path": "/login",
+   "accept": "gzip, deflate, br",
+   "first": {
+    "status": 200,
+    "encoding": "br",
+    "etag": "W/\"A3FB6A5DD8175EA9\"",
+    "bytes": 25673
+   },
+   "again": {
+    "status": 304,
+    "encoding": "identity",
+    "etag": "W/\"A3FB6A5DD8175EA9\"",
+    "bytes": 0
+   }
+  },
+  {
+   "side": "B",
+   "path": "/service-worker.js",
+   "accept": "gzip, deflate",
+   "first": {
+    "status": 200,
+    "encoding": "gzip",
+    "etag": "W/\"C8FA4F06433B1089\"",
+    "bytes": 6838
+   },
+   "again": {
+    "status": 304,
+    "encoding": "identity",
+    "etag": "W/\"C8FA4F06433B1089\"",
+    "bytes": 0
+   }
+  },
+  {
+   "side": "B",
+   "path": "/service-worker.js",
+   "accept": "gzip, deflate, br",
+   "first": {
+    "status": 200,
+    "encoding": "br",
+    "etag": "W/\"C8FA4F06433B1089\"",
+    "bytes": 5662
+   },
+   "again": {
+    "status": 304,
+    "encoding": "identity",
+    "etag": "W/\"C8FA4F06433B1089\"",
+    "bytes": 0
+   }
+  }
+ ],
+ "navigation": [
+  {
+   "side": "A",
+   "acceptEncoding": "gzip, deflate, br, zstd",
+   "response": {
+    "status": 200,
+    "encoding": "br",
+    "etag": null
+   }
+  },
+  {
+   "side": "B",
+   "acceptEncoding": "gzip, deflate, br, zstd",
+   "response": {
+    "status": 200,
+    "encoding": "br",
+    "etag": "W/\"A3FB6A5DD8175EA9\""
+   }
+  }
+ ]
+}

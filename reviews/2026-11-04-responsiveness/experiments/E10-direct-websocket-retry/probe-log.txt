@@ -1,0 +1,212 @@
+
+== far
+  far control B#1 resume 1: rows 3078 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f | GET /images/turqline01_3px.png
+  far control A#1 resume 1: rows 3090 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f | GET /images/turqline01_3px.png
+  far control A#1 resume 2: rows 3088 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  far control B#1 resume 2: rows 3093 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  far control A#2 resume 1: rows 3073 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f | GET /images/turqline01_3px.png
+  far control B#2 resume 1: rows 3073 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f | GET /images/turqline01_3px.png
+  far control B#2 resume 2: rows 3083 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  far control A#2 resume 2: rows 3083 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  far outage A#1: stop 112 ms, down to back 4600 ms (start 3459 ms), back to connected 5198 ms, reconnect by ws negotiated, negotiate 1
+    attempts from the stop: 1011 ms ws direct: Error during WebSocket handshake: net::ERR_CONNECTION_RESET; 1017 ms negotiate: net::ERR_SOCKET_NOT_CONNECTED; 3021 ms negotiate: net::ERR_SOCKET_NOT_CONNECTED; 7026 ms negotiate: 200; 7946 ms ws negotiated: 101
+  far outage B#1: stop 120 ms, down to back 4531 ms (start 3509 ms), back to connected 4388 ms, reconnect by ws direct, negotiate 0
+    attempts from the stop: 1011 ms ws direct: Connection closed before receiving a handshake response; 1017 ms negotiate: net::ERR_SOCKET_NOT_CONNECTED; 3020 ms ws direct: Error in connection establishment: net::ERR_SOCKET_NOT_CONNECTED; 3026 ms negotiate: net::ERR_EMPTY_RESPONSE; 7027 ms ws direct: 101
+  far outage B#1 resume 1: rows 3098 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  far outage A#1 resume 1: rows 4025 ms, negotiate 1, sockets [ws negotiated]
+    crossed until the rows (3): POST /hub/negotiate?device=…&negotiateVersion=1 HTTP/1.1 | GET /hub?device=…&id=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: POST /hub/negotiate?device=…&negotiateVersion=1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  far outage A#1 resume 2: rows 4012 ms, negotiate 1, sockets [ws negotiated]
+    crossed until the rows (3): POST /hub/negotiate?device=…&negotiateVersion=1 HTTP/1.1 | GET /hub?device=…&id=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: POST /hub/negotiate?device=…&negotiateVersion=1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  far outage B#1 resume 2: rows 3090 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  far outage A#2: stop 110 ms, down to back 4813 ms (start 3704 ms), back to connected 5034 ms, reconnect by ws negotiated, negotiate 1
+    attempts from the stop: 1006 ms ws direct: Error in connection establishment: net::ERR_SOCKET_NOT_CONNECTED; 1009 ms negotiate: net::ERR_SOCKET_NOT_CONNECTED; 3018 ms negotiate: net::ERR_EMPTY_RESPONSE; 7023 ms negotiate: 200; 7947 ms ws negotiated: 101
+  far outage B#2: stop 118 ms, down to back 4741 ms (start 3722 ms), back to connected 4195 ms, reconnect by ws direct, negotiate 0
+    attempts from the stop: 1006 ms ws direct: Error in connection establishment: net::ERR_SOCKET_NOT_CONNECTED; 1010 ms negotiate: net::ERR_SOCKET_NOT_CONNECTED; 3014 ms ws direct: Connection closed before receiving a handshake response; 3018 ms negotiate: net::ERR_EMPTY_RESPONSE; 7023 ms ws direct: 101
+  far outage A#2 resume 1: rows 4003 ms, negotiate 1, sockets [ws negotiated]
+    crossed until the rows (3): POST /hub/negotiate?device=…&negotiateVersion=1 HTTP/1.1 | GET /hub?device=…&id=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: POST /hub/negotiate?device=…&negotiateVersion=1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  far outage B#2 resume 1: rows 3083 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  far outage B#2 resume 2: rows 3080 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  far outage A#2 resume 2: rows 4001 ms, negotiate 1, sockets [ws negotiated]
+    crossed until the rows (3): POST /hub/negotiate?device=…&negotiateVersion=1 HTTP/1.1 | GET /hub?device=…&id=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: POST /hub/negotiate?device=…&negotiateVersion=1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  far outage A#3: stop 112 ms, down to back 4462 ms (start 3445 ms), back to connected 5322 ms, reconnect by ws negotiated, negotiate 1
+    attempts from the stop: 1005 ms ws direct: Error in connection establishment: net::ERR_SOCKET_NOT_CONNECTED; 1009 ms negotiate: net::ERR_SOCKET_NOT_CONNECTED; 3013 ms negotiate: net::ERR_CONNECTION_RESET; 7021 ms negotiate: 200; 7938 ms ws negotiated: 101
+  far outage B#3: stop 121 ms, down to back 4273 ms (start 3183 ms), back to connected 4613 ms, reconnect by ws direct, negotiate 0
+    attempts from the stop: 1005 ms ws direct: Error in connection establishment: net::ERR_SOCKET_NOT_CONNECTED; 1010 ms negotiate: net::ERR_SOCKET_NOT_CONNECTED; 3012 ms ws direct: Connection closed before receiving a handshake response; 3018 ms negotiate: net::ERR_EMPTY_RESPONSE; 7021 ms ws direct: 101
+  far outage B#3 resume 1: rows 3098 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  far outage A#3 resume 1: rows 4006 ms, negotiate 1, sockets [ws negotiated]
+    crossed until the rows (3): POST /hub/negotiate?device=…&negotiateVersion=1 HTTP/1.1 | GET /hub?device=…&id=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: POST /hub/negotiate?device=…&negotiateVersion=1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  far outage A#3 resume 2: rows 3999 ms, negotiate 1, sockets [ws negotiated]
+    crossed until the rows (3): POST /hub/negotiate?device=…&negotiateVersion=1 HTTP/1.1 | GET /hub?device=…&id=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: POST /hub/negotiate?device=…&negotiateVersion=1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  far outage B#3 resume 2: rows 3089 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  far outage A#4: stop 108 ms, down to back 5535 ms (start 4435 ms), back to connected 4279 ms, reconnect by ws negotiated, negotiate 1
+    attempts from the stop: 1005 ms ws direct: Error in connection establishment: net::ERR_SOCKET_NOT_CONNECTED; 1010 ms negotiate: net::ERR_EMPTY_RESPONSE; 3014 ms negotiate: net::ERR_EMPTY_RESPONSE; 7017 ms negotiate: 200; 7934 ms ws negotiated: 101
+  far outage B#4: stop 115 ms, down to back 5731 ms (start 4714 ms), back to connected 3169 ms, reconnect by ws direct, negotiate 0
+    attempts from the stop: 1005 ms ws direct: Error in connection establishment: net::ERR_SOCKET_NOT_CONNECTED; 1008 ms negotiate: net::ERR_EMPTY_RESPONSE; 3012 ms ws direct: Connection closed before receiving a handshake response; 3015 ms negotiate: net::ERR_CONNECTION_RESET; 7018 ms ws direct: 101
+  far outage A#4 resume 1: rows 4004 ms, negotiate 1, sockets [ws negotiated]
+    crossed until the rows (3): POST /hub/negotiate?device=…&negotiateVersion=1 HTTP/1.1 | GET /hub?device=…&id=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: POST /hub/negotiate?device=…&negotiateVersion=1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  far outage B#4 resume 1: rows 3084 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  far outage B#4 resume 2: rows 3078 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  far outage A#4 resume 2: rows 4011 ms, negotiate 1, sockets [ws negotiated]
+    crossed until the rows (3): POST /hub/negotiate?device=…&negotiateVersion=1 HTTP/1.1 | GET /hub?device=…&id=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: POST /hub/negotiate?device=…&negotiateVersion=1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  far outage A#5: stop 108 ms, down to back 5008 ms (start 3996 ms), back to connected 4805 ms, reconnect by ws negotiated, negotiate 1
+    attempts from the stop: 1004 ms ws direct: Error in connection establishment: net::ERR_SOCKET_NOT_CONNECTED; 1008 ms negotiate: net::ERR_SOCKET_NOT_CONNECTED; 3014 ms negotiate: net::ERR_EMPTY_RESPONSE; 7016 ms negotiate: 200; 7933 ms ws negotiated: 101
+  far outage B#5: stop 115 ms, down to back 4827 ms (start 3706 ms), back to connected 4084 ms, reconnect by ws direct, negotiate 0
+    attempts from the stop: 1004 ms ws direct: Error in connection establishment: net::ERR_SOCKET_NOT_CONNECTED; 1008 ms negotiate: net::ERR_EMPTY_RESPONSE; 3014 ms ws direct: Error during WebSocket handshake: net::ERR_CONNECTION_RESET; 3015 ms negotiate: net::ERR_EMPTY_RESPONSE; 7018 ms ws direct: 101
+  far outage B#5 resume 1: rows 3077 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  far outage A#5 resume 1: rows 4024 ms, negotiate 1, sockets [ws negotiated]
+    crossed until the rows (3): POST /hub/negotiate?device=…&negotiateVersion=1 HTTP/1.1 | GET /hub?device=…&id=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: POST /hub/negotiate?device=…&negotiateVersion=1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  far outage A#5 resume 2: rows 4004 ms, negotiate 1, sockets [ws negotiated]
+    crossed until the rows (3): POST /hub/negotiate?device=…&negotiateVersion=1 HTTP/1.1 | GET /hub?device=…&id=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: POST /hub/negotiate?device=…&negotiateVersion=1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  far outage B#5 resume 2: rows 3088 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+
+== near
+  near control B#1 resume 1: rows 287 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f | GET /images/turqline01_3px.png
+  near control A#1 resume 1: rows 286 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f | GET /images/turqline01_3px.png
+  near control A#1 resume 2: rows 276 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  near control B#1 resume 2: rows 267 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  near control A#2 resume 1: rows 269 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f | GET /images/turqline01_3px.png
+  near control B#2 resume 1: rows 269 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f | GET /images/turqline01_3px.png
+  near control B#2 resume 2: rows 272 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  near control A#2 resume 2: rows 271 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  near outage A#1: stop 111 ms, down to back 4611 ms (start 3436 ms), back to connected 2645 ms, reconnect by ws negotiated, negotiate 1
+    attempts from the stop: 1006 ms ws direct: Error in connection establishment: net::ERR_SOCKET_NOT_CONNECTED; 1016 ms negotiate: net::ERR_EMPTY_RESPONSE; 3020 ms negotiate: net::ERR_EMPTY_RESPONSE; 7023 ms negotiate: 200; 7102 ms ws negotiated: 101
+  near outage B#1: stop 119 ms, down to back 4800 ms (start 3775 ms), back to connected 2441 ms, reconnect by ws direct, negotiate 0
+    attempts from the stop: 1007 ms ws direct: Connection closed before receiving a handshake response; 1014 ms negotiate: net::ERR_EMPTY_RESPONSE; 3020 ms ws direct: Connection closed before receiving a handshake response; 3020 ms negotiate: net::ERR_EMPTY_RESPONSE; 7026 ms ws direct: 101
+  near outage B#1 resume 1: rows 297 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  near outage A#1 resume 1: rows 373 ms, negotiate 1, sockets [ws negotiated]
+    crossed until the rows (3): POST /hub/negotiate?device=…&negotiateVersion=1 HTTP/1.1 | GET /hub?device=…&id=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: POST /hub/negotiate?device=…&negotiateVersion=1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  near outage A#1 resume 2: rows 348 ms, negotiate 1, sockets [ws negotiated]
+    crossed until the rows (3): POST /hub/negotiate?device=…&negotiateVersion=1 HTTP/1.1 | GET /hub?device=…&id=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: POST /hub/negotiate?device=…&negotiateVersion=1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  near outage B#1 resume 2: rows 306 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  near outage A#2: stop 119 ms, down to back 4242 ms (start 3221 ms), back to connected 3064 ms, reconnect by ws negotiated, negotiate 1
+    attempts from the stop: 1008 ms ws direct: Error in connection establishment: net::ERR_SOCKET_NOT_CONNECTED; 1017 ms negotiate: net::ERR_EMPTY_RESPONSE; 3022 ms negotiate: net::ERR_EMPTY_RESPONSE; 7025 ms negotiate: 200; 7095 ms ws negotiated: 101
+  near outage B#2: stop 142 ms, down to back 4296 ms (start 3174 ms), back to connected 2871 ms, reconnect by ws direct, negotiate 0
+    attempts from the stop: 1008 ms ws direct: Error in connection establishment: net::ERR_SOCKET_NOT_CONNECTED; 1017 ms negotiate: net::ERR_SOCKET_NOT_CONNECTED; 3021 ms ws direct: Connection closed before receiving a handshake response; 3029 ms negotiate: net::ERR_EMPTY_RESPONSE; 7027 ms ws direct: 101
+  near outage A#2 resume 1: rows 369 ms, negotiate 1, sockets [ws negotiated]
+    crossed until the rows (3): POST /hub/negotiate?device=…&negotiateVersion=1 HTTP/1.1 | GET /hub?device=…&id=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: POST /hub/negotiate?device=…&negotiateVersion=1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  near outage B#2 resume 1: rows 308 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  near outage B#2 resume 2: rows 261 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  near outage A#2 resume 2: rows 343 ms, negotiate 1, sockets [ws negotiated]
+    crossed until the rows (3): POST /hub/negotiate?device=…&negotiateVersion=1 HTTP/1.1 | GET /hub?device=…&id=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: POST /hub/negotiate?device=…&negotiateVersion=1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  near outage A#3: stop 113 ms, down to back 4215 ms (start 3192 ms), back to connected 3060 ms, reconnect by ws negotiated, negotiate 1
+    attempts from the stop: 1004 ms ws direct: Error in connection establishment: net::ERR_SOCKET_NOT_CONNECTED; 1007 ms negotiate: net::ERR_CONNECTION_RESET; 3012 ms negotiate: net::ERR_EMPTY_RESPONSE; 7014 ms negotiate: 200; 7081 ms ws negotiated: 101
+  near outage B#3: stop 126 ms, down to back 4267 ms (start 3174 ms), back to connected 2977 ms, reconnect by ws direct, negotiate 0
+    attempts from the stop: 1004 ms ws direct: Error in connection establishment: net::ERR_SOCKET_NOT_CONNECTED; 1007 ms negotiate: net::ERR_SOCKET_NOT_CONNECTED; 3013 ms ws direct: Connection closed before receiving a handshake response; 3014 ms negotiate: net::ERR_EMPTY_RESPONSE; 7017 ms ws direct: 101
+  near outage B#3 resume 1: rows 306 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  near outage A#3 resume 1: rows 367 ms, negotiate 1, sockets [ws negotiated]
+    crossed until the rows (3): POST /hub/negotiate?device=…&negotiateVersion=1 HTTP/1.1 | GET /hub?device=…&id=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: POST /hub/negotiate?device=…&negotiateVersion=1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  near outage A#3 resume 2: rows 344 ms, negotiate 1, sockets [ws negotiated]
+    crossed until the rows (3): POST /hub/negotiate?device=…&negotiateVersion=1 HTTP/1.1 | GET /hub?device=…&id=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: POST /hub/negotiate?device=…&negotiateVersion=1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  near outage B#3 resume 2: rows 270 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  near outage A#4: stop 114 ms, down to back 4224 ms (start 3205 ms), back to connected 3074 ms, reconnect by ws negotiated, negotiate 1
+    attempts from the stop: 1005 ms ws direct: Error in connection establishment: net::ERR_SOCKET_NOT_CONNECTED; 1008 ms negotiate: net::ERR_SOCKET_NOT_CONNECTED; 3013 ms negotiate: net::ERR_EMPTY_RESPONSE; 7015 ms negotiate: 200; 7082 ms ws negotiated: 101
+  near outage B#4: stop 127 ms, down to back 4022 ms (start 2927 ms), back to connected 3179 ms, reconnect by ws direct, negotiate 0
+    attempts from the stop: 1005 ms ws direct: Error in connection establishment: net::ERR_SOCKET_NOT_CONNECTED; 1008 ms negotiate: net::ERR_CONNECTION_RESET; 3013 ms ws direct: Connection closed before receiving a handshake response; 3014 ms negotiate: net::ERR_EMPTY_RESPONSE; 7017 ms ws direct: 101
+  near outage A#4 resume 1: rows 371 ms, negotiate 1, sockets [ws negotiated]
+    crossed until the rows (3): POST /hub/negotiate?device=…&negotiateVersion=1 HTTP/1.1 | GET /hub?device=…&id=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: POST /hub/negotiate?device=…&negotiateVersion=1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  near outage B#4 resume 1: rows 300 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  near outage B#4 resume 2: rows 274 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  near outage A#4 resume 2: rows 334 ms, negotiate 1, sockets [ws negotiated]
+    crossed until the rows (3): POST /hub/negotiate?device=…&negotiateVersion=1 HTTP/1.1 | GET /hub?device=…&id=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: POST /hub/negotiate?device=…&negotiateVersion=1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  near outage A#5: stop 240 ms, down to back 6983 ms (start 5939 ms), back to connected 329 ms, reconnect by ws negotiated, negotiate 1
+    attempts from the stop: 1010 ms ws direct: Error in connection establishment: net::ERR_SOCKET_NOT_CONNECTED; 1017 ms negotiate: net::ERR_EMPTY_RESPONSE; 3033 ms negotiate: net::ERR_EMPTY_RESPONSE; 7047 ms negotiate: 200; 7122 ms ws negotiated: 101
+  near outage B#5: stop 269 ms, down to back 7143 ms (start 5936 ms), back to connected 140 ms, reconnect by ws direct, negotiate 0
+    attempts from the stop: 1009 ms ws direct: Connection closed before receiving a handshake response; 1017 ms negotiate: net::ERR_EMPTY_RESPONSE; 3022 ms ws direct: Connection closed before receiving a handshake response; 3033 ms negotiate: net::ERR_EMPTY_RESPONSE; 7047 ms ws direct: 101
+  near outage B#5 resume 1: rows 311 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  near outage A#5 resume 1: rows 349 ms, negotiate 1, sockets [ws negotiated]
+    crossed until the rows (3): POST /hub/negotiate?device=…&negotiateVersion=1 HTTP/1.1 | GET /hub?device=…&id=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: POST /hub/negotiate?device=…&negotiateVersion=1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  near outage A#5 resume 2: rows 389 ms, negotiate 1, sockets [ws negotiated]
+    crossed until the rows (3): POST /hub/negotiate?device=…&negotiateVersion=1 HTTP/1.1 | GET /hub?device=…&id=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: POST /hub/negotiate?device=…&negotiateVersion=1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f
+  near outage B#5 resume 2: rows 310 ms, negotiate 0, sockets [ws direct]
+    crossed until the rows (2): GET /hub?device=… HTTP/1.1 | GET /api/bootstrap?emojiStamp=b15a0f3de181880f HTTP/1.1
+    the page asked: GET /api/bootstrap?emojiStamp=b15a0f3de181880f

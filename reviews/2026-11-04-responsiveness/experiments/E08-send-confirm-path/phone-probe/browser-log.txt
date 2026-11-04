@@ -1,0 +1,4 @@
+1x A/keeper requestfailed: GET http://127.0.0.1:5313/api/account/passphrase net::ERR_ABORTED
+1x A/keeper requestfailed: GET http://127.0.0.1:5313/api/account/location net::ERR_ABORTED
+1x B/keeper requestfailed: GET http://127.0.0.1:5314/api/account/location net::ERR_ABORTED
+1x B/keeper requestfailed: GET http://127.0.0.1:5314/api/account/passphrase net::ERR_ABORTED

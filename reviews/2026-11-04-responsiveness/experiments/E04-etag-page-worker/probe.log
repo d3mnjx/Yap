@@ -1,0 +1,36 @@
+server: /home/agent/yap-perf/harness/Yap/bin/Debug/net10.0/Yap.dll on http://127.0.0.1:5313, root /home/agent/yap-perf/runs/root-cxHvlB, up after 3135 ms
+A: /home/agent/yap-perf/harness on 5313 (pid 617287), proxy http://127.0.0.1:5413
+server: /home/agent/yap-perf/exp/04-etag-page-worker/Yap/bin/Debug/net10.0/Yap.dll on http://127.0.0.1:5314, root /home/agent/yap-perf/runs/root-C4fbpr, up after 2873 ms
+B: /home/agent/yap-perf/exp/04-etag-page-worker on 5314 (pid 617354), proxy http://127.0.0.1:5414
+A open /    from blank   rows 18150 ms, wire   1391 KB in 73 requests; / 200 (- B), /service-worker.js?v=… 200 (- B), /login 200 (- B)
+A first navigation: Accept-Encoding "gzip, deflate, br, zstd", answer {"status":200,"encoding":"br","etag":null}
+A reload 1  from /lobby  rows  3049 ms, wire   35.7 KB in  3 requests; /service-worker.js?v=… 200 (- B)
+A reload 2  from /lobby  rows  2994 ms, wire   35.7 KB in  3 requests; /service-worker.js?v=… 200 (- B)
+A reload 3  from /lobby  rows  2992 ms, wire   35.7 KB in  3 requests; /service-worker.js?v=… 200 (- B)
+A goto / 1  from /lobby  rows  4190 ms, wire   70.6 KB in  4 requests; / 200 (- B), /service-worker.js?v=… 200 (- B)
+A goto / 2  from /lobby  rows  4165 ms, wire   70.6 KB in  4 requests; / 200 (- B), /service-worker.js?v=… 200 (- B)
+A goto / 3  from /lobby  rows  4183 ms, wire   70.6 KB in  4 requests; / 200 (- B), /service-worker.js?v=… 200 (- B)
+B open /    from blank   rows 18228 ms, wire   1374 KB in 73 requests; / 200 (- B), /service-worker.js?v=… 200 (- B), /login 200 (- B)
+B first navigation: Accept-Encoding "gzip, deflate, br, zstd", answer {"status":200,"encoding":"br","etag":"W/\"A3FB6A5DD8175EA9\""}
+B reload 1  from /lobby  rows  3034 ms, wire   29.4 KB in  3 requests; /service-worker.js?v=… 304
+B reload 2  from /lobby  rows  2996 ms, wire   29.4 KB in  3 requests; /service-worker.js?v=… 304
+B reload 3  from /lobby  rows  2994 ms, wire   29.4 KB in  3 requests; /service-worker.js?v=… 304
+B goto / 1  from /lobby  rows  3875 ms, wire   30.3 KB in  4 requests; / 304, /service-worker.js?v=… 304
+B goto / 2  from /lobby  rows  3920 ms, wire   30.3 KB in  4 requests; / 304, /service-worker.js?v=… 304
+B goto / 3  from /lobby  rows  3907 ms, wire   30.3 KB in  4 requests; / 304, /service-worker.js?v=… 304
+A /                  gzip, deflate     200 gzip      32701 B, ETag (none)
+A /                  gzip, deflate, br 200 br        34576 B, ETag (none)
+A /login             gzip, deflate     200 gzip      32701 B, ETag (none)
+A /login             gzip, deflate, br 200 br        34576 B, ETag (none)
+A /service-worker.js gzip, deflate     200 gzip       6843 B, ETag (none)
+A /service-worker.js gzip, deflate, br 200 br         6368 B, ETag (none)
+B /                  gzip, deflate     200 gzip      32709 B, ETag W/"A3FB6A5DD8175EA9"; with If-None-Match: 304, 0 B
+B /                  gzip, deflate, br 200 br        25673 B, ETag W/"A3FB6A5DD8175EA9"; with If-None-Match: 304, 0 B
+B /login             gzip, deflate     200 gzip      32709 B, ETag W/"A3FB6A5DD8175EA9"; with If-None-Match: 304, 0 B
+B /login             gzip, deflate, br 200 br        25673 B, ETag W/"A3FB6A5DD8175EA9"; with If-None-Match: 304, 0 B
+B /service-worker.js gzip, deflate     200 gzip       6838 B, ETag W/"C8FA4F06433B1089"; with If-None-Match: 304, 0 B
+B /service-worker.js gzip, deflate, br 200 br         5662 B, ETag W/"C8FA4F06433B1089"; with If-None-Match: 304, 0 B
+A: pid 617287 stopped
+B: pid 617354 stopped
+
+written /tmp/claude-1000/-d-PROJECTS-Yap/6e990ba7-f0bf-4ee7-802f-7a4cb4edeb8e/scratchpad/measure-04-etag/probe-etag.json

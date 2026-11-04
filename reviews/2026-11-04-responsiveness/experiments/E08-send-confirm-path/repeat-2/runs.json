@@ -1,0 +1,3628 @@
+{
+ "sides": [
+  {
+   "key": "A",
+   "label": "main",
+   "dir": "/home/agent/yap-perf/harness",
+   "commit": "cb074cfa Tests: perf.mjs measures how responsive Yap feels, build A against build B"
+  },
+  {
+   "key": "B",
+   "label": "E08-send-confirm",
+   "dir": "/home/agent/yap-perf/exp/08-send-confirm-path",
+   "commit": "59944dea Send: the own row confirms before the outbox delete, and an identical second copy draws nothing"
+  }
+ ],
+ "n": 5,
+ "plan": {
+  "near": [
+   "send"
+  ],
+  "lan": [
+   "send"
+  ]
+ },
+ "wallMs": 69104,
+ "records": [
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 3.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 81.1
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.8
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 70.9
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.8
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 67.6
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.4
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 67
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.1
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 68.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 67.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 66.7
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 67.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 67.6
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 65.9
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 2.1
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 70.1
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.4
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 69.1
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.1
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 69.4
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.1
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 67.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 69
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 69.7
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.7
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 70
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 71.7
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 76.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 67.9
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 89.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 65.7
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 68.7
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 69.7
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 67.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 68.8
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 67.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.4
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 65.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 66.7
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 66.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 34.9
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 101.9
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.1
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 66
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 67.1
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 68.8
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.7
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 68.9
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.7
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 66.4
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 67.6
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 65.8
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 70
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 70
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 68.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.6
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 66.4
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 70
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 4.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 74.9
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 66.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 2.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 72.8
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.7
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 70.6
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.4
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 66.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 69.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 69.4
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 8.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 73.8
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 68.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 70.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.4
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 67.7
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 69.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 70.7
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.7
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 70.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.6
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 68
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 24
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 91
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 3.8
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 74.4
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.6
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 68.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.4
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 68.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.6
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 67.1
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 67.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 67.6
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 69.7
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 68.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 68.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 3.6
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 71.6
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.6
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 66.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 19.9
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 91.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.6
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 72
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 2.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 68.9
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 2.4
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 69.8
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.8
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 69.6
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.6
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 68.1
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.4
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 70.7
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.4
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 67.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 66.6
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 66
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 0.8
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 66.9
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.1
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 67.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.1
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 66.8
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 3.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 74.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 67.7
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.1
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 68.8
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 69.1
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 70.9
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 68.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 66.7
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 5.1
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 71.1
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 65.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 79.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 2.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 69.5
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 67.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 2.1
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 70
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 69.6
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 67.6
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 0.9
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 66
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1
+  },
+  {
+   "profile": "near",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 67.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 10.7
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 2.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 11.8
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 9.6
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.7
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 6.9
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 4.4
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.4
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 4.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 5.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 6.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 6
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 5.5
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.9
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 6.7
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 3.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 3.7
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.5
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 3.9
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 3.9
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 9.5
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 3.7
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 3.6
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 3.6
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "own row ms",
+   "value": 2.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 1,
+   "metric": "confirmed ms",
+   "value": 5.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.5
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 4.7
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.5
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 4.5
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 3.8
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 2.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 4.8
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 5.8
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.6
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 6.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.5
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 6.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 2.5
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 17.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.4
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 4
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 5.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 7.5
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 10.8
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.8
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 5.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 4.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.8
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 5.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 3.8
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 4.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 4.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 3.5
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 9
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "own row ms",
+   "value": 1.9
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 2,
+   "metric": "confirmed ms",
+   "value": 4.5
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 4.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 3.4
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 4
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 3.8
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 4.6
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 3.8
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 3.8
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 5.8
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.9
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 10.7
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 6.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.4
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 7.7
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 2.8
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 5.5
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.8
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 6.5
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 3.4
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 10.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 5.8
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 2.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 4.5
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.7
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 4.4
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 6.8
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "own row ms",
+   "value": 1.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 3,
+   "metric": "confirmed ms",
+   "value": 8
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 3.6
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 5.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 3.8
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.7
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 4.9
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.5
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 3.6
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.5
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 5.6
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.7
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 9.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 5.6
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 5.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.4
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 5
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 4.8
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 4.5
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 3.6
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 3.6
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 3.6
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 3.5
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 3.8
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.9
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 4.7
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 7.9
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "own row ms",
+   "value": 1.4
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 4,
+   "metric": "confirmed ms",
+   "value": 3.9
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 3.9
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 3.7
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 3.4
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 2.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 12.4
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 2.5
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 6.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 2.5
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 6.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 2.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 7.5
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.4
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 5.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 8.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "A",
+   "label": "main",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 6
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 5.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 6
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 4.7
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 3.8
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.1
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 4
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 3.4
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 3.8
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.3
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 4
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.2
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 3.4
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "own row ms",
+   "value": 1.5
+  },
+  {
+   "profile": "lan",
+   "journey": "send",
+   "side": "B",
+   "label": "E08-send-confirm",
+   "rep": 5,
+   "metric": "confirmed ms",
+   "value": 6.3
+  }
+ ]
+}
