@@ -52,7 +52,6 @@ export function EmojiPicker({ onPick, recordUse = true }) {
       replace(grid, s.cells.map(cell));
       return section;
     }));
-    fillRecent();
   }
 
   function cell(c) {
@@ -134,11 +133,26 @@ export function EmojiPicker({ onPick, recordUse = true }) {
   };
 }
 
+// One reaction picker per page: built on the first open, then moved into the wrapper of each open, so a tap pays for
+// Recent and the search, not for some 1,000 cells again. pickHandler sends the pick to the row of the latest open.
+// New emoji images (a pack added or changed) build it again, as a picker made per open showed them on the next open;
+// a bootstrap without new rules keeps the same object (store.js), so a reconnect keeps the cells.
+let shared = null, pickHandler = null;
+
 // The picker for a reaction (MR-42, PK-43, PK-44): placed below or above the button on desktop, a sheet on a phone.
 export function reactionPicker(rowNode, anchor, onPick, onClose) {
   const wrapper = el('div', { class: 'emoji-picker-wrapper' });
   const backdrop = el('div', { class: 'emoji-picker-backdrop' });
-  const picker = EmojiPicker({ onPick: emoji => { close(); onPick(emoji); }, recordUse: false });   // React records the use (MR-44)
+  const pick = emoji => { close(); onPick(emoji); };
+  let picker;
+  // The keyboard opens a second picker while the first is open (Tab out of it, Enter on another row's button: no
+  // outside tap closes the first). The shared one stays in the first, and this open gets a picker of its own, as before.
+  if (shared?.element.isConnected) picker = EmojiPicker({ onPick: pick, recordUse: false });   // React records the use (MR-44)
+  else {
+    if (shared?.rules !== state.emojiImages) shared = { ...EmojiPicker({ onPick: emoji => pickHandler(emoji), recordUse: false }), rules: state.emojiImages };
+    pickHandler = pick;
+    picker = shared;
+  }
   wrapper.append(picker.element);
   rowNode.append(backdrop, wrapper);
   picker.opened();

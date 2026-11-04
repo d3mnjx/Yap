@@ -386,6 +386,7 @@ What the harness cannot see, and what it found on the way:
 
 ## Merge notes
 
+- E07 is on main since 2026-11-11, as the commit "Reactions: the emoji picker is built once per page and moves to the row of each open". Its message holds the checks and the A/B numbers of that day. The other nine are not merged.
 - Each experiment patch is one commit on 7f149be4. Main has moved on (ffd8e485 touched `text.js`, `pickers.css`, `features.mjs`); `git am experiments/<E>/change.patch` on main, then run the suites the commit message names. On 2026-11-04 all ten still applied to main without conflict.
 - Stale text to fix on merge: `index.html` lines 113 to 116 and `docs/performance-notes.md` line 99 describe the full preload list (E03); `docs/performance-notes.md` line 105 describes the worker's registration at script start (E06); `docs/architecture/client.md` line 338 says the page keeps negotiation for its life (E10).
 - After the merge of the first-visit set (E01, E02, E03, E05, E06), run the harness once on `far` and `near` for the combined number, and run E02's upload probe with the worker's install after the rows.
