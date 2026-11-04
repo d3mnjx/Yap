@@ -127,8 +127,8 @@ Pin {   // a copy of what the panel shows, stored with the channel; it outlives 
   // the row's order. kind: image (src: the medium picture; large, original: the viewer's stage and Download, TL-24),
   // gif (src: an image file when isImage, else a video file to loop; no src when the file is gone), video (src, poster:
   // an upload, or a cached link video with title, site and url), link (poster, title, site, url of the first link
-  // card), voice (src, durationMs, peaks: what the row's player draws). A copy made before 2026-11-04 has no large,
-  // original, isImage or url, and an image-file GIF there has kind image. Resolved when the pin is made; an edit,
+  // card), voice (src, durationMs, peaks: what the row's player draws). A copy made before 2026-11-04 has no original,
+  // isImage or url, and an image-file GIF there has kind image; a server start gives its pictures the large URL. Resolved when the pin is made; an edit,
   // or a link card that arrives later, updates it; a server start resolves the pins of messages in memory again.
   // Channel rows written before 2026-10-23 hold one object or null here: the server reads it as a list of one or none.
 }

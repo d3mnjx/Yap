@@ -6,7 +6,7 @@
 import { chromium } from 'playwright';
 import fs from 'node:fs';
 import path from 'node:path';
-import { BASE, REPO, sleep, waitTrue, row, step, finish, startServer, signIn, watchContext, watchPage, fixture, writePng, sendFiles as pickAndSend } from './lib.mjs';
+import { BASE, REPO, sleep, waitTrue, row, step, finish, startServer, signIn, watchContext, watchPage, fixture, writePng, sendFiles as pickAndSend, api } from './lib.mjs';
 
 // offline-phone-pending: Playwright applies setOffline to the service worker only with this variable (see offline.mjs).
 process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = '1';
@@ -121,18 +121,6 @@ const HEART = '\u2764\uFE0F', LAUGH = '\u{1F602}', THUMBS = '\u{1F44D}';
 const thirdLast = async page => { const rows = page.locator('.messages-container .message-group:not(.system-message)'); return rows.nth((await rows.count()) - 3); };
 const text = async loc => ((await loc.first().innerText().catch(() => '')) ?? '').replace(/\s+/g, ' ').trim();
 const visible = loc => loc.first().isVisible().catch(() => false);
-
-// fetch from the page, with its cookie: the same requests the client makes.
-function api(page, method, url, body = null) {
-  return page.evaluate(async ([method, url, body]) => {
-    const init = { method, credentials: 'same-origin' };
-    if (body !== null) { init.headers = { 'content-type': 'application/json' }; init.body = JSON.stringify(body); }
-    const res = await fetch(url, init);
-    const reply = await res.text();
-    if (!res.ok) throw new Error(`${method} ${url}: ${res.status} ${reply.slice(0, 200)}`);
-    return reply ? JSON.parse(reply) : null;
-  }, [method, url, body]);
-}
 
 const people = {};   // username -> { ctx, page }
 async function open(name, options = DESKTOP) {

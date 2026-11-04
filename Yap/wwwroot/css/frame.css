@@ -1327,8 +1327,11 @@
     border-radius: 4px;
 }
 
-/* A picture that opens the viewer is a <button> (pins.js): no button look, only the picture's own box. */
+/* A picture that opens the viewer is in a <button> (pins.js): no button look, only the picture's own box. A single
+   picture's button fits the picture, so a tap beside it jumps (SH-49); a grid cell's button fills its cell. */
 .pin-shot {
+    position: relative; /* the focus ring below */
+    display: block;
     padding: 0;
     border: 0;
     background: none;
@@ -1337,9 +1340,24 @@
     cursor: zoom-in;
 }
 
+.pin-media > .pin-shot {
+    width: fit-content;
+    max-width: 100%;
+}
+
+/* Inside, not outside: .pin-grid clips its cells (overflow: hidden, for the round corners), and an outer ring would
+   show only as a sliver in the 2 px gap. On a layer over the picture: an inset outline of the button paints under
+   its picture and does not show. */
 .pin-shot:focus-visible {
-    outline: 2px solid var(--accent-primary);
-    outline-offset: 2px;
+    outline: none;
+}
+
+.pin-shot:focus-visible::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 4px;
+    box-shadow: inset 0 0 0 2px var(--accent-primary);
 }
 
 /* The row's player (ui/video.js), at the panel's cap of 240 px and not the row's 350 px: three entries fit in one

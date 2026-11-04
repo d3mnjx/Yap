@@ -16,7 +16,7 @@ import { reactionPicker } from './emoji-picker.js';
 import { api } from '../api.js';
 import { openInstallDialog } from '../pwa.js';
 import { voicePlayer } from './voice.js';
-import { video } from './video.js';
+import { video, gifLoop } from './video.js';
 
 const MAX_TEXT = 4000;   // MR-11
 
@@ -26,16 +26,6 @@ export function setReplyTarget(id) {
   if (replyTargetId) document.getElementById(`msg-${replyTargetId}`)?.classList.remove('reply-target');
   replyTargetId = id;
   if (id) document.getElementById(`msg-${id}`)?.classList.add('reply-target');
-}
-
-// A browser that blocks autoplay: the next tap or key starts every paused GIF (MR-29, TL-31).
-let autoplayBlocked = false;
-function noteAutoplayBlocked() {
-  if (autoplayBlocked) return;
-  autoplayBlocked = true;
-  const resume = () => { autoplayBlocked = false; for (const v of document.querySelectorAll('.gif-message video, .gif-card video')) v.play().catch(() => {}); };
-  document.addEventListener('pointerdown', resume, { once: true, capture: true });
-  document.addEventListener('keydown', resume, { once: true, capture: true });
 }
 
 // MR-01: a header when the row is the first, the author changed, the row is a reply, or 30 minutes passed.
@@ -137,7 +127,7 @@ function caption(m) {
 const ROWS = { 2: [2], 3: [3], 4: [2, 2], 5: [2, 3], 6: [3, 3], 7: [2, 2, 3], 8: [2, 3, 3], 9: [3, 3, 3], 10: [2, 2, 3, 3] };
 
 function imageGallery(m) {
-  const open = index => openGallery(m.images, index, m.id);
+  const open = index => openGallery(m.images, index, { ownerId: m.id });
   const item = (img, index, single) => {
     // draggable=false: on Android a long press whose menu is suppressed (below) would start a drag of the picture instead
     const attrs = { src: img.medium, alt: 'Uploaded image', class: 'gallery-image', loading: 'lazy', width: 800, height: single ? 600 : 800, draggable: 'false', onerror: imageFailed };   // a poor connection: load again (MR-24)
@@ -167,10 +157,9 @@ function gif(g, m) {
   else {
     const media = g.isImage
       ? el('img', { src: g.src, alt: 'GIF', width: g.width || null, height: g.height || null, loading: 'lazy', onerror: imageFailed })
-      : el('video', { src: g.src, autoplay: true, loop: true, muted: true, playsinline: true, preload: 'auto', class: 'gif-message-video' });
+      : gifLoop(g.src, 'gif-message-video');
     media.addEventListener(g.isImage ? 'load' : 'canplay', () => node.classList.add('gif-loaded'), { once: true });
     media.addEventListener('error', () => node.classList.add('gif-loaded'), { once: true });
-    if (!g.isImage) { media.muted = true; media.play?.().catch(noteAutoplayBlocked); }
     node.prepend(media);
   }
   if (g.entryId) {

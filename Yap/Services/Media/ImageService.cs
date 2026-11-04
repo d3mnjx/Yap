@@ -117,6 +117,14 @@ public class ImageService
         return $"{originalUrl[..lastDot]}_{size}px.webp";
     }
 
+    /// <summary>The large URL of a medium URL, or null when the URL is not a medium one. For a pin copied before
+    /// 2026-11-04, which holds only the medium URL (SH-48): the two differ only in the size of the suffix.</summary>
+    public static string? LargeOfMedium(string mediumUrl)
+    {
+        var suffix = $"_{SizeMedium}px.webp";
+        return mediumUrl.EndsWith(suffix, StringComparison.Ordinal) ? $"{mediumUrl[..^suffix.Length]}_{SizeLarge}px.webp" : null;
+    }
+
     // Convenience methods for common sizes
     public static string GetMediumUrl(string originalUrl) => GetSizedUrl(originalUrl, SizeMedium);
     public static string GetLargeUrl(string originalUrl) => GetSizedUrl(originalUrl, SizeLarge);

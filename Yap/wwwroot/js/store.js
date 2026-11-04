@@ -146,21 +146,23 @@ export function pinLocally(m) {
 // Whether a row shows media (MR-14): pictures, videos, GIFs, a voice note, or a pending row's files before the upload (IB-34).
 export const hasMedia = m => m.images.length > 0 || m.videos.length > 0 || m.gifs.length > 0 || !!m.voice || (m.files?.length ?? 0) > 0;
 
-// The media of the local copy, as the server's Pin.Media (SH-48), in the row's order: the pictures, the videos, the
-// GIFs, the voice note; for a text row, the first link card with something to show. The server's copy replaces it
-// with the pins event.
+// The media of the local copy, the same shape as the server's Pin.Media (SH-48, ChatService.PinMediaOf): keep the two
+// in step, or the panel draws the local copy differently until the pins event replaces it. In the row's order: the
+// pictures (with the viewer's large and original files), the videos, the GIFs (kind gif also for a picture file: no
+// GIF opens the viewer), the voice note; for a text row, the first link card with something to show.
 function pinMediaOf(m) {
   const list = [
-    ...m.images.map(i => ({ kind: 'image', src: i.medium })),
-    ...m.videos.map(v => ({ kind: 'video', src: v.src, poster: v.poster })),
-    ...m.gifs.map(g => g.src ? { kind: g.isImage ? 'image' : 'gif', src: g.src, width: g.width, height: g.height } : { kind: 'gif' }),
+    ...m.images.map(i => ({ kind: 'image', src: i.medium, large: i.large, original: i.original, width: i.width, height: i.height })),
+    ...m.videos.map(v => ({ kind: 'video', src: v.src, poster: v.poster, width: v.width, height: v.height })),
+    ...m.gifs.map(g => g.src ? { kind: 'gif', src: g.src, isImage: g.isImage, width: g.width, height: g.height } : { kind: 'gif' }),
   ];
   if (m.voice) list.push({ kind: 'voice', src: m.voice.src, durationMs: m.voice.durationMs, peaks: m.voice.peaks });
   if (list.length) return list;
   const card = m.previews?.find(p => p.title || p.imageUrl || p.media);
   if (!card) return [];
-  return [card.media?.type === 'video' ? { kind: 'video', src: card.media.src, poster: card.media.poster ?? card.imageUrl, title: card.title, site: card.siteName }
-                                        : { kind: 'link', poster: card.imageUrl, title: card.title, site: card.siteName }];
+  return [card.media?.type === 'video'
+    ? { kind: 'video', src: card.media.src, poster: card.media.poster ?? card.imageUrl, width: card.media.width, height: card.media.height, title: card.title, site: card.siteName, url: card.url }
+    : { kind: 'link', poster: card.imageUrl, title: card.title, site: card.siteName, url: card.url }];
 }
 
 export function unpinLocally(id) {

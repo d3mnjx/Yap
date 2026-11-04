@@ -5,7 +5,7 @@
 // Run: npm run features (see README.md). Screenshots go to shots/.
 
 import { chromium } from 'playwright';
-import { BASE, SHOTS, sleep, waitTrue, row, step, finish, startServer, signIn, watchContext, watchPage, fixture, makePng, sendFiles } from './lib.mjs';
+import { BASE, SHOTS, sleep, waitTrue, row, step, finish, startServer, signIn, watchContext, watchPage, fixture, makePng, sendFiles, api } from './lib.mjs';
 
 const RED = makePng(fixture('red.png'), [220, 30, 30]);
 const BLUE = makePng(fixture('blue.png'), [30, 60, 220]);
@@ -14,17 +14,6 @@ const lastRow = page => page.locator('.messages-container .message-group:not(.sy
 async function send(page, text) { await page.fill('.message-input', text); await page.press('.message-input', 'Enter'); }
 const scroller = page => page.locator('.messages');
 const scrollInfo = page => scroller(page).evaluate(e => ({ top: Math.round(e.scrollTop), h: e.scrollHeight, ch: e.clientHeight }));
-// fetch from the page, with its cookie: the same requests the client makes (as in screenshots.mjs).
-function api(page, method, url, body = null) {
-  return page.evaluate(async ([method, url, body]) => {
-    const init = { method, credentials: 'same-origin' };
-    if (body !== null) { init.headers = { 'content-type': 'application/json' }; init.body = JSON.stringify(body); }
-    const res = await fetch(url, init);
-    const reply = await res.text();
-    if (!res.ok) throw new Error(`${method} ${url}: ${res.status} ${reply.slice(0, 200)}`);
-    return reply ? JSON.parse(reply) : null;
-  }, [method, url, body]);
-}
 const countRows = page => page.locator('.messages-container .message-group:not(.system-message)').count();
 
 const server = await startServer();

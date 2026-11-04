@@ -15,9 +15,10 @@ const SHARE_FILES = navigator.standalone === true && typeof navigator.canShare =
 let current = null;   // { modal, close, messageId }
 
 // images: [{ medium, large, original }] of one message. ownerId: that message, for the close on a delete (TL-29).
-// Returns the close function: the pins panel closes the viewer it opened when the pin goes. That rule stays in the
-// panel; here it would also close a viewer opened from the row when someone unpins the message.
-export function openGallery(images, startIndex = 0, ownerId = null) {
+// onClose runs on every close route. Returns the close function: the pins panel closes the viewer it opened when the
+// pin goes. That rule stays in the panel; here it would also close a viewer opened from the row when someone unpins
+// the message.
+export function openGallery(images, startIndex = 0, { ownerId = null, onClose = null } = {}) {
   current?.close();
   const modal = clone('t-gallery');
   const strip = modal.querySelector('.gallery-strip');
@@ -161,6 +162,7 @@ export function openGallery(images, startIndex = 0, ownerId = null) {
     setTimeout(() => modal.remove(), 160);
     if (active instanceof HTMLElement && document.activeElement !== active) active.focus?.({ preventScroll: true });
     if (current?.modal === modal) current = null;
+    onClose?.();
   }
   function close() { closeLayer(); }
   current = { modal, close, messageId: ownerId };

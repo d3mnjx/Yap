@@ -839,19 +839,33 @@ public class ChatService
         return card switch
         {
             null => [],
-            { Media: { Type: "video" } media } => [new("video", Src: media.Src, Poster: media.Poster ?? card.ImageUrl, Title: card.Title, Site: card.SiteName, Url: card.Url)],
+            { Media: { Type: "video" } media } => [new("video", Src: media.Src, Poster: media.Poster ?? card.ImageUrl, Width: media.Width, Height: media.Height, Title: card.Title, Site: card.SiteName, Url: card.Url)],   // the size: the player's box before the poster loads, as in the row (MR-27)
             _ => [new("link", Poster: card.ImageUrl, Title: card.Title, Site: card.SiteName, Url: card.Url)],
         };
     }
 
     /// <summary>At start, once the GIF entries are in: the pins of messages still in memory get their media resolved
     /// again, so a pin made on an older build shows what this build shows (the whole gallery, the video itself). A
-    /// text message's pin keeps its copy: its link card is not in memory after a restart, and the copy is all there is.</summary>
+    /// text message's pin keeps its copy: its link card is not in memory after a restart, and the copy is all there is.
+    /// A picture pinned before 2026-11-04 whose message is no longer in memory gets its large URL from the medium one,
+    /// by the same naming rule: the viewer's stage then shows the large file (TL-23). Its original stays unknown (the
+    /// medium URL lost the extension), and the panel's Download falls back to the medium picture (TL-24).</summary>
     public void RefreshPinMedia()
     {
         foreach (var channel in _channels.Values)
+        {
             foreach (var pin in channel.Pins)   // the refresh replaces channel.Pins with a new list; this loop walks the old one
                 if (GetMessage(pin.MessageId) is { HasMedia: true } message) RefreshPinMedia(message);
+            lock (LockOf(channel.Id))
+            {
+                if (!channel.Pins.Any(p => p.Media.Any(m => WithLarge(m) != m))) continue;
+                channel.Pins = channel.Pins.Select(p => p with { Media = p.Media.Select(WithLarge).ToList() }).ToList();
+            }
+            _writer.Enqueue(Writes.Channel(channel));   // no event: at start nobody is connected, and a later call (VideoPosterBackfill) finds nothing left to upgrade
+        }
+
+        static PinMedia WithLarge(PinMedia m) =>
+            m is { Kind: "image", Large: null, Src: { } src } && Media.ImageService.LargeOfMedium(src) is { } large ? m with { Large = large } : m;
     }
 
     /// <summary>The pin copy of a text message follows its link cards: the first scrape lands after the pin when

@@ -48,4 +48,11 @@ public class ImageServiceTests : IClassFixture<YapFactory>
         }
         finally { dir.Delete(recursive: true); }
     }
+
+    [Fact(DisplayName = "SH-48: the large URL of an old pin's medium URL follows the naming rule; another URL has none")]
+    public void Large_url_of_a_medium_url()
+    {
+        Assert.Equal(ImageService.GetLargeUrl("/uploads/a.b.jpg"), ImageService.LargeOfMedium(ImageService.GetMediumUrl("/uploads/a.b.jpg")));
+        Assert.Null(ImageService.LargeOfMedium("/uploads/gifs/cat.gif"));   // an image-file GIF of an old pin
+    }
 }

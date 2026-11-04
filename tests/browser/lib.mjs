@@ -205,6 +205,18 @@ export async function signIn(page, name) {
   return t;
 }
 
+// fetch from the page, with its cookie: the same requests the client makes.
+export function api(page, method, url, body = null) {
+  return page.evaluate(async ([method, url, body]) => {
+    const init = { method, credentials: 'same-origin' };
+    if (body !== null) { init.headers = { 'content-type': 'application/json' }; init.body = JSON.stringify(body); }
+    const res = await fetch(url, init);
+    const reply = await res.text();
+    if (!res.ok) throw new Error(`${method} ${url}: ${res.status} ${reply.slice(0, 200)}`);
+    return reply ? JSON.parse(reply) : null;
+  }, [method, url, body]);
+}
+
 // A path in the scratch folder for a generated input file.
 export function fixture(name) {
   const dir = path.join(SCRATCH, 'fixtures');
