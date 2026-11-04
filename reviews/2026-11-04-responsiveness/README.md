@@ -9,8 +9,8 @@ A file-by-file review of Yap for one question: where does a user wait, and what 
 | The 140 findings, one file each | `findings/`, index in `INDEX.md` |
 | The 178 raw findings per reader | `raw/<area>/`, with each reader's own index |
 | The ten experiments: measurement write-up, harness report, every sample, probes | `experiments/E01..E10-*/` |
-| The experiment branches (one commit each from 7f149be4, not merged, not pushed) | `perf/01-compression-optimal` ... `perf/10-direct-websocket-retry` |
-| The measurement harness (branch, not merged) | `perf/harness`, `tests/browser/perf.mjs` |
+| The ten changes, one patch each (one commit on 7f149be4; the `perf/*` branches were removed on 2026-11-04 after this review) | `experiments/E01..E10-*/change.patch`, restored with `git am` |
+| The measurement harness (two patches on 7f149be4) | `experiments/harness/*.patch`, which add `tests/browser/perf.mjs` |
 
 Categories, as the brief defined them:
 
@@ -77,7 +77,7 @@ Ordered by the largest measured gain on the journey the change targets. "far" is
 | 9 | E05 WebP sprites, lean sound | far first visit, rows | 18,111 | 17,923 | -188 ms, -63 KB | far users on a first visit; zero once E06 lands | assets, +5 -4 |
 | 10 | E08 one draw of the confirmed own row | send, confirmed | 68 | 68 | none felt (7 ms of main thread on a phone, after the confirmation) | nobody | +8 -4 |
 
-### E03 Preload only the boot graph (C1-03), branch `perf/03-modulepreload-boot-graph`
+### E03 Preload only the boot graph (C1-03), patch `experiments/E03-modulepreload-boot-graph/change.patch`
 
 `ShellAssets.cs` leaves six page and picker modules (admin, settings, settings-debug, channel-settings, gif-library, tooltip) out of the `modulepreload` list: 42 links become 36. The import map and the worker's list keep all 43, so the modules still load when a page needs them.
 
@@ -92,7 +92,7 @@ Ordered by the largest measured gain on the journey the change targets. "far" is
 
 Proof: the signed-in shell carries 42 preload links on main and 36 on the branch. The six modules still cross the link once, in the worker's install, after the page. The harness speaks HTTP/1.1 with six connections; behind Caddy on HTTP/2 the round-trip part of the gain shrinks and the byte part (47 KB) stays, so about 0.5 s on `far` is the careful estimate for production. Who feels it: a new device on a slow link, once, and once after each deploy.
 
-### E09 Listen sooner after a start (C1-10), branch `perf/09-startup-listen-sooner`
+### E09 Listen sooner after a start (C1-10), patch `experiments/E09-startup-listen-sooner/change.patch`
 
 `Program.cs` constructs the three services that probe for ffmpeg and yt-dlp in parallel, and moves the action-log clean-up from the start path to `ApplicationStarted`, through the writer queue so that it cannot race a trim.
 
@@ -104,7 +104,7 @@ Proof: the signed-in shell carries 42 preload links on main and 36 on the branch
 
 Every branch start beat every main start. The whole gain is the clean-up's time; the parallel probes give 33 ms, inside the spread. The clean-up still runs: on the branch the row count drops to the same 3,065 within 15 s of the start. The gain grows with the size of the action log; with 8,000 rows it was 139 ms. Who feels it: everyone, at every deploy and restart, on every network.
 
-### E06 Register the worker after the first rows (C1-07), branch `perf/06-worker-after-rows`
+### E06 Register the worker after the first rows (C1-07), patch `experiments/E06-worker-after-rows/change.patch`
 
 `main.js` registers the service worker at once when one already controls the page, and otherwise after the first sync answered (or after 10 s). On a first visit the worker's install, which fetches about 60 files, no longer shares the link with the boot.
 
@@ -118,7 +118,7 @@ Every branch start beat every main start. The whole gain is the clean-up's time;
 
 Proof: on main the install starts 3.5 s before the rows and its nine network fetches (117 KB) overlap the hub's socket request; on the branch the worker script is requested 12 to 20 ms after the rows. The install finishes 3.3 s later than on main, so a person who closes the tab within about 5 s of the rows leaves without a worker. Who feels it: a new device on a slow link.
 
-### E02 Load tus on the first upload (C1-02), branch `perf/02-lazy-tus`
+### E02 Load tus on the first upload (C1-02), patch `experiments/E02-lazy-tus/change.patch`
 
 `index.html` drops the blocking `tus.min.js` script tag (87 KB raw, 32 KB compressed); `upload.js` loads it on the first upload through a shared promise. The worker's precache list still holds the file.
 
@@ -132,7 +132,7 @@ Proof: on main the install starts 3.5 s before the rows and its nine network fet
 
 Proof: the shell on the branch has two script tags instead of three. The bytes still cross the link once before the rows, fetched by the worker's install instead of the page; the gain is the script's place in the boot order. The cost shows only when nothing holds the file: with E06 the install comes after the rows, so an attach in the first seconds of a first visit on `far` can pay the 1.2 s. Who feels it: a new device on a slow link.
 
-### E01 Compress at the Optimal level (C1-01), branch `perf/01-compression-optimal`
+### E01 Compress at the Optimal level (C1-01), patch `experiments/E01-compression-optimal/change.patch`
 
 `Program.cs` sets the Brotli and gzip providers to `CompressionLevel.Optimal` (Brotli quality 4, gzip 6) instead of the framework's `Fastest`.
 
@@ -147,7 +147,7 @@ Proof: the shell on the branch has two script tags instead of three. The bytes s
 
 Proof: `app.css` 10,328 to 8,922 bytes, `signalr.min.js` 18,230 to 14,370, the login page 34,576 to 22,391. The compression runs on every response; nothing caches the compressed bytes, so the CPU cost (about 0.5 ms per page response) scales with traffic. C2-07 (compress once per build) removes that cost and compresses better still. Who feels it: a far user on a first visit, and every device when the worker fetches the shell again after a deploy.
 
-### E04 An ETag for the page and the worker script (C1-04), branch `perf/04-etag-page-worker`
+### E04 An ETag for the page and the worker script (C1-04), patch `experiments/E04-etag-page-worker/change.patch`
 
 `ShellEndpoints.cs` gives the shell routes and `/service-worker.js` a weak ETag from a SHA-256 of the body, so a revalidation with `If-None-Match` answers 304 with no body.
 
@@ -161,7 +161,7 @@ Proof: `app.css` 10,328 to 8,922 bytes, `signalr.min.js` 18,230 to 14,370, the l
 
 Proof: the server log shows 200 on main for every `/` and `/service-worker.js`, and 304 on the branch after the first. The worker serves `/lobby` from its cache, so the harness warm open gains only the update check's bytes. The time gain lands where the worker goes to the network first: `/`, `/login`, `/verify/*`, `/invite/*`. A side effect: the page is written in one piece (`Results.Bytes`) and its Brotli body shrinks by 8.9 KB, which gives the first-visit `html` gain. Who feels it: a far user who opens the root (a typed address, a bookmark, an app installed before sign-in).
 
-### E05 WebP sprites and a lean notification sound (C1-05, C1-06), branch `perf/05-sprites-webp-mp3`
+### E05 WebP sprites and a lean notification sound (C1-05, C1-06), patch `experiments/E05-sprites-webp-mp3/change.patch`
 
 The two emoji-toggle sprites go from PNG to lossless WebP (85.0 KB to 31.5 KB, pixels identical); `notif.mp3` loses its cover art (43.9 KB to 32.4 KB, audio identical).
 
@@ -175,7 +175,7 @@ The two emoji-toggle sprites go from PNG to lossless WebP (85.0 KB to 31.5 KB, p
 
 Proof: the sprites cross the link once at 14.5 s, before the rows; the sound crosses only in the worker's install. The gain is the rows' answer waiting behind fewer install bytes. With E06 the install moves after the rows, and this gain on the first visit goes to zero; the byte saving at every install stays. Who feels it: a far user on a first visit, before E06.
 
-### E07 Build the reaction picker once per page (C1-08), branch `perf/07-reaction-picker-once`
+### E07 Build the reaction picker once per page (C1-08), patch `experiments/E07-reaction-picker-once/change.patch`
 
 `js/ui/emoji-picker.js` builds the reaction picker (about 1,000 cells) on the first open and moves it into the wrapper of each later open. The composer's own picker already lived once per page. Measured with a new harness journey (`picker-reaction`, five opens on five rows of one page; `phone-picker-reaction` the same with a 4x CPU throttle).
 
@@ -191,7 +191,7 @@ Proof: the sprites cross the link once at 14.5 s, before the rows; the sound cro
 
 Proof: every main page built 5,040 cell buttons over five opens; every branch page built 1,008. The ranges of the later opens never touch (main's fastest 46 ms against the branch's slowest 9 ms on desktop; 304 against 66 on the phone). The network plays no part: `near` and `lan` agree, and blocking the CDN makes main slower still. Who feels it: anyone who reacts more than once per page, phones most.
 
-### E08 Confirm the own row without a second draw (C1-09), branch `perf/08-send-confirm-path`
+### E08 Confirm the own row without a second draw (C1-09), patch `experiments/E08-send-confirm-path/change.patch`
 
 `store.js` `addMessage` returns without work when the confirmed message is already known and equal; `sender.js` adds the message, publishes once, and removes the outbox row afterwards. Before, every send ended with one `replaceMessage`, which drew the own row a second time.
 
@@ -204,7 +204,7 @@ Proof: every main page built 5,040 cell buttons over five opens; every branch pa
 
 Proof: on main the confirmed row's node is replaced by a second copy in 30 of 30 sends and the store fires a `replace` per send; on the branch 0 of 30 and none. One such replace costs 6.8 ms of main thread on the throttled phone. That work ran about 20 ms after the confirmation, so it never delayed what the person waits for, and it is small next to the 150 to 350 ms of other main-thread work per send. Verdict: correct, cheap, and not felt. The test messages carried no emoji, so the saved emoji image requests on WebKit are not measured.
 
-### E10 Try the direct WebSocket again after a double failure (C1-11), branch `perf/10-direct-websocket-retry`
+### E10 Try the direct WebSocket again after a double failure (C1-11), patch `experiments/E10-direct-websocket-retry/change.patch`
 
 `js/hub.js` `connect()` tries a direct WebSocket, then a negotiated connection when the direct one fails. On main a double failure (the server is down for a deploy) left the negotiate flag on for the life of the page, so every later connect sent `POST /hub/negotiate` before the socket. On the branch a double failure resets the flag. Measured with a standalone probe: a page in a quiet room lives through a server restart, reconnects, then resumes twice from a 35 s pause.
 
@@ -365,10 +365,10 @@ Each needs the user's word on the visible change. Pros and cons are short; the f
 
 ## The harness
 
-`tests/browser/perf.mjs` on branch `perf/harness` (commit 345de009: cb074cfa is the harness, 345de009 adds the two reaction-picker journeys of E07). The worktree `/home/agent/yap-perf/harness` holds a built copy; the seed is at `/home/agent/yap-perf/seed`. To compare two builds:
+`tests/browser/perf.mjs` lives as two patches in `experiments/harness/` (cb074cfa is the harness, 345de009 adds the two reaction-picker journeys of E07). `git am experiments/harness/*.patch` on a branch restores it; the seed is rebuilt with `--seed`. To compare two builds:
 
 ```
-cd /home/agent/yap-perf/<experiment>/Yap && dotnet build
+cd <worktree>/Yap && dotnet build                      # one worktree per build, each with the patch under test
 cp -r tests/browser/node_modules <harness worktree>/tests/browser/node_modules
 cd <harness worktree>/tests/browser
 node perf.mjs --seed                                   # once; 83 s; writes ~/yap-perf/seed
@@ -386,7 +386,7 @@ What the harness cannot see, and what it found on the way:
 
 ## Merge notes
 
-- Each experiment branch is one commit on 7f149be4. Main has moved on (ffd8e485 touched `text.js`, `pickers.css`, `features.mjs`); cherry-pick each commit and run the suites it names.
+- Each experiment patch is one commit on 7f149be4. Main has moved on (ffd8e485 touched `text.js`, `pickers.css`, `features.mjs`); `git am experiments/<E>/change.patch` on main, then run the suites the commit message names. On 2026-11-04 all ten still applied to main without conflict.
 - Stale text to fix on merge: `index.html` lines 113 to 116 and `docs/performance-notes.md` line 99 describe the full preload list (E03); `docs/performance-notes.md` line 105 describes the worker's registration at script start (E06); `docs/architecture/client.md` line 338 says the page keeps negotiation for its life (E10).
 - After the merge of the first-visit set (E01, E02, E03, E05, E06), run the harness once on `far` and `near` for the combined number, and run E02's upload probe with the worker's install after the rows.
-- The results folders under `/home/agent/yap-perf/` are sandbox-local; the copies in `experiments/` are the record.
+- The sandbox folders under `/home/agent/yap-perf/` (worktrees, seed, results) were removed after the review; `experiments/` is the record.

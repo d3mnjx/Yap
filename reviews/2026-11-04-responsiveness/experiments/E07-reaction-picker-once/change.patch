@@ -1,0 +1,84 @@
+From c4ffb2fab2ddc592cbd0e94abd1719ec3c41903e Mon Sep 17 00:00:00 2001
+From: urza <189804+urza@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 11:02:00 +0100
+Subject: [PATCH] Reactions: the emoji picker is built once per page and moves
+ to the row of each open
+
+Every tap on "Add Reaction" built a new picker: about 1,000 cells (925 Unicode emoji and 76
+pack emoji), each a button with two listeners and a lazy image with an error listener, and
+Recent filled twice. The person waits for all of it between the tap and the picker. The
+composer's picker already lives once per page.
+
+Now one instance is built on the first open and moved into the wrapper of each later open.
+opened() refreshes Recent, clears the search and scrolls to the top, as before. The pick
+handler is set per open, so the pick lands on the row of that open. rowReplaced moves the
+wrapper with the picker inside, as before.
+
+Two cases keep today's behaviour:
+- New emoji images (a pack added or changed) build the picker again. The check is the
+  identity of state.emojiImages, not a listener on the 'emojiImages' part: that part fires on
+  every bootstrap, also when the server leaves the rules out and the object stays, so a
+  listener would throw the cells away on every reconnect. The composer's own picker has no
+  rebuild on new images at all; this change does not touch it.
+- The keyboard can open a second picker while one is open (Tab out of it, Enter on another
+  row's button: no pointerdown, so the overlay stack does not close the first). The shared
+  element can sit in one wrapper only, so that open gets a picker of its own, as before.
+
+build() no longer calls fillRecent(): opened() is its only caller and fills Recent right
+after the await, also when a second open ran while the list was still loading.
+
+Checked: features suite (14/14; a first run timed out on a click in the Reply step, which
+opens no picker, and passed on the rerun), smoke suite (17/17), and a Playwright probe: four opens on three
+rows reuse one element, Recent updates between opens, the search and the scroll reset, a
+smiley and a pack emoji land on the right row, a redraw of the row under the open picker
+keeps it working, and the document holds at most the composer's picker plus one. First open
+37 ms to a visible grid, later opens 6 to 10 ms (headless Chromium, desktop size).
+
+Co-Authored-By: Wren <wren@yap.local>
+---
+ Yap/wwwroot/js/ui/emoji-picker.js | 18 ++++++++++++++++--
+ 1 file changed, 16 insertions(+), 2 deletions(-)
+
+diff --git a/Yap/wwwroot/js/ui/emoji-picker.js b/Yap/wwwroot/js/ui/emoji-picker.js
+index c4ec6dd6..22fd7482 100644
+--- a/Yap/wwwroot/js/ui/emoji-picker.js
++++ b/Yap/wwwroot/js/ui/emoji-picker.js
+@@ -51,7 +51,6 @@ export function EmojiPicker({ onPick, recordUse = true }) {
+       replace(grid, s.cells.map(cell));
+       return section;
+     }));
+-    fillRecent();
+   }
+ 
+   function cell(c) {
+@@ -133,11 +132,26 @@ export function EmojiPicker({ onPick, recordUse = true }) {
+   };
+ }
+ 
++// One reaction picker per page: built on the first open, then moved into the wrapper of each open, so a tap pays for
++// Recent and the search, not for some 1,000 cells again. pickHandler sends the pick to the row of the latest open.
++// New emoji images (a pack added or changed) build it again, as a picker made per open showed them on the next open;
++// a bootstrap without new rules keeps the same object (store.js), so a reconnect keeps the cells.
++let shared = null, pickHandler = null;
++
+ // The picker for a reaction (MR-42, PK-43, PK-44): placed below or above the button on desktop, a sheet on a phone.
+ export function reactionPicker(rowNode, anchor, onPick, onClose) {
+   const wrapper = el('div', { class: 'emoji-picker-wrapper' });
+   const backdrop = el('div', { class: 'emoji-picker-backdrop' });
+-  const picker = EmojiPicker({ onPick: emoji => { close(); onPick(emoji); }, recordUse: false });   // React records the use (MR-44)
++  const pick = emoji => { close(); onPick(emoji); };
++  let picker;
++  // The keyboard opens a second picker while the first is open (Tab out of it, Enter on another row's button: no
++  // outside tap closes the first). The shared one stays in the first, and this open gets a picker of its own, as before.
++  if (shared?.element.isConnected) picker = EmojiPicker({ onPick: pick, recordUse: false });   // React records the use (MR-44)
++  else {
++    if (shared?.rules !== state.emojiImages) shared = { ...EmojiPicker({ onPick: emoji => pickHandler(emoji), recordUse: false }), rules: state.emojiImages };
++    pickHandler = pick;
++    picker = shared;
++  }
+   wrapper.append(picker.element);
+   rowNode.append(backdrop, wrapper);
+   picker.opened();
+-- 
+2.53.0
+

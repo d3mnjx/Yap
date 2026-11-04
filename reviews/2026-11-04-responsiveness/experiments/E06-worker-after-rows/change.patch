@@ -1,0 +1,54 @@
+From 273573e8cc56914b945ddbe67652e05834386523 Mon Sep 17 00:00:00 2001
+From: urza <189804+urza@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 10:58:15 +0100
+Subject: [PATCH] Worker: a first visit registers it after the hub's first
+ sync, not at script start
+
+On a first visit the worker's install precaches the whole shell list at once. Most of it comes from the HTTP
+cache, but about 100 KB does not (notif.mp3, the two icons, the emoji list, /login again, small images), and it
+went out in the same seconds as the bootstrap, the socket and openRoom: on the far user's 1 Mbit/s link about
+0.8 s taken from the waits the person sees. The worker is needed for the next open and for offline use, not for
+this one.
+
+Now main.js registers at once only when a worker already controls the page, so a returning visitor's update
+check and a new build's worker keep their moment. Otherwise it waits for hub.firstSync(), or 10 s for a page
+that never connects (the login page, a signed-out visitor). firstSync is the signal the code already exports
+(the chat page waits on it too); on the chat page it settles after the server's rows, because the page's open
+runs as a connected hook and the first connect awaits the hooks before it settles. The rows mark has no event
+of its own, and one would be a new abstraction.
+
+Checked: offline suite 14/14 PASS, smoke suite 17/17 PASS. A Playwright probe in a fresh context with only the
+sign-in cookie (a signed-in first visit): openRoom answered at 258 ms, the rows mark at 258 ms, the worker script
+request and the first install fetch at 262 ms; the worker activated and the next navigation to /lobby came from
+the worker. On the login page with nobody signed in: no registration at 5 s, the registration at 10.2 s, and the
+worker became active.
+
+Co-Authored-By: Wren <wren@yap.local>
+---
+ Yap/wwwroot/js/main.js | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/Yap/wwwroot/js/main.js b/Yap/wwwroot/js/main.js
+index 1b300aa1..1187e9cd 100644
+--- a/Yap/wwwroot/js/main.js
++++ b/Yap/wwwroot/js/main.js
+@@ -87,7 +87,15 @@ on('emojiImages', () => text.useImages(state.emojiImages));   // registered befo
+ 
+ // The service worker: the shell offline, the emoji and media caches, push. A new build registers a new worker.
+ if ('serviceWorker' in navigator) {
+-  navigator.serviceWorker.register(`/service-worker.js?v=${encodeURIComponent(build ?? '')}`).catch(() => {});
++  const registerWorker = () => navigator.serviceWorker.register(`/service-worker.js?v=${encodeURIComponent(build ?? '')}`).catch(() => {});
++  // A worker that controls the page registers at once: a returning visitor's update check, and a new build's worker,
++  // keep their moment. Without one (a first visit) the install downloads what the page itself did not load (the
++  // sound, the icons, the emoji list, /login again: about 100 KB), and on a slow link that competes with the
++  // bootstrap, the socket and openRoom. So it waits for the hub's first sync, which on the chat page settles after
++  // the server's rows are on screen (the chat page's open runs as a connected hook). A signed-out page never
++  // connects, and a first sync can hang: the timer registers the worker then.
++  if (navigator.serviceWorker.controller) registerWorker();
++  else Promise.race([hub.firstSync(), new Promise(r => setTimeout(r, 10_000))]).then(registerWorker);
+   navigator.serviceWorker.addEventListener('message', e => {
+     if (e.data?.type === 'NOTIFICATION_CLICK' && typeof e.data.url === 'string') router.navigate(e.data.url);   // NT-28
+   });
+-- 
+2.53.0
+

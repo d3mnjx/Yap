@@ -1,0 +1,89 @@
+From c3a3bbdecf9e854c31eb2bb58772166713bf550c Mon Sep 17 00:00:00 2001
+From: urza <189804+urza@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 10:47:23 +0100
+Subject: [PATCH] Shell: no modulepreload for Settings, Admin, Channel settings
+ and their own modules
+
+A modulepreload fetches and compiles its module at every start, cold or warm. Six modules
+(pages/admin, pages/settings, pages/settings-debug, pages/channel-settings, ui/gif-library,
+ui/tooltip; 148,942 B raw, about 47 KB gzip) belong only to pages that open from inside the
+app. On a cold first visit they shared the link with the 29 modules main.js waits for; on a
+warm start the browser read and compiled them from the worker's cache for pages the start
+does not show. This is the reason js/data is already left out (PK-11).
+
+The list comes from a walk of the static imports (import ... from, import '...', export
+... from) of main.js and the four start pages: chat, login, invite, verify. The walk reaches
+36 of the 43 modules; the other 7 are js/data/emoji-list.js (already left out) and the six
+above. Login, invite and verify stay preloaded: a first visit lands on them, and their
+import starts only after the bootstrap answer, so without a preload they would add a round
+trip. The import map and the worker's shell list stay complete (43 modules each), so the
+import() on first use carries the build stamp and is a cache hit once the worker is in.
+
+The list is short and by hand, with a comment that tells the next developer to add a new
+lazy page and its own modules to it. A generated walk in ShellAssets was the other option;
+for six entries it is more code than the list.
+
+Trade-off: a load that starts on /settings, /admin or a channel's settings (a reload there,
+or the fresh load after a new build) now imports the page after main.js runs, one import
+level per step, from the worker's cache. Every other start stops paying for them.
+
+Verified: dotnet build, 0 warnings. The built page has 36 modulepreload links (42 before),
+all with ?v=; import map 43 entries, worker list 43 js modules (unchanged). Smoke 17/17
+PASS. Pages 17/17 PASS on the second run; the first run failed step 13 on the diagnostics
+session table, a read right after the stat cards appear (14 of 19 cards drawn at the read),
+in a tab whose admin.js was loaded since step 11, so not from this change.
+
+Co-Authored-By: Wren <wren@yap.local>
+---
+ Yap/Endpoints/ShellAssets.cs | 21 +++++++++++++++++----
+ 1 file changed, 17 insertions(+), 4 deletions(-)
+
+diff --git a/Yap/Endpoints/ShellAssets.cs b/Yap/Endpoints/ShellAssets.cs
+index bbb425b9..bfc00066 100644
+--- a/Yap/Endpoints/ShellAssets.cs
++++ b/Yap/Endpoints/ShellAssets.cs
+@@ -4,8 +4,9 @@ namespace Yap.Endpoints;
+ 
+ /// <summary>
+ /// The generated parts of the shell, from one scan of wwwroot at startup: the import map that gives every module a
+-/// URL with the build stamp, the modulepreload links for the same modules, and the service worker's list of files
+-/// to precache. One scan, so the three never disagree and no list is kept by hand. Every deploy changes the stamp
++/// URL with the build stamp, the modulepreload links for the modules a start can need, and the service worker's list
++/// of files to precache. One scan, so the three never disagree and no file list is kept by hand (LazyModules names
++/// only the exceptions to the preloads). Every deploy changes the stamp
+ /// and so every URL; a per-file hash would invalidate less and was not worth its machinery (docs/performance-notes.md).
+ /// A file added to wwwroot shows up after a restart, as a new build does.
+ /// </summary>
+@@ -15,6 +16,18 @@ public sealed class ShellAssets
+     public string ModulePreloads { get; }
+     public string ShellList { get; }
+ 
++    // Not preloaded, for the reason js/data is not (below, PK-11): a preload fetches and compiles them at every start.
++    // These are the pages a load does not start on (they open from inside the app; a reload on one imports them after
++    // main.js, from the worker's cache), and the modules only those pages import, from a walk of the static imports of
++    // main.js and the start pages (chat, login, invite, verify). A new page that opens only from inside the app belongs
++    // here, with any module only it imports. A module a start page imports must not be here: it would load one import
++    // level per round trip.
++    private static readonly string[] LazyModules =
++    [
++        "/js/pages/admin.js", "/js/pages/settings.js", "/js/pages/settings-debug.js", "/js/pages/channel-settings.js",
++        "/js/ui/gif-library.js", "/js/ui/tooltip.js",
++    ];
++
+     public ShellAssets(string webRoot, string build)
+     {
+         var v = Uri.EscapeDataString(build);
+@@ -33,8 +46,8 @@ public sealed class ShellAssets
+         ImportMap = JsonSerializer.Serialize(new { imports = modules.ToDictionary(p => p, p => $"{p}?v={v}") });
+         // Data modules (js/data: the picker's emoji list, 44 KB) are imported on demand and must not be preloaded: a preload
+         // fetches and compiles them at every start, for a picker that may never open (PK-11). They stay in the import map
+-        // and in the worker's list, so the import on first use carries the build stamp and is a cache hit.
+-        ModulePreloads = string.Join("\n    ", modules.Where(p => !p.StartsWith("/js/data/")).Select(p => $"""<link rel="modulepreload" href="{p}?v={v}" />"""));
++        // and in the worker's list, so the import on first use carries the build stamp and is a cache hit. LazyModules too.
++        ModulePreloads = string.Join("\n    ", modules.Where(p => !p.StartsWith("/js/data/") && !LazyModules.Contains(p)).Select(p => $"""<link rel="modulepreload" href="{p}?v={v}" />"""));
+         ShellList = JsonSerializer.Serialize(new[] { "/login" }.Concat(versioned).Concat(plain));
+     }
+ 
+-- 
+2.53.0
+

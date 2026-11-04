@@ -1,0 +1,1491 @@
+From cb074cfa1623c7e1c130d217b37b17144f3ae124 Mon Sep 17 00:00:00 2001
+From: urza <189804+urza@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 12:40:14 +0100
+Subject: [PATCH 1/2] Tests: perf.mjs measures how responsive Yap feels, build
+ A against build B
+
+The instrument for the performance experiments: each experiment is a worktree with a change, measured against the
+worktree without it. One person (the seed's admin) on a server with a real history, through three links.
+
+What it measures. perf-seed.mjs builds the server once and keeps it: 30 people, 10 rooms, 3 direct conversations,
+50,000 messages spread over 180 days (the lobby holds 20,000), emoji in about 10%, replies 5%, reactions on 3%, 2%
+long multi-line texts, 50 pictures and 20 GIFs. It goes through the real routes (sign-in, the send route, tus, the
+hub) in parallel and takes about 1.5 minutes; the database is 50 MB. Every measured server starts from a copy, with
+the database on, and answers about 3 s after its start. The journeys (perf-journeys.mjs), timed in the page's own
+clock: a cold and a warm open (the six phases of the boot report, the files, the bytes on the wire, long tasks, the
+heap), a resume after a frozen background, sends (the own row and the server's confirmation), room changes to the
+quietest and the busiest room, three older pages, the emoji and the GIF picker (the first open on a device and the
+next one), and a cold open and older pages on a phone with a 4x slower CPU. A and B alternate A, B, B, A per journey
+and profile; the report gives medians, min, max and deltas, and runs.json every sample.
+
+Why a proxy and not a CDP throttle: a CDP throttle shapes the page's requests only, never the service worker's
+fetches or the WebSocket frames, and the shell caching is the worker's work. The proxy sees every byte, so it also
+counts the wire, and it can kill the server side of a socket while the client side stays silent, which the resume
+needs. It moved from load.mjs into proxy.mjs; load.mjs imports it and passes as before.
+
+Assumptions that turned out wrong, found with an A/A run (the same build on both sides):
+- Page.setWebLifecycleState frozen stops nothing in this headless Chromium (Playwright 1.47). The call returns ok,
+  the page's timers tick through the freeze, SignalR's own 30 s timeout fires, and the page reconnects before the
+  thaw: the return found the rows already there (0 ms). The resume pauses the page in the debugger instead (no
+  script runs, as in a suspended app; the overdue timers fire at the return): far 2,980 ms, three round trips.
+  load.mjs still uses the freeze call.
+- The proxy kept the time of bytes nobody would receive: the server writes whole responses into its queue at once,
+  and a page closed during the worker's precache left seconds of them on the link. The next page on that link
+  started 2.1 s late. A closing connection now gives its waiting bytes' time back.
+- The person's presence depended on the order of the runs: a page that connects after the server saw the person go
+  offline gets the person's own join line in the lobby, set in italics, and the italic font (380 KB) loaded before
+  the rows. A page idling on Settings keeps the person online on each server for the whole run.
+
+The defaults keep one A/B run at five repetitions near 20 minutes (19.5 measured): no phone rows and no sends on
+far, no resume on near and lan, no phone rows on lan. --full runs every journey (28.5 minutes A/B).
+
+Co-Authored-By: Wren <wren@yap.local>
+---
+ tests/browser/README.md         |  35 +++
+ tests/browser/lib.mjs           |  46 ++--
+ tests/browser/load.mjs          |  73 +------
+ tests/browser/package.json      |   1 +
+ tests/browser/perf-journeys.mjs | 376 ++++++++++++++++++++++++++++++++
+ tests/browser/perf-seed.mjs     | 370 +++++++++++++++++++++++++++++++
+ tests/browser/perf.mjs          | 314 ++++++++++++++++++++++++++
+ tests/browser/proxy.mjs         |  97 ++++++++
+ 8 files changed, 1228 insertions(+), 84 deletions(-)
+ create mode 100644 tests/browser/perf-journeys.mjs
+ create mode 100644 tests/browser/perf-seed.mjs
+ create mode 100644 tests/browser/perf.mjs
+ create mode 100644 tests/browser/proxy.mjs
+
+diff --git a/tests/browser/README.md b/tests/browser/README.md
+index c96a704d..d607a150 100644
+--- a/tests/browser/README.md
++++ b/tests/browser/README.md
+@@ -27,6 +27,13 @@ server, runs its steps, prints PASS or FAIL for each step, and stops the server
+   from a return after a frozen background with a dead socket to the server's rows. It asserts nothing on the
+   numbers; run it before and after a change and compare. The link is a TCP proxy inside the script, so the
+   service worker and the WebSocket go through it too.
++- `perf.mjs` measures how responsive Yap feels for one person on a real-sized server, and compares two builds (A
++  and B) side by side. Each build runs on a copy of a seed with a real history (`perf-seed.mjs`: 30 people, 10 rooms,
++  50,000 messages over 180 days). The journeys (`perf-journeys.mjs`) are a cold open, a warm open, a resume after a
++  frozen background, sends, room changes, older pages and the two pickers, plus a cold open and older pages on a slow
++  phone. They run through the link proxy of `load.mjs` (`proxy.mjs`) on three profiles: `far` (900 ms round trip,
++  1 Mbit/s), `near` (60 ms, 20 Mbit/s) and `lan` (no proxy). The report gives the median, min and max of every
++  metric per build and the delta. See "The performance harness" below.
+ - `update.mjs` replays a deploy: build A is served, the browser stores the shell through the worker, then build
+   B takes the same port and the page is reloaded, as an installed app is at its next launch. It watches the
+   worker's registration, taps the new-version strip's Reload, and says whether the page ends on build B with no
+@@ -71,6 +78,34 @@ could not bind and the run would test the old one. To change the settings, pass
+ 
+ Screenshots go to `shots/`. The exit code is 1 when a step fails.
+ 
++## The performance harness
++
++Build each worktree to compare (`dotnet build Yap` in it), then from `tests/browser`:
++
++```
++npm run perf -- --seed                                             # once: about 1.5 minutes
++npm run perf -- --a=<worktree A>:<label> --b=<worktree B>:<label>   # about 20 minutes at the defaults
++```
++
++`--seed` builds the seed into `~/yap-perf/seed` (`--seed-dir=<dir>` for another place) with the build of `--a` and
++stops. A measurement starts each build on its own copy of the seed, with the database on, under `~/yap-perf/runs`
++(ports 5301 and 5302, their proxies 5401 and 5402). With only `--a` it measures one build. The person is the seed's
++admin, signed in through the API, so a journey times the page and not the login form. A page idling on Settings keeps
++the person online on each server, so the person's presence (and the join line it draws) does not depend on the
++order of the runs. The runs alternate A, B, B, A, so drift of the machine hits both builds alike. The tables go to stdout and to `report.md` in `--out` (default
++`~/yap-perf/results/<time>`), the raw numbers to `runs.json`, the browser's complaints to `browser-log.txt`. A failed
++run leaves a screenshot there, and the exit code is 1.
++
++The default plan keeps one A/B run at five repetitions near 20 minutes. It leaves out the phone rows and the sends
++on `far`, the resume on `near` and `lan`, and the phone rows on `lan`; `DEFAULT_PLAN` in `perf.mjs` says why. `--full`
++runs every journey (about 29 minutes for A/B on all three profiles). `--profiles=`, `--journeys=` and `--n=` choose
++others.
++
++The numbers compare two builds on one machine. They are not production numbers: the server speaks HTTP/1.1 without
++TLS, the emoji images come from the real CDN outside the proxy, and the phone is a desktop Chromium with a slower
++CPU. The resume pauses the page in the debugger, because a freeze through `Page.setWebLifecycleState` does not stop
++the timers of this headless Chromium.
++
+ ## The service worker and the offline script
+ 
+ Playwright applies `setOffline` to a service worker only when the environment variable
+diff --git a/tests/browser/lib.mjs b/tests/browser/lib.mjs
+index 908cc5a5..8e97a29a 100644
+--- a/tests/browser/lib.mjs
++++ b/tests/browser/lib.mjs
+@@ -48,16 +48,23 @@ export async function sendFiles(page, files) {
+ // ---- the server ----
+ 
+ // Starts Yap.dll memory-only in a fresh temp content root (a copy of Yap/Data and a link to Yap/wwwroot), so a
+-// run never touches the repository's Data folder. Returns { root, stop() }; stop() returns the server's
+-// fail/crit/exception lines and removes the root.
+-export async function startServer() {
++// run never touches the repository's Data folder. Returns { root, base, startMs, stop() }; stop() returns the
++// server's fail/crit/exception lines and removes the root.
++//
++// The options serve perf.mjs, which runs two builds side by side, each on a copy of a seeded database:
++//   dll, wwwroot, port: the build and its address;  scratch: the folder that gets the root;
++//   prepare(root): fills the root before the start (the seed's Data and uploads, over the copied settings);
++//   args: replace the default memory-only argument;  keep: stop() leaves the root (the seed is taken from it).
++export async function startServer({ dll = DLL, wwwroot = path.join(REPO, 'Yap', 'wwwroot'), port = PORT, scratch = SCRATCH,
++  prepare = null, args = ['--ChatSettings:Persistence:Enabled=false'], keep = false } = {}) {
++  const base = `http://127.0.0.1:${port}`;
+   // An old server on the port would answer instead of the new one, and the new one would die on the bind
+   // error: the run would then test stale state without saying so.
+-  if (await answers(`${BASE}/login`)) throw new Error(`${BASE} already answers. Stop the old server first.`);
+-  if (!fs.existsSync(DLL)) throw new Error(`${DLL} not found. Run dotnet build first.`);
++  if (await answers(`${base}/login`)) throw new Error(`${base} already answers. Stop the old server first.`);
++  if (!fs.existsSync(dll)) throw new Error(`${dll} not found. Run dotnet build first.`);
+ 
+-  fs.mkdirSync(SCRATCH, { recursive: true });
+-  const root = fs.mkdtempSync(path.join(SCRATCH, 'root-'));
++  fs.mkdirSync(scratch, { recursive: true });
++  const root = fs.mkdtempSync(path.join(scratch, 'root-'));
+   const data = path.join(REPO, 'Yap', 'Data');
+   fs.mkdirSync(path.join(root, 'Data'));
+   for (const entry of fs.readdirSync(data, { withFileTypes: true })) {
+@@ -65,40 +72,45 @@ export async function startServer() {
+     if (keep) fs.cpSync(path.join(data, entry.name), path.join(root, 'Data', entry.name), { recursive: true });
+   }
+   // 'junction' is what Windows allows without admin rights; other systems ignore the type.
+-  fs.symlinkSync(path.join(REPO, 'Yap', 'wwwroot'), path.join(root, 'wwwroot'), 'junction');
++  fs.symlinkSync(wwwroot, path.join(root, 'wwwroot'), 'junction');
++  await prepare?.(root);
+ 
+   const logFile = path.join(root, 'server.log');
+   const out = fs.openSync(logFile, 'w');
+-  const child = spawn('dotnet', [DLL, '--contentRoot', root, '--urls', BASE,
+-    '--ChatSettings:Persistence:Enabled=false', '--ChatSettings:WelcomePageEnabled=false'],
+-  { cwd: root, env: { ...process.env, ASPNETCORE_ENVIRONMENT: 'Development' }, stdio: ['ignore', out, out] });
++  const started = Date.now();
++  const child = spawn('dotnet', [dll, '--contentRoot', root, '--urls', base, ...args, '--ChatSettings:WelcomePageEnabled=false'],
++    { cwd: root, env: { ...process.env, ASPNETCORE_ENVIRONMENT: 'Development' }, stdio: ['ignore', out, out] });
+   let exited = false;
+   child.on('exit', () => { exited = true; });
+ 
+   // A crash or Ctrl+C must not leave the server running or the root behind.
+-  const cleanup = () => { if (!exited) child.kill(); fs.rmSync(root, { recursive: true, force: true }); };
++  const cleanup = () => { if (!exited) child.kill(); if (!keep) fs.rmSync(root, { recursive: true, force: true }); };
+   process.on('exit', cleanup);
+   process.on('SIGINT', () => process.exit(130));
+ 
+-  const up = await waitTrue(async () => !exited && await answers(`${BASE}/login`), 30000, 250);
++  // A seeded database loads into memory before the server answers: allow for it.
++  const up = await waitTrue(async () => !exited && await answers(`${base}/login`), 120_000, 250);
+   if (!up) {
+     const tail = fs.readFileSync(logFile, 'utf8').split('\n').slice(-15).join('\n');
+     cleanup();
+     throw new Error(`The server did not start. Last log lines:\n${tail}`);
+   }
+-  console.log(`server: ${DLL} on ${BASE}, root ${root}`);
++  const startMs = Date.now() - started;
++  console.log(`server: ${dll} on ${base}, root ${root}, up after ${startMs} ms`);
+ 
+   return {
+-    root,
++    root, base, startMs,
+     async stop() {
+       if (!exited) {
+         child.kill();
+-        if (!await waitTrue(() => exited, 10000, 100)) child.kill('SIGKILL');
++        // A server with the database on flushes its write queue before it exits (PersistenceWriter): a kill sooner
++        // would lose the seed's last writes.
++        if (!await waitTrue(() => exited, 30000, 100)) child.kill('SIGKILL');
+       }
+       fs.closeSync(out);
+       const issues = fs.readFileSync(logFile, 'utf8').split('\n')
+         .filter(l => /^(fail|crit):|exception/i.test(l)).map(l => l.trim());
+-      fs.rmSync(root, { recursive: true, force: true });
++      if (!keep) fs.rmSync(root, { recursive: true, force: true });
+       process.off('exit', cleanup);
+       return issues;
+     },
+diff --git a/tests/browser/load.mjs b/tests/browser/load.mjs
+index c882d11a..7e9263b1 100644
+--- a/tests/browser/load.mjs
++++ b/tests/browser/load.mjs
+@@ -2,83 +2,22 @@
+ // for a comparison before and after a change. Nothing asserts on the numbers; the link makes them noisy, and the
+ // reader compares two runs. The plumbing is checked: the boot report (AD-41) must arrive, the resume must end.
+ //
+-// The slow link is a TCP proxy in this process, not a CDP throttle: a CDP throttle shapes the page's requests
+-// only, never the service worker's fetches or the WebSocket frames, and the shell caching is the worker's work.
+-// Every byte between the browser and the server passes the proxy, so the proxy can also kill the server side of
+-// a socket while the client side stays open and silent: a socket dead without a close, as after a long sleep.
+-//
+-// The server speaks HTTP/1.1 here (no TLS), so the browser has six connections and a file count costs more than it
+-// does over h2 in production. The numbers compare two runs on this machine; they are not production numbers.
++// The slow link is a TCP proxy in this process (proxy.mjs), not a CDP throttle: a CDP throttle shapes the page's
++// requests only, never the service worker's fetches or the WebSocket frames, and the shell caching is the worker's
++// work. The proxy can also kill the server side of a socket while the client side stays open and silent: a socket
++// dead without a close, as after a long sleep. perf.mjs measures more journeys through the same proxy, A/B.
+ //
+ // Run from tests/browser: npm run load  (-- --port=<n> to move the server; the proxy takes the next port)
+ 
+-import net from 'node:net';
+ import { chromium } from 'playwright';
+ import { BASE, PORT, row, sleep, waitTrue, step, finish, startServer, signIn, watchContext, watchPage } from './lib.mjs';
++import { startProxy } from './proxy.mjs';
+ 
+ const LINK = { oneWayMs: 450, bytesPerSec: 125_000 };   // 900 ms round trip, 1 Mbit/s each way; production reports replace these later
+ const PROXY_PORT = PORT + 1;
+ const PROXY = `http://127.0.0.1:${PROXY_PORT}`;
+ 
+-// ---- the link ----
+-// One queue per direction, shared by every connection, like one link: a chunk leaves after its time on the wire
+-// at the rate, never before the chunk ahead of it, plus the one-way delay. `set(null)` is a plain pass-through.
+-function startProxy() {
+-  let link = null;
+-  const pairs = new Set();
+-  const lanes = { up: { ready: 0 }, down: { ready: 0 } };
+-  // One ordered queue per direction of a connection, drained by one timer at a time: a timer per chunk would let two
+-  // chunks with the same expiry fire in either order and corrupt the stream.
+-  const forward = (from, to, lane, pair, fromClient) => {
+-    const queue = [];   // { chunk | null for the end, at }, in order of `at`
+-    let timer = null;
+-    const drain = () => {
+-      timer = null;
+-      while (queue.length && queue[0].at <= Date.now()) {
+-        const { chunk } = queue.shift();
+-        if (to.destroyed) continue;
+-        if (chunk) to.write(chunk); else to.end();
+-      }
+-      if (queue.length) timer = setTimeout(drain, Math.max(1, queue[0].at - Date.now()));
+-    };
+-    const enqueue = (chunk, at) => { queue.push({ chunk, at }); if (!timer) timer = setTimeout(drain, Math.max(1, at - Date.now())); };
+-    let first = true;
+-    from.on('data', chunk => {
+-      if (fromClient && first) { first = false; pair.ws = /upgrade: websocket/i.test(chunk.toString('latin1', 0, 1024)); }   // the socket's first request names it
+-      if (pair.hold && fromClient) return;   // blackholed: the client talks into the void
+-      if (!link) { to.write(chunk); return; }
+-      const start = Math.max(Date.now(), lane.ready);
+-      lane.ready = start + chunk.length * 1000 / link.bytesPerSec;
+-      enqueue(chunk, lane.ready + link.oneWayMs);
+-    });
+-    from.on('end', () => {
+-      if (pair.hold && fromClient) return;
+-      if (!link) { to.end(); return; }
+-      enqueue(null, Math.max(queue.at(-1)?.at ?? 0, Date.now() + link.oneWayMs));
+-    });
+-  };
+-  const server = net.createServer(client => {
+-    const upstream = net.connect(PORT, '127.0.0.1');
+-    const pair = { client, upstream, hold: false };
+-    pairs.add(pair);
+-    forward(client, upstream, lanes.up, pair, true);
+-    forward(upstream, client, lanes.down, pair, false);
+-    client.on('close', () => { pairs.delete(pair); upstream.destroy(); });
+-    client.on('error', () => client.destroy());
+-    upstream.on('close', () => { if (!pair.hold) client.destroy(); });
+-    upstream.on('error', () => { if (!pair.hold) client.destroy(); });
+-  });
+-  server.listen(PROXY_PORT, '127.0.0.1');
+-  return {
+-    set(l) { link = l; },
+-    // What a long sleep leaves behind: the WebSocket's server side is gone while its client side stays open and
+-    // silent, and the idle keep-alive HTTP sockets are closed, so the page's next requests open new connections.
+-    blackhole() { for (const p of pairs) { if (p.ws) { p.hold = true; p.upstream.destroy(); } else { p.client.destroy(); p.upstream.destroy(); } } },
+-    close() { for (const p of pairs) { p.client.destroy(); p.upstream.destroy(); } server.close(); },
+-  };
+-}
+-
+-const proxy = startProxy();
++const proxy = startProxy({ port: PROXY_PORT, upstream: PORT });
+ const server = await startServer();
+ const browser = await chromium.launch();
+ 
+diff --git a/tests/browser/package.json b/tests/browser/package.json
+index 57912db4..90d7feee 100644
+--- a/tests/browser/package.json
++++ b/tests/browser/package.json
+@@ -11,6 +11,7 @@
+     "latency": "node latency.mjs",
+     "screenshots": "node screenshots.mjs",
+     "load": "node load.mjs",
++    "perf": "node perf.mjs",
+     "update": "node update.mjs"
+   },
+   "devDependencies": {
+diff --git a/tests/browser/perf-journeys.mjs b/tests/browser/perf-journeys.mjs
+new file mode 100644
+index 00000000..f40e17f3
+--- /dev/null
++++ b/tests/browser/perf-journeys.mjs
+@@ -0,0 +1,376 @@
++// The journeys of perf.mjs: what one person does, timed inside the page. Each journey run returns samples, pairs of
++// [metric, value]. A run gets a `site`: one build (side A or B) on one network profile, with its origin, its proxy, its
++// warm page and a way to open new pages (perf.mjs). Times come from the page's own clock (performance.now), so the
++// round trips between this process and the browser do not count.
++
++import { sleep } from './lib.mjs';
++
++// ---- the instruments in the page ----
++
++// Installed before any script of the page (addInitScript):
++// - the long tasks (over 50 ms) from the start of the document;
++// - the time of the last click and of the last key, from the event's own time stamp: it includes the wait before a
++//   busy main thread runs the handler, which is part of what a person feels;
++// - watch(name, test): resolves with the time the DOM first passes the test (a MutationObserver checks after every
++//   change, so the time is the change itself, not a poll interval), or with the first animation frame that passes
++//   it for tests the DOM does not announce (an image that finished loading);
++// - a resource timing buffer for the emoji picker's hundreds of images (the default keeps 250 entries).
++export function instruments() {
++  const perf = window.__perf = { longTasks: [], input: {}, watches: {} };
++  try { performance.setResourceTimingBufferSize(100000); } catch { /* an old engine: counts stop at 250 */ }
++  try {
++    new PerformanceObserver(list => { for (const e of list.getEntries()) perf.longTasks.push([e.startTime, e.duration]); })
++      .observe({ type: 'longtask', buffered: true });
++  } catch { /* no Long Tasks API: the counts stay 0 */ }
++  for (const type of ['click', 'keydown']) {
++    addEventListener(type, e => { perf.input[type] = e.timeStamp > 0 ? e.timeStamp : performance.now(); }, { capture: true });
++  }
++  perf.watch = (name, test, { frames = false, timeout = 60000 } = {}) => {
++    perf.watches[name] = new Promise(resolve => {
++      const end = performance.now() + timeout;
++      const passes = () => { try { return !!test(); } catch { return false; } };
++      if (passes()) { resolve(performance.now()); return; }
++      if (frames) {
++        const tick = () => { if (passes()) resolve(performance.now()); else if (performance.now() > end) resolve(null); else requestAnimationFrame(tick); };
++        requestAnimationFrame(tick);
++        return;
++      }
++      const observer = new MutationObserver(() => { if (passes()) { observer.disconnect(); resolve(performance.now()); } });
++      observer.observe(document, { subtree: true, childList: true, attributes: true, characterData: true });
++      setTimeout(() => { observer.disconnect(); resolve(null); }, timeout);
++    });
++  };
++}
++
++const PHASES = ['html', 'scripts', 'bootstrap', 'paint', 'socket', 'rows'];
++
++// ---- the page load (cold-open, warm-open) ----
++
++// Navigates (go) and waits for the server's rows of the first conversation, the last phase of the boot report (AD-41).
++// The phases are the boot report's marks, read from the page; the files are the report's facts (same-origin resource
++// entries and the page, up to the rows); the wire is the proxy's view (every byte, the worker's and the socket's too).
++async function load({ page, cdp }, go, proxy) {
++  proxy?.reset();
++  await go();
++  await page.waitForFunction(() => performance.getEntriesByName('rows', 'mark').length > 0, null, { timeout: 120_000, polling: 50 });
++  const wire = proxy?.counters();
++  // The server's bootstrap may land a moment after the rows (hub.reportLoad waits for it too).
++  await page.waitForFunction(() => ['bootstrap', 'socket'].every(n => performance.getEntriesByName(n, 'mark').length), null, { timeout: 10_000, polling: 50 }).catch(() => {});
++  const facts = await page.evaluate(phases => {
++    const mark = name => performance.getEntriesByName(name, 'mark')[0]?.startTime ?? null;
++    const [nav] = performance.getEntriesByType('navigation');
++    const rows = mark('rows');
++    const files = performance.getEntriesByType('resource').filter(r => r.name.startsWith(location.origin) && r.startTime <= rows);
++    if (nav) files.push(nav);
++    const long = window.__perf.longTasks.filter(([start]) => start <= rows);
++    return {
++      phases: Object.fromEntries(phases.map(p => [p, p === 'html' ? nav?.responseEnd ?? null : mark(p)])),
++      requests: files.length, cached: files.filter(f => f.transferSize === 0).length,
++      kb: files.reduce((s, f) => s + (f.transferSize || 0), 0) / 1024,
++      longTasks: long.length, longMs: long.reduce((s, [, d]) => s + d, 0),
++    };
++  }, PHASES);
++  const samples = PHASES.map(p => [`${p} ms`, facts.phases[p]]);
++  samples.push(['requests', facts.requests], ['cached', facts.cached], ['KB', facts.kb]);
++  if (wire) samples.push(['wire requests', wire.requests], ['wire KB', (wire.up + wire.down) / 1024]);
++  samples.push(['long tasks', facts.longTasks], ['long task ms', facts.longMs], ['heap MB', await heapMB(cdp)]);
++  return samples;
++}
++
++// The live heap after a collection: what the page keeps, not what it has not collected yet.
++async function heapMB(cdp) {
++  try {
++    await cdp.send('HeapProfiler.collectGarbage');
++    const { usedSize } = await cdp.send('Runtime.getHeapUsage');
++    return usedSize / 1048576;
++  } catch { return null; }
++}
++
++// A fresh context: no HTTP cache, no worker, no IndexedDB. Landing on `/` opens the lobby, the busiest room.
++async function coldOpen(site, kind) {
++  const p = await site.newPage(kind);
++  try { return await load(p, () => p.page.goto(site.origin + '/', { waitUntil: 'commit' }), site.proxy); }
++  finally { await p.ctx.close(); }
++}
++
++// The warm page of the site (loaded once, the worker installed and the snapshot stored), reloaded.
++async function warmOpen(site) {
++  const p = await site.warmPage();
++  return load(p, () => p.page.reload({ waitUntil: 'commit' }), site.proxy);
++}
++
++// ---- in the open conversation ----
++
++// The test of "the server's rows are on screen" after a room change: a new list (the old one is marked before the
++// tap), with rows, without the loading line of a conversation never shown here, and without the "Catching up…" pill
++// that marks the device's copy until the server answers (TL-39).
++function serverRowsTest() {
++  const list = document.querySelector('.messages:not([data-perf-old])');
++  return !!list && !!list.querySelector('.message-group') && !list.querySelector('.loading-tail') && !document.querySelector('.catching-up');
++}
++
++// A tap on a room in the sidebar; the time from the click to the server's rows of that room.
++async function tapRoom(page, name) {
++  await page.evaluate(test => {
++    document.querySelector('.messages')?.setAttribute('data-perf-old', '');
++    // A function cannot cross into the page as a value, so the test travels as its source text.
++    window.__perf.watch('room', new Function(`return (${test})()`));
++  }, serverRowsTest.toString());
++  await page.locator('.users-sidebar .rooms-list .room-item:not(.add-room)')
++    .filter({ has: page.locator('.room-name', { hasText: new RegExp(`^${name}$`) }) }).click();
++  return page.evaluate(async () => { const t = await window.__perf.watches.room; return t == null ? null : t - window.__perf.input.click; });
++}
++
++// The warm page in the busiest room with the server's rows, at the bottom: the start of send, room changes and older.
++async function inLobby(site) {
++  const p = await site.warmPage();
++  const here = await p.page.evaluate(() => location.pathname === '/lobby' && !!document.querySelector('.messages .message-group') && !document.querySelector('.catching-up'));
++  if (!here) await tapRoom(p.page, site.seed.lobby.name);
++  return p;
++}
++
++// Ten texts, each typed and sent with Enter. The own row is the pending row of the outbox (IB-24, sender.js); the
++// confirmation is the server's row that replaces it, the same moment the client reports the `send` wait (AD-26).
++async function send(site, rep) {
++  const { page } = await inLobby(site);
++  const samples = [];
++  for (let i = 1; i <= 10; i++) {
++    const text = `perf ${site.side.key}${rep}.${i} ${Math.random().toString(36).slice(2, 8)}`;
++    await page.fill('.message-input', text);
++    await page.evaluate(text => {
++      const has = selector => [...document.querySelectorAll(selector)].some(g => g.querySelector('.message-content')?.textContent.includes(text));
++      window.__perf.watch('row', () => has('.messages .message-group'));
++      window.__perf.watch('confirmed', () => has('.messages .message-group:not(.pending):not(.failed)'));
++    }, text);
++    await page.press('.message-input', 'Enter');
++    const t = await page.evaluate(async () => {
++      const [row, confirmed] = await Promise.all([window.__perf.watches.row, window.__perf.watches.confirmed]);
++      const t0 = window.__perf.input.keydown;
++      return { row: row == null ? null : row - t0, confirmed: confirmed == null ? null : confirmed - t0 };
++    });
++    samples.push(['own row ms', t.row], ['confirmed ms', t.confirmed]);
++    await sleep(200);
++  }
++  await deleteOwn(page, `perf ${site.side.key}${rep}.`);
++  return samples;
++}
++
++// The sent texts go again (through the hub, as the row's Delete does), so the lobby's newest rows stay the seed's:
++// every later journey and profile opens the same tail.
++async function deleteOwn(page, prefix) {
++  await page.evaluate(async prefix => {
++    const { state } = await import('/js/store.js');
++    const hub = await import('/js/hub.js');
++    const own = (state.open?.messages ?? []).filter(m => m.text?.startsWith(prefix));
++    await Promise.all(own.map(m => hub.invoke('delete', m.id)));   // at once: one round trip on `far`, not ten
++  }, prefix);
++}
++
++// The quiet room, then the busiest one again.
++async function switchRoom(site) {
++  const { page } = await inLobby(site);
++  const quiet = await tapRoom(page, site.seed.quiet.name);
++  await sleep(300);
++  const busy = await tapRoom(page, site.seed.lobby.name);
++  await sleep(300);
++  const size = name => site.seed.rooms.find(r => r.name === name)?.messages;
++  return [[`to ${site.seed.quiet.name} (${size(site.seed.quiet.name)}) ms`, quiet], [`to ${site.seed.lobby.name} (${size(site.seed.lobby.name)}) ms`, busy]];
++}
++
++// Three older pages in the busiest room: the list jumps to the top, the timeline asks for the page before its oldest
++// row, and the page lands when the view is still (TL-06: 200 ms without a scroll event). The time runs from the jump
++// to the rows in the DOM, so it includes that hold. The long tasks count from the first jump to a second after the
++// last page.
++async function older(site, rep, kind = 'desktop') {
++  const p = kind === 'phone' ? await site.warmPage('phone') : await inLobby(site);
++  // A fresh timeline of the newest rows: another room and back (the phone has no sidebar on screen: a reload).
++  if (kind === 'phone') await load(p, () => p.page.reload({ waitUntil: 'commit' }), null);
++  else { await tapRoom(p.page, site.seed.quiet.name); await tapRoom(p.page, site.seed.lobby.name); }
++  await sleep(500);
++  const samples = [];
++  const start = await p.page.evaluate(() => performance.now());
++  for (let i = 0; i < 3; i++) {
++    const ms = await p.page.evaluate(async () => {
++      const list = document.querySelector('.messages');
++      const before = list.querySelectorAll('.message-group').length;
++      window.__perf.watch('older', () => list.querySelectorAll('.message-group').length > before, { timeout: 30000 });
++      const t0 = performance.now();
++      list.scrollTop = 0;
++      const t = await window.__perf.watches.older;
++      return t == null ? null : t - t0;
++    });
++    samples.push(['page landed ms', ms]);
++    await sleep(300);
++  }
++  await sleep(700);
++  const long = await p.page.evaluate(start => window.__perf.longTasks.filter(([s]) => s >= start), start);
++  samples.push(['long tasks', long.length], ['long task ms', long.reduce((s, [, d]) => s + d, 0)]);
++  return samples;
++}
++
++// ---- the pickers ----
++
++// Two opens of a picker on a new device, each the first open of a page load (a warm open on the profile's link, then
++// a settled page, then the click): `first` meets image caches that hold only what the lobby's rows asked for, as on a
++// device that never opened the picker; `again` meets the caches the first open filled. Repetitions on one device
++// would mix the two cases.
++async function picker(site, measure) {
++  const p = await site.prepared();
++  try {
++    const samples = [];
++    for (const when of ['first', 'again']) {
++      await load(p, () => p.page.reload({ waitUntil: 'commit' }), null);
++      await p.page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {});
++      await sleep(300);
++      for (const [metric, value] of await measure(p.page)) samples.push([`${when}: ${metric}`, value]);
++      await p.page.keyboard.press('Escape');
++    }
++    return samples;
++  } finally { await p.ctx.close(); }
++}
++
++// Every image inside `selector` that shows on screen has loaded (or failed: `complete` is true for both).
++function imagesTest(selector) {
++  return `() => {
++    const pane = document.querySelector(${JSON.stringify(selector)});
++    if (!pane) return false;
++    const box = pane.getBoundingClientRect();
++    const shown = [...pane.querySelectorAll('img')].filter(i => { const r = i.getBoundingClientRect(); return r.width > 0 && r.bottom > box.top && r.top < box.bottom && r.right > box.left && r.left < box.right; });
++    return shown.length > 0 && shown.every(i => i.complete);
++  }`;
++}
++
++// The emoji picker: the click to the grid, the click to the first screen of images complete, and the requests the
++// page issued in the first 2 s (every <img> is a request of its own; on the iPhone each costs, 2026-10-31).
++async function measureEmoji(page) {
++  await page.evaluate(images => {
++    window.__perf.watch('grid', () => document.querySelector('.message-input-container[data-picker="emoji"] [data-picker-pane="emoji"] .emoji-btn'));
++    window.__perf.watch('images', new Function(`return (${images})()`), { frames: true, timeout: 20000 });
++  }, imagesTest('[data-picker-pane="emoji"] .emoji-content'));
++  await page.click('.emoji-toggle-button');
++  const t = await page.evaluate(async () => {
++    const perf = window.__perf, t0 = perf.input.click;
++    const [grid, images] = await Promise.all([perf.watches.grid, perf.watches.images]);
++    await new Promise(r => setTimeout(r, Math.max(0, t0 + 2000 - performance.now())));
++    const requests = performance.getEntriesByType('resource').filter(e => e.startTime >= t0 && e.startTime <= t0 + 2000).length;
++    return { grid: grid == null ? null : grid - t0, images: images == null ? null : images - t0, requests };
++  });
++  return [['grid ms', t.grid], ['images ms', t.images], ['requests in 2 s', t.requests]];
++}
++
++// The GIF picker: the click to its first content, the Recent grid (the seed's GIFs) or an empty state, and the click
++// to the first screen of its images complete when it shows a grid.
++async function measureGif(page) {
++  await page.evaluate(images => {
++    window.__perf.watch('shown', () => { const r = document.querySelector('.gif-results'); return !!r && r.children.length > 0 && !/Loading/.test(r.textContent); });
++    window.__perf.watch('images', new Function(`return (${images})()`), { frames: true, timeout: 20000 });
++  }, imagesTest('.gif-results'));
++  await page.click('.gif-toggle-button');
++  const t = await page.evaluate(async () => {
++    const perf = window.__perf, t0 = perf.input.click;
++    const shown = await perf.watches.shown;
++    const grid = !!document.querySelector('.gif-results .gif-card');
++    const images = grid ? await perf.watches.images : null;
++    return { shown: shown == null ? null : shown - t0, images: images == null ? null : images - t0, grid };
++  });
++  return [[t.grid ? 'grid ms' : 'empty state ms', t.shown], ['images ms', t.images]];
++}
++
++
++// ---- the resume (load.mjs, step 4), all repetitions at once ----
++
++// A resume needs 35 s of a frozen page, so the repetitions share that wait: every page of both sides loads, hides,
++// freezes and loses its socket together; after 35 s someone else posts in the lobby, and the pages thaw one at a
++// time, the sides alternating, each timed from its return to that message on screen. Each page was frozen longer than
++// the server's 30 s timeout, so each takes the restart path of hub.js. The pages load through the proxy without
++// delay (the load is not measured); the link applies from the freeze on. On `lan` the proxy only forwards: the dead
++// socket needs it.
++//
++// The freeze is a paused debugger, not load.mjs's Page.setWebLifecycleState: in this Chromium (Playwright 1.47,
++// headless) that call returns ok and the page's timers keep running, so SignalR's own 30 s timeout fired while the
++// page was "frozen", the page reconnected, and the return found the rows already there (measured 2026-11-04: ticks
++// every second through the freeze, connected again 33.7 s after the dead socket). A paused page runs no script at
++// all, as a suspended app on a phone; its overdue timers fire at the return.
++async function freeze({ page, cdp }) {
++  await page.evaluate(() => { window.__perfPoke = setInterval(() => {}, 100); });   // the pause lands at the next statement: this one, at once
++  await cdp.send('Debugger.enable');
++  await cdp.send('Debugger.pause');
++}
++async function thaw({ page, cdp }) {
++  await cdp.send('Debugger.resume');
++  await cdp.send('Debugger.disable');   // a page with an attached debugger may run slower
++  await page.evaluate(() => clearInterval(window.__perfPoke));
++}
++
++async function resumeAll(sites, n) {
++  const runs = [];
++  for (const site of sites) {
++    for (let rep = 1; rep <= n; rep++) runs.push({ site, rep, ...await site.prepared('desktop', site.side.proxy.origin) });
++  }
++  for (const r of runs) {
++    await r.page.evaluate(() => {
++      Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
++      Object.defineProperty(document, 'hidden', { value: true, configurable: true });
++      document.dispatchEvent(new Event('visibilitychange'));
++    });
++  }
++  await sleep(1500);
++  for (const r of runs) await freeze(r);
++  for (const site of sites) site.side.proxy.blackhole();
++  await sleep(35_000);
++  for (const site of sites) site.napText = await site.postInLobby(`after the nap ${site.side.key} ${Date.now()}`);
++
++  const results = [];
++  for (let rep = 1; rep <= n; rep++) {
++    for (const site of rep % 2 ? sites : [...sites].reverse()) {
++      const r = runs.find(x => x.site === site && x.rep === rep);
++      try {
++        await thaw(r);
++        const ms = await r.page.evaluate(async text => {
++          window.__perf.watch('back', () => [...document.querySelectorAll('.messages .message-group .message-content')].some(c => c.textContent.includes(text)), { timeout: 90000 });
++          const t0 = performance.now();
++          delete document.visibilityState; delete document.hidden;
++          document.dispatchEvent(new Event('visibilitychange'));
++          const t = await window.__perf.watches.back;
++          return t == null ? null : t - t0;
++        }, site.napText);
++        results.push({ site, rep, samples: [['return to rows ms', ms]] });
++      } catch (e) {
++        results.push({ site, rep, error: e.message.split('\n')[0] });
++      } finally { await r.ctx.close(); }
++    }
++  }
++  return results;
++}
++
++// One untimed walk per server before the first measurement: a load, two room changes, an older page and a send. The
++// first call of each path pays for the server's JIT and its cold caches, and that cost belongs to neither side.
++export async function warmUp(site) {
++  const p = await site.newPage('desktop');
++  try {
++    await load(p, () => p.page.goto(site.origin + '/', { waitUntil: 'commit' }), null);
++    await tapRoom(p.page, site.seed.quiet.name);
++    await tapRoom(p.page, site.seed.lobby.name);
++    await p.page.evaluate(() => { document.querySelector('.messages').scrollTop = 0; });
++    await sleep(1500);
++    await p.page.fill('.message-input', 'perf warm-up');
++    await p.page.press('.message-input', 'Enter');
++    await sleep(1000);
++    await deleteOwn(p.page, 'perf warm-up');
++  } finally { await p.ctx.close(); }
++}
++
++// name -> { run(site, rep) } or { all(sites, n) }. The phone rows are the cold open and the older pages at
++// 390x800, three device pixels per CSS pixel, the CPU four times slower (CDP), touch on.
++export const JOURNEYS = {
++  'cold-open': { run: site => coldOpen(site, 'desktop') },
++  'warm-open': { run: site => warmOpen(site) },
++  'resume': { all: resumeAll },
++  'send': { run: send },
++  'switch-room': { run: switchRoom },
++  'older': { run: (site, rep) => older(site, rep) },
++  'picker-emoji': { run: site => picker(site, measureEmoji) },
++  'picker-gif': { run: site => picker(site, measureGif) },
++  'phone-cold-open': { run: site => coldOpen(site, 'phone') },
++  'phone-older': { run: (site, rep) => older(site, rep, 'phone') },
++};
+diff --git a/tests/browser/perf-seed.mjs b/tests/browser/perf-seed.mjs
+new file mode 100644
+index 00000000..e678c076
+--- /dev/null
++++ b/tests/browser/perf-seed.mjs
+@@ -0,0 +1,370 @@
++// The seed of perf.mjs: a small server with a real history, built once through the real code paths and kept, so no
++// measured run seeds. 30 people, 10 rooms and 3 direct conversations, 50,000 messages: the lobby holds 20,000 (the
++// busiest room, and where a person lands), nine rooms share 24,000 unevenly (the quietest has 200), and the measured
++// person has three direct conversations of 2,000. About 10% of the texts carry emoji (Unicode, and the first custom
++// pack's shortcodes), 5% are replies, 3% get reactions, 2% are long multi-line texts near the 4,000 limit, 50 carry a
++// small picture, and the measured person sent 20 GIF files (they fill the GIF picker's Recent). No links: the sandbox
++// firewall would stall the link previews.
++//
++// Messages go through the send route from this process with each person's cookie: one queue per conversation (a reply
++// needs the id of an earlier message), every conversation at once. Pictures and GIFs go up through the tus route, as
++// the composer sends them. Reactions go through the hub from a page of each reacting person, as a tap does. The
++// timestamps are then spread over the last 180 days (node:sqlite on the stopped server's database), so the timeline
++// shows its date lines as a real history does.
++//
++// The result is a folder: Data/ (yap.db and the settings files), uploads/, and seed.json (people, rooms, tokens).
++
++import fs from 'node:fs';
++import path from 'node:path';
++import { chromium } from 'playwright';
++import { startServer, writePng, waitTrue, sleep } from './lib.mjs';
++
++// The settings of the seed server and of every measured server. The database is on, at the default connection string
++// (Data/yap.db relative to the working directory, which is the content root). The uploads live in the root: the
++// default is under wwwroot, which is a link to the worktree's own folder. No load bounds: production loads 5,000 rows
++// per conversation and 90 days, which would hide half of a 180-day history; the whole seed is in memory instead.
++export const SERVER_ARGS = [
++  '--ChatSettings:Persistence:Enabled=true',
++  '--ChatSettings:Persistence:Load:MaxMessagesPerChannel=0',
++  '--ChatSettings:Persistence:Load:MaxDays=0',
++  '--ChatSettings:UploadsPath=uploads',
++];
++
++const PEOPLE = ['ada', 'ben', 'cleo', 'dan', 'eva', 'finn', 'gia', 'hugo', 'ivy', 'jack', 'kai', 'lena', 'milo', 'nora', 'omar',
++  'pia', 'quinn', 'rosa', 'sam', 'tara', 'uma', 'vic', 'wes', 'xena', 'yuri', 'zoe', 'abe', 'bea', 'cal', 'dora'];
++const MEASURED = 'ada';   // the first sign-in, so the admin who creates the rooms; the person every journey is
++const ROOMS = [['lobby', 20000], ['dev', 8000], ['design', 5000], ['random', 3500], ['music', 2500], ['games', 2000],
++  ['food', 1500], ['travel', 800], ['books', 500], ['pets', 200]];
++const QUIET = 'pets';
++const DMS = [['ben', 2000], ['cleo', 2000], ['dan', 2000]];   // the measured person's direct conversations
++const IMAGES = 50, GIFS = 20, SPREAD_DAYS = 180;
++
++// ---- the text ----
++
++// A fixed seed: two seeds built from the same code hold the same history.
++function random(seed) {
++  return () => { seed |= 0; seed = seed + 0x6d2b79f5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
++}
++const rnd = random(20261104);
++const pick = list => list[Math.floor(rnd() * list.length)];
++const between = (lo, hi) => lo + Math.floor(rnd() * (hi - lo + 1));
++
++const WORDS = ('the a to and of in is it you that we for on this was with but not are have be just so at like what can about ' +
++  'think know really time get one all would there they if out up my do your more when no will now some how good people ' +
++  'today tomorrow week build test deploy fix bug server phone app release meeting lunch coffee music game play read book ' +
++  'trip train weather idea plan maybe sure yes nice cool great thanks again later soon still already never always new old ' +
++  'first last next work home team design review change merge branch code page room chat message picture video link note').split(' ');
++const SHORT = ['ok', 'lol', 'sounds good', 'thanks!', 'nice', 'agreed', 'on it', 'haha yes', 'brb', 'same', 'done', 'why not'];
++const UNICODE = ['😀', '😂', '🤣', '😅', '😊', '😍', '🤔', '😎', '🙃', '😭', '👍', '👏', '🙏', '💪', '🎉', '🔥', '❤️', '💯', '👀', '✅', '🚀', '☕', '🍕', '🌧️', '🐶'];
++export const REACTIONS = ['👍', '❤️', '😂', '🎉', '🔥', '👀', '🙏', '💯'];
++
++function sentence() {
++  const words = Array.from({ length: between(3, 16) }, () => pick(WORDS));
++  words[0] = words[0][0].toUpperCase() + words[0].slice(1);
++  return words.join(' ') + pick(['.', '.', '.', '?', '!', '']);
++}
++const plain = () => rnd() < 0.15 ? pick(SHORT) : Array.from({ length: between(1, 3) }, sentence).join(' ');
++
++// Near the 4,000-character limit, over many lines (MR-11): the rows that cost the layout most.
++function long() {
++  const lines = [];
++  let length = 0;
++  const target = between(3500, 3950);
++  while (length < target) { const line = Array.from({ length: between(1, 3) }, sentence).join(' '); lines.push(line); length += line.length + 1; }
++  return lines.join('\n').slice(0, 3990);
++}
++
++// 10% carry emoji: a fifth emoji only, half Unicode inside a text, the rest a pack shortcode inside a text.
++function withEmoji(packCodes) {
++  const r = rnd();
++  if (r < 0.2) return Array.from({ length: between(1, 3) }, () => pick(UNICODE)).join('');
++  if (r < 0.7 || !packCodes.length) return `${plain()} ${Array.from({ length: between(1, 2) }, () => pick(UNICODE)).join('')}`;
++  return `${plain()} :${pick(packCodes)}:`;
++}
++
++// ---- the plan ----
++
++// Who talks: a few people often, most people sometimes (weights 1/rank^0.8), the measured person in the middle.
++const talk = (() => {
++  const order = [...PEOPLE].sort(() => rnd() - 0.5);
++  const weights = order.map((_, i) => 1 / Math.pow(i + 1, 0.8));
++  const sum = weights.reduce((a, b) => a + b, 0);
++  return () => { let r = rnd() * sum; for (let i = 0; i < order.length; i++) { r -= weights[i]; if (r <= 0) return order[i]; } return order.at(-1); };
++})();
++
++// Every message of every conversation, in sending order: { sender, text, reply (how many messages back, 0 for none),
++// image and gif (the file's number, or null) }. Every random choice is made here, before the parallel sends, whose
++// order varies from run to run: two seeds of the same code hold the same history, at the same times before their day.
++function plan(packCodes) {
++  const conversations = [
++    ...ROOMS.map(([name, count]) => ({ kind: 'room', name, count })),
++    ...DMS.map(([partner, count]) => ({ kind: 'dm', name: `@${partner}`, partner, count })),
++  ];
++  for (const c of conversations) {
++    c.messages = Array.from({ length: c.count }, (_, i) => {
++      const sender = c.kind === 'dm' ? (rnd() < 0.5 ? MEASURED : c.partner) : talk();
++      const r = rnd();
++      const text = r < 0.02 ? long() : r < 0.12 ? withEmoji(packCodes) : plain();
++      return { sender, text, reply: i > 0 && rnd() < 0.05 ? between(1, Math.min(30, i)) : 0, image: null, gif: null };
++    });
++  }
++  // The pictures anywhere; the GIFs in the lobby and the direct conversations, sent by the measured person.
++  const all = conversations.flatMap(c => c.messages);
++  pickDistinct(all, IMAGES).forEach((m, i) => { m.image = i; if (rnd() < 0.5) m.text = ''; });
++  const mine = conversations.filter(c => c.name === 'lobby' || c.kind === 'dm').flatMap(c => c.messages).filter(m => m.image === null);
++  pickDistinct(mine, GIFS).forEach((m, i) => { m.gif = i; m.sender = MEASURED; m.text = ''; m.reply = 0; });
++  // 3% of the messages get one to three reactions; a direct message from its two people only.
++  for (const c of conversations) {
++    const people = c.kind === 'dm' ? [MEASURED, c.partner] : PEOPLE;
++    for (const m of c.messages) {
++      if (rnd() < 0.03) m.reactions = pickDistinct(people, between(1, Math.min(3, people.length))).map(p => [p, pick(REACTIONS)]);
++    }
++  }
++  return conversations;
++}
++
++function pickDistinct(list, count) {
++  const chosen = new Set();
++  while (chosen.size < Math.min(count, list.length)) chosen.add(list[Math.floor(rnd() * list.length)]);
++  return [...chosen];
++}
++
++// ---- the files ----
++
++// A small GIF (one frame, four colours) without a library. The LZW stream clears its table every two pixels, so every
++// code stays three bits wide: bigger than a real encoder's output, and valid for every decoder.
++function gif(width, height, palette, colourAt) {
++  const codes = [];
++  for (let i = 0; i < width * height; i++) { if (i % 2 === 0) codes.push(4); codes.push(colourAt(i % width, Math.floor(i / width))); }
++  codes.push(5);
++  const bytes = [];
++  let acc = 0, bits = 0;
++  for (const c of codes) { acc |= c << bits; bits += 3; while (bits >= 8) { bytes.push(acc & 255); acc >>= 8; bits -= 8; } }
++  if (bits) bytes.push(acc & 255);
++  const blocks = [];
++  for (let i = 0; i < bytes.length; i += 255) { const part = bytes.slice(i, i + 255); blocks.push(part.length, ...part); }
++  const le = n => [n & 255, n >> 8];
++  return Buffer.from([...Buffer.from('GIF89a'), ...le(width), ...le(height), 0x91, 0, 0, ...palette.flat(),
++    0x2c, 0, 0, 0, 0, ...le(width), ...le(height), 0, 2, ...blocks, 0, 0x3b]);
++}
++const gifNumber = i => gif(64, 64, [[255, 255, 255], [40 + i * 10, 80, 200 - i * 8], [230, 120, 20 + i * 9], [20, 20, 20]],
++  (x, y) => ((x >> (1 + i % 4)) + (y >> (1 + (i >> 2) % 3))) % 4);
++
++// A gradient picture, a different one per number (lib.mjs writes PNG files only, so it goes through the disk).
++function pngNumber(dir, i) {
++  const w = 240, h = 160, rgb = Buffer.alloc(w * h * 3);
++  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) rgb.set([(x + i * 37) % 256, (y * 2 + i * 11) % 256, (i * 53) % 256], (y * w + x) * 3);
++  return fs.readFileSync(writePng(path.join(dir, `seed-${i}.png`), w, h, rgb));
++}
++
++// ---- the server's routes ----
++
++function client(base, token) {
++  const cookie = `yap_auth=${token}`;
++  async function call(method, url, body) {
++    for (let attempt = 1; ; attempt++) {
++      const res = await fetch(base + url, { method, headers: { cookie, 'content-type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
++      if (res.ok) return res.status === 204 ? null : res.json();
++      if (attempt === 3) throw new Error(`${method} ${url}: ${res.status} ${(await res.text()).slice(0, 200)}`);
++      await sleep(500);
++    }
++  }
++  // tus by hand (creation, one PATCH, then the info poll of upload.js): the route the composer uses, without its library.
++  async function upload(name, type, bytes) {
++    const meta = Object.entries({ filename: name, filetype: type }).map(([k, v]) => `${k} ${Buffer.from(v).toString('base64')}`).join(',');
++    const created = await fetch(`${base}/api/tus`, { method: 'POST', headers: { cookie, 'Tus-Resumable': '1.0.0', 'Upload-Length': String(bytes.length), 'Upload-Metadata': meta } });
++    if (created.status !== 201) throw new Error(`tus create: ${created.status}`);
++    const location = new URL(created.headers.get('location'), base).href;
++    const patched = await fetch(location, { method: 'PATCH', headers: { cookie, 'Tus-Resumable': '1.0.0', 'Upload-Offset': '0', 'Content-Type': 'application/offset+octet-stream' }, body: bytes });
++    if (patched.status !== 204) throw new Error(`tus patch: ${patched.status}`);
++    const id = location.split('/').pop();
++    for (let i = 0; i < 120; i++) {
++      const res = await fetch(`${base}/api/tus/info/${id}`, { headers: { cookie } });
++      if (res.ok) return res.json();
++      await sleep(250);
++    }
++    throw new Error(`tus info: no answer for ${name}`);
++  }
++  return { get: url => call('GET', url), post: (url, body) => call('POST', url, body), upload };
++}
++
++// The sign-in route sets the cookie; its value is the account's token, which seed.json keeps.
++export async function signInToken(base, username) {
++  const res = await fetch(`${base}/api/auth/signin`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ username }) });
++  const token = res.headers.getSetCookie().map(c => /^yap_auth=([^;]+)/.exec(c)?.[1]).find(Boolean);
++  if (!res.ok || !token) throw new Error(`sign-in of ${username}: ${res.status} ${(await res.text()).slice(0, 200)}`);
++  return token;
++}
++
++// ---- the seed ----
++
++export async function buildSeed({ dll, wwwroot, seedDir, runsDir, port }) {
++  const t0 = Date.now();
++  if (fs.existsSync(seedDir)) throw new Error(`${seedDir} exists. Remove it first, or measure with it (--seed-dir).`);
++  const server = await startServer({ dll, wwwroot, port, scratch: runsDir, args: SERVER_ARGS, keep: true });
++  const base = server.base;
++  const fixtures = fs.mkdtempSync(path.join(runsDir, 'seed-fixtures-'));
++  try {
++    const tokens = {};
++    for (const name of PEOPLE) tokens[name] = await signInToken(base, name);   // in order: the first is the admin
++    const as = Object.fromEntries(PEOPLE.map(p => [p, client(base, tokens[p])]));
++    const boot = await as[MEASURED].get('/api/bootstrap');
++    if (!boot.user?.isAdmin) throw new Error(`${MEASURED} is not the admin: the seed needs a fresh server`);
++    const packCodes = (boot.emojiImages?.packs?.[0]?.emojis ?? []).map(e => e.shortcode);
++
++    const rooms = { lobby: boot.rooms.find(r => r.isDefault)?.id ?? boot.rooms[0].id };
++    for (const [name] of ROOMS.slice(1)) {
++      rooms[name] = (await as[MEASURED].post('/api/rooms', { name, description: null, adminOnly: false, historyLimit: 'unlimited', sinceJoined: false })).id;
++    }
++
++    const conversations = plan(packCodes);
++    const total = conversations.reduce((s, c) => s + c.count, 0);
++    let sent = 0, images = 0, gifs = 0;
++    const progress = setInterval(() => console.log(`seed: ${sent} of ${total} messages, ${images} pictures, ${gifs} GIFs`), 5000);
++    await Promise.all(conversations.map(async c => {
++      const own = [];
++      for (const m of c.messages) {
++        const body = { clientId: crypto.randomUUID(), text: m.text || null };
++        if (m.reply) body.replyToId = own[own.length - m.reply];
++        if (m.image !== null) { const info = await as[m.sender].upload(`picture-${m.image}.png`, 'image/png', pngNumber(fixtures, m.image)); body.images = [info.url]; images++; }
++        if (m.gif !== null) { const info = await as[m.sender].upload(`gif-${m.gif}.gif`, 'image/gif', gifNumber(m.gif)); body.gifs = [{ entryId: info.gifEntryId, searchText: null }]; gifs++; }
++        const url = c.kind === 'dm'
++          ? `/api/dm/${m.sender === MEASURED ? c.partner : MEASURED}/messages`
++          : `/api/channels/${rooms[c.name]}/messages`;
++        const message = await as[m.sender].post(url, body);
++        own.push(message.id);
++        m.id = message.id;
++        c.channelId ??= message.channelId;
++        sent++;
++      }
++    }));
++    clearInterval(progress);
++    console.log(`seed: ${sent} messages sent after ${Math.round((Date.now() - t0) / 1000)} s`);
++
++    const reactions = await react(base, tokens, conversations);
++    await drained(as[MEASURED]);
++    const issues = await server.stop();
++    if (issues.length) console.log(`seed server problems:\n${issues.join('\n')}`);
++
++    fs.mkdirSync(seedDir, { recursive: true });
++    fs.cpSync(path.join(server.root, 'Data'), path.join(seedDir, 'Data'), { recursive: true, filter: src => !src.includes(`${path.sep}RequestLogs`) });   // the seed's own request log is no state
++    fs.cpSync(path.join(server.root, 'uploads'), path.join(seedDir, 'uploads'), { recursive: true, filter: src => !src.includes(`${path.sep}tus-temp`) });
++    const spread = await spreadTimestamps(path.join(seedDir, 'Data', 'yap.db'));
++
++    const facts = {
++      createdAt: new Date().toISOString(), seconds: Math.round((Date.now() - t0) / 1000),
++      measured: MEASURED, people: PEOPLE.map(username => ({ username, token: tokens[username] })),
++      lobby: { id: rooms.lobby, name: 'lobby' }, quiet: { id: rooms[QUIET], name: QUIET },
++      rooms: ROOMS.map(([name, count]) => ({ id: rooms[name], name, messages: count })),
++      dms: conversations.filter(c => c.kind === 'dm').map(c => ({ partner: c.partner, channelId: c.channelId, messages: c.count })),
++      messages: sent, images, gifs, reactions, spread,
++      bytes: { db: fs.statSync(path.join(seedDir, 'Data', 'yap.db')).size, uploads: folderBytes(path.join(seedDir, 'uploads')) },
++    };
++    fs.writeFileSync(path.join(seedDir, 'seed.json'), JSON.stringify(facts, null, 2));
++    console.log(`seed: done in ${facts.seconds} s: ${sent} messages, ${reactions} reactions, ${images} pictures, ${gifs} GIFs; ` +
++      `database ${(facts.bytes.db / 1e6).toFixed(1)} MB, uploads ${(facts.bytes.uploads / 1e6).toFixed(1)} MB, in ${seedDir}`);
++    return facts;
++  } finally {
++    fs.rmSync(fixtures, { recursive: true, force: true });
++    fs.rmSync(server.root, { recursive: true, force: true });
++  }
++}
++
++// The planned reactions, each from a page of the reacting person through the hub, as a tap sends it. The measured
++// person's page then marks every conversation read, so the sidebar starts without the counts the seed piled up, and
++// records a few emoji uses, so the picker's Recent row has content.
++async function react(base, tokens, conversations) {
++  const byPerson = new Map();
++  let count = 0;
++  for (const m of conversations.flatMap(c => c.messages)) {
++    for (const [p, emoji] of m.reactions ?? []) {
++      if (!byPerson.has(p)) byPerson.set(p, []);
++      byPerson.get(p).push([m.id, emoji]);
++      count++;
++    }
++  }
++  const channelIds = conversations.map(c => c.channelId);
++  const browser = await chromium.launch();
++  try {
++    for (const person of PEOPLE) {
++      const ctx = await browser.newContext();
++      await ctx.addCookies([{ name: 'yap_auth', value: tokens[person], domain: '127.0.0.1', path: '/', httpOnly: true, secure: true, sameSite: 'Lax' }]);
++      const page = await ctx.newPage();
++      await page.goto(`${base}/settings`);
++      const up = await waitTrue(() => page.evaluate(async () => (await import('/js/hub.js')).connected()), 20000, 200);
++      if (!up) throw new Error(`no hub connection for ${person}`);
++      const failed = await page.evaluate(async ({ list, read, emoji }) => {
++        const hub = await import('/js/hub.js');
++        let failures = 0;
++        for (const [id, e] of list) if ((await hub.invoke('react', id, e))?.error) failures++;
++        for (const id of read) await hub.invoke('markRead', id);
++        for (const e of emoji) await hub.invoke('emojiUsed', e);
++        return failures;
++      }, { list: byPerson.get(person) ?? [], read: person === MEASURED ? channelIds : [], emoji: person === MEASURED ? ['👍', '😂', '🎉', '🔥', '❤️', '🙏'] : [] });
++      if (failed) throw new Error(`${failed} reactions of ${person} were refused`);
++      await ctx.close();
++    }
++  } finally { await browser.close(); }
++  return count;
++}
++
++// The writer is seconds behind memory (PersistenceWriter); a stop flushes it too, but a drained queue first keeps the
++// stop short. Two empty readings in a row: the read states are coalesced and flushed every 2 s.
++async function drained(admin) {
++  let empty = 0;
++  const ok = await waitTrue(async () => {
++    const d = await admin.get('/api/admin/diagnostics');
++    empty = d.writer.depth === 0 ? empty + 1 : 0;
++    return empty >= 2;
++  }, 300_000, 3000);
++  if (!ok) throw new Error('the database writer did not drain within 5 minutes');
++}
++
++// Each conversation's messages keep their order and get random times over the last 180 days: sorted uniform draws,
++// so the gaps vary as in a real history (some hours busy, some days quiet). EF Core stores a DateTime as text,
++// 'yyyy-MM-dd HH:mm:ss.fffffff', which sorts as it reads. The people and the rooms get a creation time before it all.
++async function spreadTimestamps(file) {
++  const { DatabaseSync } = await import('node:sqlite');   // here, not at the top: the module is experimental and warns when loaded
++  const db = new DatabaseSync(file);
++  const end = Date.now() - 10 * 60_000, start = end - SPREAD_DAYS * 86_400_000;
++  const text = ms => new Date(ms).toISOString().replace('T', ' ').replace('Z', '') + '0000';
++  const rows = db.prepare('SELECT Id, ChannelId, Content FROM Messages ORDER BY ChannelId, Timestamp, Id').all();
++  const update = db.prepare('UPDATE Messages SET Timestamp = ? WHERE Id = ?');
++  db.exec('BEGIN');
++  for (let i = 0; i < rows.length;) {
++    let j = i;
++    while (j < rows.length && rows[j].ChannelId === rows[i].ChannelId) j++;
++    // The channel ids differ between seeds; the first text of a conversation does not: it seeds the conversation's draws.
++    const draw = random([...rows[i].Content ?? ''].reduce((h, ch) => Math.imul(h ^ ch.codePointAt(0), 16777619), 2166136261 ^ (j - i)));
++    const times = Array.from({ length: j - i }, () => start + draw() * (end - start)).sort((a, b) => a - b);
++    for (let k = i; k < j; k++) update.run(text(times[k - i]), rows[k].Id);
++    i = j;
++  }
++  for (const [table, column] of [['Users', 'CreatedAt'], ['Channels', 'CreatedAt']]) {
++    const has = db.prepare(`SELECT COUNT(*) AS n FROM pragma_table_info('${table}') WHERE name = '${column}'`).get().n > 0;
++    if (has) db.prepare(`UPDATE ${table} SET ${column} = ?`).run(text(start - 86_400_000));
++  }
++  db.exec('COMMIT');
++  db.close();
++  return `${rows.length} messages over ${SPREAD_DAYS} days`;
++}
++
++function folderBytes(dir) {
++  return fs.readdirSync(dir, { withFileTypes: true, recursive: true })
++    .filter(e => e.isFile()).reduce((sum, e) => sum + fs.statSync(path.join(e.parentPath ?? e.path, e.name)).size, 0);
++}
++
++// The facts of a seed folder; perf.mjs reads the people, rooms and tokens from here.
++export function readSeed(seedDir) {
++  const file = path.join(seedDir, 'seed.json');
++  if (!fs.existsSync(file)) throw new Error(`${file} not found. Build a seed first: node perf.mjs --seed`);
++  return JSON.parse(fs.readFileSync(file, 'utf8'));
++}
++
++// Fills a fresh content root with a copy of the seed (prepare() of startServer).
++export function copySeed(seedDir) {
++  return root => {
++    fs.cpSync(path.join(seedDir, 'Data'), path.join(root, 'Data'), { recursive: true });
++    fs.cpSync(path.join(seedDir, 'uploads'), path.join(root, 'uploads'), { recursive: true });
++  };
++}
+diff --git a/tests/browser/perf.mjs b/tests/browser/perf.mjs
+new file mode 100644
+index 00000000..03e96d60
+--- /dev/null
++++ b/tests/browser/perf.mjs
+@@ -0,0 +1,314 @@
++// How responsive Yap feels for one person on a real-sized server, build A against build B. The instrument for the
++// performance experiments: each one is a worktree with a change, measured against the worktree without it.
++//
++// The server: a copy of a seed (perf-seed.mjs: 30 people, 10 rooms, 50,000 messages over 180 days) with the database
++// on, one copy per build, on two ports. The person: the seed's admin, signed in through the API, so a journey times
++// the page and not the login form. The journeys (perf-journeys.mjs): a cold open, a warm open, a resume after a frozen
++// background, sends, room changes, older pages, the two pickers; a cold open and older pages again on a slow phone.
++//
++// The networks are a TCP proxy in this process (proxy.mjs), not a CDP throttle: a CDP throttle shapes the page's
++// requests only, never the service worker's fetches or the WebSocket frames, and the shell caching is the worker's
++// work. `far` is the target user of docs/performance-notes.md (900 ms round trip, 1 Mbit/s); `near` a good mobile or
++// home link; `lan` has no proxy, so it shows the server's and the page's own cost.
++//
++// The runs alternate A, B, B, A, A, B ... for every journey and profile, so drift of the machine hits both sides
++// alike. The report gives the median, min and max of every metric per side, and the delta of the medians.
++//
++// Run from tests/browser (Node and Playwright only; build each worktree first with dotnet build):
++//   node perf.mjs --seed                        build the seed once (about 1.5 minutes), into --seed-dir
++//   node perf.mjs --a=<worktree>:<label> --b=<worktree>:<label>
++// Options: --profiles=far,near,lan  --journeys=cold-open,...  --full (every journey)  --n=5
++//   --out=<dir> (report.md, runs.json, browser-log.txt, a screenshot per failed run)  --seed-dir=<dir>
++//   --runs-dir=<dir> (the servers' content roots)  --port-a=5301  --port-b=5302 (each proxy listens 100 above)
++// DEFAULT_PLAN below says which journeys run on which profile by default, and why.
++
++import fs from 'node:fs';
++import os from 'node:os';
++import path from 'node:path';
++import { execFileSync } from 'node:child_process';
++import { chromium } from 'playwright';
++import { REPO, startServer, watchContext, watchPage, logs, waitTrue } from './lib.mjs';
++import { startProxy } from './proxy.mjs';
++import { SERVER_ARGS, buildSeed, readSeed, copySeed, signInToken } from './perf-seed.mjs';
++import { JOURNEYS, instruments, warmUp } from './perf-journeys.mjs';
++
++const arg = (name, fallback) => process.argv.find(a => a.startsWith(`--${name}=`))?.slice(name.length + 3) ?? fallback;
++const flag = name => process.argv.includes(`--${name}`);
++
++const PROFILES = {
++  far: { oneWayMs: 450, bytesPerSec: 125_000 },     // 900 ms round trip, 1 Mbit/s each way (load.mjs, production 2026-08-11)
++  near: { oneWayMs: 30, bytesPerSec: 2_500_000 },   // 60 ms round trip, 20 Mbit/s
++  lan: null,                                        // no proxy
++};
++const DESCRIBE = { far: '900 ms round trip, 1 Mbit/s', near: '60 ms round trip, 20 Mbit/s', lan: 'no proxy: the server and the page' };
++const ALL_JOURNEYS = Object.keys(JOURNEYS);
++// The default plan keeps one A/B experiment at n=5 near 20 minutes (19.5 measured); --full runs every journey (28.5
++// minutes A/B at n=5). Timed on 2026-11-04, one side at n=3, then A/A. What stays out, and why it costs little:
++// - the phone rows on `far` (31 s a run): the link hides the slow CPU there (cold open 18.3 s desktop, 18.3 s phone);
++//   `near` keeps them, a phone on a good link.
++// - send on `far` (12 s a run): its confirmation is the link's round trip plus the server (922 ms against 7 ms on
++//   `lan`); `near` and `lan` show the client's and the server's part.
++// - the resume on `near` and `lan` (a fixed 37 s wait each): a resume is round trips, which `far` shows best.
++// - the phone rows on `lan`: `near` has them with a link.
++const DEFAULT_PLAN = {
++  far: ['cold-open', 'warm-open', 'resume', 'switch-room', 'older', 'picker-emoji', 'picker-gif'],
++  near: ['cold-open', 'warm-open', 'send', 'switch-room', 'older', 'picker-emoji', 'picker-gif', 'phone-cold-open', 'phone-older'],
++  lan: ['cold-open', 'warm-open', 'send', 'switch-room', 'older', 'picker-emoji', 'picker-gif'],
++};
++
++const DESKTOP = { viewport: { width: 1440, height: 900 } };
++const PHONE = { viewport: { width: 390, height: 800 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true };
++const RUN_TIMEOUT = 240_000;   // one run of one journey; far cold opens take about 20 s
++
++const HOME = path.join(os.homedir(), 'yap-perf');   // the seed, the servers' roots and the results live outside the worktrees
++const seedDir = path.resolve(arg('seed-dir', path.join(HOME, 'seed')));
++const runsDir = path.resolve(arg('runs-dir', path.join(HOME, 'runs')));
++const n = Number(arg('n', 5));
++// profile -> its journeys: --full every one on every chosen profile; --journeys the same list on every chosen profile;
++// otherwise the default plan, cut to --profiles when given.
++const profiles = arg('profiles')?.split(',') ?? (flag('full') ? Object.keys(PROFILES) : Object.keys(DEFAULT_PLAN));
++const plan = Object.fromEntries(profiles.map(p => [p, flag('full') ? ALL_JOURNEYS : arg('journeys')?.split(',') ?? DEFAULT_PLAN[p] ?? ALL_JOURNEYS]));
++for (const p of profiles) if (!(p in PROFILES)) throw new Error(`unknown profile ${p}; known: ${Object.keys(PROFILES).join(', ')}`);
++for (const j of Object.values(plan).flat()) if (!JOURNEYS[j]) throw new Error(`unknown journey ${j}; known: ${ALL_JOURNEYS.join(', ')}`);
++
++// A side is one build: a worktree with Yap/bin/Debug/net10.0/Yap.dll and its own Yap/wwwroot.
++function side(key, spec, port) {
++  const at = spec.lastIndexOf(':');
++  const dir = path.resolve(at > 0 ? spec.slice(0, at) : spec);
++  let commit = '';
++  try { commit = execFileSync('git', ['-C', dir, 'log', '-1', '--format=%h %s'], { encoding: 'utf8' }).trim(); } catch { /* not a git folder */ }
++  return { key, label: at > 0 ? spec.slice(at + 1) : key, dir, port, commit,
++    dll: path.join(dir, 'Yap', 'bin', 'Debug', 'net10.0', 'Yap.dll'), wwwroot: path.join(dir, 'Yap', 'wwwroot') };
++}
++const sides = [side('A', arg('a', REPO), Number(arg('port-a', 5301)))];
++if (arg('b')) sides.push(side('B', arg('b'), Number(arg('port-b', 5302))));
++
++const started = Date.now();
++
++if (flag('seed')) {
++  await buildSeed({ dll: sides[0].dll, wwwroot: sides[0].wwwroot, seedDir, runsDir, port: sides[0].port });
++  console.log(`wall time ${minutes(Date.now() - started)}`);
++  process.exit(0);
++}
++
++const seed = readSeed(seedDir);
++const stamp = new Date().toISOString().slice(0, 16).replace(/[T:]/g, '-');
++const outDir = path.resolve(arg('out', path.join(path.dirname(seedDir), 'results', stamp)));
++fs.mkdirSync(outDir, { recursive: true });
++
++// ---- the servers and the browser ----
++
++const other = seed.people.find(p => p.username !== seed.measured && seed.dms.some(d => d.partner === p.username)) ?? seed.people[1];
++for (const s of sides) {
++  s.server = await startServer({ dll: s.dll, wwwroot: s.wwwroot, port: s.port, scratch: runsDir, prepare: copySeed(seedDir), args: SERVER_ARGS });
++  s.base = s.server.base;
++  s.proxy = startProxy({ port: s.port + 100, upstream: s.port });
++  // The sign-in route, as the login page uses it; smart login knows this address from the seed. The seed's token
++  // stands in when that memory expired (14 days): the account and its token are the same.
++  s.token = await signInToken(s.base, seed.measured).catch(() => seed.people.find(p => p.username === seed.measured).token);
++}
++const browser = await chromium.launch();
++
++// The person stays online on each server through a page that idles on Settings, off the proxies. Without it the
++// person's presence depended on the order of the runs: a page that connects after the server saw the person go
++// offline gets the person's own join line in the lobby, in italics, and the italic font (380 KB) loads before the
++// rows. On 2026-11-04 every first run after the other side's run carried 1,386 KB on the wire instead of 1,006.
++for (const s of sides) {
++  const ctx = await browser.newContext(DESKTOP);
++  await ctx.addCookies([{ name: 'yap_auth', value: s.token, domain: '127.0.0.1', path: '/', httpOnly: true, secure: true, sameSite: 'Lax' }]);
++  const page = await ctx.newPage();
++  await page.goto(s.base + '/settings');
++  if (!await waitTrue(() => page.evaluate(async () => (await import('/js/hub.js')).connected()), 20_000, 200)) throw new Error(`the keeper page of ${s.key} did not connect`);
++}
++
++// A site is one side on one profile: where the page goes, the proxy that shapes it, and its warm pages.
++function site(s, profile) {
++  const link = PROFILES[profile];
++  return {
++    side: s, profile, seed, link,
++    proxy: link ? s.proxy : null,
++    origin: link ? s.proxy.origin : s.base,
++    pages: {},
++    async newPage(kind = 'desktop') {
++      const ctx = await browser.newContext(kind === 'phone' ? PHONE : DESKTOP);
++      // A cookie belongs to the host, not the port: the same one serves the server and its proxy.
++      await ctx.addCookies([{ name: 'yap_auth', value: s.token, domain: '127.0.0.1', path: '/', httpOnly: true, secure: true, sameSite: 'Lax' }]);
++      await ctx.addInitScript(instruments);
++      const name = `${s.key}/${profile}/${kind}`;
++      watchContext(ctx, name);
++      const page = await ctx.newPage();
++      watchPage(page, name);
++      const cdp = await ctx.newCDPSession(page);
++      if (kind === 'phone') await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
++      return { ctx, page, cdp };
++    },
++    // A new device that has loaded the app once at full speed (that load is not measured): the worker installed and
++    // in control, the conversation's tail and the bootstrap in IndexedDB. The client stores them 800 ms and 2 s
++    // after the last change (offline/snapshot.js); a reload before that paints nothing from the device.
++    async prepared(kind = 'desktop', origin = this.origin) {
++      const p = await this.newPage(kind);
++      s.proxy.set(null);
++      try {
++        await p.page.goto(origin + '/', { waitUntil: 'commit' });
++        await p.page.waitForFunction(() => performance.getEntriesByName('rows', 'mark').length > 0, null, { timeout: 60_000, polling: 100 });
++        await p.page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
++        await p.page.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 15_000 }).catch(() => {});
++        const stored = await waitTrue(() => p.page.evaluate(async () => {
++          const snapshot = await import('/js/offline/snapshot.js');
++          const { state } = await import('/js/store.js');
++          return !!state.open && !!await snapshot.loadTail(snapshot.keyOf(state.open)) && !!await snapshot.loadBootstrap();
++        }), 15_000, 250);
++        if (!stored) throw new Error('the tail and the bootstrap were not stored within 15 s');
++        await p.page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
++      } catch (e) { await p.ctx.close(); throw e; }
++      finally { s.proxy.set(this.link); }
++      return p;
++    },
++    // The prepared page that send, room changes, older pages and warm opens share.
++    async warmPage(kind = 'desktop') { return (this.pages[kind] ??= await this.prepared(kind)); },
++    // Someone else's message in the lobby, through the send route (the resume waits for it).
++    async postInLobby(text) {
++      const res = await fetch(`${s.base}/api/channels/${seed.lobby.id}/messages`, { method: 'POST',
++        headers: { cookie: `yap_auth=${other.token}`, 'content-type': 'application/json' }, body: JSON.stringify({ clientId: crypto.randomUUID(), text }) });
++      if (!res.ok) throw new Error(`post in the lobby: ${res.status}`);
++      return text;
++    },
++    // `shots`: a file name prefix; the pages are photographed first (the state a failed run left behind).
++    async close(shots) {
++      for (const [kind, p] of Object.entries(this.pages)) {
++        if (shots) await p.page.screenshot({ path: path.join(outDir, `${shots}-${kind}.png`) }).catch(() => {});
++        await p.ctx.close().catch(() => {});
++      }
++      this.pages = {};
++    },
++  };
++}
++
++// ---- the runs ----
++
++const records = [];   // { profile, journey, side, label, rep, metric, value }
++const errors = [];
++
++function record(profile, journey, s, rep, samples) {
++  for (const [metric, value] of samples) {
++    if (value == null || !Number.isFinite(value)) continue;
++    records.push({ profile, journey, side: s.key, label: s.label, rep, metric, value: Math.round(value * 10) / 10 });
++  }
++  const summary = [...new Set(samples.map(([m]) => m))].slice(0, 4)
++    .map(m => `${m} ${fmt(median(samples.filter(([x, v]) => x === m && v != null).map(([, v]) => v)))}`).join(', ');
++  console.log(`  ${profile} ${journey} ${s.key}#${rep}: ${summary}`);
++}
++
++function failed(profile, journey, s, rep, e) {
++  const text = `${profile} ${journey} ${s.key}#${rep}: ${String(e?.message ?? e).split('\n')[0]}`;
++  errors.push(text);
++  console.log(`  !! ${text}`);
++}
++
++const withTimeout = (promise, ms) => Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error(`no end after ${ms / 1000} s`)), ms))]);
++
++for (const s of sides) await warmUp(site(s, 'lan')).catch(e => console.log(`warm-up of ${s.key} failed: ${e.message.split('\n')[0]}`));
++
++for (const profile of profiles) {
++  const sites = sides.map(s => site(s, profile));
++  for (const s of sides) s.proxy.set(PROFILES[profile]);
++  console.log(`\n== ${profile} (${DESCRIBE[profile]})`);
++  for (const journey of plan[profile]) {
++    const j = JOURNEYS[journey];
++    const t0 = Date.now();
++    if (j.all) {
++      try {
++        for (const r of await j.all(sites, n)) {
++          if (r.error) failed(profile, journey, r.site.side, r.rep, r.error); else record(profile, journey, r.site.side, r.rep, r.samples);
++        }
++      } catch (e) { failed(profile, journey, sides[0], 0, e); }
++    } else {
++      for (let rep = 1; rep <= n; rep++) {
++        for (const st of rep % 2 ? sites : [...sites].reverse()) {
++          try { record(profile, journey, st.side, rep, await withTimeout(j.run(st, rep), RUN_TIMEOUT)); }
++          catch (e) { failed(profile, journey, st.side, rep, e); await st.close(`fail-${profile}-${journey}-${st.side.key}${rep}`); }   // a page in an unknown state is not reused
++        }
++      }
++    }
++    console.log(`  (${journey}: ${minutes(Date.now() - t0)})`);
++  }
++  for (const st of sites) await st.close();
++}
++
++const wall = Date.now() - started;
++
++// ---- the report ----
++
++function median(values) {
++  if (!values.length) return null;
++  const v = [...values].sort((a, b) => a - b), mid = v.length >> 1;
++  return v.length % 2 ? v[mid] : (v[mid - 1] + v[mid]) / 2;
++}
++function fmt(x) {
++  if (x == null || !Number.isFinite(x)) return '—';
++  return Math.abs(x) >= 100 || Number.isInteger(x) ? String(Math.round(x)) : x.toFixed(1);
++}
++function minutes(ms) { return `${Math.floor(ms / 60000)} min ${Math.round(ms % 60000 / 1000)} s`; }
++
++function profileTables(profile) {
++  const rows = [];
++  for (const r of records.filter(r => r.profile === profile)) {
++    if (!rows.some(x => x.journey === r.journey && x.metric === r.metric)) rows.push({ journey: r.journey, metric: r.metric });
++  }
++  const stats = (row, key) => {
++    const v = records.filter(r => r.profile === profile && r.journey === row.journey && r.metric === row.metric && r.side === key).map(r => r.value);
++    return { median: median(v), min: v.length ? Math.min(...v) : null, max: v.length ? Math.max(...v) : null, count: v.length };
++  };
++  const [A, B] = sides;
++  const lines = [`## ${profile} (${DESCRIBE[profile]})`, '', `Journeys: ${plan[profile].join(', ')}.`, ''];
++  if (!B) {
++    lines.push('| journey | metric | median | min | max | n |', '| --- | --- | --: | --: | --: | --: |');
++    for (const row of rows) { const a = stats(row, 'A'); lines.push(`| ${row.journey} | ${row.metric} | ${fmt(a.median)} | ${fmt(a.min)} | ${fmt(a.max)} | ${a.count} |`); }
++    return lines.join('\n');
++  }
++  lines.push(`| journey | metric | A: ${A.label} | B: ${B.label} | Δ | Δ % |`, '| --- | --- | --: | --: | --: | --: |');
++  for (const row of rows) {
++    const a = stats(row, 'A'), b = stats(row, 'B');
++    const delta = a.median != null && b.median != null ? b.median - a.median : null;
++    const pct = delta != null && a.median ? `${delta >= 0 ? '+' : ''}${(delta / a.median * 100).toFixed(1)}%` : '—';
++    lines.push(`| ${row.journey} | ${row.metric} | ${fmt(a.median)} | ${fmt(b.median)} | ${delta != null && delta >= 0 ? '+' : ''}${fmt(delta)} | ${pct} |`);
++  }
++  lines.push('', `Spread (${profile}): min and max of every sample, n samples per side.`, '',
++    `| journey | metric | A min | A max | B min | B max | n |`, '| --- | --- | --: | --: | --: | --: | --: |');
++  for (const row of rows) {
++    const a = stats(row, 'A'), b = stats(row, 'B');
++    lines.push(`| ${row.journey} | ${row.metric} | ${fmt(a.min)} | ${fmt(a.max)} | ${fmt(b.min)} | ${fmt(b.max)} | ${a.count}/${b.count} |`);
++  }
++  return lines.join('\n');
++}
++
++const header = [
++  `# Yap responsiveness: ${sides.map(s => `${s.key} = ${s.label}`).join(', ')}`, '',
++  `${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC. Wall time ${minutes(wall)}. ${n} repetitions${flag('full') ? ', every journey (--full)' : ''}.`, '',
++  ...sides.map(s => `- ${s.key} (${s.label}): ${s.dir}, ${s.commit || 'no git'}; the server answered ${s.server.startMs} ms after its start (the seed loads into memory first).`),
++  `- Seed: ${seed.messages} messages, ${seed.reactions} reactions, ${seed.images} pictures, ${seed.gifs} GIFs (${seedDir}, built ${seed.createdAt}). The person: ${seed.measured}.`,
++  '- Times in ms. Opens: phases from the navigation start; the other journeys: from the click, the key or the scroll, in the page\'s clock.',
++  '',
++];
++const report = [...header, ...profiles.map(profileTables).flatMap(t => [t, '']),
++  errors.length ? `## Runs that failed\n\n${errors.map(e => `- ${e}`).join('\n')}\n` : 'All runs ended.\n'].join('\n');
++console.log('\n' + report);
++fs.writeFileSync(path.join(outDir, 'report.md'), report);
++fs.writeFileSync(path.join(outDir, 'runs.json'), JSON.stringify({ sides: sides.map(({ key, label, dir, commit }) => ({ key, label, dir, commit })), n, plan, wallMs: wall, records }, null, 1));
++
++// The browser's complaints, deduplicated: a page error during a run says more than any number.
++const seen = new Map();
++for (const l of logs) { const k = `${l.page} ${l.kind}: ${l.text}`; seen.set(k, (seen.get(k) ?? 0) + 1); }
++fs.writeFileSync(path.join(outDir, 'browser-log.txt'), [...seen].map(([k, c]) => `${c}x ${k}`).join('\n') + '\n');
++const pageErrors = [...seen].filter(([k]) => / pageerror: /.test(k));
++console.log(`browser log: ${seen.size} distinct lines (${pageErrors.length} page errors) in ${path.join(outDir, 'browser-log.txt')}`);
++for (const [k, c] of pageErrors.slice(0, 10)) console.log(`  ${c}x ${k}`);
++
++await browser.close();
++for (const s of sides) {
++  s.proxy.close();
++  const issues = await s.server.stop();
++  if (issues.length) console.log(`server ${s.key}: ${issues.length} fail/crit/exception lines, first: ${issues[0]}`);
++}
++console.log(`report: ${path.join(outDir, 'report.md')}\nwall time ${minutes(wall)}`);
++process.exit(errors.length ? 1 : 0);
+diff --git a/tests/browser/proxy.mjs b/tests/browser/proxy.mjs
+new file mode 100644
+index 00000000..94775201
+--- /dev/null
++++ b/tests/browser/proxy.mjs
+@@ -0,0 +1,97 @@
++// The slow link of load.mjs and perf.mjs: a TCP proxy in this process between the browser and the server.
++//
++// Why a proxy and not a CDP throttle: a CDP throttle shapes the page's requests only, never the service worker's
++// fetches or the WebSocket frames, and the shell caching is the worker's work. Every byte between the browser and the
++// server passes the proxy, so the proxy can also kill the server side of a socket while the client side stays open
++// and silent: a socket dead without a close, as after a long sleep.
++//
++// The server speaks HTTP/1.1 here (no TLS), so the browser has six connections and a file count costs more than it
++// does over h2 in production. The numbers compare two runs on one machine; they are not production numbers.
++
++import net from 'node:net';
++
++// One queue per direction, shared by every connection, like one link: a chunk leaves after its time on the wire
++// at the rate, never before the chunk ahead of it, plus the one-way delay. `set(null)` is a plain pass-through.
++// `link` is { oneWayMs, bytesPerSec }. The counters see every byte and every HTTP request line that crosses.
++export function startProxy({ port, upstream }) {
++  let link = null;
++  const pairs = new Set();
++  const lanes = { up: { ready: 0 }, down: { ready: 0 } };
++  const counts = { up: 0, down: 0, requests: 0, lines: [] };   // lines: the request lines, to see which files crossed
++  // One ordered queue per direction of a connection, drained by one timer at a time: a timer per chunk would let two
++  // chunks with the same expiry fire in either order and corrupt the stream.
++  const forward = (from, to, lane, pair, fromClient) => {
++    const queue = [];   // { chunk | null for the end, at }, in order of `at`
++    let timer = null;
++    const drain = () => {
++      timer = null;
++      while (queue.length && queue[0].at <= Date.now()) {
++        const { chunk } = queue.shift();
++        if (to.destroyed) continue;
++        if (chunk) to.write(chunk); else to.end();
++      }
++      if (queue.length) timer = setTimeout(drain, Math.max(1, queue[0].at - Date.now()));
++    };
++    const enqueue = (chunk, at) => { queue.push({ chunk, at }); if (!timer) timer = setTimeout(drain, Math.max(1, at - Date.now())); };
++    let first = true;
++    from.on('data', chunk => {
++      if (fromClient && first) { first = false; pair.ws = /upgrade: websocket/i.test(chunk.toString('latin1', 0, 1024)); }   // the socket's first request names it
++      if (pair.hold && fromClient) return;   // blackholed: the client talks into the void
++      count(chunk, fromClient, pair);
++      if (!link) { to.write(chunk); return; }
++      const start = Math.max(Date.now(), lane.ready);
++      lane.ready = start + chunk.length * 1000 / link.bytesPerSec;
++      enqueue(chunk, lane.ready + link.oneWayMs);
++    });
++    from.on('end', () => {
++      if (pair.hold && fromClient) return;
++      if (!link) { to.end(); return; }
++      enqueue(null, Math.max(queue.at(-1)?.at ?? 0, Date.now() + link.oneWayMs));
++    });
++    // A connection that closes gives the link back the time of its chunks still waiting. The server writes whole
++    // responses into this queue at once, while real TCP keeps a window in flight and stops when the peer goes. Without
++    // this, a page closed during the worker's precache left seconds of bytes nobody receives on the lane, and the next
++    // page on the link waited behind them (2026-11-04: the html phase of the next cold open 2.1 s late).
++    return () => {
++      const bytes = queue.reduce((sum, q) => sum + (q.chunk?.length ?? 0), 0);
++      queue.length = 0;
++      clearTimeout(timer); timer = null;
++      if (link && bytes) lane.ready = Math.max(Date.now(), lane.ready - bytes * 1000 / link.bytesPerSec);
++    };
++  };
++  // HTTP/1.1 without pipelining: a request starts a chunk of its socket, and its line is plain text. A WebSocket's
++  // frames after the upgrade are masked binary and are counted as bytes only.
++  const REQUEST_LINE = /(?:^|\r\n)(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS) \S+ HTTP\/1\.[01]\r\n/g;
++  function count(chunk, fromClient, pair) {
++    if (!fromClient) { counts.down += chunk.length; return; }
++    counts.up += chunk.length;
++    if (pair.ws && pair.counted) return;
++    pair.counted = true;   // the upgrade request itself counts once
++    const lines = chunk.toString('latin1').match(REQUEST_LINE) ?? [];
++    counts.requests += lines.length;
++    lines.forEach(l => counts.lines.push(l.trim()));
++  }
++  const server = net.createServer(client => {
++    const upstreamSocket = net.connect(upstream, '127.0.0.1');
++    const pair = { client, upstream: upstreamSocket, hold: false };
++    pairs.add(pair);
++    const dropUp = forward(client, upstreamSocket, lanes.up, pair, true);
++    const dropDown = forward(upstreamSocket, client, lanes.down, pair, false);
++    client.on('close', () => { pairs.delete(pair); upstreamSocket.destroy(); dropUp(); dropDown(); });
++    client.on('error', () => client.destroy());
++    upstreamSocket.on('close', () => { if (!pair.hold) client.destroy(); });
++    upstreamSocket.on('error', () => { if (!pair.hold) client.destroy(); });
++  });
++  server.listen(port, '127.0.0.1');
++  return {
++    origin: `http://127.0.0.1:${port}`,
++    set(l) { link = l; },
++    // What crossed since the last reset: bytes each way and HTTP requests (the WebSocket upgrade included).
++    counters() { return { ...counts, lines: [...counts.lines] }; },
++    reset() { counts.up = 0; counts.down = 0; counts.requests = 0; counts.lines = []; },
++    // What a long sleep leaves behind: the WebSocket's server side is gone while its client side stays open and
++    // silent, and the idle keep-alive HTTP sockets are closed, so the page's next requests open new connections.
++    blackhole() { for (const p of pairs) { if (p.ws) { p.hold = true; p.upstream.destroy(); } else { p.client.destroy(); p.upstream.destroy(); } } },
++    close() { for (const p of pairs) { p.client.destroy(); p.upstream.destroy(); } server.close(); },
++  };
++}
+-- 
+2.53.0
+

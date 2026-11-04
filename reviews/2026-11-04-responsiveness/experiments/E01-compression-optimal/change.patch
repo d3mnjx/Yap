@@ -1,0 +1,59 @@
+From 9c623d933593ba5a1db8187abf2fc61a11d0e51d Mon Sep 17 00:00:00 2001
+From: urza <189804+urza@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 10:46:29 +0100
+Subject: [PATCH] Response compression at the Optimal level instead of the
+ framework's Fastest
+
+The Brotli and gzip providers had no options, so both ran at their default,
+CompressionLevel.Fastest (Brotli quality 1, gzip level 1). A device fetches the
+shell's scripts and styles once per build (immutable ?v= URLs), so the ratio
+counts exactly when a far user waits: the first visit and the worker's install
+after a deploy. The CPU per request at Optimal is small for a few KB of JSON
+and the page.
+
+What Optimal means in .NET 10 (runtime 10.0.14), checked by compressing
+app.css with BrotliStream/GZipStream at each CompressionLevel and comparing the
+output byte for byte against explicit qualities: Fastest = Brotli 1 / gzip 1,
+Optimal = Brotli 4 / gzip 6, SmallestSize = Brotli 11 / gzip 9. Both provider
+options default to Fastest.
+
+Downloaded bytes from the built server (curl, Accept-Encoding: gzip | br),
+before -> after:
+  app.css             gzip 12161 -> 8795    br 10328 -> 8922
+  js/pages/admin.js   gzip 33736 -> 23261   br 30400 -> 23698
+  lib/signalr.min.js  gzip 19843 -> 14077   br 18230 -> 14370
+  /login              gzip 32701 -> 22804   br 34576 -> 22391
+A browser's Accept-Encoding (gzip, deflate, br, zstd) still gets br. Smoke
+suite: 17 passed, 0 failed.
+
+Co-Authored-By: Wren <wren@yap.local>
+---
+ Yap/Program.cs | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/Yap/Program.cs b/Yap/Program.cs
+index 2a38fa2d..24522f5b 100644
+--- a/Yap/Program.cs
++++ b/Yap/Program.cs
+@@ -1,4 +1,5 @@
+ using Microsoft.AspNetCore.ResponseCompression;
++using System.IO.Compression;
+ using System.Text.Json;
+ using System.Text.Json.Serialization;
+ using Microsoft.AspNetCore.Authentication;
+@@ -82,6 +83,12 @@ builder.Services.AddResponseCompression(o =>
+     o.EnableForHttps = true;
+     o.MimeTypes = [.. ResponseCompressionDefaults.MimeTypes, "image/svg+xml", "application/manifest+json"];
+ });
++// Optimal, not the framework default Fastest: a device fetches the shell's scripts and styles once per build,
++// and on a far, slow link the bytes are what the user waits for. The extra CPU per request (a few KB of JSON,
++// the page) is negligible. In .NET 10 Optimal is Brotli quality 4 of 11 and gzip level 6 (Fastest is 1 for both).
++// SmallestSize (Brotli 11) is many times slower and belongs in a compress-once step, not in every response.
++builder.Services.Configure<BrotliCompressionProviderOptions>(o => o.Level = CompressionLevel.Optimal);
++builder.Services.Configure<GzipCompressionProviderOptions>(o => o.Level = CompressionLevel.Optimal);
+ 
+ // The sign-in cookie becomes a principal with the account id, the username and the admin role.
+ builder.Services.AddAuthentication(YapCookieAuthHandler.SchemeName)
+-- 
+2.53.0
+

@@ -1,0 +1,78 @@
+From 59944dea0f704df9a6e346a7c2b316efa8375bcb Mon Sep 17 00:00:00 2001
+From: urza <189804+urza@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 11:03:20 +0100
+Subject: [PATCH] Send: the own row confirms before the outbox delete, and an
+ identical second copy draws nothing
+
+After the POST answer, flush() waited for the outbox row's IndexedDB delete to
+commit before addMessage, the AD-26 'send' report and publish. The delete has no
+bearing on the screen: the row already left the in-memory queue. So the faded
+pending row stayed one readwrite commit longer than the wire needed, the 'send'
+wait counted that commit, and with rows queued offline every POST after the
+first waited for the previous commit too. Now the row confirms first and the
+delete runs behind it; the cross-tab announce still follows the commit, so the
+other tabs read the outbox only once the row is gone from disk. A tab closed
+before the commit posts the row again from the next open, and the server's
+clientId dedupe answers with the stored message, the same window as before.
+
+An own message is confirmed twice, by the POST answer and by the hub's
+'message' event, and the second one always replaced the row: one row rebuild
+per send (its DOM, avatar and emoji images, each image a worker request on
+WebKit). addMessage now replaces only when the JSON of the two copies differs,
+the same test the timeline's reset uses; a reaction that came between them
+still redraws.
+
+Checked: offline suite 14/14, smoke 17/17, features 14/14. A probe with a
+listener on the store: 10 sends in a row gave 0 'replace' notifications per
+send (1 per send with the old code), all 10 confirmed in order, 10 POSTs, the
+outbox store empty afterwards. 3 messages queued offline: 3 rows on disk, all
+confirmed in order within ~120 ms of the network's return, the outbox empty.
+An identical copy passed to addMessage draws nothing; a copy with a reaction
+replaces the row. Ten rounds of "3 queued, then online" on each version ended
+with exactly one row per message every time.
+
+Co-Authored-By: Wren <wren@yap.local>
+---
+ Yap/wwwroot/js/sender.js | 6 ++++--
+ Yap/wwwroot/js/store.js  | 5 ++++-
+ 2 files changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/Yap/wwwroot/js/sender.js b/Yap/wwwroot/js/sender.js
+index b275f536..f6202ec7 100644
+--- a/Yap/wwwroot/js/sender.js
++++ b/Yap/wwwroot/js/sender.js
+@@ -118,11 +118,13 @@ async function flush() {
+           voice: row.voice?.url ? { url: row.voice.url, durationMs: row.voice.durationMs, peaks: row.voice.peaks } : null,
+         });
+         queue = queue.filter(r => r !== row);
+-        await outbox.remove(row);
+-        outbox.announce();
+         addMessage(message);                 // the POST answer and the hub event are the same confirmation
+         if (row.tappedAt) hub.report('send', performance.now() - row.tappedAt);   // AD-26: tap to own row rendered; a tap of this tab only
+         publish();
++        // The disk delete has no bearing on the screen (the row already left the queue), so the confirmation and
++        // the next POST do not wait for its commit. The other tabs hear of it only once it is on disk. A tab closed
++        // before the commit posts the row again from the next open; the server's clientId dedupe answers that.
++        outbox.remove(row).then(() => outbox.announce());
+       } catch (e) {
+         if (e instanceof ApiError && (e.status === 0 || e.status === 409)) break;   // no network, or the first copy is still being stored
+         fail(row, e instanceof ApiError ? e.message : 'Could not send');
+diff --git a/Yap/wwwroot/js/store.js b/Yap/wwwroot/js/store.js
+index a0c5e8da..a45a4d27 100644
+--- a/Yap/wwwroot/js/store.js
++++ b/Yap/wwwroot/js/store.js
+@@ -186,7 +186,10 @@ export function addMessage(m) {
+     state.pending = state.pending.filter(p => p.clientId !== m.clientId);
+     changed('pending');
+   }
+-  if (openMessage(m.id)) { replaceMessage(m); return; }        // the POST answer and the hub event are the same confirmation
++  // The POST answer and the hub event are the same confirmation: the second copy redraws the row only when it
++  // differs (a reaction came between them, say). Each redraw asked the worker for the row's emoji images again.
++  const known = openMessage(m.id);
++  if (known) { if (JSON.stringify(known) !== JSON.stringify(m)) replaceMessage(m); return; }
+   const last = open.messages.at(-1);
+   if (!last || last.timestamp <= m.timestamp) open.messages.push(m);
+   else open.messages.splice(open.messages.findIndex(x => x.timestamp > m.timestamp), 0, m);
+-- 
+2.53.0
+

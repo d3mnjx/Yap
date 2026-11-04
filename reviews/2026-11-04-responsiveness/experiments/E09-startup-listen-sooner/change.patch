@@ -1,0 +1,118 @@
+From 455bdf4d922ef778be240f571d22c26e64369e9b Mon Sep 17 00:00:00 2001
+From: urza <189804+urza@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 11:07:01 +0100
+Subject: [PATCH] Startup: the action-log cleanup waits until the server
+ listens, the three probes run side by side
+
+Kestrel listens only at app.Run, and every client that a deploy disconnects retries on a backoff (1, 3, 7,
+15 s). Two things before app.Run did not need to be there.
+
+The action-log cleanup only maintains rows the admin pages read. It now goes on the persistence writer's
+queue from ApplicationStarted. The writer was chosen over a Task.Run of its own: the writer adds log rows
+all the time after start, and a row added between a trim's SELECT of the ids to keep and its DELETE would
+have been deleted with the old ones. On the queue nothing runs in between. Before app.Run that race could
+not happen, because the writer had not started yet. The cleanup is still skipped without persistence:
+Enqueue is a no-op then, the same condition (no IDbContextFactory) as the old early return. Its own catch
+stays, so a failed cleanup does not send the other writes of its batch to the one-by-one retry.
+
+The ffmpeg probes of VideoService and GifFfmpegHelper and the yt-dlp probe of MediaCacheService ran one
+after another inside the ChatService resolution. They now resolve on three tasks before the chat load. The
+default container builds a singleton once under a lock per service, so nothing is built twice. The yt-dlp
+probe still follows the video ffmpeg probe, because MediaCacheService takes a VideoService. The gain is the
+GIF helper's probe only (about 25 ms here); yt-dlp is not installed on this machine, so its probe fails fast.
+
+Measured on this machine, persistence on, 8,000 seeded action-log rows per start (5,000 old, 3,000 excess),
+five interleaved starts each, process start to "Now listening": main median 1410 ms, this branch 1271 ms.
+From the first load log line to "Now listening": 588 ms against 404 ms. Each probe logs once per start, and
+the cleanup logs "deleted 5000 old + 3001 excess" about 70 to 100 ms after "Now listening". Smoke suite 17
+of 17, Yap.Tests 58 of 58.
+
+Co-Authored-By: Wren <wren@yap.local>
+---
+ Yap/Program.cs                             | 14 ++++++++++----
+ Yap/Services/Admin/UserActionLogService.cs | 17 ++++++++++-------
+ 2 files changed, 20 insertions(+), 11 deletions(-)
+
+diff --git a/Yap/Program.cs b/Yap/Program.cs
+index 2a38fa2d..b766d9bf 100644
+--- a/Yap/Program.cs
++++ b/Yap/Program.cs
+@@ -213,17 +213,23 @@ await app.Services.InitializePersistenceAsync();   // migrations
+ await app.Services.GetRequiredService<UserService>().LoadUsersAsync();
+ await app.Services.GetRequiredService<AccessLinkService>().LoadAsync();
+ await app.Services.GetRequiredService<NotificationSettingsService>().InitializeAsync();
++// The child-process probes (each up to 3 s) run here, not inside the first upload, and side by side: inside the
++// ChatService resolution they ran one after another. The container builds each singleton once, so the yt-dlp probe
++// still follows the video ffmpeg probe (MediaCacheService takes a VideoService); the GIF helper's runs beside both.
++await Task.WhenAll(
++    Task.Run(() => app.Services.GetRequiredService<VideoService>()),       // ffmpeg for video posters and compression
++    Task.Run(() => app.Services.GetRequiredService<GifFfmpegHelper>()),    // ffmpeg for GIFs and voice: done before the first voice upload is judged
++    Task.Run(() => app.Services.GetRequiredService<MediaCacheService>())); // yt-dlp for cached link media
+ await app.Services.GetRequiredService<ChatService>().InitializeAsync();
+-app.Services.GetRequiredService<VideoService>();   // the ffmpeg probe (a child process, up to 3 s) runs here, not inside the first upload
+-app.Services.GetRequiredService<VoiceService>();   // its ffmpeg detection (the GIF helper's) must be done before the first voice upload is judged
+ await app.Services.GetRequiredService<GifService>().InitializeAsync();
+ app.Services.GetRequiredService<ChatService>().RefreshPinMedia();   // after the GIF entries: a pinned GIF resolves through them
+ app.Services.GetRequiredService<VideoPosterBackfill>().Start();   // after the pins: it refreshes them again when it makes a poster
+ await app.Services.GetRequiredService<PushSubscriptionStore>().InitializeAsync();
+ await app.Services.GetRequiredService<SystemBotService>().InitializeAsync();
+ 
+-// Clean up old action logs (keep last 100 per user, delete older than 6 months)
+-await app.Services.GetRequiredService<UserActionLogService>().CleanupAsync();
++// Clean up old action logs (keep last 100 per user, delete older than 6 months) once the server listens: only the
++// admin pages read these rows, and awaited here the cleanup held back every reconnect after a deploy.
++app.Lifetime.ApplicationStarted.Register(app.Services.GetRequiredService<UserActionLogService>().Cleanup);
+ 
+ var uploads = app.Services.GetRequiredService<UploadPaths>();
+ 
+diff --git a/Yap/Services/Admin/UserActionLogService.cs b/Yap/Services/Admin/UserActionLogService.cs
+index 6f1f6540..7fb95dd3 100644
+--- a/Yap/Services/Admin/UserActionLogService.cs
++++ b/Yap/Services/Admin/UserActionLogService.cs
+@@ -11,7 +11,7 @@ namespace Yap.Services.Admin;
+ /// </summary>
+ public class UserActionLogService
+ {
+-    private readonly IDbContextFactory<ChatDbContext>? _dbFactory;   // admin reads and cleanup only
++    private readonly IDbContextFactory<ChatDbContext>? _dbFactory;   // admin reads only
+     private readonly PersistenceWriter _writer;
+     private readonly ILogger<UserActionLogService> _logger;
+ 
+@@ -39,17 +39,20 @@ public class UserActionLogService
+         }));
+     }
+ 
++    /// <summary>
++    /// Queues the cleanup. Synchronous, non-blocking; a no-op when persistence is disabled.
++    /// </summary>
++    // A write on the writer's queue, not a task of its own: the writer adds log rows all the time, and a row added
++    // between a trim's SELECT and its DELETE would go with the old rows. On the queue nothing runs in between.
++    public void Cleanup() => _writer.Enqueue((db, _) => CleanupAsync(db));
++
+     /// <summary>
+     /// Deletes entries older than 6 months, then trims to the last 100 joins and the last 100 other rows per user.
+     /// </summary>
+-    public async Task CleanupAsync()
++    private async Task CleanupAsync(ChatDbContext db)
+     {
+-        if (_dbFactory is null) return;
+-
+         try
+         {
+-            await using var db = await _dbFactory.CreateDbContextAsync();
+-
+             // Delete everything older than 6 months
+             var cutoff = DateTime.UtcNow.AddMonths(-6);
+             var deletedOld = await db.UserActionLogs
+@@ -87,7 +90,7 @@ public class UserActionLogService
+                     deletedOld, deletedExcess);
+             }
+         }
+-        catch (Exception ex)
++        catch (Exception ex)   // caught here, not by the writer: a failed cleanup must not send the other writes of its batch to the one-by-one retry
+         {
+             _logger.LogError(ex, "Failed to clean up action logs");
+         }
+-- 
+2.53.0
+

@@ -1,0 +1,96 @@
+From b8d5199f3899422c80d9fa5741bbec152e310462 Mon Sep 17 00:00:00 2001
+From: urza <189804+urza@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 10:53:27 +0100
+Subject: [PATCH] Shell: the page and the worker carry an ETag, so a
+ revalidation is a 304
+
+Both answer no-cache, but without a validator the browser could not ask whether they changed: every network-first navigation (/, /login, /verify/*, /invite/*), the worker's install fetch of /login and the worker's update check downloaded the whole file again (102,599 B raw, about 25.7 KB with Brotli for the page; 14,116 B for the worker).
+
+The ETag is a hash of the filled bytes, computed once per process in Production next to the cached file and per request in Development, where the file is read per request. Results.Bytes does the If-None-Match comparison (lists, W/ prefix) and answers 304 with the same ETag and Cache-Control and no body. The tag is weak: the response compression middleware rewrites the bytes and leaves the tag as it is (checked: identity and br answers carry the same tag), and RFC 9110 8.8.3.3 says a strong tag must differ per content coding. If-None-Match uses the weak comparison, so the 304 behaviour is the same.
+
+The welcome page at / for signed-out visitors keeps no ETag. It returns before the shell's check, so a signed-out request that carries the shell's tag gets the welcome page as a 200 (checked with curl), and a cached welcome page sends no validator. The visitor log still runs before the answer.
+
+Checked on port 5404: curl 200 then 304 for /login, signed-in / and /lobby, and /service-worker.js?v=<build>, in Development and Production, with and without br; smoke 17/17; offline 14/14 (a first run failed step 11, the tus upload retry, and passed on the rerun); update.mjs deploy replay ends on build B with no strip. In Chromium the server logs 304 for the worker's /login fetches and its update checks.
+
+Co-Authored-By: Wren <wren@yap.local>
+---
+ Yap/Endpoints/ShellEndpoints.cs | 29 ++++++++++++++++++++---------
+ 1 file changed, 20 insertions(+), 9 deletions(-)
+
+diff --git a/Yap/Endpoints/ShellEndpoints.cs b/Yap/Endpoints/ShellEndpoints.cs
+index 0819f4d0..4b9efc68 100644
+--- a/Yap/Endpoints/ShellEndpoints.cs
++++ b/Yap/Endpoints/ShellEndpoints.cs
+@@ -1,5 +1,8 @@
++using Microsoft.Net.Http.Headers;
+ using System.Net;
+ using System.Security.Claims;
++using System.Security.Cryptography;
++using System.Text;
+ using System.Text.RegularExpressions;
+ using Yap.Configuration;
+ using Yap.Helpers;
+@@ -33,27 +36,32 @@ public static class ShellEndpoints
+         var config = app.Services.GetRequiredService<ServerConfig>();   // a singleton; the name comes from appsettings and changes with a restart
+         // The client routes as one pattern for the worker: "{id:guid}" and "{user}" become one path segment.
+         var routePattern = string.Join("|", Routes.Select(r => Regex.Replace(r, @"\{[^}]*\}", "[^/]+")));
+-        string? cachedShell = null, cachedWorker = null;
++        (byte[] Body, EntityTagHeaderValue ETag)? cachedShell = null, cachedWorker = null;
+         // Development reads the files on every request, so an edit shows on reload. Production reads them once.
+-        string Shell() => env.IsDevelopment() ? Read("index.html") : cachedShell ??= Read("index.html");
+-        string Worker() => env.IsDevelopment() ? Read("service-worker.js") : cachedWorker ??= Read("service-worker.js");
+-        string Read(string file)
++        (byte[] Body, EntityTagHeaderValue ETag) Shell() => env.IsDevelopment() ? Read("index.html") : cachedShell ??= Read("index.html");
++        (byte[] Body, EntityTagHeaderValue ETag) Worker() => env.IsDevelopment() ? Read("service-worker.js") : cachedWorker ??= Read("service-worker.js");
++        // A filled file changes only with a build, the project name or an edit (Development), so a hash of its bytes is
++        // its ETag, and the browser's revalidation (no-cache) of an unchanged page or worker is a 304 without the body.
++        // Weak: the response compression changes the bytes on the wire and keeps the tag (RFC 9110 8.8.3.3).
++        (byte[] Body, EntityTagHeaderValue ETag) Read(string file)
+         {
+             using var reader = new StreamReader(env.WebRootFileProvider.GetFileInfo(file).CreateReadStream());
+-            return reader.ReadToEnd()
++            var body = Encoding.UTF8.GetBytes(reader.ReadToEnd()
+                 .Replace("{{build}}", BuildInfo.Time)
+                 .Replace("{{project}}", WebUtility.HtmlEncode(config.ProjectName))
+                 .Replace("{{importmap}}", assets.ImportMap)
+                 .Replace("{{modulepreload}}", assets.ModulePreloads)
+                 .Replace("{{shell}}", assets.ShellList)
+-                .Replace("{{routes}}", routePattern);
++                .Replace("{{routes}}", routePattern));
++            return (body, new EntityTagHeaderValue($"\"{Convert.ToHexString(SHA256.HashData(body))[..16]}\"", isWeak: true));
+         }
+ 
+         foreach (var route in Routes)
+         {
+             app.MapGet(route, (HttpContext http, ClaimsPrincipal principal, ServerConfig config, UserActionLogService log, RegistrationGateService gate) =>
+             {
+-                // A signed-out visitor at the root gets the welcome page when the deployment has one (AD-36).
++                // A signed-out visitor at the root gets the welcome page when the deployment has one (AD-36). It has no
++                // ETag: it shares the root's URL with the shell, and only the shell's own tag may earn the shell's 304.
+                 if (route == "/" && !principal.IsSignedIn() && config.WelcomePageEnabled
+                     && File.Exists(Path.Combine(env.ContentRootPath, "Data", "welcome", "welcome.html")))
+                     return Results.Content(Welcome(env, config.ProjectName), "text/html; charset=utf-8");
+@@ -68,7 +76,9 @@ public static class ShellEndpoints
+                         ip: IpHelper.GetClientIp(http), userAgent: http.Request.Headers.UserAgent.ToString());
+ 
+                 http.Response.Headers.CacheControl = "no-cache";   // always revalidate: the service worker, not the HTTP cache, serves the shell
+-                return Results.Content(Shell(), "text/html; charset=utf-8");
++                // Results.Bytes answers an If-None-Match that matches the tag with a 304: no body, the same ETag and Cache-Control.
++                var (body, etag) = Shell();
++                return Results.Bytes(body, "text/html; charset=utf-8", entityTag: etag);
+             });
+         }
+ 
+@@ -77,7 +87,8 @@ public static class ShellEndpoints
+         app.MapGet("/service-worker.js", (HttpContext http) =>
+         {
+             http.Response.Headers.CacheControl = "no-cache";
+-            return Results.Content(Worker(), "text/javascript; charset=utf-8");
++            var (body, etag) = Worker();
++            return Results.Bytes(body, "text/javascript; charset=utf-8", entityTag: etag);
+         });
+     }
+ 
+-- 
+2.53.0
+

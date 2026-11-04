@@ -1,0 +1,173 @@
+From 345de009957078abc0b988d5334fd7eff59706b7 Mon Sep 17 00:00:00 2001
+From: urza <189804+urza@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 13:16:01 +0100
+Subject: [PATCH 2/2] Tests: picker-reaction times five reaction picker opens
+ on one page, and counts the cells they build
+
+picker-emoji opens the composer's picker on a fresh page load each time, so it only ever sees a first
+open. The reaction picker ("Add Reaction" in a row's bar) built about 1,000 cells on every open, and
+E07 builds it once per page and moves it into each open's row: the difference is in the second open
+on the same page, which no journey had.
+
+picker-reaction takes a prepared page (a warm open on the profile's link, as picker() does), marks the
+five lowest rows of plain text that are wholly on screen, and opens the picker on each, top to bottom:
+hover (a finger: a tap on the text, then the bar), click "Add Reaction", Escape, wait for the wrapper
+to go, a second and two frames before the next. Samples: the click to the grid per open, the median of
+opens 2 to 5, the distinct cell buttons that entered the page during the five opens (a
+MutationObserver keeps the added nodes; the count runs after the last open, so the timed opens pay
+one push per node), and the long tasks. phone-picker-reaction is the same on the phone page
+(site.prepared('phone'): 390x800, CPU x4, touch).
+
+The grid test asks for the cell's layout (offsetParent), not only the cell in the DOM: main's cells
+land before opened() lays them out (build() is awaited), E07's later opens after it, so a DOM-only test
+left ~1,000 cells of layout out of main's time only. A first version also timed the end of the frame
+after the grid (a frame callback, then a timer). The shake-out dropped it: on the phone row that frame
+took 6.6 s on B's first open while the long tasks of all five opens added up to 2.2 s, so it measured
+the headless software raster of the emoji images, not the page. The same shake-out timed out (5 s)
+waiting for the wrapper to close on A's phone page; the close wait is 30 s now and each open starts on a
+drawn frame.
+
+Neither row is in DEFAULT_PLAN; --journeys names them.
+
+Co-Authored-By: Wren <wren@yap.local>
+---
+ tests/browser/perf-journeys.mjs | 109 +++++++++++++++++++++++++++++++-
+ 1 file changed, 107 insertions(+), 2 deletions(-)
+
+diff --git a/tests/browser/perf-journeys.mjs b/tests/browser/perf-journeys.mjs
+index f40e17f3..44795f11 100644
+--- a/tests/browser/perf-journeys.mjs
++++ b/tests/browser/perf-journeys.mjs
+@@ -276,6 +276,108 @@ async function measureGif(page) {
+   return [[t.grid ? 'grid ms' : 'empty state ms', t.shown], ['images ms', t.images]];
+ }
+ 
++// ---- the reaction picker (picker-reaction) ----
++
++// Five opens of the reaction picker ("Add Reaction" in a row's bar) on one page, each on another row: open 1 is the
++// first of the page, opens 2 to 5 are what every further reaction costs on that page. picker() above opens on a fresh
++// page load each time, so it cannot see a cost that only a second open on the same page avoids (E07: one picker per
++// page, moved into the row of each open). One run is one page: --n is the number of pages per side.
++// The samples: per open the click to the grid (a smileys cell in the DOM and laid out), their median for opens 2 to 5,
++// `cells built` (the distinct cell buttons that entered the page during the five opens), and the long tasks from
++// before the first click to after the last close. The emoji images come from the real CDN and are not timed.
++async function pickerReaction(site, kind = 'desktop') {
++  const p = await site.prepared(kind);
++  const { page } = p;
++  try {
++    // A warm open on the profile's link and a settled page, as picker() does before its click.
++    await load(p, () => page.reload({ waitUntil: 'commit' }), null);
++    await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {});
++    await sleep(300);
++    const rows = await page.evaluate(markRows);
++    if (rows < 5) throw new Error(`only ${rows} rows of plain text wholly on screen, 5 needed`);
++    const start = await page.evaluate(keepAdded);
++    const grid = [];
++    for (let i = 1; i <= 5; i++) {
++      const row = page.locator(`.messages .message-group[data-perf-row="${i}"]`);
++      // A pointer shows the bar by hovering the row; a finger taps the row first, and the tap that shows the bar never
++      // presses one of its buttons (MR-50).
++      if (kind === 'phone') {
++        await row.locator('.message-content').tap();
++        await page.waitForFunction(i => document.querySelector(`[data-perf-row="${i}"]`)?.classList.contains('touched'), i, { timeout: 10_000, polling: 50 });
++      } else await row.hover();
++      // The test asks for the cell's layout (offsetParent). Main's cells land in the DOM before opened() lays them out
++      // (build() is awaited); E07's later opens land after it (nothing to await). A test of the DOM alone would leave
++      // the layout of ~1,000 cells out of main's time only. The paint after it is left out on purpose: in this
++      // headless Chromium the first frame with the grid took up to 6.6 s on the phone row while the long tasks of all
++      // five opens added up to 2.2 s (2026-11-04), so that wait is the software raster of the emoji images, not the page.
++      await page.evaluate(() => window.__perf.watch('reaction', () => {
++        const cell = document.querySelector('.emoji-picker-wrapper [data-section="smileys"] .emoji-btn');
++        return !!cell && cell.offsetParent !== null;
++      }));
++      const button = row.locator('.message-actions .action-picker');
++      await (kind === 'phone' ? button.tap() : button.click());
++      grid.push(await page.evaluate(async () => {
++        const perf = window.__perf;
++        const shown = await perf.watches.reaction;
++        return shown == null ? null : shown - perf.input.click;   // read after the grid: the button's click, not the tap that showed the bar
++      }));
++      await page.keyboard.press('Escape');
++      await page.waitForFunction(() => !document.querySelector('.emoji-picker-wrapper'), null, { timeout: 30_000, polling: 50 });
++      // A person takes a second or more to the next reaction; the open starts on a page whose last frame is drawn,
++      // not behind the work the previous open left (a slow phone frame took seconds, see above).
++      await sleep(1000);
++      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
++    }
++    await sleep(700);   // a long task's entry arrives after the task
++    const facts = await page.evaluate(start => {
++      const cells = new Set();
++      for (const n of window.__perfAdded) {
++        if (n.matches('.emoji-picker .emoji-btn')) cells.add(n);
++        for (const b of n.querySelectorAll('.emoji-picker .emoji-btn')) cells.add(b);
++      }
++      const long = window.__perf.longTasks.filter(([s]) => s >= start);
++      return { cells: cells.size, longTasks: long.length, longMs: long.reduce((s, [, d]) => s + d, 0) };
++    }, start);
++    const samples = grid.map((v, i) => [`open ${i + 1}: grid`, v]);
++    samples.push(['later opens: grid', middle(grid.slice(1))]);
++    samples.push(['cells built', facts.cells], ['long tasks', facts.longTasks], ['long task ms', facts.longMs]);
++    return samples;
++  } finally { await p.ctx.close(); }
++}
++
++// Marks the five lowest rows that are wholly on screen and hold only text, 1 to 5 from the top: a finger's tap on the
++// text lands on no link or picture, and the bar (16 px above the row) stays below the list's top edge. Top to bottom
++// on purpose: on a phone the touched row keeps its bar 5 s after the picker closed (MR-51), and that bar covers the
++// bottom of the row above it, never the row below.
++function markRows() {
++  const list = document.querySelector('.messages');
++  const box = list.getBoundingClientRect();
++  const rows = [...list.querySelectorAll('.message-group:not(.system-message):not(.pending)')].filter(r => {
++    const b = r.getBoundingClientRect();
++    return b.top >= box.top + 40 && b.bottom <= box.bottom && !!r.querySelector('.message-actions .action-picker')
++      && !!r.querySelector('.message-content')?.textContent.trim()
++      && !r.querySelector('.message-content a, .image-gallery, .gif-message, .video-container, .voice-message, .reply-preview:not([hidden])');
++  }).slice(-5);
++  rows.forEach((r, i) => { r.dataset.perfRow = String(i + 1); });
++  return rows.length;
++}
++
++// Keeps every element added to the page from here on and returns the time. The cells are counted after the last open,
++// so the timed opens pay for one push per added node, not for a search through 1,000 cells. A picker moved into a new
++// wrapper adds its cells again; the set in pickerReaction counts each button once.
++function keepAdded() {
++  const added = window.__perfAdded = [];
++  new MutationObserver(records => { for (const r of records) for (const n of r.addedNodes) if (n.nodeType === 1) added.push(n); })
++    .observe(document, { childList: true, subtree: true });
++  return performance.now();
++}
++
++// The median of the values that came back (a watch that timed out gives null).
++function middle(values) {
++  const v = values.filter(x => x != null).sort((a, b) => a - b), mid = v.length >> 1;
++  return !v.length ? null : v.length % 2 ? v[mid] : (v[mid - 1] + v[mid]) / 2;
++}
++
+ 
+ // ---- the resume (load.mjs, step 4), all repetitions at once ----
+ 
+@@ -360,8 +462,9 @@ export async function warmUp(site) {
+   } finally { await p.ctx.close(); }
+ }
+ 
+-// name -> { run(site, rep) } or { all(sites, n) }. The phone rows are the cold open and the older pages at
+-// 390x800, three device pixels per CSS pixel, the CPU four times slower (CDP), touch on.
++// name -> { run(site, rep) } or { all(sites, n) }. The phone rows are the cold open, the older pages and the reaction
++// picker at 390x800, three device pixels per CSS pixel, the CPU four times slower (CDP), touch on. picker-reaction
++// and its phone row are not in perf.mjs's DEFAULT_PLAN: --journeys names them.
+ export const JOURNEYS = {
+   'cold-open': { run: site => coldOpen(site, 'desktop') },
+   'warm-open': { run: site => warmOpen(site) },
+@@ -371,6 +474,8 @@ export const JOURNEYS = {
+   'older': { run: (site, rep) => older(site, rep) },
+   'picker-emoji': { run: site => picker(site, measureEmoji) },
+   'picker-gif': { run: site => picker(site, measureGif) },
++  'picker-reaction': { run: site => pickerReaction(site) },
+   'phone-cold-open': { run: site => coldOpen(site, 'phone') },
+   'phone-older': { run: (site, rep) => older(site, rep, 'phone') },
++  'phone-picker-reaction': { run: site => pickerReaction(site, 'phone') },
+ };
+-- 
+2.53.0
+

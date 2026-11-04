@@ -1,0 +1,118 @@
+From fdb8b93389672c9b00e768f52b0ac4b823600779 Mon Sep 17 00:00:00 2001
+From: urza <189804+urza@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 10:49:54 +0100
+Subject: [PATCH] Upload: tus.min.js loads at the first upload, not as a script
+ tag in the page
+
+The page ended with a parser-blocking classic script for lib/tus.min.js (87 KB raw, about 22 to 27 KB
+on the wire). main.js runs only after it, so every start fetched (cold) or read from the worker (warm),
+then parsed and ran the library on the main thread, for a feature most starts never use. Only
+upload.js uses the `tus` global.
+
+upload.js now appends the script once, on the first upload() or uploadOne(). The URL is
+/lib/tus.min.js?v=<build stamp>, the exact entry that ShellAssets puts in the worker's precache list
+(unchanged), so the worker's cache.match hits and the load needs no network. A failed load acts as a
+network failure: upload() resolves with every file in `retry` (the sender keeps them for the next
+wake-up, OF-08), uploadOne() rejects. The failed promise is forgotten, so the next upload tries again.
+A job cancelled or given up while the library loads starts nothing.
+
+Checked: the served page has no tus.min.js script tag; the worker's shell list still names
+/lib/tus.min.js?v=<stamp>, equal to the URL upload.js builds; in Chromium with the worker in control
+there is no `tus` global at boot, the first uploadOne loads it from the worker with no worker network
+fetch (cache hit), and offline it still loads from the cache; with the script blocked and no worker,
+upload() resolves with the file in `retry` and the next upload loads it; a cancel during the load
+starts no /api/tus request. Browser suites: smoke 17/17, features 14/14, offline 14/14.
+
+Co-Authored-By: Wren <wren@yap.local>
+---
+ Yap/wwwroot/index.html   |  4 ++--
+ Yap/wwwroot/js/upload.js | 30 ++++++++++++++++++++++++------
+ 2 files changed, 26 insertions(+), 8 deletions(-)
+
+diff --git a/Yap/wwwroot/index.html b/Yap/wwwroot/index.html
+index 4b12f8f1..70fb4b8d 100644
+--- a/Yap/wwwroot/index.html
++++ b/Yap/wwwroot/index.html
+@@ -1326,9 +1326,9 @@
+     </template>
+ 
+     <!-- The SignalR client is a classic script: it defines the global `signalR` that js/hub.js uses. -->
+-    <!-- Not imports, so the import map does not reach them: the stamp is written here. -->
++    <!-- Not an import, so the import map does not reach it: the stamp is written here. The tus client
++         (lib/tus.min.js) has no tag here on purpose: upload.js loads it at the first upload, so no start pays for it. -->
+     <script src="lib/signalr.min.js?v={{build}}"></script>
+-    <script src="lib/tus.min.js?v={{build}}"></script>
+     <script type="module" src="js/main.js?v={{build}}"></script>
+ </body>
+ </html>
+diff --git a/Yap/wwwroot/js/upload.js b/Yap/wwwroot/js/upload.js
+index 80e65a93..501e60e5 100644
+--- a/Yap/wwwroot/js/upload.js
++++ b/Yap/wwwroot/js/upload.js
+@@ -1,5 +1,5 @@
+ // Files to the TUS endpoint, with one progress figure for the whole message (IB-29 to IB-37), and one file
+-// with metadata for the GIF library (PK-38, ST-22). lib/tus.min.js defines `tus`.
++// with metadata for the GIF library (PK-38, ST-22). lib/tus.min.js defines `tus`; loadTus() brings it in.
+ 
+ const EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.webm', '.mov', '.avi', '.mkv'];   // IB-31
+ const MAX_FILES = 10;                                                                              // IB-32
+@@ -39,9 +39,25 @@ async function info(uploadUrl, attempts = 30, tick = () => {}) {
+   return { info: null, reached };
+ }
+ 
+-// One file with metadata (the GIF library: kind, target, folder). Resolves to the server's info object.
++// lib/tus.min.js (87 KB) is not in the page: a script tag there made every start load, parse and run it before
++// main.js, for a feature most starts never use. It loads once, at the first upload. The URL must be the one the
++// worker precached (ShellAssets: /lib/*.js with the build stamp), so the worker answers it from the device; a URL
++// with another query misses its cache. A failed load is forgotten, so the next upload tries again.
++let tusLoading = null;
++function loadTus() {
++  return tusLoading ??= new Promise((resolve, reject) => {
++    const s = document.createElement('script');
++    s.src = `/lib/tus.min.js?v=${encodeURIComponent(document.documentElement.dataset.build)}`;
++    s.onload = resolve;
++    s.onerror = () => { tusLoading = null; s.remove(); reject(new Error('the upload library did not load')); };
++    document.head.append(s);
++  });
++}
++
++// One file with metadata (the GIF library: kind, target, folder). Resolves to the server's info object. No library
++// rejects, as a network failure does.
+ export function uploadOne(file, endpoint, metadata = {}) {
+-  return new Promise((resolve, reject) => {
++  return loadTus().then(() => new Promise((resolve, reject) => {
+     const u = new tus.Upload(file, {
+       endpoint, chunkSize: 5 * 1024 * 1024, retryDelays: [0, 1000, 3000], withCredentials: true,
+       metadata: { filename: file.name, filetype: file.type, ...metadata },
+@@ -49,7 +65,7 @@ export function uploadOne(file, endpoint, metadata = {}) {
+       onSuccess: async () => { const { info: result } = await info(u.url, 60); if (result) resolve(result); else reject(new Error('timeout')); },
+     });
+     u.start();
+-  });
++  }));
+ }
+ 
+ // Uploads every file; onProgress(percent, done, total). Returns { promise, cancel, giveUp }: the promise resolves
+@@ -68,7 +84,9 @@ export function upload(files, endpoint, onProgress, metadata = {}) {
+   const outcome = () => ({ files: settled.filter(r => r?.info).map(r => r.info), errors: settled.filter(r => r?.error).map(r => r.error),
+                            refused: settled.filter(r => r?.error).map(r => r.file), retry: files.filter((f, i) => !settled[i] || settled[i].retry), cancelled });
+ 
+-  const all = Promise.all(files.map((file, i) => new Promise(resolve => {
++  // No library (loadTus failed) is no network: outcome() puts every file in `retry`, and the sender tries again at
++  // the next wake-up (OF-08). A job cancelled or given up while the library loaded starts nothing: its promise settled.
++  const all = loadTus().then(() => !over && Promise.all(files.map((file, i) => new Promise(resolve => {
+     const finish = r => { settled[i] = r; resolve(r); };
+     const u = new tus.Upload(file, {
+       endpoint, chunkSize: 5 * 1024 * 1024, retryDelays: [0, 1000, 3000, 5000], withCredentials: true,
+@@ -89,7 +107,7 @@ export function upload(files, endpoint, onProgress, metadata = {}) {
+     });
+     uploads.push(u);
+     u.start();
+-  }))).then(outcome);
++  }))), () => {}).then(outcome);
+ 
+   const promise = new Promise(resolve => { settle = resolve; all.then(resolve); });
+   // tus calls neither onSuccess nor onError after abort(), so the promise settles here.
+-- 
+2.53.0
+

@@ -1,0 +1,81 @@
+From 920c74051375b95678e36bf0bc2585bedcad1e0b Mon Sep 17 00:00:00 2001
+From: urza <189804+urza@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 11:08:05 +0100
+Subject: [PATCH] Hub: the next connect goes direct again after both attempts
+ failed
+
+The negotiate flag answers "does this network block the direct WebSocket?",
+but connect() also turned it on when the server or the network was down: the
+direct attempt failed, the negotiated attempt failed too, and the flag stayed
+on for the life of the page. Every later connect then sent POST /hub/negotiate
+before the socket, one more round trip on each resume of an installed app
+after any deploy. Now a double failure sets the flag back and rebuilds the
+connection. A proxy that blocks WebSockets keeps the flag, because there the
+negotiated attempt opens.
+
+restart() keeps the flag. After this change the flag survives only when the
+direct socket failed and the negotiated one opened right after, which is
+evidence about this network; a reset at every long-background resume would
+cost such a network one failed direct attempt (a blocked upgrade can hang)
+on each return.
+
+The catch now returns when restart() replaced the connection during its
+start: restart() runs its own connect(), and the new rebuild in the catch
+would otherwise replace that live connection too and leave it open unseen
+beside the next one. onClose already ignores a replaced connection, and a
+failed start() fires no close callback in SignalR 10.0.11.
+
+Checked: dotnet build, 0 warnings; offline suite 14/14 PASS; smoke suite
+17/17 PASS. Probe (Playwright, own server killed by PID, 5 s down, restarted
+on the same port and content root, then offline/online): on main the reconnect
+after the restart and the forced reconnect each send POST /hub/negotiate and
+open a negotiated socket (id=<token>); on this branch both open the direct
+socket with no negotiate request. While the server is down this branch makes
+two refused attempts per retry tick (direct, then negotiated) where main makes
+one after its first tick.
+
+Co-Authored-By: Wren <wren@yap.local>
+---
+ Yap/wwwroot/js/hub.js | 14 +++++++++++---
+ 1 file changed, 11 insertions(+), 3 deletions(-)
+
+diff --git a/Yap/wwwroot/js/hub.js b/Yap/wwwroot/js/hub.js
+index 10d2474b..7be936f9 100644
+--- a/Yap/wwwroot/js/hub.js
++++ b/Yap/wwwroot/js/hub.js
+@@ -25,8 +25,8 @@ export function deviceId() {
+ 
+ // A direct WebSocket, without the negotiate round trip (one less per connect, docs/performance-notes.md 5.4). SignalR
+ // has no fallback then: when the direct socket does not open, connect() builds the connection again with negotiation
+-// and every transport, as before, and the page keeps that for the rest of its life. The admin's Sessions table shows
+-// the transport in use (AD-25).
++// and every transport, as before, and keeps that while the negotiated connection opens. When that one fails too, the
++// next try goes direct again (see the catch in connect()). The admin's Sessions table shows the transport in use (AD-25).
+ let negotiate = false;
+ let connection = build();
+ 
+@@ -98,12 +98,20 @@ export async function connect() {
+   clearTimeout(retryTimer);
+   if (!navigator.onLine) { store.setConnection('offline'); scheduleRetry(); return; }   // the online event tries at once
+   store.setConnection(everConnected ? 'reconnecting' : 'connecting');
+-  try { await connection.start(); }
++  const c = connection;
++  try { await c.start(); }
+   catch (e) {
+     if (/401|Unauthorized/.test(String(e?.message ?? e))) { signedOut(); return; }   // the cookie is dead: the login page, not a loop (AU-21)
++    // restart() replaced this connection during its start and runs its own connect(). A rebuild below would replace
++    // that one too: it would open unseen beside the next one, and every hub message would arrive twice.
++    if (c !== connection) return;
+     // The direct socket did not open: a dead cookie shows as a plain socket error here, and so does a proxy that
+     // blocks WebSockets. The negotiated connection tells the two apart (a 401 above) or finds another transport.
+     if (!negotiate) { negotiate = true; connection = build(); connect(); return; }
++    // The negotiated attempt failed too: the server or the network is down (a deploy, no signal), which says nothing
++    // about the transport. The flag goes back, or every later connect of this page pays the negotiate round trip. A
++    // proxy that blocks WebSockets keeps the flag: there the negotiated attempt opens and never reaches this line.
++    negotiate = false; connection = build();
+     if (!everConnected) settleFirst();   // the first try failed: whoever waits for the first sync goes on without it
+     store.setConnectionFailed(true);   // the catching-up pill stops spinning (TL-39)
+     store.setConnection(navigator.onLine ? (everConnected ? 'reconnecting' : 'connecting') : 'offline'); scheduleRetry(); return;
+-- 
+2.53.0
+
