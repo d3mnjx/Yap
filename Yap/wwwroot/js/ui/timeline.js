@@ -62,6 +62,7 @@ export function Timeline(root, { reopen }) {
     flow.querySelectorAll('.lobby-line').forEach(n => n.remove());
     hidePill(); hideDown();
     landed = null;   // the rows it measured are gone (the still view, below)
+    held = null;     // the row a jump held is gone too; a jump's reset holds its new target in centre()
     shownChannel = state.open?.channelId ?? null;
     unread = state.unread[shownChannel] > 0;   // a count from before this open; chat.js marks it read on open, this is the fallback
     if (!state.open) { renderTop(); return; }
@@ -81,7 +82,7 @@ export function Timeline(root, { reopen }) {
     renderTop();
     const jumped = target && rows.get(target);
     if (jumped) {
-      centre(jumped.node, { animate: false });   // the rows are new: an animation from the old place has no meaning
+      centre(target, { animate: false });   // the rows are new: an animation from the old place has no meaning
       syncDown();                           // the arrow is the way back, at any distance in a window (TL-40, TL-41)
       return;
     }
@@ -395,6 +396,7 @@ export function Timeline(root, { reopen }) {
   // The pill and the arrow are placed again: the strip they sit above moved with the list's bottom edge.
   const sizes = new ResizeObserver(() => {
     if (following) list.scrollTop = list.scrollHeight;
+    else hold();   // a jump's target stays in the middle while the rows around it load (MR-34)
     if (state.open?.hasMore && !loading) renderTop();
     if (pill) place(pill);
     if (down) place(down);
@@ -517,7 +519,7 @@ export function Timeline(root, { reopen }) {
   async function jumpTo(id) {
     const token = ++jumpToken;                         // every tap counts, a loaded row too: an older answer must not move the view after it
     const r = rows.get(id);
-    if (r) { centre(r.node, { animate: true }); return null; }
+    if (r) { centre(id, { animate: true }); return null; }
     const open = state.open;
     if (!open) return 'Not available';
     if (state.connection !== 'connected') return 'Needs a connection';   // TL-34
@@ -538,30 +540,59 @@ export function Timeline(root, { reopen }) {
 
   // The row in the middle of the view, highlighted (MR-34). The follow stops: the reader is at the row, not at the
   // newest message.
-  function centre(node, { animate }) {
+  let held = null, gliding = 0;   // the message a jump centred (the id: a redraw replaces the node), and the frame of its glide
+  const heldNode = () => rows.get(held)?.node;
+  function centre(id, { animate }) {
     following = false;
     cancelAnimationFrame(scrollFrame); scrollFrame = 0;   // a bottom scroll queued for an earlier row must not undo this
+    cancelAnimationFrame(gliding); gliding = 0;           // the glide of an earlier jump
+    held = id;
+    const node = heldNode();
     const highlight = () => { node.classList.add('highlight-message'); setTimeout(() => node.classList.remove('highlight-message'), 2000); };
-    const target = node.offsetTop - list.offsetTop - list.clientHeight / 2 + node.offsetHeight / 2;
-    if (!animate) {
-      const top = Math.round(Math.max(0, Math.min(target, list.scrollHeight - list.clientHeight)));
-      // A jump is no scroll up by the reader: with lastTop here, the scroll event keeps the 100 px floor of nearTop and
-      // asks for no older page two screens early. placeTop marks the write as the handler's own for the still view.
-      lastTop = top;
-      placeTop(top);
-      highlight();
-      return;
-    }
-    const start = list.scrollTop, distance = target - start, t0 = performance.now();
+    if (!animate) { hold(); highlight(); return; }
+    const start = list.scrollTop, t0 = performance.now();
     const ease = t => 1 - Math.pow(1 - t, 3);
     const step = now => {
+      const node = held === id && heldNode();
+      if (!node) { gliding = 0; return; }   // the reader took over, or the rows changed
       const k = Math.min((now - t0) / 600, 1);
-      list.scrollTop = start + distance * ease(k);
-      if (k < 1) requestAnimationFrame(step);
-      else highlight();
+      moveTo(start + (middleOf(node) - start) * ease(k));   // the target of this frame: the rows on the way may have grown
+      if (k < 1) gliding = requestAnimationFrame(step);
+      else { gliding = 0; highlight(); }
     };
-    requestAnimationFrame(step);
+    gliding = requestAnimationFrame(step);
   }
+
+  // The rows around a jump's target load their pictures and posters after the jump, and every row that grows above
+  // the target pushes it down. Chrome's scroll anchoring makes up only for growth above the first row in view: the
+  // rows between that row and the target, and the target itself, still pushed it. The 5/29 lobby pin, a TikTok post
+  // under seven videos with no stored size, slid out of view (2026-11-04). The view holds the target in the middle
+  // while the rows grow (the ResizeObserver above), until the reader moves the view.
+  function hold() {
+    if (following) held = null;   // the pill, the arrow or a scroll to the bottom: the reader went back to the newest
+    const node = !gliding && heldNode();
+    if (node) moveTo(middleOf(node));   // a deleted target holds nothing
+  }
+
+  // The scroll position that puts the row in the middle of the view. The boxes and not offsetTop: a row's offsetTop
+  // counts from .messages-flow, and the list's top padding lies outside it.
+  function middleOf(node) {
+    const row = node.getBoundingClientRect(), view = list.getBoundingClientRect();
+    return list.scrollTop + row.top - view.top - list.clientTop - (list.clientHeight - row.height) / 2;
+  }
+
+  // A jump is no scroll up by the reader: with lastTop here, the scroll event keeps the 100 px floor of nearTop and
+  // asks for no older page two screens early. placeTop marks the write as the handler's own for the still view.
+  function moveTo(target) {
+    const top = Math.round(Math.max(0, Math.min(target, list.scrollHeight - list.clientHeight)));
+    if (top === Math.round(list.scrollTop)) return;
+    lastTop = top;
+    placeTop(top);
+  }
+
+  // The reader's own move ends the hold and the glide: a wheel, a finger, a click (the scrollbar's too) or a key in
+  // the list. A scroll event cannot tell: the anchoring's own adjustments send them as well.
+  for (const type of ['wheel', 'touchstart', 'pointerdown', 'keydown']) list.addEventListener(type, () => { held = null; }, { passive: true, signal });
 
   const offs = [
     on('messages', onMessages), on('pending', onPending), on('presence', onPresence),
@@ -577,7 +608,7 @@ export function Timeline(root, { reopen }) {
   current = { jumpTo };
   reset();
   return () => {
-    offs.forEach(off => off()); aborter.abort(); sizes.disconnect(); clearInterval(clock); hidePill(); hideDown(); catching?.remove(); loadingPill?.remove(); clearTimeout(stillTimer); list.remove();
+    offs.forEach(off => off()); aborter.abort(); sizes.disconnect(); clearInterval(clock); hidePill(); hideDown(); catching?.remove(); loadingPill?.remove(); clearTimeout(stillTimer); cancelAnimationFrame(gliding); list.remove();
     if (current?.jumpTo === jumpTo) current = null;
   };
 }
