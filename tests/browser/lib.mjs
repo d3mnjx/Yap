@@ -48,16 +48,23 @@ export async function sendFiles(page, files) {
 // ---- the server ----
 
 // Starts Yap.dll memory-only in a fresh temp content root (a copy of Yap/Data and a link to Yap/wwwroot), so a
-// run never touches the repository's Data folder. Returns { root, stop() }; stop() returns the server's
-// fail/crit/exception lines and removes the root.
-export async function startServer() {
+// run never touches the repository's Data folder. Returns { root, base, startMs, stop() }; stop() returns the
+// server's fail/crit/exception lines and removes the root.
+//
+// The options serve perf.mjs, which runs two builds side by side, each on a copy of a seeded database:
+//   dll, wwwroot, port: the build and its address;  scratch: the folder that gets the root;
+//   prepare(root): fills the root before the start (the seed's Data and uploads, over the copied settings);
+//   args: replace the default memory-only argument;  keep: stop() leaves the root (the seed is taken from it).
+export async function startServer({ dll = DLL, wwwroot = path.join(REPO, 'Yap', 'wwwroot'), port = PORT, scratch = SCRATCH,
+  prepare = null, args = ['--ChatSettings:Persistence:Enabled=false'], keep = false } = {}) {
+  const base = `http://127.0.0.1:${port}`;
   // An old server on the port would answer instead of the new one, and the new one would die on the bind
   // error: the run would then test stale state without saying so.
-  if (await answers(`${BASE}/login`)) throw new Error(`${BASE} already answers. Stop the old server first.`);
-  if (!fs.existsSync(DLL)) throw new Error(`${DLL} not found. Run dotnet build first.`);
+  if (await answers(`${base}/login`)) throw new Error(`${base} already answers. Stop the old server first.`);
+  if (!fs.existsSync(dll)) throw new Error(`${dll} not found. Run dotnet build first.`);
 
-  fs.mkdirSync(SCRATCH, { recursive: true });
-  const root = fs.mkdtempSync(path.join(SCRATCH, 'root-'));
+  fs.mkdirSync(scratch, { recursive: true });
+  const root = fs.mkdtempSync(path.join(scratch, 'root-'));
   const data = path.join(REPO, 'Yap', 'Data');
   fs.mkdirSync(path.join(root, 'Data'));
   for (const entry of fs.readdirSync(data, { withFileTypes: true })) {
@@ -65,40 +72,45 @@ export async function startServer() {
     if (keep) fs.cpSync(path.join(data, entry.name), path.join(root, 'Data', entry.name), { recursive: true });
   }
   // 'junction' is what Windows allows without admin rights; other systems ignore the type.
-  fs.symlinkSync(path.join(REPO, 'Yap', 'wwwroot'), path.join(root, 'wwwroot'), 'junction');
+  fs.symlinkSync(wwwroot, path.join(root, 'wwwroot'), 'junction');
+  await prepare?.(root);
 
   const logFile = path.join(root, 'server.log');
   const out = fs.openSync(logFile, 'w');
-  const child = spawn('dotnet', [DLL, '--contentRoot', root, '--urls', BASE,
-    '--ChatSettings:Persistence:Enabled=false', '--ChatSettings:WelcomePageEnabled=false'],
-  { cwd: root, env: { ...process.env, ASPNETCORE_ENVIRONMENT: 'Development' }, stdio: ['ignore', out, out] });
+  const started = Date.now();
+  const child = spawn('dotnet', [dll, '--contentRoot', root, '--urls', base, ...args, '--ChatSettings:WelcomePageEnabled=false'],
+    { cwd: root, env: { ...process.env, ASPNETCORE_ENVIRONMENT: 'Development' }, stdio: ['ignore', out, out] });
   let exited = false;
   child.on('exit', () => { exited = true; });
 
   // A crash or Ctrl+C must not leave the server running or the root behind.
-  const cleanup = () => { if (!exited) child.kill(); fs.rmSync(root, { recursive: true, force: true }); };
+  const cleanup = () => { if (!exited) child.kill(); if (!keep) fs.rmSync(root, { recursive: true, force: true }); };
   process.on('exit', cleanup);
   process.on('SIGINT', () => process.exit(130));
 
-  const up = await waitTrue(async () => !exited && await answers(`${BASE}/login`), 30000, 250);
+  // A seeded database loads into memory before the server answers: allow for it.
+  const up = await waitTrue(async () => !exited && await answers(`${base}/login`), 120_000, 250);
   if (!up) {
     const tail = fs.readFileSync(logFile, 'utf8').split('\n').slice(-15).join('\n');
     cleanup();
     throw new Error(`The server did not start. Last log lines:\n${tail}`);
   }
-  console.log(`server: ${DLL} on ${BASE}, root ${root}`);
+  const startMs = Date.now() - started;
+  console.log(`server: ${dll} on ${base}, root ${root}, up after ${startMs} ms`);
 
   return {
-    root,
+    root, base, startMs,
     async stop() {
       if (!exited) {
         child.kill();
-        if (!await waitTrue(() => exited, 10000, 100)) child.kill('SIGKILL');
+        // A server with the database on flushes its write queue before it exits (PersistenceWriter): a kill sooner
+        // would lose the seed's last writes.
+        if (!await waitTrue(() => exited, 30000, 100)) child.kill('SIGKILL');
       }
       fs.closeSync(out);
       const issues = fs.readFileSync(logFile, 'utf8').split('\n')
         .filter(l => /^(fail|crit):|exception/i.test(l)).map(l => l.trim());
-      fs.rmSync(root, { recursive: true, force: true });
+      if (!keep) fs.rmSync(root, { recursive: true, force: true });
       process.off('exit', cleanup);
       return issues;
     },

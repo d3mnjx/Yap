@@ -2,83 +2,22 @@
 // for a comparison before and after a change. Nothing asserts on the numbers; the link makes them noisy, and the
 // reader compares two runs. The plumbing is checked: the boot report (AD-41) must arrive, the resume must end.
 //
-// The slow link is a TCP proxy in this process, not a CDP throttle: a CDP throttle shapes the page's requests
-// only, never the service worker's fetches or the WebSocket frames, and the shell caching is the worker's work.
-// Every byte between the browser and the server passes the proxy, so the proxy can also kill the server side of
-// a socket while the client side stays open and silent: a socket dead without a close, as after a long sleep.
-//
-// The server speaks HTTP/1.1 here (no TLS), so the browser has six connections and a file count costs more than it
-// does over h2 in production. The numbers compare two runs on this machine; they are not production numbers.
+// The slow link is a TCP proxy in this process (proxy.mjs), not a CDP throttle: a CDP throttle shapes the page's
+// requests only, never the service worker's fetches or the WebSocket frames, and the shell caching is the worker's
+// work. The proxy can also kill the server side of a socket while the client side stays open and silent: a socket
+// dead without a close, as after a long sleep. perf.mjs measures more journeys through the same proxy, A/B.
 //
 // Run from tests/browser: npm run load  (-- --port=<n> to move the server; the proxy takes the next port)
 
-import net from 'node:net';
 import { chromium } from 'playwright';
 import { BASE, PORT, row, sleep, waitTrue, step, finish, startServer, signIn, watchContext, watchPage } from './lib.mjs';
+import { startProxy } from './proxy.mjs';
 
 const LINK = { oneWayMs: 450, bytesPerSec: 125_000 };   // 900 ms round trip, 1 Mbit/s each way; production reports replace these later
 const PROXY_PORT = PORT + 1;
 const PROXY = `http://127.0.0.1:${PROXY_PORT}`;
 
-// ---- the link ----
-// One queue per direction, shared by every connection, like one link: a chunk leaves after its time on the wire
-// at the rate, never before the chunk ahead of it, plus the one-way delay. `set(null)` is a plain pass-through.
-function startProxy() {
-  let link = null;
-  const pairs = new Set();
-  const lanes = { up: { ready: 0 }, down: { ready: 0 } };
-  // One ordered queue per direction of a connection, drained by one timer at a time: a timer per chunk would let two
-  // chunks with the same expiry fire in either order and corrupt the stream.
-  const forward = (from, to, lane, pair, fromClient) => {
-    const queue = [];   // { chunk | null for the end, at }, in order of `at`
-    let timer = null;
-    const drain = () => {
-      timer = null;
-      while (queue.length && queue[0].at <= Date.now()) {
-        const { chunk } = queue.shift();
-        if (to.destroyed) continue;
-        if (chunk) to.write(chunk); else to.end();
-      }
-      if (queue.length) timer = setTimeout(drain, Math.max(1, queue[0].at - Date.now()));
-    };
-    const enqueue = (chunk, at) => { queue.push({ chunk, at }); if (!timer) timer = setTimeout(drain, Math.max(1, at - Date.now())); };
-    let first = true;
-    from.on('data', chunk => {
-      if (fromClient && first) { first = false; pair.ws = /upgrade: websocket/i.test(chunk.toString('latin1', 0, 1024)); }   // the socket's first request names it
-      if (pair.hold && fromClient) return;   // blackholed: the client talks into the void
-      if (!link) { to.write(chunk); return; }
-      const start = Math.max(Date.now(), lane.ready);
-      lane.ready = start + chunk.length * 1000 / link.bytesPerSec;
-      enqueue(chunk, lane.ready + link.oneWayMs);
-    });
-    from.on('end', () => {
-      if (pair.hold && fromClient) return;
-      if (!link) { to.end(); return; }
-      enqueue(null, Math.max(queue.at(-1)?.at ?? 0, Date.now() + link.oneWayMs));
-    });
-  };
-  const server = net.createServer(client => {
-    const upstream = net.connect(PORT, '127.0.0.1');
-    const pair = { client, upstream, hold: false };
-    pairs.add(pair);
-    forward(client, upstream, lanes.up, pair, true);
-    forward(upstream, client, lanes.down, pair, false);
-    client.on('close', () => { pairs.delete(pair); upstream.destroy(); });
-    client.on('error', () => client.destroy());
-    upstream.on('close', () => { if (!pair.hold) client.destroy(); });
-    upstream.on('error', () => { if (!pair.hold) client.destroy(); });
-  });
-  server.listen(PROXY_PORT, '127.0.0.1');
-  return {
-    set(l) { link = l; },
-    // What a long sleep leaves behind: the WebSocket's server side is gone while its client side stays open and
-    // silent, and the idle keep-alive HTTP sockets are closed, so the page's next requests open new connections.
-    blackhole() { for (const p of pairs) { if (p.ws) { p.hold = true; p.upstream.destroy(); } else { p.client.destroy(); p.upstream.destroy(); } } },
-    close() { for (const p of pairs) { p.client.destroy(); p.upstream.destroy(); } server.close(); },
-  };
-}
-
-const proxy = startProxy();
+const proxy = startProxy({ port: PROXY_PORT, upstream: PORT });
 const server = await startServer();
 const browser = await chromium.launch();
 

@@ -36,6 +36,13 @@ server, runs its steps, prints PASS or FAIL for each step, and stops the server 
   from a return after a frozen background with a dead socket to the server's rows. It asserts nothing on the
   numbers; run it before and after a change and compare. The link is a TCP proxy inside the script, so the
   service worker and the WebSocket go through it too.
+- `perf.mjs` measures how responsive Yap feels for one person on a real-sized server, and compares two builds (A
+  and B) side by side. Each build runs on a copy of a seed with a real history (`perf-seed.mjs`: 30 people, 10 rooms,
+  50,000 messages over 180 days). The journeys (`perf-journeys.mjs`) are a cold open, a warm open, a resume after a
+  frozen background, sends, room changes, older pages and the two pickers, plus a cold open and older pages on a slow
+  phone. They run through the link proxy of `load.mjs` (`proxy.mjs`) on three profiles: `far` (900 ms round trip,
+  1 Mbit/s), `near` (60 ms, 20 Mbit/s) and `lan` (no proxy). The report gives the median, min and max of every
+  metric per build and the delta. See "The performance harness" below.
 - `update.mjs` replays a deploy: build A is served, the browser stores the shell through the worker, then build
   B takes the same port and the page is reloaded, as an installed app is at its next launch. It watches the
   worker's registration, taps the new-version strip's Reload, and says whether the page ends on build B with no
@@ -80,6 +87,34 @@ could not bind and the run would test the old one. To change the settings, pass 
 `--dll=<path>` or `--scratch=<folder>` after `--`, for example `npm run smoke -- --port=5099`.
 
 Screenshots go to `shots/`. The exit code is 1 when a step fails.
+
+## The performance harness
+
+Build each worktree to compare (`dotnet build Yap` in it), then from `tests/browser`:
+
+```
+npm run perf -- --seed                                             # once: about 1.5 minutes
+npm run perf -- --a=<worktree A>:<label> --b=<worktree B>:<label>   # about 20 minutes at the defaults
+```
+
+`--seed` builds the seed into `~/yap-perf/seed` (`--seed-dir=<dir>` for another place) with the build of `--a` and
+stops. A measurement starts each build on its own copy of the seed, with the database on, under `~/yap-perf/runs`
+(ports 5301 and 5302, their proxies 5401 and 5402). With only `--a` it measures one build. The person is the seed's
+admin, signed in through the API, so a journey times the page and not the login form. A page idling on Settings keeps
+the person online on each server, so the person's presence (and the join line it draws) does not depend on the
+order of the runs. The runs alternate A, B, B, A, so drift of the machine hits both builds alike. The tables go to stdout and to `report.md` in `--out` (default
+`~/yap-perf/results/<time>`), the raw numbers to `runs.json`, the browser's complaints to `browser-log.txt`. A failed
+run leaves a screenshot there, and the exit code is 1.
+
+The default plan keeps one A/B run at five repetitions near 20 minutes. It leaves out the phone rows and the sends
+on `far`, the resume on `near` and `lan`, and the phone rows on `lan`; `DEFAULT_PLAN` in `perf.mjs` says why. `--full`
+runs every journey (about 29 minutes for A/B on all three profiles). `--profiles=`, `--journeys=` and `--n=` choose
+others.
+
+The numbers compare two builds on one machine. They are not production numbers: the server speaks HTTP/1.1 without
+TLS, the emoji images come from the real CDN outside the proxy, and the phone is a desktop Chromium with a slower
+CPU. The resume pauses the page in the debugger, because a freeze through `Page.setWebLifecycleState` does not stop
+the timers of this headless Chromium.
 
 ## The service worker and the offline script
 

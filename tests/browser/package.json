@@ -12,6 +12,7 @@
     "latency": "node latency.mjs",
     "screenshots": "node screenshots.mjs",
     "load": "node load.mjs",
+    "perf": "node perf.mjs",
     "update": "node update.mjs"
   },
   "devDependencies": {
