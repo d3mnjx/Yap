@@ -1,6 +1,7 @@
 // The feature run of the chat client: replies, link cards, the image gallery, emoji sizes and pack emoji,
 // older pages and the top note, the New messages pill, typing in a DM, Shift+Enter, the keys on a GIF star, the
-// emoji pick at the limit with Edit on a failed row, and a rename of the open room.
+// emoji pick at the limit with Edit on a failed row, a rename of the open room, and the media of a pin (the viewer over
+// the pins panel, a video that plays in the entry).
 // Run: npm run features (see README.md). Screenshots go to shots/.
 
 import { chromium } from 'playwright';
@@ -13,6 +14,17 @@ const lastRow = page => page.locator('.messages-container .message-group:not(.sy
 async function send(page, text) { await page.fill('.message-input', text); await page.press('.message-input', 'Enter'); }
 const scroller = page => page.locator('.messages');
 const scrollInfo = page => scroller(page).evaluate(e => ({ top: Math.round(e.scrollTop), h: e.scrollHeight, ch: e.clientHeight }));
+// fetch from the page, with its cookie: the same requests the client makes (as in screenshots.mjs).
+function api(page, method, url, body = null) {
+  return page.evaluate(async ([method, url, body]) => {
+    const init = { method, credentials: 'same-origin' };
+    if (body !== null) { init.headers = { 'content-type': 'application/json' }; init.body = JSON.stringify(body); }
+    const res = await fetch(url, init);
+    const reply = await res.text();
+    if (!res.ok) throw new Error(`${method} ${url}: ${res.status} ${reply.slice(0, 200)}`);
+    return reply ? JSON.parse(reply) : null;
+  }, [method, url, body]);
+}
 const countRows = page => page.locator('.messages-container .message-group:not(.system-message)').count();
 
 const server = await startServer();
@@ -343,6 +355,64 @@ await step(14, 'A rename of the open room reaches the header and the tab title (
   const okB = await waitTrue(async () => (await header(B)).includes('newname') && (await B.title()).endsWith('#newname'), 3000);
   const okA = await waitTrue(async () => (await header(A)).includes('newname') && (await A.title()).endsWith('#newname'), 3000);
   check(back && okB && okA, `A back at the room ${back}; B header "${await header(B)}", title "${await B.title()}"; A header "${await header(A)}", title "${await A.title()}"`);
+});
+
+await step(15, 'A pin opens its pictures in the viewer over the panel and plays its video in place (SH-48, SH-49, TL-22, TL-29)', async (check) => {
+  await A.goto(BASE + '/lobby');
+  await A.waitForSelector('.message-input', { timeout: 10000 });
+  // The store and the hub of the page itself (the same module instances): the ids, and a pin without the row menu.
+  const ids = () => A.evaluate(async () => { const s = (await import('/js/store.js')).state; return { channelId: s.open.channelId, ...Object.fromEntries(s.open.messages.filter(m => !m.pending).map(m => [m.text, m.id])) }; });
+  const invoke = (...args) => A.evaluate(async args => (await import('/js/hub.js')).invoke(...args), args);
+  await A.setInputFiles('.message-input-container input[type=file]', [RED, BLUE]);
+  await A.fill('.message-input', 'pin album');
+  await A.click('.send-button');
+  const { channelId } = await ids();
+  await api(A, 'POST', `/api/channels/${channelId}/messages`, { clientId: crypto.randomUUID(), text: 'pin video', videos: ['/uploads/pin-video.mp4'] });   // no file behind it: the player and its tap are the point
+  const sent = await waitTrue(async () => { const m = await ids(); return !!m['pin album'] && !!m['pin video']; }, 20000, 200);
+  const m = await ids();
+  const pinned = sent && (await invoke('pin', channelId, m['pin album'])) == null && (await invoke('pin', channelId, m['pin video'])) == null;
+  check(pinned, `both messages sent ${sent}; both pinned ${pinned}`);
+  if (!pinned) return;
+
+  const panel = A.locator('.pins-panel'), modal = A.locator('.image-modal');
+  const openPanel = async () => { await A.locator('.pins-button').click(); await panel.waitFor({ state: 'visible', timeout: 3000 }); };
+  const album = () => A.locator('.pin-entry').filter({ hasText: 'pin album' });
+  await openPanel();
+  const shots = await album().locator('button.pin-shot').count();
+  await album().locator('button.pin-shot').nth(1).click();
+  await modal.waitFor({ timeout: 3000 });
+  const at = await waitTrue(async () => (await modal.locator('.modal-counter-index').innerText()).trim() === '2', 2000, 50);
+  const stillOpen = await panel.isVisible();
+  const download = await modal.locator('.modal-download').getAttribute('href');
+  check(shots === 2 && at && stillOpen && /^\/uploads\//.test(download ?? ''), `pin entry picture buttons ${shots}; viewer at 2 / 2 ${at}; panel still open under it ${stillOpen}; Download "${download}"`);
+  await modal.locator('.modal-close').click();
+  const closeOnly = await waitTrue(async () => (await modal.count()) === 0, 2000, 50) && await panel.isVisible();
+  await album().locator('button.pin-shot').first().click();
+  await modal.waitFor({ timeout: 3000 });
+  await A.keyboard.press('Escape');
+  const escViewer = await waitTrue(async () => (await modal.count()) === 0, 2000, 50) && await panel.isVisible();
+  await A.keyboard.press('Escape');
+  const escPanel = await waitTrue(async () => (await panel.count()) === 0, 2000, 50);
+  check(closeOnly && escViewer && escPanel, `the viewer's × closes the viewer only ${closeOnly}; Escape closes the viewer first ${escViewer}, then the panel ${escPanel}`);
+
+  await openPanel();
+  const videoEntry = A.locator('.pin-entry').filter({ hasText: 'pin video' });
+  const inGrid = await A.locator('.pin-entry .pin-cell .video-container').count();
+  await videoEntry.locator('.video-play-overlay').click();
+  // The controls, not the overlay: with no file the play fails, and the row's player shows its overlay again (MR-27).
+  const playing = await videoEntry.locator('video.video-player').evaluate(v => v.controls);
+  check(inGrid === 0 && playing && await panel.isVisible(), `no video in a grid cell ${inGrid === 0}; a tap on the video starts the row's player (controls ${playing}), and the panel stays`);
+
+  await album().locator('button.pin-shot').first().click();
+  await modal.waitFor({ timeout: 3000 });
+  const unpinned = (await invoke('unpin', channelId, m['pin album'])) == null;   // as if another device: the 'pins' event closes the viewer
+  const viewerGone = await waitTrue(async () => (await modal.count()) === 0, 3000, 50);
+  check(unpinned && viewerGone && await panel.isVisible(), `unpin while the viewer is open ${unpinned}: the viewer closes ${viewerGone}, the panel stays with the other pin`);
+
+  await videoEntry.locator('.pin-time').click();
+  const jumped = await waitTrue(async () => (await panel.count()) === 0, 5000, 50);
+  check(jumped, `a tap on the header jumps, and the panel closes ${jumped}`);
+  await invoke('unpin', channelId, m['pin video']);
 });
 
 await finish(browser, server);

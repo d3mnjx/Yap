@@ -13,7 +13,8 @@
 .image-modal {
     position: fixed;
     inset: 0;
-    z-index: 1000;
+    z-index: 1001; /* over the pins panel (.pins-panel, 1000, frame.css): the viewer opens from a pin (SH-48). With
+                      equal values it was on top only by the order of insertion. */
     --bg-alpha: 0.9;
     /* The backdrop follows the finger during a drag-to-close; the picture stays opaque. */
     background: rgb(0 0 0 / calc(var(--bg-alpha) * (1 - var(--drag, 0))));

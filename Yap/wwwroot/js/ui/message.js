@@ -4,7 +4,7 @@
 
 import { state, displayName, hasMedia, toggleReactionLocally, editLocally, removeLocally, toggleFavoriteLocally, mayPin, isPinned, pinLocally, unpinLocally } from '../store.js';
 import { clone, el, replace, classes } from '../render/dom.js';
-import { inline, messageText, imageFailed } from '../render/text.js';
+import { inline, messageText, imageFailed, safeHref } from '../render/text.js';
 import { messageTime } from '../render/time.js';
 import { avatar } from '../render/avatar.js';
 import * as hub from '../hub.js';
@@ -16,6 +16,7 @@ import { reactionPicker } from './emoji-picker.js';
 import { api } from '../api.js';
 import { openInstallDialog } from '../pwa.js';
 import { voicePlayer } from './voice.js';
+import { video } from './video.js';
 
 const MAX_TEXT = 4000;   // MR-11
 
@@ -136,7 +137,7 @@ function caption(m) {
 const ROWS = { 2: [2], 3: [3], 4: [2, 2], 5: [2, 3], 6: [3, 3], 7: [2, 2, 3], 8: [2, 3, 3], 9: [3, 3, 3], 10: [2, 2, 3, 3] };
 
 function imageGallery(m) {
-  const open = index => openGallery(m, index);
+  const open = index => openGallery(m.images, index, m.id);
   const item = (img, index, single) => {
     // draggable=false: on Android a long press whose menu is suppressed (below) would start a drag of the picture instead
     const attrs = { src: img.medium, alt: 'Uploaded image', class: 'gallery-image', loading: 'lazy', width: 800, height: single ? 600 : 800, draggable: 'false', onerror: imageFailed };   // a poor connection: load again (MR-24)
@@ -154,20 +155,6 @@ function imageGallery(m) {
     rows.push(el('div', { class: 'gallery-row' }, cells));
   }
   return el('div', { class: 'image-gallery' }, rows);
-}
-
-// MR-27: the poster under a tint with a play icon; a tap shows the controls and plays.
-function video(v) {
-  const node = clone('t-video');
-  const player = node.querySelector('video');
-  player.poster = v.poster; player.src = v.src;
-  if (v.width && v.height) { player.classList.add('sized'); player.style.setProperty('--w', v.width); player.style.setProperty('--h', v.height); }   // the poster's shape before it loads (MR-27)
-  const overlay = node.querySelector('.video-play-overlay');
-  overlay.addEventListener('click', () => { player.controls = true; overlay.hidden = true; player.play().catch(() => {}); });
-  const back = () => { if (player.currentTime === 0 || player.ended) overlay.hidden = false; };
-  player.addEventListener('ended', () => { overlay.hidden = false; });
-  player.addEventListener('pause', back);
-  return node;
 }
 
 // MR-28 to MR-31
@@ -223,8 +210,6 @@ async function toggleFavorite(entryId, rowNode) {
   try { await api.put(`/api/gifs/${entryId}/favorite`, { on }); }   // the gifFavorites message confirms it (PK-36)
   catch (e) { undo(); overlays.reason(document.getElementById(rowNode.id) ?? rowNode, e.message); }
 }
-
-const safeHref = url => /^https?:\/\//i.test(url ?? '') ? url : '#';   // the server's URL, but never another scheme
 
 // ---- cards (MR-19 to MR-23) ----
 

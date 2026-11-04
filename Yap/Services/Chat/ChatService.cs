@@ -807,7 +807,9 @@ public class ChatService
 
     /// <summary>What the pin entry shows under the text (SH-48, <see cref="PinMedia"/>), in the row's order: every
     /// picture, every uploaded video, every GIF, the voice note; for a text message, the first link card that has
-    /// something to show. The URLs are the row's own (MessageMapper), copied because the pin outlives the memory window.</summary>
+    /// something to show. The URLs are the row's own (MessageMapper), copied because the pin outlives the memory window.
+    /// The panel opens a picture in the gallery viewer, so a picture carries its large and original files too: the
+    /// client must not build them from the medium URL, the naming rule is the server's.</summary>
     private IReadOnlyList<PinMedia> PinMediaOf(ChatMessage m)
     {
         var list = new List<PinMedia>();
@@ -815,7 +817,8 @@ public class ChatService
         {
             var src = Media.ImageService.GetMediumUrl(image);
             var size = _mediaSizes.Of(src);   // the box before the file loads, as in the row
-            list.Add(new("image", Src: src, Width: size?.Width, Height: size?.Height));
+            list.Add(new("image", Src: src, Width: size?.Width, Height: size?.Height,
+                Large: Media.ImageService.GetLargeUrl(image), Original: image));   // the viewer's stage and Download (TL-24)
         }
         foreach (var video in m.VideoUrls)
         {
@@ -828,7 +831,7 @@ public class ChatService
             var entry = _gifService.GetEntry(gif.GifEntryId);
             if (entry is null || entry.DeletedAt is not null || entry.Src is null) { list.Add(new("gif")); continue; }   // the file is gone: the panel shows a label
             var (w, h) = gif.Width > 0 && gif.Height > 0 ? (gif.Width, gif.Height) : (entry.Width, entry.Height);
-            list.Add(new(entry.SrcIsImage ? "image" : "gif", Src: entry.Src, Width: w, Height: h));
+            list.Add(new("gif", Src: entry.Src, Width: w, Height: h, IsImage: entry.SrcIsImage));   // a GIF stays out of the viewer, as in the row (TL-22)
         }
         if (m.Voice is { } voice) list.Add(new("voice", Src: voice.Url, DurationMs: voice.DurationMs, Peaks: voice.Peaks));
         if (list.Count > 0) return list;
@@ -836,8 +839,8 @@ public class ChatService
         return card switch
         {
             null => [],
-            { Media: { Type: "video" } media } => [new("video", Src: media.Src, Poster: media.Poster ?? card.ImageUrl, Title: card.Title, Site: card.SiteName)],
-            _ => [new("link", Poster: card.ImageUrl, Title: card.Title, Site: card.SiteName)],
+            { Media: { Type: "video" } media } => [new("video", Src: media.Src, Poster: media.Poster ?? card.ImageUrl, Title: card.Title, Site: card.SiteName, Url: card.Url)],
+            _ => [new("link", Poster: card.ImageUrl, Title: card.Title, Site: card.SiteName, Url: card.Url)],
         };
     }
 

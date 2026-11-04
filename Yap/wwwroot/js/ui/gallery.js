@@ -1,5 +1,6 @@
 // The gallery viewer (TL-22 to TL-29): the images of one message on a black layer, with previous and next,
-// fit and fill, the counter, swipe, drag to close. No videos: they play in the row (TL-29).
+// fit and fill, the counter, swipe, drag to close. It opens from the message's row or from its pin (SH-48). No
+// videos: they play in the row or in the pin entry (TL-29).
 
 import { clone, el } from '../render/dom.js';
 import * as overlays from './overlays.js';
@@ -13,11 +14,14 @@ const SHARE_FILES = navigator.standalone === true && typeof navigator.canShare =
 
 let current = null;   // { modal, close, messageId }
 
-export function openGallery(message, startIndex = 0) {
+// images: [{ medium, large, original }] of one message. ownerId: that message, for the close on a delete (TL-29).
+// Returns the close function: the pins panel closes the viewer it opened when the pin goes. That rule stays in the
+// panel; here it would also close a viewer opened from the row when someone unpins the message.
+export function openGallery(images, startIndex = 0, ownerId = null) {
   current?.close();
   const modal = clone('t-gallery');
   const strip = modal.querySelector('.gallery-strip');
-  const items = message.images.map(i => ({ image: i }));
+  const items = images.map(i => ({ image: i }));
   if (!items.length) return;
   strip.append(...items.map((item, i) => {
     const stage = el('div', { class: 'modal-stage' });
@@ -159,7 +163,8 @@ export function openGallery(message, startIndex = 0) {
     if (current?.modal === modal) current = null;
   }
   function close() { closeLayer(); }
-  current = { modal, close, messageId: message.id };
+  current = { modal, close, messageId: ownerId };
+  return close;
 }
 
 // A deleted message or a switch closes the viewer (TL-29).

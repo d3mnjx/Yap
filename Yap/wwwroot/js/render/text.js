@@ -164,6 +164,10 @@ function splitShortcodes(text) {
 
 // ---- links (MR-12) ----
 
+// A URL from the server as a link target: http and https only, never another scheme (a javascript: link). The link
+// cards of a row (MR-19) and of a pin (SH-48) use it.
+export const safeHref = url => /^https?:\/\//i.test(url ?? '') ? url : '#';
+
 // Named LINK, not URL: a const named URL would hide the global URL class for the whole module.
 const LINK = /(?:https?:\/\/|www\.)[^\s<>"']*[^\s<>"'.,;:!?-]|(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+(?:com|org|net|io|dev|app|co|me|info|edu|gov)\b(?:\/[^\s<>"']*)?/gi;
 

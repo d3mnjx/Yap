@@ -22,13 +22,16 @@ public sealed record Pin(Guid MessageId, string Username, string? Text, DateTime
 /// <summary>
 /// One item under a pin's text (SH-48), in the row's order, resolved when the pin is made: a GIF file can move or go,
 /// and a link card lives in memory for an hour, so the pin keeps its own copy of the URLs. Kind decides the shape:
-/// image (Src: a picture, or a GIF that is an image file), gif (Src: a video file the panel loops; no Src when the file
-/// is gone), video (Src and Poster: an uploaded video, or a cached link video with the card's Title and Site), link
-/// (Poster, Title and Site of a link card), voice (Src, DurationMs and Peaks: what the row's player draws). Width and
-/// Height keep a GIF's shape before it loads.
+/// image (Src: the medium picture; Large and Original: what the gallery viewer shows and downloads, TL-24), gif (Src:
+/// the file the panel shows, a picture when IsImage, else a video it loops; no Src when the file is gone), video (Src
+/// and Poster: an uploaded video, or a cached link video with the card's Title, Site and Url), link (Poster, Title,
+/// Site and Url of a link card), voice (Src, DurationMs and Peaks: what the row's player draws). Width and Height keep
+/// a GIF's shape before it loads. The fields after Peaks came on 2026-11-04: an older copy lacks them, and the panel
+/// falls back to Src.
 /// </summary>
 public sealed record PinMedia(string Kind, string? Src = null, string? Poster = null, int? Width = null, int? Height = null,
-    string? Title = null, string? Site = null, int? DurationMs = null, string? Peaks = null);
+    string? Title = null, string? Site = null, int? DurationMs = null, string? Peaks = null,
+    string? Large = null, string? Original = null, bool? IsImage = null, string? Url = null);
 
 /// <summary>
 /// The media list of a stored pin. Pins made before 2026-10-23 hold one object (the first picture only) or null, and

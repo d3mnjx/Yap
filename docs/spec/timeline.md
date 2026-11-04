@@ -76,11 +76,11 @@ The timeline is the scrolling list of messages in a conversation. The oldest loa
 
 ### Gallery viewer
 
-**TL-22** A tap or click on an image opens the viewer immediately, at that image. The viewer contains only the images of that message. GIFs and videos do not open the viewer.
+**TL-22** A tap or click on an image opens the viewer immediately, at that image. The viewer contains only the images of that message. GIFs and videos do not open the viewer. A tap on a picture of a pin entry (SH-48) opens the same viewer, with the pictures of that pin, over the pins panel.
 
 **TL-23** The viewer covers the whole app with a black layer. The layer is 90 % opaque on desktop and fully black on a phone. The picture is centred and is never cropped. On desktop, it fits within 85 % of the screen. On a phone, it fits within the whole screen. On a phone, the controls are smaller and are 8 px from the edges.
 
-**TL-24** The controls are on top of the picture. Close is at the top right, download is left of close, previous and next are at mid height, and fill is at the bottom right. The counter "{n} / {total}" is at the bottom centre. With one image, there are no previous and next controls and no counter. Download saves the image in view to the device, as the file that was uploaded, in its own format and size. The viewer stays open. In the installed app on iOS, download opens the share sheet with the image instead, where "Save Image" puts it in Photos. *Why:* the installed app on iOS has no download manager; a download there shows a file preview page that reads as nothing. While the file arrives, the download control pulses, and a tap does nothing. When the file takes too long for the tap, the sheet does not open. The hint "Ready. Tap again to save." then shows under the control for 4 seconds, and the next tap opens the sheet. A long press or a right click on the picture opens no menu of the device. *Why:* the download control is the one way to save, on a phone and on a PC.
+**TL-24** The controls are on top of the picture. Close is at the top right, download is left of close, previous and next are at mid height, and fill is at the bottom right. The counter "{n} / {total}" is at the bottom centre. With one image, there are no previous and next controls and no counter. Download saves the image in view to the device, as the file that was uploaded, in its own format and size. A pin made before 2026-11-04 whose message is no longer in the server's memory has no copy of that file; from such a pin, Download saves the medium picture. The viewer stays open. In the installed app on iOS, download opens the share sheet with the image instead, where "Save Image" puts it in Photos. *Why:* the installed app on iOS has no download manager; a download there shows a file preview page that reads as nothing. While the file arrives, the download control pulses, and a tap does nothing. When the file takes too long for the tap, the sheet does not open. The hint "Ready. Tap again to save." then shows under the control for 4 seconds, and the next tap opens the sheet. A long press or a right click on the picture opens no menu of the device. *Why:* the download control is the one way to save, on a phone and on a PC.
 
 **TL-25** On touch, each horizontal swipe moves one image. Previous, next and the arrow keys move one image. The viewer does not loop. At the first image, the previous control is hidden. At the last image, the next control is hidden. A swipe or an arrow key past an end does nothing. The counter changes when 60 % of an image is in view.
 
@@ -90,7 +90,7 @@ The timeline is the scrolling list of messages in a conversation. The oldest loa
 
 **TL-28** The viewer does not move the focus when it opens or closes. The phone keyboard and the list position do not change.
 
-**TL-29** The viewer has no caption and no video. A conversation switch closes it. If the message is deleted while the viewer is open, the viewer closes.
+**TL-29** The viewer has no caption and no video. A conversation switch closes it. If the message is deleted while the viewer is open, the viewer closes. A viewer opened from a pin also closes when the pin goes.
 
 ### Media in the list
 

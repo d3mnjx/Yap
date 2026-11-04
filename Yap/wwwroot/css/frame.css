@@ -1304,10 +1304,10 @@
     overflow-wrap: break-word;
 }
 
-/* Media under the text, at the panel's width (SH-48): the pictures and videos, the GIF itself, the voice player, or a
-   link card. The user asked to see the GIF and the media, not a label (2026-10-18), and the whole gallery, small
-   (2026-10-23). The height cap keeps three entries in one view. The frame shrinks to the picture, so the play mark
-   centres on it and not on the row. */
+/* Media under the text, at the panel's width (SH-48), in the row's blocks: the pictures, each video as the row's
+   player, the GIFs, the voice player, or a link card. The user asked to see the GIF and the media, not a label
+   (2026-10-18), and the whole gallery, small (2026-10-23). The height cap keeps three entries in one view. The frame
+   shrinks to the picture, so a tap beside a single picture jumps and does not open the viewer. */
 .pin-media {
     margin-top: 0.375rem;
 }
@@ -1320,16 +1320,36 @@
 }
 
 .pin-picture,
-.pin-gif,
-.pin-video {
+.pin-gif {
     display: block;
     max-width: 100%;
     max-height: 240px;
     border-radius: 4px;
 }
 
-.pin-video {
-    background: #000; /* the box before the first frame, and the bars of a poster narrower than the frame */
+/* A picture that opens the viewer is a <button> (pins.js): no button look, only the picture's own box. */
+.pin-shot {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: zoom-in;
+}
+
+.pin-shot:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+/* The row's player (ui/video.js), at the panel's cap of 240 px and not the row's 350 px: three entries fit in one
+   view. One video under the other, as in the row (.video-gallery). */
+.pin-media > * + * {
+    margin-top: 4px;
+}
+
+.pin-media .video-player {
+    max-height: 240px;
 }
 
 /* Two or more pictures: square cells that crop as the row's gallery does (MR-25). pins.js sets --cols from the
@@ -1350,46 +1370,12 @@
 }
 
 .pin-cell > .pin-picture,
-.pin-cell > .pin-gif,
-.pin-cell > .pin-video {
+.pin-cell > .pin-gif {
     width: 100%;
     height: 100%;
     max-height: none;
     object-fit: cover;
     border-radius: 0;
-}
-
-.pin-cell .pin-play {
-    width: 28px;
-    height: 28px;
-}
-
-.pin-cell .pin-play::after {
-    border-left-width: 10px;
-    border-top-width: 6px;
-    border-bottom-width: 6px;
-}
-
-.pin-play {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 40px;
-    height: 40px;
-    transform: translate(-50%, -50%);
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.6);
-}
-
-.pin-play::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 55%;
-    transform: translate(-50%, -50%);
-    border-left: 14px solid white;
-    border-top: 9px solid transparent;
-    border-bottom: 9px solid transparent;
 }
 
 .pin-card {
@@ -1398,6 +1384,8 @@
 
 .pin-card-title {
     display: block;
+    width: fit-content; /* a link title opens the link on its text only; the empty rest of the line jumps (SH-49) */
+    max-width: 100%;
     margin-top: 0.25rem;
     font-size: 0.8125rem;
     color: var(--text-secondary);
