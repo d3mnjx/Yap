@@ -446,9 +446,13 @@ public class ChatService
         if (!_channels.TryGetValue(channelId, out var channel) || !channel.CanAccess(viewerId) || !_channelMessages.TryGetValue(channelId, out var all))
             return ([], false, false, "Message not found.");
         var cutoff = Cutoff(channel, viewerId);
+        // The id map says in O(1) whether the message is in memory and in this channel, as in GetMessage: a pin whose
+        // message left memory costs no scan under the lock. Send writes the map after the list, but a client learns an
+        // id only from the send's answer or the broadcast, and both come after the map write.
+        var inMemory = _channelOfMessage.TryGetValue(messageId, out var home) && home == channelId;
         lock (LockOf(channelId))
         {
-            var index = all.FindIndex(m => m.Id == messageId);
+            var index = inMemory ? all.FindIndex(m => m.Id == messageId) : -1;
             // A delete removes the pin too (Delete), so a pin whose message is not in memory points before the startup
             // load (SH-48): the reader learns that, instead of "not found".
             if (index < 0) return ([], false, false, channel.Pins.Any(p => p.MessageId == messageId) ? "Too old to load" : "Message not found.");

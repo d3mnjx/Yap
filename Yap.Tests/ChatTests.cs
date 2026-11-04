@@ -311,14 +311,18 @@ public class ChatTests : IClassFixture<YapFactory>
         await reader.DisposeAsync();
     }
 
-    [Fact(DisplayName = "SH-48, SH-49: an unknown id is not found; a pin whose message is not in memory is too old to load")]
+    [Fact(DisplayName = "SH-48, SH-49: an unknown id or one of another room is not found; a pin whose message is not in memory is too old to load")]
     public async Task Around_of_an_unknown_id()
     {
         var hub = await (await _app.AdminAsync()).ConnectAsync();
         var (room, _) = await RoomWithMessages(hub, "around_unknown", 10, TimeSpan.FromHours(1));
+        var (_, elsewhere) = await RoomWithMessages(hub, "around_elsewhere", 10, TimeSpan.FromHours(1));
 
         var unknown = await hub.InvokeAsync<Window>("Around", room.Id, Guid.NewGuid());
         Assert.Equal("Message not found.", unknown.Error);
+        var foreign = await hub.InvokeAsync<Window>("Around", room.Id, elsewhere[0].Id);
+        Assert.Equal("Message not found.", foreign.Error);
+        Assert.Empty(foreign.Messages);
 
         // A pin from before the startup load: the channel keeps it while the message stays in the database (SH-48).
         var gone = Guid.NewGuid();

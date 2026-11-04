@@ -524,7 +524,11 @@ export function Timeline(root, { reopen }) {
     const startedAt = performance.now();
     const around = await hub.invoke('around', open.channelId, id);
     if (token !== jumpToken) return null;              // a later jump won; it answers for its own tap
-    if (state.open !== open) return 'Try again';       // a reconnect or a switch replaced the rows meanwhile
+    // A reconnect or a switch replaced the rows meanwhile. The page's own open, in flight under the stored rows (TL-39),
+    // lands here too: it leaves before any tap, and the server runs one call per connection at a time (SignalR's
+    // default MaximumParallelInvocationsPerClient of 1), so its answer replaces the rows before this answer arrives.
+    // With parallel calls, a window could show and then give way to the tail with no reason.
+    if (state.open !== open) return 'Try again';
     if (around?.error) return around.error;            // GEN-02: "Too old to load", "Message not found.", "Needs a connection"
     setWindow(around, id);                             // the 'window' change draws the rows and centres the target
     // AD-26: the timeout after the frame callback runs after the paint, so the wait ends with the rows on screen
