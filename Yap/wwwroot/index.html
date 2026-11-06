@@ -1332,10 +1332,13 @@
         </div>
     </template>
 
-    <!-- The SignalR client is a classic script: it defines the global `signalR` that js/hub.js uses. -->
-    <!-- Not imports, so the import map does not reach them: the stamp is written here. -->
+    <!-- The two libraries are classic scripts, not imports, so the import map does not reach them: the stamp is written here. -->
+    <!-- SignalR defines the global `signalR`. js/hub.js needs it at start, so it stays a normal script before main.js. -->
     <script src="lib/signalr.min.js?v={{build}}"></script>
-    <script src="lib/tus.min.js?v={{build}}"></script>
+    <!-- tus defines the global `tus`. Only an upload needs it, so it is async: main.js does not wait for its download
+         and run. It can run after main.js, so js/upload.js waits for it (tusReady). The onerror attribute marks a failed
+         load for that wait: a listener added later would miss an error that already fired. -->
+    <script async id="tus-script" src="lib/tus.min.js?v={{build}}" onerror="this.dataset.failed = ''"></script>
     <script type="module" src="js/main.js?v={{build}}"></script>
 </body>
 </html>

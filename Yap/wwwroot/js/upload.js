@@ -39,8 +39,23 @@ async function info(uploadUrl, attempts = 30, tick = () => {}) {
   return { info: null, reached };
 }
 
+// lib/tus.min.js loads async (index.html), so it can run after the first upload starts: the sender sends the outbox
+// at boot. Every upload waits here. Without the wait, `new tus.Upload` throws, the promise of upload() never settles,
+// and the sender stops for every row behind it. A failed load (no network and no cached copy) rejects; a reload
+// loads the script again.
+function tusReady() {
+  if (window.tus) return Promise.resolve();
+  const script = document.getElementById('tus-script');
+  if ('failed' in script.dataset) return Promise.reject(new Error('The upload library did not load'));   // set by its onerror attribute
+  return new Promise((resolve, reject) => {
+    script.addEventListener('load', resolve, { once: true });
+    script.addEventListener('error', () => reject(new Error('The upload library did not load')), { once: true });
+  });
+}
+
 // One file with metadata (the GIF library: kind, target, folder). Resolves to the server's info object.
-export function uploadOne(file, endpoint, metadata = {}) {
+export async function uploadOne(file, endpoint, metadata = {}) {
+  await tusReady();
   return new Promise((resolve, reject) => {
     const u = new tus.Upload(file, {
       endpoint, chunkSize: 5 * 1024 * 1024, retryDelays: [0, 1000, 3000], withCredentials: true,
@@ -68,7 +83,7 @@ export function upload(files, endpoint, onProgress, metadata = {}) {
   const outcome = () => ({ files: settled.filter(r => r?.info).map(r => r.info), errors: settled.filter(r => r?.error).map(r => r.error),
                            refused: settled.filter(r => r?.error).map(r => r.file), retry: files.filter((f, i) => !settled[i] || settled[i].retry), cancelled });
 
-  const all = Promise.all(files.map((file, i) => new Promise(resolve => {
+  const startAll = () => Promise.all(files.map((file, i) => new Promise(resolve => {
     const finish = r => { settled[i] = r; resolve(r); };
     const u = new tus.Upload(file, {
       endpoint, chunkSize: 5 * 1024 * 1024, retryDelays: [0, 1000, 3000, 5000], withCredentials: true,
@@ -89,7 +104,10 @@ export function upload(files, endpoint, onProgress, metadata = {}) {
     });
     uploads.push(u);
     u.start();
-  }))).then(outcome);
+  })));
+  // tus may still be loading (tusReady). A cancel or a give-up during that wait starts nothing. A failed load settles
+  // no file, so outcome() puts every file in `retry`: they go again at the next wake-up (OF-08).
+  const all = tusReady().then(() => { if (!over) return startAll(); }, () => {}).then(outcome);
 
   const promise = new Promise(resolve => { settle = resolve; all.then(resolve); });
   // tus calls neither onSuccess nor onError after abort(), so the promise settles here.
