@@ -4,7 +4,7 @@
 import { state, on, isMuted, unreadTotal, dmByChannel } from './store.js';
 
 let baseTitle = document.title;   // the shell's <title>: the project name, stamped by the server (ShellEndpoints)
-let hiddenCount = 0;
+let arrivals = {};   // channelId -> messages counted since the tab hid; the title shows their sum (NT-12)
 let audio = null;
 let lastUnread = {};
 
@@ -14,7 +14,8 @@ export function setTitle(text) {
 }
 
 function render() {
-  document.title = hiddenCount > 0 ? `(${hiddenCount}) ${baseTitle}` : baseTitle;
+  const total = Object.values(arrivals).reduce((sum, n) => sum + n, 0);
+  document.title = total > 0 ? `(${total}) ${baseTitle}` : baseTitle;
 }
 
 // Pre-loaded on the first input, because a browser plays nothing before a gesture.
@@ -38,7 +39,15 @@ on('unread', () => {
     const before = previous[channelId] ?? 0;
     if (count <= before || isMuted(channelId)) continue;
     if (openIsDm() && !dmByChannel(channelId)) continue;
-    hiddenCount += count - before;
+    arrivals[channelId] = (arrivals[channelId] ?? 0) + count - before;
+  }
+  // A read in another session sets the count to 0, and the store drops the key. The arrivals of a conversation
+  // can never be more than its count. Without this cap, a hidden tab kept "(3)" for messages read on the phone.
+  // The cap also covers a reconnect, where the bootstrap brings counts that fell while the socket was down.
+  for (const [channelId, n] of Object.entries(arrivals)) {
+    const count = state.unread[channelId] ?? 0;
+    if (count === 0) delete arrivals[channelId];
+    else if (n > count) arrivals[channelId] = count;
   }
   render();
 });
@@ -55,7 +64,7 @@ on('incoming', m => {
 });
 
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') { hiddenCount = 0; render(); }
+  if (document.visibilityState === 'visible') { arrivals = {}; render(); }
 });
 
 // The badge counts every unmuted conversation, the open one included (NT-11).

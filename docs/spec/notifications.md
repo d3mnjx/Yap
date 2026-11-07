@@ -34,7 +34,7 @@ Unread counts and notifications tell a person about new messages. This page spec
 
 **NT-11** The icon badge of the installed app shows the sum of the unread counts of the unmuted conversations. The sum includes the open conversation. The badge updates while the app is open, and when a notification arrives while the app is closed. A suppressed or muted message does not change the badge. A read on another device corrects the badge at the next notification or the next open of the app.
 
-**NT-12** While the tab is hidden, the tab title starts with a number. The number counts the messages that raised an unread count after the tab became hidden. A message that the person reads on another device at that moment adds nothing. The mute rules below apply to this number. The number resets when the tab becomes visible again. On a room page, every unmuted conversation counts. On a direct message page, only direct messages count.
+**NT-12** While the tab is hidden, the tab title starts with a number. The number counts the messages that raised an unread count after the tab became hidden. A message that the person reads on another device at that moment adds nothing. When the person reads a conversation in another tab or on another device, the messages of that conversation leave the number. The mute rules below apply to this number. The number resets when the tab becomes visible again. On a room page, every unmuted conversation counts. On a direct message page, only direct messages count.
 
 ### Sound
 
