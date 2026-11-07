@@ -82,7 +82,8 @@ footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--li
 <ol><li><strong>Purpose.</strong> One paragraph that says what the part is for.</li><li><strong>Anatomy.</strong> A screenshot with the parts numbered, and one line per part.</li><li><strong>Rules.</strong> The numbered rules.</li><li><strong>States.</strong> A table: the state or trigger, the input type (mouse, touch, keyboard), and what the user sees.</li><li><strong>Wording.</strong> Every text the user can read in this part, verbatim.</li><li><strong>Related.</strong> Links to the pages this one depends on.</li></ol>
 <p><code>tools/page-template.md</code> is the empty template.</p>
 <h2 id="screenshots">Screenshots</h2>
-<p>Screenshots are generated and never pasted. A Playwright script captures each named state from a running instance with seeded data. It writes the images to <code>img/</code>. When a screenshot no longer matches its page, one of the two has a bug.</p>
+<p>Screenshots are generated and never pasted. <code>tests/browser/screenshots.mjs</code> (<code>npm run screenshots</code> in <code>tests/browser</code>) seeds a throwaway server, captures each named state and writes the images to <code>img/</code>. When a screenshot no longer matches its page, one of the two has a bug.</p>
+<p>A run rewrites nearly every image, because the placeholder texts, the section titles and the message times are random or new. Keep only the images whose content changed, and restore the others with <code>git checkout</code>.</p>
 <h2 id="tools">Tools</h2>
 <pre><code>python3 docs/spec/tools/lint.py     # IDs unique, links resolve, no implementation words
 python3 docs/spec/tools/build.py    # Markdown to html/</code></pre>

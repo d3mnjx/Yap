@@ -54,7 +54,9 @@ Every component page has these sections in this order. A feature page has the sa
 
 ## Screenshots
 
-Screenshots are generated and never pasted. A Playwright script captures each named state from a running instance with seeded data. It writes the images to `img/`. When a screenshot no longer matches its page, one of the two has a bug.
+Screenshots are generated and never pasted. `tests/browser/screenshots.mjs` (`npm run screenshots` in `tests/browser`) seeds a throwaway server, captures each named state and writes the images to `img/`. When a screenshot no longer matches its page, one of the two has a bug.
+
+A run rewrites nearly every image, because the placeholder texts, the section titles and the message times are random or new. Keep only the images whose content changed, and restore the others with `git checkout`.
 
 ## Tools
 
