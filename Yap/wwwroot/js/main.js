@@ -142,6 +142,12 @@ function showPageError(root, route) {
 // page has nothing to paint with, and the answer decides between the frame and the login page.
 async function start() {
   let doc = await snapshot.loadBootstrap();
+  // The stored copy's build stamp is the server's build at this device's last connection, not the server's build
+  // now. Only the server's answer may say that a new build exists (update.js, SH-20). After a deploy, a start
+  // through '/' gets the new page from the server while the stored copy still names the old build: with the stamp
+  // the page showed the strip and loaded itself a second time (OF-04, reproduced 2026-11-07). Without a stamp,
+  // update.js waits for the hub's bootstrap.
+  if (doc?.config) doc = { ...doc, config: { ...doc.config, buildStamp: undefined } };
   if (!doc) {
     doc = await fetchBootstrap();
     if (!doc?.user && launchToken) { await handoff(launchToken); doc = await fetchBootstrap(); }   // the first launch of the installed app (OF-03)

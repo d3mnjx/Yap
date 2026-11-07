@@ -14,7 +14,7 @@ decided each item. This file records the decisions and the two items that wait f
 | TL-15, TL-18 | Code fixed | After a refresh that keeps the place, the pill shows when someone else posted below. A pill shown before the refresh stays, with its phrase. |
 | MR-62 | Code fixed | The row with the editor stays through a refresh, also when its message changed. The editor's close draws the row with the message as it is then. MR-62 now says that changes from elsewhere show when the editor closes. |
 | SH-20, OF-18 | Fixed before | 5a09cbb5: Reload fetches the page from the server. |
-| OF-04, SH-20 | Checked on 2026-11-07 | See the section on the new-version strip below. |
+| OF-04, SH-20 | Code fixed | See the section on the new-version strip below. |
 | PR-24, NT-26 | **For later** | See below. |
 | NT-07 | **For later** | See below. |
 | Admin hints | Code fixed | The Older column and the Load time hint say what they measure now. |
@@ -32,8 +32,14 @@ said "Getting the new version…" after about 0.1 s, and the page loaded a secon
 build B with no strip. OF-04 says that Yap never reloads an open page by itself, and the reload had no cause,
 because the page was already the new build. On a slow link the extra load costs seconds.
 
-`update.js` compares this page's build with the stamp in the account data that arrives first. At a start that is
-the stored copy (OF-06). `main.js needsFreshLoad` then sends the first page to a fresh load.
+`update.js` compared this page's build with the stamp in the account data that arrived first. At a start that is
+the stored copy (OF-06). `main.js needsFreshLoad` then sent the first page to a fresh load.
+
+The fix, after the user saw the explanation: `main.js start()` applies the stored copy without its build stamp, so
+only the server's answer can raise the strip. The same two-build run then showed one load and no strip. The update
+suite (`--signin`) showed that a page that is really old still gets the strip about one second after the deploy, and
+one Reload ends on the new build with the route kept. The Admin load-time table does not mark every row red while
+the server's stamp is missing.
 
 ## Other decisions
 

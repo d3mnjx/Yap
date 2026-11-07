@@ -657,7 +657,7 @@ export function mount(root, route) {
     const buildCell = load => {
       if (!load.build) return td('—');
       const text = load.worker && load.worker !== load.build ? `${load.build} · worker ${load.worker}` : load.build;
-      return el('td', load.build !== state.config?.buildStamp ? { style: { color: 'var(--color-danger)', fontWeight: 600 } } : null, text);
+      return el('td', state.config?.buildStamp && load.build !== state.config.buildStamp ? { style: { color: 'var(--color-danger)', fontWeight: 600 } } : null, text);
     };
     const loadRow = s => el('tr', s.load.hidden ? { style: { opacity: 0.55 } } : null,
       td(s.username), td(`${s.isMobile ? '📱' : '🖥️'} ${[s.browser, s.os].filter(Boolean).join(' · ') || '—'}${s.pwa ? ' · app' : ''}`), buildCell(s.load),
