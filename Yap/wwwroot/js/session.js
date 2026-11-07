@@ -50,6 +50,15 @@ const NOTICE_KEY = 'yap.signInNotice';
 let notice = null;
 export const signInNotice = () => { try { return notice ?? sessionStorage.getItem(NOTICE_KEY); } catch { return notice; } };
 const setNotice = value => { notice = value; try { if (value) sessionStorage.setItem(NOTICE_KEY, value); else sessionStorage.removeItem(NOTICE_KEY); } catch {} };
+// The pictures and videos of the account's conversations, which the worker keeps for reading offline (GEN-05, OF-16).
+// The name is the worker's MEDIA_CACHE without its version, as in the DEBUG INFO card. The emoji images and the
+// app's own files stay: they belong to no account. `caches` is missing outside a secure context.
+function clearMedia() {
+  return globalThis.caches?.keys()
+    .then(names => Promise.all(names.filter(n => n.startsWith('yap-media')).map(n => caches.delete(n))))
+    .catch(() => {});
+}
+
 export function signedOut({ elsewhere = false } = {}) {
   if (!store.state.user && router.current.page === 'login') return;   // done already: a 401 or an 'ended' that lands during the clean-up must not run it twice
   if (elsewhere) setNotice('elsewhere');
@@ -57,6 +66,7 @@ export function signedOut({ elsewhere = false } = {}) {
   store.reset();
   snapshot.clearAll();
   sender.clearAll();
+  clearMedia();
   if (router.current.page !== 'login') {
     if (['chat', 'settings', 'channel-settings', 'admin'].includes(router.current.page)) rememberReturnTo(router.current.path);
     router.navigate('/login', { replace: true });
@@ -70,6 +80,7 @@ export async function forgetAccount() {
   store.reset();
   await snapshot.clearAll();
   await sender.clearAll();
+  await clearMedia();
 }
 
 // Sign Out in the status menu (SH-15). The confirmations are the caller's; this does the work. Returns false

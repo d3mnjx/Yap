@@ -90,7 +90,7 @@ The timeline is the scrolling list of messages in a conversation. The oldest loa
 
 **TL-28** The viewer does not move the focus when it opens or closes. The phone keyboard and the list position do not change.
 
-**TL-29** The viewer has no caption and no video. A conversation switch closes it, and so does a jump that replaces the rows ([TL-41](#TL-41)). If the message is deleted while the viewer is open, the viewer closes. A viewer opened from a pin also closes when the pin goes.
+**TL-29** The viewer has no caption and no video. A conversation switch closes it, and so does a jump that replaces the rows ([TL-41](#TL-41)). A refresh of the list closes it too: when the connection returns, when the user returns to the app after more than 30 seconds, and when the server's messages replace the device's copy at an open. If the message is deleted while the viewer is open, the viewer closes. A viewer opened from a pin also closes when the pin goes.
 
 ### Media in the list
 

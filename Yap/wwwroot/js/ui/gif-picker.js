@@ -150,7 +150,7 @@ export function GifPicker({ onSend, onWarn }) {
       const unsorted = data.gifs.filter(g => !(g.folder ?? g.serverFolder));
       if (unsorted.length) { if (folders.length) nodes.push(header('Unsorted')); nodes.push(grid(unsorted, true)); }
     }
-    if (manage) nodes.push(el('a', { class: 'gif-manage-link', href: '/settings' }, 'Manage your GIFs in Settings'));
+    if (manage) nodes.push(el('a', { class: 'gif-manage-link', href: '/settings#my-gifs' }, 'Manage your GIFs in Settings'));   // ST-01: opens at My GIFs
     return nodes;
   }
 

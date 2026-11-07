@@ -17,19 +17,21 @@ Component pages and feature pages link to each other. A component page tells wha
 
 | Page | Prefix | Status |
 | --- | --- | --- |
-| [Yap](yap.md) | YAP | draft, in review |
-| [General rules](general-rules.md) | GEN | draft, in review |
-| [Input box](input-box.md) | IB | draft, in review |
-| [Message row and actions](message-row.md) | MR | draft, in review |
-| [Emoji and GIF pickers](pickers.md) | PK | draft, in review |
-| [Timeline and media](timeline.md) | TL | draft, in review |
-| [Header, sidebar and overlays](frame.md) | SH | draft, in review |
-| [Settings](settings.md) | ST | draft, in review |
-| [Administration](admin.md) | AD | draft, in review |
-| [Presence](presence.md) | PR | draft, in review |
-| [Notifications and unread](notifications.md) | NT | draft, in review |
-| [Sign-in and sessions](sessions.md) | AU | draft, in review |
-| [Offline and installation](offline.md) | OF | draft, in review |
+| [Yap](yap.md) | YAP | current |
+| [General rules](general-rules.md) | GEN | current |
+| [Input box](input-box.md) | IB | current |
+| [Message row and actions](message-row.md) | MR | current |
+| [Emoji and GIF pickers](pickers.md) | PK | current |
+| [Timeline and media](timeline.md) | TL | current |
+| [Header, sidebar and overlays](frame.md) | SH | current |
+| [Settings](settings.md) | ST | current |
+| [Administration](admin.md) | AD | current |
+| [Presence](presence.md) | PR | current |
+| [Notifications and unread](notifications.md) | NT | current |
+| [Sign-in and sessions](sessions.md) | AU | current |
+| [Offline and installation](offline.md) | OF | current |
+
+Current means that the page describes the product as it is now. A change of behaviour changes its page in the same commit.
 
 ## Rules and their IDs
 

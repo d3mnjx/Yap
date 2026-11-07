@@ -478,11 +478,13 @@ export function mount(root, route) {
   offs.push(on('user', () => { if (!state.user) return; drawPicture(); drawThemes(); drawSizes(); drawLink(); drawClock(); drawFormats(); }));
 
   root.replaceChildren(page);
-  // ST-01. The lists above the section (sessions, push devices, the login link) arrive after the first frame and
-  // push it down. The browser's scroll anchoring does not hold it on the phone. So each size change of the column
-  // scrolls to the section again, until the reader touches the page.
-  if (route.hash === 'notification-settings') {
-    const section = $('#notification-settings'), touched = new AbortController();
+  // ST-01. "Notification settings" in the status menu and "Manage your GIFs in Settings" in the GIF picker open a
+  // section. The lists above it (sessions, push devices, the login link) arrive after the first frame and push it
+  // down. The browser's scroll anchoring does not hold it on the phone. So each size change of the column scrolls to
+  // the section again, until the reader touches the page.
+  const linked = { 'notification-settings': '#notification-settings', 'my-gifs': '[data-section="gifs"]' }[route.hash];
+  if (linked) {
+    const section = $(linked), touched = new AbortController();
     const pin = new ResizeObserver(() => section.scrollIntoView());   // it also fires once on observe: the first scroll
     pin.observe($('.settings-content'));
     const release = () => { pin.disconnect(); touched.abort(); };

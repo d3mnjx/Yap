@@ -164,13 +164,13 @@ A message row is one message as it appears in the conversation. The row shows wh
 
 **MR-58** Edit replaces the text with an editor in the same row. The header stays, and the media of a captioned row stays. The editor starts with the current text and looks like the input box. It grows to 200 px, then scrolls. Below the editor are "✓ Save", "✕ Cancel" and, on desktop, the hint "Enter to save · Shift+Enter for newline · Esc to cancel".
 
-**MR-59** The editor gets focus, with the caret at the end. On a phone, a closed keyboard stays closed. An open keyboard stays open and types into the editor.
+**MR-59** The editor gets focus, with the caret at the end. On a phone, the keyboard opens, because Edit is an action whose purpose is typing ([GEN-03](general-rules.md#GEN-03)).
 
 **MR-60** On a device without touch input, Enter saves and Shift+Enter adds a new line. On a device with touch input, Enter adds a new line. Escape cancels the edit. During input method composition, Enter and Escape do nothing.
 
 **MR-61** When the text is unchanged, empty or only whitespace, Save closes the editor and changes nothing. When the text is changed, Save updates the message for every reader and adds "(edited)". The edited text contains at most 4000 characters.
 
-**MR-62** Only one editor is open at a time. Edit on another row discards the draft of the first editor. While the user edits a row, its action bar is hidden. The row continues to receive live changes, and its link cards stay visible. When the message is deleted elsewhere, the editor disappears.
+**MR-62** Only one editor is open at a time. Edit on another row discards the draft of the first editor. While the user edits a row, its action bar is hidden. Changes from elsewhere, such as a reaction, show on the row when the editor closes, also after a reconnect. Its link cards stay visible. When the message is deleted elsewhere, the editor disappears.
 
 **MR-63** Nothing typed in the editor is sent to the server before Save.
 
@@ -238,7 +238,7 @@ A message row is one message as it appears in the conversation. The row shows wh
 | Tap outside the menu | mouse, touch | Menu closes. Nothing under it is pressed. |
 | Scroll with the menu open | touch | Menu stays open. |
 | Copy Text | mouse, touch | Text copied as typed; menu closes. |
-| Edit | mouse, touch | Editor in the row, caret at the end, bar hidden. Phone: keyboard state unchanged. |
+| Edit | mouse, touch | Editor in the row, caret at the end, bar hidden. Phone: the keyboard opens. |
 | Enter in the editor | keyboard, device without touch | Saves. |
 | Enter in the editor | keyboard, device with touch | Newline. |
 | Escape in the editor | keyboard | Cancels. |

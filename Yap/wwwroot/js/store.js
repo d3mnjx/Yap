@@ -271,6 +271,13 @@ export function toggleReactionLocally(id, emoji, username) {
   changed('messages', { type: 'replace', message: m });
 }
 
+// The row of a message is drawn again with the message as it is now. A row skips every redraw while its editor is
+// open (timeline.js), so the editor's close asks for one (MR-62).
+export function redrawMessage(id) {
+  const m = openMessage(id);
+  if (m) changed('messages', { type: 'replace', message: m });
+}
+
 export function editLocally(id, text) {
   const m = openMessage(id);
   if (!m) return null;

@@ -49,12 +49,15 @@ export function Timeline(root, { reopen }) {
   function reset(target = null) {
     const same = state.open && state.open.channelId === shownChannel;
     const keptTop = list.scrollTop, keptFollowing = following;
+    const keptPick = pill ? pillPick : '';   // a pill shown before the refresh stays, with its phrase (TL-17)
+    const lastSeen = [...rows.values()].reduce((t, r) => r.message.timestamp > t ? r.message.timestamp : t, '');   // the newest row the person had
     const leftWindow = shownWindow && atTail();   // the rows before this reset were a window: the kept place belongs to them (TL-41)
     shownWindow = !atTail();
     // The rows of the same conversation whose message did not change stay: the node moves into the new order instead
     // of being drawn again. At every open the server's rows follow the device's copy, nearly always the same fifty,
     // and drawing them again asked for every emoji image once more; on the iPhone every <img> is a request of its
-    // own (2026-10-31). A row in the editor stays too while its message is the same.
+    // own (2026-10-31). The row in the editor stays even when its message changed: drawing it again would drop the
+    // draft (MR-62). The editor's close draws it with the message as it is then (message.js).
     const kept = same ? new Map(rows) : new Map();
     if (!same) for (const r of rows.values()) r.node.remove();
     rows.clear();
@@ -70,7 +73,7 @@ export function Timeline(root, { reopen }) {
     let prev = null;
     for (const m of ordered()) {
       const old = m.pending ? null : kept.get(m.id);
-      if (old && unchanged(old, m, prev)) { kept.delete(m.id); flow.append(old.node); rows.set(m.id, { node: old.node, message: m }); }
+      if (old && (unchanged(old, m, prev) || old.node.classList.contains('editing'))) { kept.delete(m.id); flow.append(old.node); rows.set(m.id, { node: old.node, message: m }); }
       else flow.append(makeRow(m, prev));
       prev = m;
     }
@@ -91,6 +94,10 @@ export function Timeline(root, { reopen }) {
     if (same && !keptFollowing && !leftWindow) {   // a tail that replaces a window goes to the bottom, whatever the reader did meanwhile
       following = false; list.scrollTop = keptTop;
       syncDown();   // the same value as before gives no scroll event, so the arrow is checked here (TL-40)
+      // TL-15: the place stays, and the pill says that messages from someone else came below meanwhile. The arrow
+      // alone only says that the view is not at the bottom.
+      const own = state.user?.username;
+      if (keptPick || state.open.messages.some(m => m.timestamp > lastSeen && m.username !== own && !m.kind)) { pillPick = keptPick; showPill(); }
       if (nearTop()) loadOlder();   // still at the top after a reconnect (the 100 px floor): the page the person waited for (TL-06)
       return;
     }
