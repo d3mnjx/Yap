@@ -10,7 +10,7 @@ A message row is one message as it appears in the conversation. The row shows wh
 
 ![Message row, desktop, a reply with reactions. The quote line with the small avatar and the connector, the text, then two reaction pills, one highlighted as the reader's own.](img/message-row-desktop-reply-reactions.png)
 
-![Message row, phone, More sheet open over a tapped row. The sheet at the bottom with Copy Text and Delete Message, the page dimmed.](img/message-row-phone-more-sheet.png)
+![Message row, phone, More sheet open over a tapped row. The sheet at the bottom with Copy Text, Pin Message and Delete Message, the page dimmed.](img/message-row-phone-more-sheet.png)
 
 1. **Avatar.** A 40 px circle on the left with the profile picture, or a coloured disc with the first letter of the username. It shows only on header rows. Other rows leave the avatar column empty.
 2. **Header.** The name, a bot badge if the author is a bot, and the time. It shows only on the first row of a group.
@@ -34,7 +34,7 @@ A message row is one message as it appears in the conversation. The row shows wh
 
 **MR-04** A bot author has a small robot badge after its name.
 
-**MR-05** The time is small and muted, on the same line as the name. For a message from today, the row shows only the time. For a message from yesterday, the row shows "Yesterday" and the time. For an earlier message from the same year, the row shows the date and the time. For an older message, the row shows the full date and the time. Rows without a header show no time.
+**MR-05** The time is small and muted, on the same line as the name. For a message from today, the row shows only the time. For a message from yesterday, the row shows "Yesterday" and the time. For an earlier message from the same year, the row shows the date and the time. For an older message, the row shows the full date and the time. Rows without a header show no time. A name that is too long for the line is cut at the edge, without an ellipsis, and the time stays complete. A long name never makes the timeline scroll sideways.
 
 **MR-06** Times use the user's time zone, and the date order and clock style from Settings. Until the user changes the date order and the clock style, they follow the language of the browser used at sign-up. The labels update with the clock. When midnight passes, a message from today shows "Yesterday".
 

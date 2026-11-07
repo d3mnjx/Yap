@@ -55,7 +55,7 @@ The emoji picker and the GIF picker open from the input box. The emoji picker pu
 
 **PK-15** A tap on a tab clears the search and shows that tab with fresh data. A tap on the active tab does nothing.
 
-**PK-16** Recent shows the last 30 GIFs that the reader sent from the picker, newest first, without duplicates. A GIF uploaded from the picker is not added to Recent. The list belongs to the account. When the list is empty, it shows "No recent GIFs yet".
+**PK-16** Recent shows the last 30 GIFs that the reader sent from the picker, newest first, without duplicates. A GIF uploaded from the picker is sent, so it is added to Recent too. The list belongs to the account. When the list is empty, it shows "No recent GIFs yet".
 
 **PK-17** Retired 2026-10-18. The Trending tab is removed. The trending GIFs show only in Browse (PK-18).
 

@@ -122,7 +122,7 @@ The frame contains all parts around a conversation. The header shows the title, 
 
 **SH-39** "Enable Notifications" asks the browser and then closes the prompt, whatever the answer is. "Maybe Later" counts one dismissal. After three dismissals, the prompt never shows again on this device.
 
-**SH-40** The "install it" link in the bot's welcome message and "Install Yap" in Settings open the install dialog. The dialog shows "Add Yap to your home screen" with the buttons "Use existing app" and "Install app". When Yap is installed, it shows "Yap is already installed" with "Close". "Install app" starts the browser's install or shows the add-to-home-screen guide. See [Offline and installation](offline.md).
+**SH-40** The "install it" link in the bot's welcome message and "Install Yap" in Settings open the install dialog. The dialog shows "Add {name} to your home screen" with the buttons "Use existing app" and "Install app", where {name} is the server's name. When Yap is installed, it shows "{name} is already installed" with "Close". The add-to-home-screen guide uses the server's name too. "Install app" starts the browser's install or shows the add-to-home-screen guide. See [Offline and installation](offline.md).
 
 **SH-41** When a page fails, the conversation area shows "Something went wrong" with "Try Again" and "Reload Page". The header and the sidebar stay. Try Again draws the page again. Reload Page reloads the page. Drafts and unsent messages are kept after both actions. When Yap cannot start at all, the gremlin screen shows "Oops! The gremlins got us" with "Reload & Try Again".
 
@@ -200,7 +200,7 @@ The frame contains all parts around a conversation. The header shows the title, 
 | Sidebar | "ROOMS"; "Add Room"; " (you)"; tooltips "Channel settings", "Notifications muted", "Admin", "Bot", "View profile" |
 | Profile card | "@{username}"; "Online"; "Away"; "Offline"; "About me"; "No bio yet — a person of mystery 🕵️"; "📍 {location}"; "🗓️ Member since {Month yyyy}" |
 | Notification prompt | "One more step"; "Turn on notifications, and this {device} shows new messages when {name} is closed. You can change this any time in Settings."; "Enable Notifications"; "Enabling..."; "Maybe Later" |
-| Install dialog | "Add Yap to your home screen"; "Already have a Yap icon? Open it to keep using your app. To replace an older install, save your login link in Settings, remove the old icon, then install here."; "Use existing app"; "Install app"; "Yap is already installed"; "Keep using this app. You do not need to install it again."; "Close" |
+| Install dialog | {name} is the server's name. "Add {name} to your home screen"; "Already have a {name} icon? Open it to keep using your app. To replace an older install, save your login link in Settings, remove the old icon, then install here."; "Use existing app"; "Install app"; "{name} is already installed"; "Keep using this app. You do not need to install it again."; "Close" |
 | Error screen | "Something went wrong"; "Try Again"; "Reload Page" |
 | Start failure | "Oops! The gremlins got us"; "Something went terribly wrong. Our best engineers (who are also gremlins) are looking into it."; "Reload & Try Again"; "If this keeps happening, try clearing your browser cache or yelling at your computer." |
 | Not found | "Not Found"; "Sorry, the content you are looking for does not exist." |

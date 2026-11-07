@@ -81,11 +81,11 @@ Settings is the one page where the user changes their profile, appearance, sign-
 
 ### App version
 
-**ST-28** The App version card shows the build this device runs and, when the server runs a newer one, the server's build and a note. "Reload the app" fetches the page from the server, so the device gets the server's build even when its service worker stays on an old one, and the person lands back on Settings.
+**ST-28** The App version card shows the build this device runs and, when the server runs a newer one, the server's build and a note. "Reload the app" fetches the page from the server, so the device gets the server's build even when the device keeps an old copy of the app, and the person lands back on Settings.
 
 ### Debug
 
-**ST-25** DEBUG INFO is a collapsed card. It shows what the browser keeps for Yap on this device: cached files by group with their size, and the storage estimate. It also has "Clear this cache" for the media cache. Clearing keeps drafts and unsent messages. Below the caches it lists the emoji images of this page load with the time each was asked for and answered, whether the service worker was in the path and whether a cache answered (the diagnostic for the cold-open wait). "Copy timings" puts the same numbers on the clipboard as text.
+**ST-25** DEBUG INFO is a collapsed card. It shows what the browser keeps for Yap on this device: cached files by group with their size, and the storage estimate. It also has "Clear this cache" for the media cache. Clearing keeps drafts and unsent messages. Below the caches it lists the emoji images of this page load with the time each was asked for and answered, whether the service worker was in the path and whether a cache answered (the diagnostic for the cold-open wait). "Copy timings" puts the same numbers on the clipboard as text. <!-- lint: allow -->
 
 ### Phones
 

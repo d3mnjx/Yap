@@ -375,7 +375,9 @@ await picture(4, 'frame-desktop-room.png', () => A, async (A) => {
 });
 
 await picture(5, 'notifications-desktop-sidebar.png', () => A, async (A) => {
-  const controls = await box(A.locator('.header-controls'));
+  // The status chip, not .header-controls: that row grows to fill the header (flex: 1 0 auto), so its left edge is
+  // near the title and the image took in the whole conversation. The chip is the leftmost control while connected.
+  const controls = await box(A.locator('.header-controls .status-dropdown-container'));
   const side = await box(A.locator('.users-sidebar'));
   const names = await box(A.locator('.users-list'));
   await save(A, 'notifications-desktop-sidebar.png', clip(A, { x0: Math.min(controls.x0, side.x0), y0: 0, x1: 1280, y1: names.y1 + 12 }));

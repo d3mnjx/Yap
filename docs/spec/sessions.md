@@ -70,6 +70,8 @@ Sign-in gives a device access to an account. An account needs only a username, w
 
 **AU-26** One minute after a person's first session, the bot sends the welcome message with the login link and, on a phone, the install line. On every sign-in of a new device, the bot tells the account which sign-in method was used and from which address. The message advises the person to use "Sign out all other devices" if the person did not make this sign-in. The new device cannot use it for one hour. The admin gets a message for a pending request, for the first join of a new account, for a return after a long absence (PR-18), and for the sign-in pause.
 
+**AU-27** When a person writes to the bot in their direct message, the bot answers "Beep boop! 🤖 I'm not interactive yet, but hopefully soon!" about one second later. The bot answers each person at most once in 30 seconds. A pin line in that conversation is not a message from the person, and the bot does not answer it ([MR-80](message-row.md#MR-80)).
+
 ## States
 
 | State or trigger | Input | What the user sees |
@@ -122,6 +124,7 @@ Sign-in gives a device access to an account. An account needs only a username, w
 | Bot, new device | "🔐 New device sign-in detected for your account using **{method}** from IP `{ip}`. If this wasn't you, open **Settings** and use **Sign out all other devices** immediately." with "smart login (same network)", "your login link" or "secret code" |
 | Bot, rescue link | "🔗 An admin created a new login link for you: {url}"; "Your previous link no longer works. Save this one somewhere safe." |
 | Bot, to the admin | "👋 **{username}** is requesting to join. Go to the Admin panel to approve or reject."; "👋 {display name} just joined the chat!"; "🚨 {n} failed login-link attempts in the last few minutes. Code sign-ins are paused for 10 minutes. Someone may be guessing codes — check the Visitors tab in Admin for failed sign-ins." |
+| Bot, reply | "Beep boop! 🤖 I'm not interactive yet, but hopefully soon!" |
 
 ## Related
 
