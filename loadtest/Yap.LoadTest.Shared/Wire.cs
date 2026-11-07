@@ -6,7 +6,8 @@ namespace Yap.LoadTest.Shared;
 // Copies of the server's wire shapes, reduced to the fields this tool reads or sends. The server's records live
 // in Yap/Models and Yap/Endpoints; System.Text.Json ignores the fields that are missing here. When a field named
 // below changes on the server, change it here too. The tool depends on: MessageDto.Id/ChannelId/ClientId/Username,
-// RoomDto.Id/Name/IsLobby, BootstrapDto.User/Config/Rooms/Users, Conversation.Messages, LinkDto.Url, LoadSample (all fields).
+// RoomDto.Id/Name/IsLobby, BootstrapDto.User/Config/Rooms/Users, Conversation.Messages, LinkDto.Url, LoadSample (all fields
+// but CpuPeakPercent, which equals CpuPercent in the 1 s samples this tool reads).
 
 public static class Json
 {

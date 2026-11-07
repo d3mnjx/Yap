@@ -6,7 +6,8 @@ using Yap.Services.Presence;
 namespace Yap.Services.Admin;
 
 /// <summary>
-/// Captures diagnostics snapshots every 30 seconds into a circular buffer (max 7 days).
+/// Captures diagnostics snapshots every 30 seconds into a circular buffer (max 7 days), in memory only, so a
+/// restart starts it again.
 /// </summary>
 public class DiagnosticsCollectorService : BackgroundService
 {
@@ -67,12 +68,7 @@ public class DiagnosticsCollectorService : BackgroundService
                 TotalConnections: totalCreated,
                 TotalEventSubscribers: diag.TotalEventSubscribers);
 
-            lock (_lock)
-            {
-                _snapshots.AddLast(snapshot);
-                while (_snapshots.Count > MaxEntries)
-                    _snapshots.RemoveFirst();
-            }
+            Record(snapshot);
         }
         catch (Exception ex)
         {
@@ -80,16 +76,39 @@ public class DiagnosticsCollectorService : BackgroundService
         }
     }
 
-    /// <summary>
-    /// Returns all snapshots in chronological order.
-    /// </summary>
-    public List<DiagnosticsSnapshot> GetSnapshots()
+    internal void Record(DiagnosticsSnapshot snapshot)
     {
         lock (_lock)
         {
-            return _snapshots.ToList();
+            _snapshots.AddLast(snapshot);
+            while (_snapshots.Count > MaxEntries)
+                _snapshots.RemoveFirst();
         }
     }
+
+    /// <summary>
+    /// The snapshots of the last <paramref name="seconds"/> in chronological order, as buckets of
+    /// <paramref name="step"/> seconds rounded up to whole snapshots, so a week comes back as a few hundred points.
+    /// </summary>
+    public List<DiagnosticsSnapshot> GetSeries(int seconds, int step)
+    {
+        var interval = (int)Interval.TotalSeconds;
+        var count = Math.Clamp((seconds + interval - 1) / interval, 1, MaxEntries);
+        var size = (Math.Max(step, 1) + interval - 1) / interval;
+        List<DiagnosticsSnapshot> last;
+        lock (_lock) last = _snapshots.TakeLast(count).ToList();
+        return size <= 1 ? last : last.Chunk(size).Select(Bucket).ToList();
+    }
+
+    // A bucket keeps the highest user, session and connection counts, so a short visit still shows on a week's
+    // chart; an average would flatten it. The message total and the rest come from the last snapshot.
+    private static DiagnosticsSnapshot Bucket(DiagnosticsSnapshot[] chunk) => chunk[^1] with
+    {
+        UserSessions = chunk.Max(s => s.UserSessions),
+        UniqueUsers = chunk.Max(s => s.UniqueUsers),
+        ActiveConnections = chunk.Max(s => s.ActiveConnections),
+        DisconnectedConnections = chunk.Max(s => s.DisconnectedConnections),
+    };
 
     /// <summary>
     /// Returns the most recent snapshot, or null if none captured yet.

@@ -577,11 +577,34 @@ export function mount(root, route) {
   }
 
   // ---- Diagnostics (AD-24 to AD-28) ----
+  // The chart ranges. The server keeps, in memory only, 1 s load samples for an hour, and 1 min load buckets and
+  // 30 s snapshots for seven days. A chart asks for at most 300 points; the server merges its samples into that many.
+  const RANGES = [[60, 'Last minute'], [300, 'Last 5 minutes'], [900, 'Last 15 minutes'], [3600, 'Last hour'], [21_600, 'Last 6 hours'], [86_400, 'Last 24 hours'], [604_800, 'Last 7 days']];
+  const stepFor = seconds => Math.ceil(seconds / 300);
+  const rangeSelect = (ranges, value, pick) => {
+    const select = el('select', { class: 'log-filter-select diag-range', onchange: () => pick(Number(select.value)) }, ranges.map(([v, l]) => el('option', { value: v }, l)));
+    select.value = String(value);
+    return select;
+  };
+  // A label carries what its range needs: the seconds up to 5 minutes, the date from a day on, because the first and
+  // the last label of a day's range have the same time of day.
+  const timeLabel = (at, seconds) => {
+    const d = new Date(at), time = d.toTimeString();
+    return seconds <= 300 ? time.slice(3, 8) : seconds < 86_400 ? time.slice(0, 5) : `${d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} ${time.slice(0, 5)}`;
+  };
+
   function diagnostics(host) {
-    let charts = {};
+    let charts = {}, chartSeconds = 86_400;
     const body = el('div');
     const load = loadCard();
-    host.append(header('Diagnostics', 'Live system metrics'), load.node, body);
+    const chartBox = (title, id) => el('div', null, el('h4', null, title), el('div', { class: 'diag-chart-wrapper' }, el('canvas', { id })));
+    // The history card stays outside `body`, which every refresh rebuilds, so its select keeps the range. One select
+    // drives the three charts, so they share one card.
+    const history = el('div', { class: 'diag-chart-card' },
+      el('div', { class: 'diag-card-head' }, el('h4', null, 'History'), rangeSelect(RANGES.slice(3), chartSeconds, v => { chartSeconds = v; refresh(); })),
+      el('p', { class: 'section-hint', style: { margin: '0 0 8px' } }, 'One sample every 30 seconds, kept in memory since the last restart for at most seven days. A point that covers more than one sample shows the highest count, and the last count for messages.'),
+      el('div', { class: 'diag-charts' }, chartBox('Users & Sessions', 'diag-chart-users'), chartBox('Connections: Active vs Disconnected', 'diag-chart-connections'), chartBox('Messages', 'diag-chart-messages')));
+    host.append(header('Diagnostics', 'Live system metrics'), load.node, body, history);
     const ms = v => v == null ? '—' : `${Math.round(v)}`;
     const sessionRow = s => el('tr', s.ghost ? { style: { color: 'var(--color-warning)' } } : null,
       td(s.username), td([s.isMobile ? '📱' : '🖥️', ' ', s.clientIp ?? '—', s.clientIpv4 && s.clientIpv4 !== s.clientIp ? el('span', { style: { color: 'var(--text-secondary)' }, 'data-tip': 'IPv4 reported by the beacon' }, ` · v4 ${s.clientIpv4}`) : null]),
@@ -642,7 +665,9 @@ export function mount(root, route) {
     const loadRows = d => [...d.sessions, ...d.recentlyClosed].filter(s => s.load).sort((a, b) => (b.load.rows ?? -1) - (a.load.rows ?? -1)).map(loadRow);
     async function refresh() {
       let d;
-      try { d = await api.get('/api/admin/diagnostics'); } catch (e) { replace(body, [empty(e.message)]); return; }
+      const seconds = chartSeconds;
+      try { d = await api.get(`/api/admin/diagnostics?seconds=${seconds}&step=${stepFor(seconds)}`); } catch (e) { replace(body, [empty(e.message)]); return; }
+      if (seconds !== chartSeconds) return;   // the range changed while this request ran; the request for the new range draws
       const latest = d.latest ?? {};
       const loads = loadRows(d);
       replace(body, [
@@ -672,22 +697,18 @@ export function mount(root, route) {
           d.writer.enabled ? el('p', { style: { color: 'var(--text-secondary)', margin: '8px 0 0' } }, d.writer.sqlLogged
             ? 'SQL commands are in the server log: one line per database write. For normal use set "Microsoft.EntityFrameworkCore" to "Warning" under Logging → LogLevel in Data/appsettings.json and restart.'
             : 'SQL commands are not in the server log. To see every command for a while, set "Microsoft.EntityFrameworkCore" to "Information" under Logging → LogLevel in Data/appsettings.json and restart. Each write is then one log line.') : null),
-        el('div', { class: 'diag-charts' },
-          el('div', { class: 'diag-chart-card' }, el('h4', null, 'Users & Sessions'), el('div', { class: 'diag-chart-wrapper' }, el('canvas', { id: 'diag-chart-users' }))),
-          el('div', { class: 'diag-chart-card' }, el('h4', null, 'Connections: Active vs Disconnected'), el('div', { class: 'diag-chart-wrapper' }, el('canvas', { id: 'diag-chart-connections' }))),
-          el('div', { class: 'diag-chart-card' }, el('h4', null, 'Messages'), el('div', { class: 'diag-chart-wrapper' }, el('canvas', { id: 'diag-chart-messages' })))),
       ]);
-      drawCharts(d.series);
+      drawCharts(d.series, seconds);
     }
-    async function drawCharts(series) {   // AD-28: Chart.js from the CDN, loaded on the first open of the tab
+    async function drawCharts(series, seconds) {   // AD-28: Chart.js from the CDN, loaded on the first open of the tab
       if (!window.Chart) { await new Promise(resolve => { const s = el('script', { src: CHART_CDN }); s.addEventListener('load', resolve); s.addEventListener('error', resolve); document.head.append(s); }); }
       if (!window.Chart) return;
-      const labels = series.map(s => new Date(s.timestamp).toTimeString().slice(0, 5));
+      const labels = series.map(s => timeLabel(s.timestamp, seconds));
       const css = getComputedStyle(document.documentElement);
       const color = (name, fallback) => css.getPropertyValue(name).trim() || fallback;   // the theme's colours (AD-28)
       const green = color('--status-online', '#3ba55c'), blue = color('--accent', '#5865f2'), orange = color('--status-away', '#faa61a');
       const make = (id, datasets) => {
-        const canvas = body.querySelector(`#${id}`); if (!canvas) return;
+        const canvas = history.querySelector(`#${id}`); if (!canvas) return;
         charts[id]?.destroy();
         charts[id] = new window.Chart(canvas, { type: 'line', data: { labels, datasets: datasets.map(ds => ({ ...ds, pointRadius: 0, borderWidth: 2, tension: 0.2 })) },
           options: { animation: false, maintainAspectRatio: false, scales: { x: { ticks: { maxTicksLimit: 8 } }, y: { beginAtZero: true } } } });
@@ -701,21 +722,24 @@ export function mount(root, route) {
     return () => { clearInterval(timer); load.stop(); Object.values(charts).forEach(c => c.destroy()); };
   }
 
-  // Server load: the 1 s samples of /api/admin/load, polled every 2 s. Built for stress tests, so it has its own
-  // clock; the 30 s rhythm of the rest of the tab would hide the moment the server bends. The range select asks
-  // for up to an hour; the server buckets a long range so the chart gets at most 300 points.
+  // Server load: the samples of /api/admin/load, polled every 2 s. Built for stress tests, so it has its own clock;
+  // the 30 s rhythm of the rest of the tab would hide the moment the server bends. The range select asks for up to
+  // seven days: up to an hour the server merges 1 s samples, beyond it 1 min buckets. A merged point averages the
+  // CPU, so a dashed line carries the busiest second of each point.
   function loadCard() {
     const stats = el('div', { class: 'diag-stats', style: { marginBottom: '0.75rem' } });
     const canvas = el('canvas');
     let seconds = 60, chart = null, timer = null;
-    const range = el('select', { class: 'log-filter-select diag-range', onchange: () => { seconds = Number(range.value); chart?.destroy(); chart = null; restart(); } },
-      [[60, 'Last minute'], [300, 'Last 5 minutes'], [900, 'Last 15 minutes'], [3600, 'Last hour']].map(([v, l]) => el('option', { value: v }, l)));
+    const range = rangeSelect(RANGES, seconds, v => { seconds = v; chart?.destroy(); chart = null; restart(); });
     const node = el('div', { class: 'diag-chart-card', style: { marginBottom: '16px' } }, el('div', { class: 'diag-card-head' }, el('h4', null, 'Server load'), range), stats, el('div', { class: 'diag-chart-wrapper' }, canvas));
     const n = v => v == null ? '—' : String(v);
     async function tick() {
       let d;
-      const step = Math.ceil(seconds / 300);
+      const asked = seconds, step = stepFor(seconds);
       try { d = await api.get(`/api/admin/load?seconds=${seconds}&step=${step}`); } catch (e) { replace(stats, [empty(e.message)]); return; }
+      // The range changed while this request ran. Its series has the old range's datasets, and the chart of the new
+      // range may already exist with another count of datasets.
+      if (asked !== seconds) return;
       const l = d.latest;
       if (!l) { replace(stats, [empty('No samples yet.')]); return; }
       replace(stats, [
@@ -726,18 +750,20 @@ export function mount(root, route) {
         statCard('Host load', n(l.machineLoad1)), statCard('Host free', l.machineMemAvailableMB == null ? '—' : `${l.machineMemAvailableMB} MB`),
       ]);
       if (!window.Chart) return;   // the diagnostics tab loads Chart.js on its first draw; until then the numbers alone
-      const labels = d.series.map(s => new Date(s.at).toTimeString().slice(seconds > 300 ? 0 : 3, seconds > 300 ? 5 : 8));   // mm:ss up to 5 min, then hh:mm
+      const labels = d.series.map(s => timeLabel(s.at, seconds));
       const data = [
         { label: 'CPU %', data: d.series.map(s => s.cpuPercent), borderColor: '#faa61a', yAxisID: 'y' },
+        // Unmerged samples have a peak equal to the CPU line, so the peak line shows only for merged points.
+        ...(step > 1 ? [{ label: 'CPU peak %', data: d.series.map(s => s.cpuPeakPercent), borderColor: '#faa61a', borderDash: [4, 3], borderWidth: 1, yAxisID: 'y' }] : []),
         { label: 'Hub sends/s', data: d.series.map(s => s.hubSendsPerSec), borderColor: '#5865f2', yAxisID: 'y1' },
         { label: 'Msg/s', data: d.series.map(s => s.messagesPerSec), borderColor: '#3ba55c', yAxisID: 'y1' },
         { label: 'Writer depth', data: d.series.map(s => s.writerDepth), borderColor: '#ed4245', yAxisID: 'y1' },
       ];
       if (chart) { chart.data.labels = labels; data.forEach((ds, i) => { chart.data.datasets[i].data = ds.data; }); chart.update('none'); return; }
-      chart = new window.Chart(canvas, { type: 'line', data: { labels, datasets: data.map(ds => ({ ...ds, pointRadius: 0, borderWidth: 2, tension: 0.2 })) },
+      chart = new window.Chart(canvas, { type: 'line', data: { labels, datasets: data.map(ds => ({ pointRadius: 0, borderWidth: 2, tension: 0.2, ...ds })) },
         options: { animation: false, maintainAspectRatio: false, scales: { x: { ticks: { maxTicksLimit: 6 } }, y: { beginAtZero: true, max: 100, position: 'left' }, y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } } } } });
     }
-    function restart() { clearInterval(timer); tick(); timer = setInterval(tick, seconds > 300 ? 5_000 : 2_000); }   // a long range moves slowly; poll it less
+    function restart() { clearInterval(timer); tick(); timer = setInterval(tick, seconds > 3600 ? 10_000 : seconds > 300 ? 5_000 : 2_000); }   // a long range moves slowly; poll it less
     restart();
     return { node, stop: () => { clearInterval(timer); chart?.destroy(); } };
   }

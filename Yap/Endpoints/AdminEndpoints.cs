@@ -337,9 +337,9 @@ public static class AdminEndpoints
         }));
 
         admin.MapGet("/diagnostics", (ChatService chat, PresenceService presence, DiagnosticsCollectorService collector, NotificationAudit audit,
-            PushNotificationService push, PersistenceWriter writer, SystemBotService bot, ILoggerFactory loggers) =>
+            PushNotificationService push, PersistenceWriter writer, SystemBotService bot, ILoggerFactory loggers, int seconds = 86_400, int step = 1) =>
         {
-            var snapshots = collector.GetSnapshots();
+            var snapshots = collector.GetSeries(seconds, step);   // the chart's range (AD-28), bucketed by `step` seconds
             // The effective level, whatever config source set it: one line per database command at Information.
             var sqlLogged = loggers.CreateLogger("Microsoft.EntityFrameworkCore.Database.Command").IsEnabled(LogLevel.Information);
             return Results.Ok(new
@@ -363,11 +363,11 @@ public static class AdminEndpoints
         });
 
         // One-second samples of the server under load (CPU, memory, GC, thread pool, hub rates, writer depth). The
-        // admin Diagnostics tab polls a range up to an hour, bucketed by `step` seconds so the chart stays light;
-        // the load-test orchestrator polls a few seconds at a time. `latest` is always the real last second.
+        // admin Diagnostics tab polls a range up to seven days, bucketed by `step` seconds so the chart stays at a few
+        // hundred points; the load-test orchestrator polls a few seconds at a time. `latest` is always the real last second.
         admin.MapGet("/load", (LoadMetrics load, int seconds = 60, int step = 1) =>
         {
-            var series = load.Last(seconds, Math.Clamp(step, 1, 60));
+            var series = load.Last(seconds, step);
             return Results.Ok(new { latest = load.Last(1).LastOrDefault(), series });
         });
     }
