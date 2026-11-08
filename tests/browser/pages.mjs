@@ -467,7 +467,7 @@ await step(13, 'Admin: bot, debug, logs, media, GIFs, diagnostics, visitors', as
   check(transports.length > 0 && transports.every(t => t === 'WS' || t === '⚠ Fallback'), `sessions Transport column ${JSON.stringify(transports)}; latency table ${JSON.stringify((await A.locator('.page-admin .diag-chart-card', { hasText: 'Latency by user' }).locator('tbody tr td:nth-child(2)').allInnerTexts()).map(t => t.trim()))}`);
   const t0 = Date.now();
   const drawn = await waitTrue(async () => A.evaluate(() => { const c = [...document.querySelectorAll('.page-admin .diag-charts canvas')]; return c.length === 3 && c.every(x => x.clientHeight > 0) && !!window.Chart && c.every(x => window.Chart.getChart(x)); }), 5000, 100);
-  const canv = await A.evaluate(() => ({ chart: !!window.Chart, version: window.Chart?.version ?? null, sizes: [...document.querySelectorAll('.page-admin canvas')].map(x => `${x.id} ${x.clientWidth}x${x.clientHeight} chart=${!!window.Chart?.getChart?.(x)}`) }));
+  const canv = await A.evaluate(() => ({ chart: !!window.Chart, version: window.Chart?.version ?? null, sizes: [...document.querySelectorAll('.page-admin canvas')].map(x => `${(h => h?.tagName === 'H4' ? h.textContent : 'load')(x.closest('.diag-chart-wrapper')?.previousElementSibling)} ${x.clientWidth}x${x.clientHeight} chart=${!!window.Chart?.getChart?.(x)}`) }));
   check(drawn, `charts within 5 s: ${drawn} (${Date.now() - t0} ms); Chart.js loaded ${canv.chart} ${canv.version ?? ''}; canvases ${JSON.stringify(canv.sizes)}`);
   if (!canv.chart) notes.push(`chart.js requests: ${stepLogs(13).filter(l => l.text.includes('chart')).map(l => l.kind + ' ' + l.text).join(' ; ') || '(none logged)'}`);
   await A.screenshot({ path: SHOTS + '25-admin-diagnostics.png' });
