@@ -77,7 +77,7 @@ page.on('pageerror', e => log('pageerror', String(e).slice(0, 200)));
 let server = await startServer(dirA);
 const A = server.build;
 const signedIn = process.argv.includes('--signin');
-if (signedIn) { const { signIn } = await import('./lib.mjs'); await signIn(page, 'wrenupdate'); log('signed in as wrenupdate'); }
+if (signedIn) { const { signIn } = await import('./lib.mjs'); await signIn(page, 'wrenupdate', BASE); log('signed in as wrenupdate'); }
 await page.goto(`${BASE}/settings`, { waitUntil: 'load' });
 log('first load of /settings on build', A);
 await waitTrue(() => page.evaluate(() => !!navigator.serviceWorker.controller), 20000);

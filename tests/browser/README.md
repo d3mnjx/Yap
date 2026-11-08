@@ -68,7 +68,7 @@ Each run uses a new temporary content root under the system temp folder (`yap-br
 `Yap/Data`, links `Yap/wwwroot`, and turns persistence off. The repository's `Yap/Data` does not change.
 The root is removed when the run ends.
 
-The port is 5097. A script stops at once if something already answers on that port, because the new server
+The port is 5097 (5098 for `update.mjs`). A script stops at once if something already answers on that port, because the new server
 could not bind and the run would test the old one. To change the settings, pass `--port=<n>`,
 `--dll=<path>` or `--scratch=<folder>` after `--`, for example `npm run smoke -- --port=5099`.
 
