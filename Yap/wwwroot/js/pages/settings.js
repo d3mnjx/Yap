@@ -464,7 +464,8 @@ export function mount(root, route) {
     $('.version-page').textContent = build || '—';
     $('.version-server-row').hidden = !newer;
     $('.version-server').textContent = server ?? '';
-    $('.version-hint').textContent = newer ? 'A newer version is on the server. Reload to get it.' : 'This is the latest version.';
+    // No stamp until the hub answers (main.js start(), OF-04): no hint then, since "latest" would be a guess.
+    $('.version-hint').textContent = !server ? '' : newer ? 'A newer version is on the server. Reload to get it.' : 'This is the latest version.';
   };
   drawVersion();
   offs.push(on('config', drawVersion));
