@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
+using Yap.Configuration;
 using Yap.Models;
 using Yap.Models.Accounts;
 using Yap.Models.Chat;
@@ -22,6 +23,7 @@ public class SystemBotService
     private readonly PresenceService _presence;
     private readonly AccessLinkService _accessLinks;
     private readonly IConfiguration _configuration;
+    private readonly ServerConfig _config;
     private readonly IWebHostEnvironment _env;
     private readonly ImageService _images;
     private readonly ILogger<SystemBotService> _logger;
@@ -67,6 +69,7 @@ public class SystemBotService
         PresenceService presence,
         AccessLinkService accessLinks,
         IConfiguration configuration,
+        ServerConfig config,
         IWebHostEnvironment env,
         ProxyWatch proxyWatch,
         ImageService images,
@@ -77,6 +80,7 @@ public class SystemBotService
         _presence = presence;
         _accessLinks = accessLinks;
         _configuration = configuration;
+        _config = config;
         _env = env;
         _images = images;
         _proxyWatch = proxyWatch;
@@ -88,7 +92,7 @@ public class SystemBotService
     private bool BotEnabled => _configuration.GetValue<bool>("ChatSettings:Bot:Enabled", true);
     private string BotUsernameConfig => _configuration["ChatSettings:Bot:Username"] ?? "ping";
     private string BotDisplayNameConfig => _configuration["ChatSettings:Bot:DisplayName"] ?? "Ping";
-    private string ProjectName => _configuration["ChatSettings:ProjectName"] ?? "Yap";
+    private string ProjectName => _config.ProjectName;
 
     /// <summary>
     /// The first part of the welcome DM. The admin's saved text wins over appsettings, which wins over the default.
@@ -104,8 +108,6 @@ public class SystemBotService
 
     /// <summary>Hours a person must be away before the admin hears that the person is back (PR-18). 0 turns the notice off.</summary>
     public int ReturnAfterHours => _returnAfterHoursFromFile ?? DefaultReturnAfterHours;
-
-    public string ServerName => ProjectName;
 
     /// <summary>Saves what the admin edited to Data/bot-settings.json. A null value keeps the current one.</summary>
     public async Task UpdateSettingsAsync(string? welcome, string? phone, string? link, int? returnAfterHours)

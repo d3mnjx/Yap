@@ -922,9 +922,10 @@
     gap: 8px;
 }
 
-/* The edit box is deliberately a small message input: same bg/radius/padding/autogrow,
-   so editing feels like composing. Styles duplicated (not shared) because CSS isolation
-   keeps MessageInput's scoped rules invisible here. */
+/* The edit box is deliberately a small message input: the text, line height, min/max height
+   and scrolling repeat .message-input (composer.css), so editing feels like composing. Keep the
+   two in step. Its own box (background, border, radius, padding) stands in for the composer's
+   .input-box, which the row does not have. */
 .edit-input {
     width: 100%;
     padding: 0.6875rem 1rem;

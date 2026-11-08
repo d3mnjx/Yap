@@ -1,17 +1,16 @@
 // A room or a direct message (SH-42, SH-43). The page mounts the timeline and the composer into the frame's
 // content column, opens the conversation on the hub, and re-opens it after every reconnect (TL-35).
 
-import { state, on, setOpen, closeOpen, roomById, lobby } from '../store.js';
+import { state, on, setOpen, closeOpen, roomById, lobby, projectName } from '../store.js';
 import * as hub from '../hub.js';
 import * as router from '../router.js';
 import * as frame from '../ui/frame.js';
 import { Timeline } from '../ui/timeline.js';
 import { Composer } from '../ui/composer.js';
-import { el } from '../render/dom.js';
+import { clone, el } from '../render/dom.js';
 import * as snapshot from '../offline/snapshot.js';
 import { setTitle } from '../notify.js';
 import * as push from '../push.js';
-import { clone } from '../render/dom.js';
 import * as overlays from '../ui/overlays.js';
 
 let generation = 0;   // a switch during an open: the older answer is dropped
@@ -23,7 +22,7 @@ function notificationPrompt() {
   if (prompted || !push.promptWanted()) return;
   prompted = true;
   const overlay = clone('t-push-prompt');
-  overlay.querySelector('.push-prompt-body').textContent = `Turn on notifications, and this ${push.where().device} shows new messages when ${push.appName()} is closed. You can change this any time in Settings.`;
+  overlay.querySelector('.push-prompt-body').textContent = `Turn on notifications, and this ${push.where().device} shows new messages when ${projectName()} is closed. You can change this any time in Settings.`;
   const enable = overlay.querySelector('.push-prompt-enable');
   const close = () => { overlay.classList.add('hiding'); setTimeout(() => layer(), 300); };
   enable.addEventListener('click', async () => { enable.disabled = true; enable.textContent = 'Enabling...'; await push.subscribe(); close(); });   // SH-39: closes whatever the answer
@@ -81,7 +80,7 @@ export function mount(root, params) {
 // The header (SH-05, SH-06) and the tab title (SH-45).
 function setTitles(target) {
   frame.setTitle(target.kind, target.kind === 'dm' ? { partner: target.partner } : { channelId: target.channelId, roomName: target.room.name });
-  setTitle(target.kind === 'dm' ? `${state.config.projectName} | @${target.partner}` : `${state.config.projectName} | #${target.room.name}`);
+  setTitle(target.kind === 'dm' ? `${projectName()} | @${target.partner}` : `${projectName()} | #${target.room.name}`);
 }
 
 function resolve({ lobby: wantsLobby, roomId, dmUser }) {

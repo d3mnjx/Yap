@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using WebPush;
+using Yap.Configuration;
 using Yap.Services.Chat;
 
 namespace Yap.Services.Notifications;
@@ -60,10 +61,11 @@ public class PushNotificationService
     private readonly bool _isConfigured;
     private readonly PushKeyStatus _keyStatus;
     private readonly string? _keyStatusDetail;
-    private readonly string _projectName;
+    private readonly ServerConfig _config;
 
     public PushNotificationService(
         IConfiguration configuration,
+        ServerConfig config,
         PushSubscriptionStore subscriptionStore,
         NotificationAudit audit,
         ILogger<PushNotificationService> logger)
@@ -71,7 +73,7 @@ public class PushNotificationService
         _subscriptionStore = subscriptionStore;
         _audit = audit;
         _logger = logger;
-        _projectName = configuration["ChatSettings:ProjectName"] ?? "Yap";   // the name under the installed app's icon
+        _config = config;
 
         var httpClient = new HttpClient(new PushLogHandler(logger))
         {
@@ -316,7 +318,7 @@ public class PushNotificationService
     {
         var payload = new PushPayload
         {
-            Title = $"{_projectName} test notification",
+            Title = $"{_config.ProjectName} test notification",   // the name under the installed app's icon
             Body = "If you can see this, notifications work on this device.",
             Icon = "/icon-192.png",
             Badge = "/icon-192.png",

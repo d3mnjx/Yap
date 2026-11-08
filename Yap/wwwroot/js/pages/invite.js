@@ -1,7 +1,7 @@
 // The link page (AU-10, AU-16, AU-17): an invite asks for a username; a login link asks for one tap, so a
 // link that a messenger fetches never signs anyone in. Signed in as someone else, it offers a switch.
 
-import { state } from '../store.js';
+import { state, projectName } from '../store.js';
 import { api, ApiError } from '../api.js';
 import { clone } from '../render/dom.js';
 import * as session from '../session.js';
@@ -19,7 +19,7 @@ export function mount(root, { code }) {
   const secondary = page.querySelector('.invite-secondary');
   const error = page.querySelector('.validation-error');
   page.querySelector('.build-info').textContent = document.documentElement.dataset.build ?? '';
-  const project = state.config?.projectName ?? 'Yap';
+  const project = projectName();
   // Only with a config: a load with no bootstrap answer (offline, signed out) must not write the "Yap" fallback over
   // the project name the server stamped into the shell's <title> (SH-45).
   if (state.config?.projectName) document.title = project;

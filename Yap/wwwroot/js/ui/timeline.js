@@ -450,8 +450,7 @@ export function Timeline(root, { reopen }) {
   // show nothing: the person can scroll that far by hand. A window has the same rule: its bottom is not the newest
   // message, but the end row there says so and leads back (TL-42).
   function syncDown(distance = distanceFromBottom()) {
-    const hide = following || pill || distance <= list.clientHeight;
-    if (hide) { hideDown(); return; }
+    if (following || pill || distance <= list.clientHeight) { hideDown(); return; }
     if (down) return;
     down = clone('t-down-arrow');
     down.addEventListener('click', toBottom);

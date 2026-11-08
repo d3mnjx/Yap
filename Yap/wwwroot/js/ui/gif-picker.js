@@ -1,7 +1,7 @@
 // The GIF picker (pickers.md, PK-13 to PK-42): the rail, the search row, the results, favourites with
 // folders, the server library, Browse (the provider's trending GIFs), the upload. A card tap sends; a star only stars.
 
-import { state, on, toggleFavoriteLocally } from '../store.js';
+import { state, on, toggleFavoriteLocally, projectName } from '../store.js';
 import { uploadOne } from '../upload.js';
 import { api } from '../api.js';
 import { clone, el, replace } from '../render/dom.js';
@@ -191,7 +191,7 @@ export function GifPicker({ onSend, onWarn }) {
     const nodes = [];
     const tiles = [];
     if (cache.favorites?.gifs.length) tiles.push(folderTile('Favorites', cache.favorites.gifs, () => { tab = 'favorites'; render(); }));
-    if (cache.server?.gifs.length) tiles.push(folderTile(state.config?.projectName ?? 'Yap', cache.server.gifs, () => { tab = 'server'; render(); }));
+    if (cache.server?.gifs.length) tiles.push(folderTile(projectName(), cache.server.gifs, () => { tab = 'server'; render(); }));
     if (tiles.length) nodes.push(el('div', { class: 'gif-tile-grid' }, tiles));
     if (configured()) nodes.push(...trendingView());
     else nodes.push(noProviderNote());

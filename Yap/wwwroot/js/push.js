@@ -2,16 +2,13 @@
 // unsubscribe, and the prompt of the installed app (SH-38, SH-39). The old chat.js helpers, as a module.
 
 import { api } from './api.js';
-import { state } from './store.js';
+import { state, projectName } from './store.js';
 
 const DISMISSALS = 'yap.pushPromptDismissals';
 
 export const supported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 export const permission = () => (supported() ? Notification.permission : 'unsupported');
 export const installed = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-
-// The server's name. It is also the name under the installed app's icon, so "the {name} app" is what the person taps.
-export const appName = () => state.config?.projectName ?? 'Yap';
 
 // Where the person is, for the words of the Settings card and of the fix for a block (ST-17). The card speaks of what
 // the person sees: a phone treats the installed app like any other app, a browser on an iPhone cannot show
@@ -27,14 +24,14 @@ export function where() {
 
 // Only the installed app can show notifications on an iPhone or iPad (NT-23); elsewhere it is an old or locked-down browser.
 function cannotHint() {
-  const w = where(), name = appName();
+  const w = where(), name = projectName();
   return w.ios ? `${w.browser} cannot show ${name} notifications. Add ${name} to your home screen first.` : 'This browser cannot show notifications.';
 }
 
 // After a block, the steps that allow notifications again, for the place where that switch lives. The installed app
 // has its own entry in the phone's Settings, like any other app; a browser keeps the switch at the address bar.
 export function blockedHint() {
-  const w = where(), name = appName();
+  const w = where(), name = projectName();
   if (w.installed && w.ios) return `Notifications for ${name} are turned off on this ${w.device}. Open the Settings app, tap Notifications, scroll to ${name}, and turn on Allow Notifications. Then come back here and tap Turn on.`;
   if (w.installed && w.android) return `Notifications for ${name} are turned off on this phone. Press and hold the ${name} icon on your home screen, tap App info, tap Notifications, and turn them on. Then come back here and tap Turn on.`;
   if (w.installed) return `Notifications for ${name} are turned off. Click the three dots at the top of the ${name} window, choose App info, set Notifications to Allow, and open the app again.`;

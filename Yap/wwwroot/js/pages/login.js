@@ -1,7 +1,7 @@
 // The login page (sessions.md, AU-02 to AU-09, AU-24): one box, one button. The server's check decides what
 // the button does for a name: create, sign in through smart login, ask for a code, or show the guide.
 
-import { state } from '../store.js';
+import { state, projectName } from '../store.js';
 import { api, ApiError } from '../api.js';
 import { clone, el, replace } from '../render/dom.js';
 import { pick } from '../render/text.js';
@@ -25,7 +25,7 @@ export function usernameRule(value, { blurred = true } = {}) {
 export function mount(root) {
   const page = clone('t-login');
   const texts = state.texts ?? {};
-  const project = state.config?.projectName ?? 'Yap';
+  const project = projectName();
   page.querySelector('.login-heading').textContent = pick(texts.loginHeadings, 'Welcome to {0}!', project);
   const button = page.querySelector('.join-button');
   const joinText = pick(texts.loginButtons, 'Join Chat');

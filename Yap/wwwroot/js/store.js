@@ -70,7 +70,6 @@ export function setConnectionFailed(value) {
   changed('connection');
 }
 
-
 // ---- the open conversation ----
 // 'messages' listeners receive a detail that says what changed, so the timeline can update one row
 // instead of redrawing hundreds: { type: 'reset' | 'add' | 'replace' | 'remove' | 'older' | 'window' | 'missed', ... }.
@@ -129,6 +128,8 @@ export function setWindow(around, target) {
 
 // ---- pins (SH-47 to SH-49, MR-77) ----
 
+const MAX_PINS = 6;   // mirrors Channel.MaxPins on the server
+
 // The server's list for the open conversation. A list for another conversation is dropped: its open answer carries one.
 export function setPins(channelId, pins) {
   if (state.open?.channelId !== channelId) return;
@@ -153,7 +154,7 @@ export function mayPin() {
 // server refuses. A full list is not changed locally (MR-77): the server's refusal arrives and shows, and nothing flickers.
 export function pinLocally(m) {
   const open = state.open;
-  if (!open || isPinned(m.id) || open.pins.length >= 6) return null;   // 6 mirrors Channel.MaxPins on the server
+  if (!open || isPinned(m.id) || open.pins.length >= MAX_PINS) return null;
   open.pins = [{ messageId: m.id, username: m.username, text: m.text || null, timestamp: m.timestamp, media: pinMediaOf(m),
                  pinnedBy: state.user.username, pinnedAt: new Date().toISOString() }, ...open.pins];
   changed('pins');
@@ -405,6 +406,10 @@ export function setDraft(channelId, draft) {
 // ---- values the client derives (bootstrap-and-events.md, "Values the client computes itself") ----
 
 export function displayName(username) { return state.users[username]?.displayName || username; }
+
+// The server's name (ChatSettings:ProjectName). It is also the name under the installed app's icon, so "the {name}
+// app" is what the person taps. 'Yap' before any bootstrap, the same default as the server's.
+export const projectName = () => state.config?.projectName ?? 'Yap';
 
 export function serverMuted() {
   const s = state.mutes?.server;

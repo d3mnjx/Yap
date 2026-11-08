@@ -1,7 +1,7 @@
 // Settings (settings.md): every control saves at once (ST-02); the `me` hub message brings a change made on
 // another device back into the page. Inside the frame (ST-03).
 
-import { state, on, mergeMe, serverMuted, displayName } from '../store.js';
+import { state, on, mergeMe, serverMuted, displayName, projectName } from '../store.js';
 import { build, reloadForNewBuild } from '../update.js';
 import { api } from '../api.js';
 import { clone, el, replace } from '../render/dom.js';
@@ -228,8 +228,8 @@ export function mount(root, route) {
   // ---- Install as App (ST-16) ----
   if (push.installed()) { $('.pwa-installed-info').hidden = false; $('.pwa-not-installed').hidden = true; }
   // The icon on the home screen carries the server's name, so the cards name it too (ST-16, ST-17).
-  for (const n of page.querySelectorAll('.pwa-name, .push-name')) n.textContent = push.appName();
-  $('.install-app').textContent = `Install ${push.appName()}`;   // one text node: the button is inline-flex, which drops the space before a span
+  for (const n of page.querySelectorAll('.pwa-name, .push-name')) n.textContent = projectName();
+  $('.install-app').textContent = `Install ${projectName()}`;   // one text node: the button is inline-flex, which drops the space before a span
   $('.pwa-where').textContent = push.where().phone ? 'on your home screen' : 'as an app on this computer';
   $('.pwa-device').textContent = push.where().device;
   $('.install-app').addEventListener('click', openInstallDialog);
@@ -248,7 +248,7 @@ export function mount(root, route) {
   };
   const scrollTo = sel => e => { e.preventDefault(); $(sel).scrollIntoView({ behavior: 'smooth' }); };
   async function drawPush() {
-    const w = push.where(), name = push.appName(), device = w.device, card = `Notifications on This ${Device(w)}`;
+    const w = push.where(), name = projectName(), device = w.device, card = `Notifications on This ${Device(w)}`;
     const possible = push.supported() && !(w.ios && !w.installed);   // a browser on an iPhone has no notifications at all (NT-23)
     const configured = !!state.config?.vapidPublicKey, blocked = possible && push.permission() === 'denied';
     const sub = possible ? await push.current() : null;

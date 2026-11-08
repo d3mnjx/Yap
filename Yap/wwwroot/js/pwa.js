@@ -4,7 +4,8 @@
 
 import { el } from './render/dom.js';
 import * as overlays from './ui/overlays.js';
-import { installed, appName } from './push.js';
+import { installed } from './push.js';
+import { projectName } from './store.js';
 
 let deferredPrompt = null;   // the browser's install prompt, kept until the person asks (Chromium)
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; });
@@ -15,10 +16,10 @@ const GUIDE_CDN = 'https://cdn.jsdelivr.net/gh/philfung/add-to-homescreen@3.5/di
 export function openInstallDialog() {
   const already = installed();
   const card = el('div', { class: 'push-prompt-card install-dialog', role: 'dialog', 'aria-modal': 'true' },
-    el('h2', { class: 'push-prompt-heading' }, already ? `${appName()} is already installed` : `Add ${appName()} to your home screen`),
+    el('h2', { class: 'push-prompt-heading' }, already ? `${projectName()} is already installed` : `Add ${projectName()} to your home screen`),
     el('p', { class: 'push-prompt-body' }, already
       ? 'Keep using this app. You do not need to install it again.'
-      : `Already have a ${appName()} icon? Open it to keep using your app. To replace an older install, save your login link in Settings, remove the old icon, then install here.`),
+      : `Already have a ${projectName()} icon? Open it to keep using your app. To replace an older install, save your login link in Settings, remove the old icon, then install here.`),
     ...(already
       ? [el('button', { class: 'push-prompt-enable', type: 'button', onclick: () => close() }, 'Close')]
       : [el('button', { class: 'push-prompt-later', type: 'button', onclick: () => close() }, 'Use existing app'),
@@ -42,7 +43,7 @@ async function install() {
 function showGuide() {
   const start = () => {
     if (!window.AddToHomeScreen) return;
-    window.AddToHomeScreen({ appName: appName(), appIconUrl: 'icon-192.png', assetUrl: `${GUIDE_CDN}/assets/img/`, allowClose: true, showArrow: true }).show('en');
+    window.AddToHomeScreen({ appName: projectName(), appIconUrl: 'icon-192.png', assetUrl: `${GUIDE_CDN}/assets/img/`, allowClose: true, showArrow: true }).show('en');
   };
   if (window.AddToHomeScreen) { start(); return; }
   document.head.append(el('link', { rel: 'stylesheet', href: `${GUIDE_CDN}/add-to-homescreen.min.css` }));
