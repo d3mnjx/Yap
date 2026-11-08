@@ -581,8 +581,8 @@ export function mount(root, route) {
   // 30 s snapshots for seven days. A chart asks for at most 300 points; the server merges its samples into that many.
   const RANGES = [[60, 'Last minute'], [300, 'Last 5 minutes'], [900, 'Last 15 minutes'], [3600, 'Last hour'], [21_600, 'Last 6 hours'], [86_400, 'Last 24 hours'], [604_800, 'Last 7 days']];
   const stepFor = seconds => Math.ceil(seconds / 300);
-  const rangeSelect = (ranges, value, pick) => {
-    const select = el('select', { class: 'log-filter-select diag-range', onchange: () => pick(Number(select.value)) }, ranges.map(([v, l]) => el('option', { value: v }, l)));
+  const rangeSelect = (name, ranges, value, pick) => {   // name: the select's accessible name, since no label wraps it
+    const select = el('select', { class: 'log-filter-select diag-range', 'aria-label': name, onchange: () => pick(Number(select.value)) }, ranges.map(([v, l]) => el('option', { value: v }, l)));
     select.value = String(value);
     return select;
   };
@@ -597,13 +597,14 @@ export function mount(root, route) {
     let charts = {}, chartSeconds = 86_400;
     const body = el('div');
     const load = loadCard();
-    const chartBox = (title, id) => el('div', null, el('h4', null, title), el('div', { class: 'diag-chart-wrapper' }, el('canvas', { id })));
+    const canvases = { users: el('canvas'), connections: el('canvas'), messages: el('canvas') };
+    const chartBox = (title, canvas) => el('div', null, el('h4', null, title), el('div', { class: 'diag-chart-wrapper' }, canvas));
     // The history card stays outside `body`, which every refresh rebuilds, so its select keeps the range. One select
     // drives the three charts, so they share one card.
     const history = el('div', { class: 'diag-chart-card' },
-      el('div', { class: 'diag-card-head' }, el('h4', null, 'History'), rangeSelect(RANGES.slice(3), chartSeconds, v => { chartSeconds = v; refresh(); })),
+      el('div', { class: 'diag-card-head' }, el('h4', null, 'History'), rangeSelect('History range', RANGES.slice(3), chartSeconds, v => { chartSeconds = v; refresh(); })),
       el('p', { class: 'section-hint', style: { margin: '0 0 8px' } }, 'One sample every 30 seconds, kept in memory since the last restart for at most seven days. A point that covers more than one sample shows the highest count, and the last count for messages.'),
-      el('div', { class: 'diag-charts' }, chartBox('Users & Sessions', 'diag-chart-users'), chartBox('Connections: Active vs Disconnected', 'diag-chart-connections'), chartBox('Messages', 'diag-chart-messages')));
+      el('div', { class: 'diag-charts' }, chartBox('Users & Sessions', canvases.users), chartBox('Connections: Active vs Disconnected', canvases.connections), chartBox('Messages', canvases.messages)));
     host.append(header('Diagnostics', 'Live system metrics'), load.node, body, history);
     const ms = v => v == null ? '—' : `${Math.round(v)}`;
     const sessionRow = s => el('tr', s.ghost ? { style: { color: 'var(--color-warning)' } } : null,
@@ -707,15 +708,14 @@ export function mount(root, route) {
       const css = getComputedStyle(document.documentElement);
       const color = (name, fallback) => css.getPropertyValue(name).trim() || fallback;   // the theme's colours (AD-28)
       const green = color('--status-online', '#3ba55c'), blue = color('--accent', '#5865f2'), orange = color('--status-away', '#faa61a');
-      const make = (id, datasets) => {
-        const canvas = history.querySelector(`#${id}`); if (!canvas) return;
-        charts[id]?.destroy();
-        charts[id] = new window.Chart(canvas, { type: 'line', data: { labels, datasets: datasets.map(ds => ({ ...ds, pointRadius: 0, borderWidth: 2, tension: 0.2 })) },
+      const make = (name, datasets) => {
+        charts[name]?.destroy();
+        charts[name] = new window.Chart(canvases[name], { type: 'line', data: { labels, datasets: datasets.map(ds => ({ ...ds, pointRadius: 0, borderWidth: 2, tension: 0.2 })) },
           options: { animation: false, maintainAspectRatio: false, scales: { x: { ticks: { maxTicksLimit: 8 } }, y: { beginAtZero: true } } } });
       };
-      make('diag-chart-users', [{ label: 'Unique Users', data: series.map(s => s.uniqueUsers), borderColor: green }, { label: 'Sessions', data: series.map(s => s.userSessions), borderColor: blue }]);
-      make('diag-chart-connections', [{ label: 'Active', data: series.map(s => s.activeConnections), borderColor: green }, { label: 'Disconnected', data: series.map(s => s.disconnectedConnections), borderColor: orange }]);
-      make('diag-chart-messages', [{ label: 'Total Messages', data: series.map(s => s.totalMessages), borderColor: blue, backgroundColor: 'rgba(88,101,242,0.15)', fill: true }]);
+      make('users', [{ label: 'Unique Users', data: series.map(s => s.uniqueUsers), borderColor: green }, { label: 'Sessions', data: series.map(s => s.userSessions), borderColor: blue }]);
+      make('connections', [{ label: 'Active', data: series.map(s => s.activeConnections), borderColor: green }, { label: 'Disconnected', data: series.map(s => s.disconnectedConnections), borderColor: orange }]);
+      make('messages', [{ label: 'Total Messages', data: series.map(s => s.totalMessages), borderColor: blue, backgroundColor: 'rgba(88,101,242,0.15)', fill: true }]);
     }
     refresh();
     const timer = setInterval(refresh, 30_000);   // AD-02
@@ -730,7 +730,7 @@ export function mount(root, route) {
     const stats = el('div', { class: 'diag-stats', style: { marginBottom: '0.75rem' } });
     const canvas = el('canvas');
     let seconds = 60, chart = null, timer = null;
-    const range = rangeSelect(RANGES, seconds, v => { seconds = v; chart?.destroy(); chart = null; restart(); });
+    const range = rangeSelect('Server load range', RANGES, seconds, v => { seconds = v; chart?.destroy(); chart = null; restart(); });
     const node = el('div', { class: 'diag-chart-card', style: { marginBottom: '16px' } }, el('div', { class: 'diag-card-head' }, el('h4', null, 'Server load'), range), stats, el('div', { class: 'diag-chart-wrapper' }, canvas));
     const n = v => v == null ? '—' : String(v);
     async function tick() {

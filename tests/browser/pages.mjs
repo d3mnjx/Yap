@@ -1,7 +1,7 @@
 // The page run of the client (step 5): the login rules, Settings, the login link and the retired secret code, the
 // verification and link pages, Admin (users, invites, registration, bot, debug, logs, GIFs, diagnostics) and
-// Create Channel / Channel Settings, the keyboard on the sidebar and +, and the notification choices at 20 px on a
-// phone. Run: npm run pages (see README.md). Screenshots go to shots/ (20-…).
+// Create Channel / Channel Settings, the keyboard on the sidebar and +, the notification choices at 20 px on a
+// phone, and the GIF picker's Settings link. Run: npm run pages (see README.md). Screenshots go to shots/ (20-…).
 
 import { chromium } from 'playwright';
 import { acceptDialogs, BASE, SHOTS, sleep, waitTrue, step, stepLogs, finish, startServer, signIn, watchContext, watchPage } from './lib.mjs';
@@ -607,9 +607,28 @@ await step(16, 'Phone, 20 px text: the choices of a notification row wrap instea
   await ctx375.close();
 });
 
-await step(17, 'Sign out A', async (check) => {
+// The link shows in the Favorites tab even when it is empty (gif-picker.js folderedView, manage: true). A plain href
+// loaded the whole app again; the marker on window survives only an in-place navigation.
+await step(17, '"Manage your GIFs in Settings" opens Settings in place, at My GIFs (ST-01)', async (check) => {
+  await A.evaluate(async () => (await import('/js/router.js')).navigate('/lobby'));
+  await A.waitForSelector('.message-input', { timeout: 5000 });
+  await A.evaluate(() => { window.sameDocument = true; });
+  await A.click('.gif-toggle-button');
+  await A.locator('.gif-sidebar [data-tab="favorites"]').click();
+  const link = A.locator('.gif-manage-link');
+  await link.waitFor({ timeout: 5000 });
+  await link.click();
+  const settings = await atPath(A, '/settings', 5000);
+  await A.waitForSelector('[data-section="gifs"]', { state: 'visible', timeout: 5000 }).catch(() => null);
+  await sleep(500);   // the section pin holds it in view while the page fills
+  const same = await A.evaluate(() => window.sameDocument === true);
+  const inView = await A.evaluate(() => { const r = document.querySelector('[data-section="gifs"]')?.getBoundingClientRect(); return !!r && r.top < innerHeight && r.bottom > 0; });
+  check(settings && same && inView, `path ${pathOf(A)}${A.url().includes('#my-gifs') ? '#my-gifs' : ''}, same document ${same}, My GIFs in view ${inView}`);
+});
+
+await step(18, 'Sign out A', async (check) => {
   const out = await signOut(A);
-  check(out, `A -> ${pathOf(A)}, .page-login ${await A.locator('.page-login').count()}, dialogs ${JSON.stringify(dialogs(17, 'A'))}`);
+  check(out, `A -> ${pathOf(A)}, .page-login ${await A.locator('.page-login').count()}, dialogs ${JSON.stringify(dialogs(18, 'A'))}`);
 });
 
 console.log('\n==== WRITE RESPONSES (status codes per request) ====');

@@ -51,7 +51,10 @@ let standalone = false;   // the current page is outside the frame
 // composer recorded a voice message that the old sender in memory did not know, and it went up as a video.
 // So while the server runs a newer build (SH-20's notice), a page this document has not loaded yet opens as a
 // fresh load of the new build instead (SH-50). Pages already loaded keep running, as SH-20 asks. One fresh load
-// per build and tab: a stored bootstrap newer than the cached shell (OF-06) must not reload in a loop.
+// per build and tab: the stamp comes only from the server's answer (start(), OF-04), and the fresh load goes through
+// '/', which the worker passes to the server, so it normally lands on the new build. The breaker stays for any fresh
+// load that still ends on an older page (a cache between the device and the server): without it that page would
+// reload in a loop, which is worse than a mixed build.
 const loadedPages = new Set();
 function needsFreshLoad(page) {
   if (!state.updateAvailable || loadedPages.has(page)) return false;

@@ -7,9 +7,9 @@ import * as router from './router.js';
 // The build this page runs: the server writes it into the page (ShellEndpoints, data-build).
 export const build = document.documentElement.dataset.build;
 
-// A new build on the server: the strip asks for a reload and nothing reloads by itself. The stored bootstrap speaks
-// first (OF-06) and can name an older build than this page when its last save failed; the server's own answer then
-// takes the strip down again, so a stale copy costs one flash, not a strip that no tap removes.
+// A new build on the server: the strip asks for a reload and nothing reloads by itself. Only the server's answer
+// sets buildStamp: start() drops the stamp from the stored copy (main.js, OF-04), because that stamp names the build
+// at the device's last connection, not the server's build now. Until the hub answers, there is no stamp and no strip.
 on('config', () => {
   const server = state.config?.buildStamp;
   if (!server || !build) return;
