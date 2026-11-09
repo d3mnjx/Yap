@@ -70,11 +70,11 @@ A message row is one message as it appears in the conversation. The row shows wh
 
 **MR-19** A text message with links gets one preview card for each link, at most five, in text order. A message with media gets no cards, also for a link in its caption. An admin switch turns off previews for everyone. By default, previews are on.
 
-**MR-20** A card shows the site name, the title and the description of the page, and a thumbnail on the right when the page has one. A card appears only when the page has a title or a description. The description is cut at 300 characters.
+**MR-20** A card shows the site name, the title and the description of the page, and a thumbnail on the right when the page has one. A card appears only when the page has a title or a description. The description is cut at 300 characters. The thumbnail comes from this server: the server copies the page's picture as a small WebP, so a reader's browser does not contact the linked site. When the server cannot copy the picture at the first read, the card shows it from the linked site, and the server does not try the copy again.
 
 **MR-21** The whole card is one link that opens in a new tab. The card has an accent bar on the left. It is at most 520 px wide, and full width on a phone.
 
-**MR-22** A card appears after the server reads the page, a short time after the message. When a card appears, a reader at the bottom of the list stays at the bottom. After a card shows, it stays with the message. An edit that adds or removes a link adds or removes the card for that link. A message from history gets its cards in the same way. The cards appear a short time after the page loads.
+**MR-22** A card appears after the server reads the page, a short time after the message. When a card appears, a reader at the bottom of the list stays at the bottom. After a card shows, it stays with the message, also after a server restart. The card shows the page as it was when the server first read it; the server does not read the page again. When the first read gives no card, the server tries again an hour later. An edit that adds or removes a link adds or removes the card for that link. A message from history gets its cards in the same way. The cards appear a short time after the page loads.
 
 **MR-23** When the admin switch for media caching is on, a link to a page whose video or audio the server can download shows a player instead of a card. The site name and the title show above the player. A player downloads nothing until the user starts it.
 

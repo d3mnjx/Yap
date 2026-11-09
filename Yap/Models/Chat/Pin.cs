@@ -21,7 +21,7 @@ public sealed record Pin(Guid MessageId, string Username, string? Text, DateTime
 
 /// <summary>
 /// One item under a pin's text (SH-48), in the row's order, resolved when the pin is made: a GIF file can move or go,
-/// and a link card lives in memory for an hour, so the pin keeps its own copy of the URLs. Kind decides the shape:
+/// and a link card loads only when a page shows its link, so the pin keeps its own copy of the URLs. Kind decides the shape:
 /// image (Src: the medium picture; Large and Original: what the gallery viewer shows and downloads, TL-24), gif (Src:
 /// the file the panel shows, a picture when IsImage, else a video it loops; no Src when the file is gone), video (Src
 /// and Poster: an uploaded video, or a cached link video with the card's Title, Site and Url), link (Poster, Title,

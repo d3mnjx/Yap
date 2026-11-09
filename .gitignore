@@ -381,6 +381,7 @@ uploads/
 /Yap/Data/crash-*.log
 /Yap/Data/uploads/
 /Yap/Data/media-cache/*
+/Yap/Data/link-cards/
 /Yap/Data/gif-cache/*
 /Yap/Data/cloudflare-ips.json
 /Yap/Data/branding/*

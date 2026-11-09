@@ -4,6 +4,7 @@ using System.Net;
 using System.Text.RegularExpressions;
 using Yap.Models;
 using Yap.Models.Chat;
+using Yap.Services.Media;
 
 namespace Yap.Services.Chat;
 
@@ -11,14 +12,22 @@ public partial class LinkPreviewService
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<LinkPreviewService> _logger;
+    private readonly IWebHostEnvironment _env;
+    private readonly ImageService _images;
 
-    // Cache: URL -> LinkPreview (with 1-hour TTL)
+    // Cache: URL -> LinkPreview. Never expires; a copy of each good card is on disk (LinkPreviewService.Store.cs).
     private readonly ConcurrentDictionary<string, LinkPreview> _cache = new();
 
     // Dedup in-flight requests
     private readonly ConcurrentDictionary<string, byte> _inFlight = new();
 
-    private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(1);
+    // A good card is a snapshot of the page when the link was first seen, as in most chat apps: it never expires and
+    // the page is never read again. Do not bring back an expiry: the row then went out without its card, the client's
+    // "unchanged" check (ui/timeline.js) failed against its stored copy, and the row redrew twice, once without the
+    // card and once when the refetch landed. A refresh timer would also scrape every viewed link again for a title
+    // that rarely changes.
+    // A card without content (a failed scrape, a media-only card) is retried after an hour: the site may be back.
+    private static readonly TimeSpan RetryAfter = TimeSpan.FromHours(1);
     // Hard cap on how much of a page we read while looking for the end of <head>. YouTube's
     // head alone is ~715KB (a 256KB cap silently dropped its og:title/og:image), so the cap
     // must sit well above that; 2MB still bounds a hostile endless stream.
@@ -30,10 +39,15 @@ public partial class LinkPreviewService
     /// </summary>
     public Action<Guid, string, LinkPreview>? OnPreviewFetched { get; set; }
 
-    public LinkPreviewService(IHttpClientFactory httpClientFactory, ILogger<LinkPreviewService> logger)
+    public LinkPreviewService(IHttpClientFactory httpClientFactory, ILogger<LinkPreviewService> logger, IWebHostEnvironment env,
+        ImageService images)
     {
         _httpClientFactory = httpClientFactory;
         _logger = logger;
+        _env = env;
+        _images = images;
+        Directory.CreateDirectory(CardDirectory);
+        Directory.CreateDirectory(PictureDirectory);
     }
 
     /// <summary>
@@ -75,34 +89,27 @@ public partial class LinkPreviewService
     }
 
     /// <summary>
-    /// Pure cache lookup — no side effects.
+    /// The card of a URL, whatever its age (<see cref="NeedsFetch"/> says whether to fetch the page). A restart empties
+    /// the memory, so a miss reads the card file; GetOrAdd lets a fetch that stored a card meanwhile win.
     /// </summary>
     public LinkPreview? GetCachedPreview(string url)
     {
-        if (_cache.TryGetValue(url, out var preview))
-        {
-            if (DateTime.UtcNow - preview.FetchedAt < CacheTtl)
-                return preview;
-
-            // Expired
-            _cache.TryRemove(url, out _);
-        }
-        return null;
+        if (_cache.TryGetValue(url, out var preview)) return preview;
+        return LoadCard(url) is { } stored ? _cache.GetOrAdd(url, stored) : null;
     }
+
+    /// <summary>Whether to fetch the page: there is no card yet, or a card without content is due for its retry.
+    /// A good card is never fetched again.</summary>
+    public static bool NeedsFetch(LinkPreview? card) =>
+        card is null || (!card.HasContent && DateTime.UtcNow - card.FetchedAt >= RetryAfter);
 
     /// <summary>
     /// Gets existing preview or creates a minimal one (for media cache to attach to
-    /// when OG scrape failed or hasn't completed).
+    /// when OG scrape failed or hasn't completed). Goes through GetCachedPreview, so an empty card never hides
+    /// the card on disk.
     /// </summary>
-    public LinkPreview GetOrCreatePreview(string url)
-    {
-        if (_cache.TryGetValue(url, out var existing) && DateTime.UtcNow - existing.FetchedAt < CacheTtl)
-            return existing;
-
-        var preview = new LinkPreview { Url = url, FetchedAt = DateTime.UtcNow };
-        _cache[url] = preview;
-        return preview;
-    }
+    public LinkPreview GetOrCreatePreview(string url) =>
+        GetCachedPreview(url) ?? _cache.GetOrAdd(url, _ => new LinkPreview { Url = url, FetchedAt = DateTime.UtcNow });
 
     /// <summary>
     /// A cached media file completes the preview of its URL, then the card becomes a player (MR-23). Used when a
@@ -133,10 +140,10 @@ public partial class LinkPreviewService
     /// </summary>
     public void QueueFetch(Guid messageId, string url)
     {
-        // Already cached?
-        if (GetCachedPreview(url) != null)
+        // Already a card that needs no fetch?
+        if (GetCachedPreview(url) is { } cached && !NeedsFetch(cached))
         {
-            OnPreviewFetched?.Invoke(messageId, url, _cache[url]);
+            OnPreviewFetched?.Invoke(messageId, url, cached);
             return;
         }
 
@@ -148,21 +155,36 @@ public partial class LinkPreviewService
         {
             try
             {
-                var preview = await FetchPreviewAsync(url);
-                _cache[url] = preview;
-                OnPreviewFetched?.Invoke(messageId, url, preview);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to fetch link preview for {Url}", url);
-                var failed = new LinkPreview { Url = url, Failed = true, FetchedAt = DateTime.UtcNow };
-                _cache[url] = failed;
+                LinkPreview fresh;
+                try
+                {
+                    fresh = await FetchPreviewAsync(url);
+                    // The picture is copied before the card is published, so the first "previews" event already
+                    // carries the local URL; a swap later would be a second event and a second redraw.
+                    if (fresh.HasContent && fresh.ImageUrl is { } image) fresh.ImageUrl = await LocalPictureAsync(url, image);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to fetch link preview for {Url}", url);
+                    fresh = new LinkPreview { Url = url, Failed = true, FetchedAt = DateTime.UtcNow };
+                }
+                Store(messageId, url, fresh);
             }
             finally
             {
                 _inFlight.TryRemove(url, out _);
             }
         });
+    }
+
+    private void Store(Guid messageId, string url, LinkPreview fresh)
+    {
+        _cache[url] = fresh;
+        // A failed card stays in memory only, is retried after RetryAfter, and sends no event: the row shows no card
+        // for it either way.
+        if (!fresh.HasContent) return;
+        SaveCard(fresh);
+        OnPreviewFetched?.Invoke(messageId, url, fresh);
     }
 
     private async Task<LinkPreview> FetchPreviewAsync(string url)

@@ -1,4 +1,5 @@
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Processing;
 
@@ -27,6 +28,48 @@ public class ImageService
     // concurrent decodes of 1500 px images took the process down on a Windows dev machine (2026-10-15)
     // while the same files passed one after another. The wait is a few hundred ms per picture.
     private static readonly SemaphoreSlim Gate = new(1, 1);
+
+    // Link card pictures (SaveWebpFitAsync): small and many, so a lower quality than the uploads' thumbnails.
+    private static readonly WebpEncoder FitEncoder = new() { Quality = 80 };
+    // The pictures come from any page a person links to. 16 MP is far above what a 640 px result needs and keeps one
+    // decode in the tens of MB.
+    private const long MaxFitPixels = 16_000_000;
+
+    /// <summary>
+    /// A picture from the network as a WebP no larger than <paramref name="maxSide"/> on either side, or false when
+    /// the bytes are no picture or too many pixels. Behind the same gate as the uploads: a room open after a deploy
+    /// can queue hundreds of link cards at once, and parallel decodes are what took the process down. One frame
+    /// only, and a large picture is scaled down while it is decoded (a JPEG skips the full-size decode), so an
+    /// animation or a huge photo costs little. A small picture keeps its size. <paramref name="source"/> must be
+    /// seekable.
+    /// </summary>
+    public async Task<bool> SaveWebpFitAsync(Stream source, string path, int maxSide)
+    {
+        await Gate.WaitAsync();
+        try
+        {
+            var info = await Image.IdentifyAsync(source);
+            if ((long)info.Width * info.Height > MaxFitPixels) return false;
+            source.Position = 0;
+            var box = new Size(maxSide, maxSide);
+            var tooLarge = info.Width > maxSide || info.Height > maxSide;
+            // TargetSize is only a decode hint that saves memory, never the limit. ImageSharp enlarges a small picture
+            // to it (a 1x1 tracking pixel became 640x640) and does nothing when one side already equals it (640x2000
+            // stayed 640x2000). So it is set only for a picture that must shrink, and the Resize below is the limit.
+            var options = new DecoderOptions { MaxFrames = 1, TargetSize = tooLarge ? box : null };
+            using var image = await Image.LoadAsync(options, source);
+            // A square box, so the limit still holds after AutoOrient swaps width and height.
+            if (image.Width > maxSide || image.Height > maxSide) image.Mutate(x => x.Resize(new ResizeOptions { Size = box, Mode = ResizeMode.Max }));
+            image.Mutate(x => x.AutoOrient());
+            await image.SaveAsync(path, FitEncoder);
+            return true;
+        }
+        catch (ImageFormatException)
+        {
+            return false;   // not a picture, or a broken one
+        }
+        finally { Gate.Release(); }
+    }
 
     /// <summary>
     /// Generates only the medium (800px) thumbnail for fast initial display.
