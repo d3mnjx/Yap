@@ -64,7 +64,9 @@ export function queueMessage({ channelId = null, partner = null, text = '', repl
   };
   row.uploading = files.length ? { names: namesOf(row), percent: 0 } : null;
   queue.push(row);
-  publish(row, { type: 'queued' });   // the timeline goes to the bottom for a send only (TL-14)
+  // 'queued' moves the timeline to the bottom, for a send only (TL-14) and only for a send into the open conversation:
+  // an uploaded GIF may go to a conversation that the person left during the upload (composer.js gifUpload, PK-41).
+  publish(row, state.open && keyOf(row) === keyOf(state.open) ? { type: 'queued' } : undefined);
   flush();
   return row;
 }

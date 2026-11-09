@@ -4,7 +4,8 @@
  * Regenerate with: python3 themes/teahouse/gen_theme_css.py
  *
  * One block per time-of-day scene. data-theme is server-rendered; data-scene is
- * set from the browser clock before first paint (see chat.js applyScene).
+ * set from the browser clock before first paint (applyScene, the inline script
+ * in index.html).
  */
 
 /* midnight - canvas #404040, dark */
@@ -40,6 +41,7 @@
     --accent-light: hsl(36 63% 88%);
     --accent-focus: hsl(36 78% 65%);
     --accent-tint: hsl(36 70% 58% / 0.15);
+    --accent-ink: var(--bg-darkest);
 }
 
 /* 2am - canvas #202020, dark */
@@ -75,6 +77,7 @@
     --accent-light: hsl(36 63% 88%);
     --accent-focus: hsl(36 78% 65%);
     --accent-tint: hsl(36 70% 58% / 0.15);
+    --accent-ink: var(--bg-darkest);
 }
 
 /* 314am - canvas #202020, dark */
@@ -110,6 +113,7 @@
     --accent-light: hsl(36 63% 88%);
     --accent-focus: hsl(36 78% 65%);
     --accent-tint: hsl(36 70% 58% / 0.15);
+    --accent-ink: var(--bg-darkest);
 }
 
 /* 4am - canvas #202020, dark */
@@ -145,6 +149,7 @@
     --accent-light: hsl(36 63% 88%);
     --accent-focus: hsl(36 78% 65%);
     --accent-tint: hsl(36 70% 58% / 0.15);
+    --accent-ink: var(--bg-darkest);
 }
 
 /* 6am - canvas #c0a080, LIGHT */
@@ -425,6 +430,7 @@
     --accent-light: hsl(36 63% 88%);
     --accent-focus: hsl(36 78% 65%);
     --accent-tint: hsl(36 70% 58% / 0.15);
+    --accent-ink: var(--bg-darkest);
 }
 
 /* 10pm - canvas #202020, dark */
@@ -460,6 +466,7 @@
     --accent-light: hsl(36 63% 88%);
     --accent-focus: hsl(36 78% 65%);
     --accent-tint: hsl(36 70% 58% / 0.15);
+    --accent-ink: var(--bg-darkest);
 }
 
 /* Mobile: the sidebar overlays the chat rather than sitting beside it,

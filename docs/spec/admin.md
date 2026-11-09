@@ -17,13 +17,13 @@ Administration is the admin's page for the server. It covers the people, the inv
 
 **AD-01** Only the admin can open the page, from "Admin" in the status menu. Any other person goes to the lobby. The page is outside the chat frame and uses the theme's colours. The back arrow goes to the lobby. The back arrow is also present on phones.
 
-**AD-02** Users opens first. A link to a tab, such as the one in the GIF picker, opens that tab. Users, Bot, Invites and Settings load with the page. Logs, Media and Visitors load when they open for the first time. GIFs loads again each time it opens. Diagnostics refreshes every 30 seconds while it is open.
+**AD-02** Users opens first. A link to a tab, such as the one in the GIF picker, opens that tab. Each tab loads again each time it opens. A tab that opens again shows its first page, and no filter is set. Diagnostics also refreshes every 30 seconds while it is open.
 
 **AD-03** Persistence is the optional saved copy of accounts, messages and settings. When the server runs without persistence, the top of the page shows "This server runs without persistence. Accounts, messages and settings last until the next restart." Logs, Media and Visitors then show "Not available without persistence." instead of an empty tab. With persistence, the server can start with only the newest messages of each conversation: a count and a number of days, both set in the server's configuration file. The admin page does not show them. Older messages stay in the saved copy. No one can read them, the admin included, until the limit changes and the server starts again.
 
 ### Users
 
-**AD-04** The Users table lists every account, including the bot, with the newest activity first. Each row shows the avatar, the display name with the admin crown, the username and a status pill. The pill is Online, Away, Invisible or Offline, and the admin sees Invisible as Invisible. The row also shows whether the installed app was seen, the creation time and the last action. It also shows the time zone and language, and up to five recent network addresses. The table is read when the page loads and does not change until the next load.
+**AD-04** The Users table lists every account, including the bot, with the newest activity first. Each row shows the avatar, the display name with the admin crown, the username and a status pill. The pill is Online, Away, Invisible or Offline, and the admin sees Invisible as Invisible. The row also shows whether the installed app was seen, the creation time and the last action. It also shows the time zone and language, and up to five recent network addresses. The table is read each time the tab opens and does not change until the next load.
 
 **AD-05** A tap on a row opens its detail. The detail shows the notification devices, the installed app and the effective theme. It also has a table of addresses with countries and a table of browsers. Both tables show the last seen time.
 

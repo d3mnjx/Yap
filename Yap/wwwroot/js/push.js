@@ -1,5 +1,6 @@
 // The push subscription of this device (NT-23, NT-24): subscribe with the server's key, tell the server,
-// unsubscribe, and the prompt of the installed app (SH-38, SH-39). The old chat.js helpers, as a module.
+// unsubscribe, and the prompt of the installed app (SH-38, SH-39). The words of the Settings card come from here
+// too (where, blockedHint, ST-17).
 
 import { api } from './api.js';
 import { state, projectName } from './store.js';

@@ -1,11 +1,138 @@
-# Component CSS (flattened from Blazor scoped CSS)
+# The stylesheets
 
-These files hold the old `*.razor.css` rules from commit 7af3454 (the parent of 2c1b6c0, "Step 1: remove Blazor").
-Declarations, values, comments and media queries are copied as they were. The only selector changes are:
-`::deep` is removed, and a root class is put in front of selectors whose class names collided between components.
-`app.css` and `themes.css` are not changed.
+The client has no build step and no scoped CSS. Every rule is global, and `index.html` loads every file at the start.
+This page is the map: which file holds which subject, why the order of the files matters, and the conventions
+that the files share. The last section is the record of how these files came out of the Blazor client.
 
-## Load order
+## The files, in load order
+
+| File | Subject | Drawn by |
+|---|---|---|
+| `app.css` | The fonts, the tokens of the default theme (`:root`), the reset, the pattern layer of a conversation, the start spinner and the start-failure screen, the shared keyframes (`fadeIn`, `spin`), `[hidden]`, the emoji sizes | `index.html`, `js/render/text.js` (emoji) |
+| `themes.css` | One block of token values per theme, and the pattern of a direct message per theme | `[data-theme]` on `<html>`, `[data-context]` on `.chat-container` |
+| `themes/teahouse.css` | The Tea House theme: one block per scene of the day. The file is generated (`themes/teahouse/gen_theme_css.py`), so edit the generator. | `[data-scene]` on `<html>`, set by the script in `index.html` |
+| `css/frame.css` | The avatar, the header, the sidebar, the frame layout with the theme scene, the push prompt, the profile card, the pins panel, the connection dot, the notice strip | `js/ui/frame.js`, `js/ui/sidebar.js`, `js/ui/pins.js`, `js/render/avatar.js`, `js/update.js` |
+| `css/pickers.css` | The picker with tabs, the emoji picker, the GIF picker | `js/ui/emoji-picker.js`, `js/ui/gif-picker.js`, `js/ui/composer.js` |
+| `css/timeline.css` | The gallery viewer, the message list with its loading row and top note, the pills over the list, the Show more button | `js/ui/timeline.js`, `js/ui/gallery.js` |
+| `css/composer.css` | The input box: the typing strip, the reply bar, the pill, the host of the pickers, the tray, the voice recorder | `js/ui/composer.js` |
+| `css/message.css` | One message row: the pending and failed states, the header, the text, the media, the link card, the players, the reactions, the action bar, the editor, the menus and dialogs of a row | `js/ui/message.js`, `js/ui/video.js`, `js/ui/voice.js`, `js/ui/confirm.js` |
+| `css/signin.css` | The login, invite and verify pages | `js/pages/login.js`, `invite.js`, `verify.js` |
+| `css/pages.css` | The rules that two or more pages share (the page shell, the form block, the toggle switch, the danger items, the upload button), the GIF library, the not-found page | `js/ui/gif-library.js`, the page modules |
+| `css/admin.css` | The Admin page | `js/pages/admin.js` |
+| `css/channel-settings.css` | The channel settings page, which also creates a channel | `js/pages/channel-settings.js` |
+| `css/settings.css` | The Settings page | `js/pages/settings.js`, `settings-debug.js` |
+
+Each file starts with a header that names its modules and templates. Inside a file, a banner
+(`/* ==== Subject ==== */`) starts each subject, and the line under it names the modules and the templates.
+
+The server finds the files by itself (`Endpoints/ShellAssets.cs` scans `.`, `css` and `themes`), so the service
+worker caches a new file with no other change. A new file needs only its `<link>` in `index.html`.
+
+## Where a rule goes
+
+- A rule goes into the file of the part of the screen that it styles.
+- A rule that two pages need goes into `pages.css`, once, with `:is(.page-a, .page-b)` in front. Do not copy it
+  into two page files.
+- A colour is a token. Use `var(--token)`, and for a tint use `color-mix(in srgb, var(--token) 15%, transparent)`.
+  A literal such as `rgba(88, 101, 242, 0.15)` keeps the colour of the default theme in every other theme.
+- Text on a fill of `--accent-primary` takes `var(--accent-ink)`. Do not use `white` or `--text-white` there:
+  `--text-white` is the strongest text of a theme, and it is dark in the light themes.
+
+## The order matters
+
+Two rules of the same weight are settled by the one that loads later. The files rely on that in these places, so
+keep the order of the `<link>` tags and the order of these rules inside their files.
+
+- `frame.css` loads before `message.css`. The avatar rules come first, and `.x .avatar` overrides in the header,
+  the profile card and the message row follow them.
+- `message.css` starts with the pending, failed, touched and editing rows. The rules `.highlight-message`,
+  `.reply-target`, `.picker-open` and `.menu-open` come later in the file and must win over them.
+- `pages.css` loads before the page files. A page rule overrides the shared one at the same weight: for example
+  `.page-channel .danger-section h3` keeps the danger heading red against the shared `.settings-section h3`.
+- `admin.css` loads before `settings.css`. On the expiry select of Settings, `.expiry-select` (Settings) must win
+  over `.link-expiry` (Admin).
+- In `composer.css`, the rule that hides `[data-picker-pane]` ties with the rule that shows it. The second one
+  wins by its position only.
+
+## Root classes
+
+Class names such as `.back-button`, `.form-input` and `.section-header` exist in more than one part of the client
+with different rules. A root class in front of the selector keeps them apart. The root is an ancestor of the
+element, never the element itself.
+
+| Root | Where it is |
+|---|---|
+| `.page-login`, `.page-invite`, `.page-verify`, `.page-admin`, `.page-channel`, `.page-settings` | The wrapper of that page's template. It is never on `<body>`: Settings and the channel settings draw inside the chat frame, and the header has its own `.back-button`. |
+| `.chat-header`, `.users-sidebar` | The header and the sidebar of the frame |
+| `.message-group`, `.message-input-container` | A message row and the input box |
+| `.emoji-picker`, `.gif-picker`, `.gif-library` | The two pickers and the GIF library |
+
+The History section lists the class names that each root guards.
+
+## Width tiers
+
+The client has two widths at which the layout changes (GEN-14).
+
+| Width | What changes | The JavaScript reads it in |
+|---|---|---|
+| 768 px and less | The sidebar leaves its column and slides over the conversation. The header shows the people count. | `narrow` in `js/ui/sidebar.js` |
+| 600 px and less | The compact layout of the components: a menu or a picker opens as a sheet from the bottom. | `phone` in `js/ui/overlays.js` |
+
+A rule for a touch screen uses `(hover: none)`, not a width.
+
+## Layers
+
+These are all the `z-index` values of the client. A value ranks an element only inside its stacking context:
+`.messages-flow` is one (the comment at that rule in `app.css` says why), and so is `.chat-container`.
+
+| z-index | What | File |
+|---|---|---|
+| -1 | The theme scene and its scrim behind the frame; the pattern behind the rows of a conversation | `frame.css`, `app.css` |
+| 1, 2 | Order inside one component: a sticky heading or search box in a picker, the header row of an Admin table, the reply line and the avatar of a row, `.messages-flow` | `pickers.css`, `admin.css`, `message.css`, `app.css` |
+| 5 | The pills over the message list | `timeline.css` |
+| 6 | The reason bubble on a row | `message.css` |
+| 20 | The bubble of the connection dot | `frame.css` |
+| 98, 99 | The backdrop of the sidebar and the sidebar, when the sidebar slides over the conversation | `frame.css` |
+| 100 | The action bar of a row | `message.css` |
+| 199, 200 | The backdrop of the profile card and the card | `frame.css` |
+| 300 | The push prompt | `frame.css` |
+| 999 | The backdrops of the menus, the pickers and the pins panel | `frame.css`, `composer.css`, `message.css` |
+| 1000 | The menus, the pickers and the pins panel. The input box and Send are also here, above the backdrop of an open picker, so the person can type and send. | `frame.css`, `composer.css`, `message.css`, `pickers.css` |
+| 1001 | The gallery viewer. It opens from a pin, so it is above the pins panel. | `timeline.css` |
+| 1100 | The dialogs: the delete question of a row, and every dialog of `js/ui/confirm.js` | `message.css` |
+| 1200 | The explanation bubble of the Admin page | `admin.css` |
+| 10000 | The start-failure screen and the warning dialog of a GIF upload | `app.css`, `composer.css` |
+
+## Themes
+
+A theme is a set of token values. `app.css` defines every token in `:root` with the value of the default theme,
+and `themes.css` has one `[data-theme="name"]` block per theme that overrides them. The header of `themes.css`
+states the rule for the status colours. A component rule never names a theme.
+
+The design record of the themes (the canvas layer, the Tea House scenes, the patterns, the status colour rule)
+was `docs/themes-2.0.md`. It left the tree with the Blazor code. `git show 048e4c46^:docs/themes-2.0.md` prints it.
+
+## State from the JavaScript
+
+The JavaScript sets state through classes (`.active`, `.selected`, `.has-unread`, `.sidebar-open`) and a few data
+attributes: `data-theme` and `data-scene` on `<html>`, `data-context` on `.chat-container`, `data-picker`,
+`data-active-tab`, `data-search-miss`, `data-search-empty` and `data-dragging` in the input box and the pickers.
+`docs/architecture/client.md` ("Templates and JavaScript") has the rules for how a module finds the parts of a template.
+
+## History: the flatten of October 2026
+
+This section is a record, not a guide. The client was a Blazor Server app until 2026-10-15, and each component had
+a scoped stylesheet (`*.razor.css`). The six first files under `css/` hold those rules from commit 7af3454 (the
+parent of 2c1b6c0, "Step 1: remove Blazor"). Declarations, values, comments and media queries were copied as they
+were. Two things changed in the selectors: `::deep` went, and a root class went in front of the selectors whose
+class names collided between components. The names below are the component names and the file names of that time.
+
+On 2026-11-10 the rules were sorted by subject. The rules that the rewrite added to `app.css` moved to the file of
+their subject. `pages.css`, which held every page, was split into `signin.css`, `pages.css`, `admin.css`,
+`channel-settings.css` and `settings.css`, and the copies that two pages shared were merged with `:is()`. The
+section banners got the names of the present modules.
+
+### Load order (of that time)
 
 Load these files after `app.css`, `themes.css` and `themes/teahouse.css`, in this order:
 `frame.css`, `pickers.css`, `timeline.css`, `composer.css`, `message.css`, `pages.css`.
@@ -16,7 +143,7 @@ after the global files. Sections inside each file use the same order. Cases that
 `.x .avatar` overrides in ChatHeader, UserProfileCard and MessageItem; the ChatLayout timeline rules before MessageItem
 (`.system-message`).
 
-## Files and sections
+### Files and sections
 
 | File | Sections |
 |---|---|
@@ -34,7 +161,7 @@ timeline.css has `.messages` and its scrollbar, `.messages-flow`, the scroll-dis
 timeline.css copy said the same and went (2026-10-30).
 ChatLayout has no "pill" rule. The only pill near messages is `.reaction-pill` in message.css.
 
-## Root classes (prefixes)
+### Root classes (prefixes)
 
 The prefix is a descendant selector, so the root must be an ancestor of the element, not the same element.
 The `.page-*` classes are new. Put each one on a wrapper around that page's own markup. Do not put it on `<body>`:
@@ -61,7 +188,7 @@ The prefix goes on every selector that names one of these classes, in any positi
 queries (`.form-group label`, `.toggle-switch input:checked + .toggle-slider`). In a selector list, only the parts
 that name the class get it. 150 selectors in total. In the old markup, every prefixed element is inside its root.
 
-## Decisions
+### Decisions
 
 1. `.dot` is not prefixed. The typing dots sit in `.typing-indicator-container`, a sibling of
    `.message-input-container`, so that prefix would break them. `.typing-dots .dot` and `.reconnect-dots .dot`
@@ -90,7 +217,7 @@ that name the class get it. 150 selectors in total. In the old markup, every pre
    `.join-button` (styled in Login). Scoping kept them bare. Flat, they take those styles. Each class is defined in
    one file only, so rule 3 did not allow a prefix. Use other class names in the new Admin markup to keep the bare look.
 
-## Dropped rules
+### Dropped rules
 
 - MainLayout: `#blazor-error-ui` and `#blazor-error-ui .dismiss` (the whole file).
 - ReconnectModal: `#components-reconnect-modal`; the hide rule
@@ -104,7 +231,7 @@ that name the class get it. 150 selectors in total. In the old markup, every pre
   strip in app.css took the role), so they went on 2026-10-29.
 - The sources had no `[b-...]` selectors and no `.blazor-error-boundary` rules.
 
-## Classes each component expects on its markup
+### Classes each component expects on its markup
 
 | Component | File | Main classes (states in brackets) |
 |---|---|---|

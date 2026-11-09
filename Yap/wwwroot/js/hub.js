@@ -1,6 +1,8 @@
 // The SignalR connection: keeps it alive, writes every hub message into the store, and offers invoke and
-// send to the components. The components never see SignalR. The heartbeat lives here too, because it is
-// the one message the client sends on its own clock (PR-10, AD-25).
+// send to the components. The components never see SignalR. The file also holds what goes with the connection:
+// the device id (AU-19), the IPv4 beacon after a bootstrap, the heartbeat with the waits the client measured
+// (PR-10, AD-25, AD-26), the boot report (AD-41), and looking(), which says whether the person reads the open
+// conversation (NT-07). The heartbeat lives here because it is the one message the client sends on its own clock.
 //
 // lib/signalr.min.js is a classic script loaded by index.html before this module; it defines `signalR`.
 
@@ -36,7 +38,7 @@ function build() {
       negotiate ? {} : { skipNegotiation: true, transport: signalR.HttpTransportType.WebSockets })
     .configureLogging(signalR.LogLevel.Warning)
     .build();
-  c.on('message', m => { store.changed('incoming', m); store.addMessage(m); });   // 'incoming' feeds the sound and the title (NT-12, NT-13)
+  c.on('message', m => { store.changed('incoming', m); store.addMessage(m); });   // 'incoming' feeds the sound (NT-13); the title reads the unread counts (notify.js)
   c.on('messageEdited', m => store.replaceMessage(m));
   c.on('messageDeleted', (channelId, id) => store.removeMessage(channelId, id));
   c.on('reactions', (id, reactions) => store.setReactions(id, reactions));
@@ -66,6 +68,7 @@ let stopped = false;          // after a sign-out nothing reconnects
 let attempts = 0;
 let retryTimer = 0;
 let everConnected = false;
+let runs = 0;                 // counts the runs of connect(), so that a run knows when a later one replaced it
 let lostAt = 0;        // the start of the reconnect wait (AD-26), see noteLost
 let visibleAt = 0;     // the tab's last return to visible
 let hiddenAt = 0;      // Date.now() when the tab went hidden: a wall clock, because performance.now() may stand still through a sleep
@@ -95,11 +98,20 @@ export function onConnected(fn) { connectedHooks.add(fn); return () => connected
 
 export async function connect() {
   if (stopped || connection.state !== signalR.HubConnectionState.Disconnected) return;
+  // A run waits twice: for the start, then for the bootstrap and the hooks. Meanwhile restart() may put a new connection
+  // in place and start a run for it, the socket may drop and a retry may start, or the person may sign out (stop()
+  // counts as a run for this). Only the newest run goes on after a wait. A run that went on after restart() landed in
+  // the catch below (restart() stops the old connection) and built a third connection next to restart()'s: two live
+  // sockets for the life of the page, and every event that the server sends to the person arrived twice. A run that
+  // went on after a sign-out applied the account's bootstrap again and stored it on the device.
+  const run = ++runs;
+  const superseded = () => run !== runs;
   clearTimeout(retryTimer);
   if (!navigator.onLine) { store.setConnection('offline'); scheduleRetry(); return; }   // the online event tries at once
   store.setConnection(everConnected ? 'reconnecting' : 'connecting');
   try { await connection.start(); }
   catch (e) {
+    if (superseded()) return;
     if (/401|Unauthorized/.test(String(e?.message ?? e))) { signedOut(); return; }   // the cookie is dead: the login page, not a loop (AU-21)
     // The direct socket did not open: a dead cookie shows as a plain socket error here, and so does a proxy that
     // blocks WebSockets. The negotiated connection tells the two apart (a 401 above) or finds another transport.
@@ -108,6 +120,7 @@ export async function connect() {
     store.setConnectionFailed(true);   // the catching-up pill stops spinning (TL-39)
     store.setConnection(navigator.onLine ? (everConnected ? 'reconnecting' : 'connecting') : 'offline'); scheduleRetry(); return;
   }
+  if (superseded()) return;
   const wasReconnect = everConnected;
   everConnected = true;
   attempts = 0;
@@ -120,6 +133,7 @@ export async function connect() {
     api.get(bootstrapUrl()),
     ...[...connectedHooks].map(fn => fn()),
   ]);
+  if (superseded()) return;   // the newest run applies its own bootstrap and settles the first sync
   const bootstrap = results[0];
   if (bootstrap.status === 'fulfilled') {
     if (bootstrap.value.user) {
@@ -131,7 +145,7 @@ export async function connect() {
     }
     else signedOut();                      // the cookie died while we were away
   }
-  if (!wasReconnect) settleFirst();
+  if (!firstDone) settleFirst();   // not `!wasReconnect`: the first run may have been superseded after it connected
   // Back in sync: the room is re-opened and the bootstrap applied. A reconnect nobody watched is nobody's wait.
   if (wasReconnect && lostAt && document.visibilityState === 'visible') report('reconnect', performance.now() - lostAt);
   lostAt = 0;
@@ -224,6 +238,7 @@ function signedOut() {
 // The page signs out: stop only. The page already knows.
 export function stop() {
   stopped = true;
+  runs++;   // a run of connect() that waits now must not go on, not even after resume()
   clearTimeout(retryTimer);
   store.setConnection('signedOut');
   connection.stop().catch(() => {});

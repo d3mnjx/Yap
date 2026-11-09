@@ -210,13 +210,12 @@ The spec is right. Listed so the user sees them. The first table is the list fro
 | NT-05 | Counts stay after a server restart | The first unread row of a user and channel is not inserted until a mark-read persists it |
 | PR-17 | A leave is 5 min after the last connection drops | Tied to Blazor circuit retention, about 3 min |
 
-Differences that remain in the rewrite, by decision (2026-10-15, after the walk of every spec page). Two rows left the table with the review fixes of 2026-10-15: OF-08 for a direct message never opened (the outbox addresses it by its partner) and PR-16/PR-24 (the automatic read checks the chosen and the effective status too). MR-59 vs GEN-03 left it on 2026-11-07: GEN-03 won, and MR-59 now says that Edit opens the phone keyboard.
+Differences that remain in the rewrite, by decision (2026-10-15, after the walk of every spec page). Two rows left the table with the review fixes of 2026-10-15: OF-08 for a direct message never opened (the outbox addresses it by its partner) and PR-16/PR-24 (the automatic read checks the chosen and the effective status too). MR-59 vs GEN-03 left it on 2026-11-07: GEN-03 won, and MR-59 now says that Edit opens the phone keyboard. AD-02 left it on 2026-11-09. The owner kept the behaviour of the rewrite, and AD-02 now says that each tab loads again each time it opens.
 
 | Rule | The spec | The rewrite |
 | --- | --- | --- |
 | SH-20, GEN-11 | "Sign in to continue." strip when signed out without a connection | Not shown: a sign-out reaches the device only with a connection, and then the login page opens |
 | AD-12 | The link preview switch applies at once to open chats | New answers follow the switch; open chats keep their cards until a reload |
-| AD-02 | Users, Bot, Invites and Settings load with the page | Each tab loads again each time it opens |
 | OF-06 | Media not seen before shows "Needs a connection" | The browser's broken-image state shows instead |
 | TL-12 | Changes above the view never move the row the reader reads | Older pages are compensated and land only while the view is still (TL-06); edits and loads above rely on the browser's scroll anchoring (Safari from 27 only) |
 

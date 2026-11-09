@@ -111,7 +111,7 @@ The emoji picker and the GIF picker open from the input box. The emoji picker pu
 
 **PK-40** A video becomes an animated image without sound. When a file has the same content as an earlier upload by the reader, or as a server GIF, Yap uses that existing GIF. The words of the file name become the first tags.
 
-**PK-41** When the upload succeeds, the GIF is added to the reader's favourites as unsorted. The GIF is sent as a message, as a reply when the reply bar is open. The picker closes. The GIF stays private. Only the uploader and each person who stars it can find it in search.
+**PK-41** When the upload succeeds, the GIF is added to the reader's favourites as unsorted. The GIF is sent as a message, as a reply when the reply bar is open. The picker closes. The GIF goes to the conversation in which the reader chose the file. When the reader opens a different conversation before the upload ends, the GIF still goes to the first one, and it is not a reply. The GIF stays private. Only the uploader and each person who stars it can find it in search.
 
 **PK-42** When the upload fails, the picker stays open behind "Couldn't send GIF". The text is "Could not process this file as a GIF" when the file was refused. The text is "GIF storage quota exceeded" when the reader's own uploads are at their quota. In all other cases, the text is "Upload failed". The quota counts only the reader's own uploads. The quota does not apply to admins.
 

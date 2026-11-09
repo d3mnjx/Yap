@@ -1,6 +1,7 @@
 // What the device keeps for reading without a connection (OF-06, TL-02): the last bootstrap document and
-// the last tail of each conversation the person opened. One record per conversation, written whole,
-// never merged (offline-design-notes.md, "Reading"). A sign-out deletes everything (GEN-05, OF-16).
+// the last tail of each conversation the person opened, and the drafts (IB-53). One tail record per conversation,
+// written whole, never merged (offline-design-notes.md, "Reading"). A sign-out deletes everything (GEN-05,
+// OF-16): clearAll empties the outbox store of offline/outbox.js too.
 //
 // The records follow the store: a message that arrives, a person who joins, a count that changes, all
 // reach the disk a moment later, so an offline reload shows what the page last showed.
@@ -34,7 +35,12 @@ export async function loadDrafts() { return (await db.get(db.STORES.kv, 'drafts'
 // "Reading"). A row's image carries its network URL, and the worker's cache answers it a frame or two after the text.
 async function saveTail(key, conversation) {
   const messages = conversation.messages.slice(-50);
-  await db.put(db.STORES.snapshots, { channelId: conversation.channelId, partner: conversation.partner ?? null, messages, hasMore: conversation.hasMore && messages.length === conversation.messages.length, restricted: conversation.restricted, typists: [], pins: conversation.pins ?? [], at: Date.now() }, tail(key));
+  // Older messages exist when the server said so, and also when the cut above left some out. This value can outlive
+  // the server's: at the next open the stored rows show first, and setOpen (store.js) keeps their hasMore when the
+  // server's tail overlaps them. With `&&` here a conversation of more than 50 loaded rows was stored as complete,
+  // and after a reload its history ended at the oldest stored row.
+  const hasMore = conversation.hasMore || messages.length < conversation.messages.length;
+  await db.put(db.STORES.snapshots, { channelId: conversation.channelId, partner: conversation.partner ?? null, messages, hasMore, restricted: conversation.restricted, typists: [], pins: conversation.pins ?? [], at: Date.now() }, tail(key));
 }
 
 export async function loadTail(key) {

@@ -40,12 +40,10 @@ export async function signedIn({ tell = true } = {}) {
   return true;
 }
 
-// The cookie is gone, here or elsewhere: stop the hub, forget the account's data on this device, show the login.
-// `elsewhere` is a sign-out this device did not ask for: sign-out-others, or a cookie that died while the device
-// was away. The login page then says so (AU-21). The note stays until the next sign-in, not until the first login
-// page: the clean-up below mounts that page twice (store.reset() sends the chat page to /lobby, the route guard sends
-// it on to /login, then this function navigates once more), and a note taken by the first mount was lost. It also
-// sits in sessionStorage: a tab from before a deploy loads the login page fresh (SH-50), and the note must survive that.
+// The note of a sign-out from elsewhere (AU-21) stays until the next sign-in, not until the first login page: the
+// clean-up of signedOut mounts that page twice (store.reset() sends the chat page to /lobby, the route guard sends it
+// on to /login, then signedOut navigates once more), and a note taken by the first mount was lost. It also sits in
+// sessionStorage: a tab from before a deploy loads the login page fresh (SH-50), and the note must survive that.
 const NOTICE_KEY = 'yap.signInNotice';
 let notice = null;
 export const signInNotice = () => { try { return notice ?? sessionStorage.getItem(NOTICE_KEY); } catch { return notice; } };
@@ -59,6 +57,9 @@ function clearMedia() {
     .catch(() => {});
 }
 
+// The cookie is gone, here or elsewhere: stop the hub, forget the account's data on this device, show the login.
+// `elsewhere` is a sign-out this device did not ask for: sign-out-others, or a cookie that died while the device
+// was away. The login page then says so (AU-21).
 export function signedOut({ elsewhere = false } = {}) {
   if (!store.state.user && router.current.page === 'login') return;   // done already: a 401 or an 'ended' that lands during the clean-up must not run it twice
   if (elsewhere) setNotice('elsewhere');

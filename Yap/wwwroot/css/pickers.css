@@ -1,10 +1,9 @@
-/* pickers.css: emoji picker, GIF picker and the combined tabbed picker
-   Flattened from the Blazor scoped CSS at commit 7af3454 (parent of 2c1b6c0 "Step 1: remove Blazor").
-   Selectors and declarations are copied as they were; only ::deep was removed and a root
-   class was put in front of selectors whose class names collided between components.
-   See README.md in this folder for the prefixes and the dropped rules. */
+/* pickers.css: the emoji picker, the GIF picker and the phone sheet with tabs that holds both (js/ui/emoji-picker.js,
+   js/ui/gif-picker.js and js/ui/composer.js; templates t-emoji-picker, t-gif-picker and t-combined-picker). The
+   hosts that the pickers mount in are in composer.css and message.css. css/README.md has the map of the stylesheets. */
 
-/* ==== CombinedPicker (was Yap/Components/CombinedPicker.razor.css) ==== */
+/* ==== Picker with tabs: emoji and GIF in one sheet on a phone ==== */
+/* js/ui/composer.js; t-combined-picker */
 
 .combined-picker {
     display: flex;
@@ -118,8 +117,8 @@
 }
 
 /* The wrapped pickers have their own fixed widths/heights and shadows — strip them
-   so they fill our pane cleanly. !important because the inner picker's own scoped
-   rule has identical specificity (0,2,0) and could win on source-order ties. */
+   so they fill our pane cleanly. !important because the phone rule .emoji-picker-container
+   .emoji-picker (composer.css) has identical specificity (0,2,0) and loads later. */
 .combined-pane .emoji-picker,
 .combined-pane .gif-picker {
     width: 100% !important;
@@ -129,7 +128,8 @@
     box-shadow: none !important;
 }
 
-/* ==== EmojiPicker (was Yap/Components/EmojiPicker.razor.css) ==== */
+/* ==== Emoji picker ==== */
+/* js/ui/emoji-picker.js; t-emoji-picker, t-emoji-section */
 
 .emoji-picker {
     display: flex;
@@ -355,7 +355,8 @@
     }
 }
 
-/* ==== GifPicker (was Yap/Components/GifPicker.razor.css) ==== */
+/* ==== GIF picker ==== */
+/* js/ui/gif-picker.js; t-gif-picker, t-gif-card, t-gif-folder-tile */
 
 .gif-picker {
     display: flex;

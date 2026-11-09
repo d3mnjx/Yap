@@ -9,8 +9,9 @@ import * as overlays from './overlays.js';
 
 const CATEGORY_NAMES = { smileys: 'Smileys', gestures: 'Gestures', animals: 'Animals', nature: 'Nature', food: 'Food', activities: 'Activities', travel: 'Travel', objects: 'Objects', symbols: 'Symbols', flags: 'Flags' };
 
-// EmojiPicker({ onPick(emojiOrShortcode) }) returns { element, opened() }. opened() refreshes Recent and clears
-// the search (PK-06, PK-08) and must be called on every open.
+// EmojiPicker({ onPick(emojiOrShortcode), recordUse = true }) returns { element, opened() }. opened() refreshes
+// Recent and clears the search (PK-06, PK-08) and must be called on every open. With recordUse false, the caller
+// records the use itself, as a reaction does (MR-44).
 export function EmojiPicker({ onPick, recordUse = true }) {
   const picker = clone('t-emoji-picker');
   const sidebar = picker.querySelector('.emoji-sidebar');

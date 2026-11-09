@@ -5,8 +5,9 @@
  * Status colors (online/away/danger/success/warning): a THEME may re-tint them
  * to fit its palette (Terminal and Neon Glow do), but --color-danger must stay
  * unmistakably red because it guards destructive actions, and a CONTEXT
- * (data-context="dm", data-scene) must never touch them. Relaxed 2026-08-25,
- * see docs/themes-2.0.md "Status colours: rule relaxed".
+ * (data-context="dm", data-scene) must never touch them. Relaxed 2026-08-25
+ * (the record is "Status colours: rule relaxed" in the themes design document;
+ * css/README.md says how to read it).
  *
  * Default theme (discord-dark) has no block here — it falls through to :root.
  */
@@ -69,6 +70,9 @@
     --accent-focus: #5e81ac;
     --accent-tint: hsl(193 43% 67% / 0.18);
 
+    /* White on this accent has a contrast of 2.0:1, so text on a fill of the accent takes the darkest background. */
+    --accent-ink: var(--bg-darkest);
+
     --border-dark: #242933;
     --border-subtle: #1c2129;
 }
@@ -100,6 +104,9 @@
     --accent-light: #b8eeed;
     --accent-focus: #00bcd4;
     --accent-tint: hsl(179 70% 49% / 0.16);
+
+    /* White on this accent has a contrast of 1.9:1, so text on a fill of the accent takes the darkest background. */
+    --accent-ink: var(--bg-darkest);
 
     --border-dark: #061319;
     --border-subtle: #030a0e;
@@ -136,6 +143,9 @@
     --accent-focus: #ff8fb5;
     --accent-tint: hsl(335 100% 71% / 0.16);
 
+    /* White on this accent has a contrast of 2.7:1, so text on a fill of the accent takes the darkest background. */
+    --accent-ink: var(--bg-darkest);
+
     --border-dark: #1a0e26;
     --border-subtle: #0d0713;
 
@@ -170,6 +180,9 @@
     --accent-light: #e3d8ff;
     --accent-focus: #c4b5fd;
     --accent-tint: hsl(254 92% 76% / 0.18);
+
+    /* White on this accent has a contrast of 2.7:1, so text on a fill of the accent takes the darkest background. */
+    --accent-ink: var(--bg-darkest);
 
     --border-dark: #0a0420;
     --border-subtle: #050210;
@@ -380,6 +393,9 @@
     --accent-light: #ccffdb;
     --accent-focus: #66ff8f;
     --accent-tint: hsl(140 100% 60% / 0.14);
+
+    /* White on this accent has a contrast of 1.3:1, so text on a fill of the accent takes the darkest background. */
+    --accent-ink: var(--bg-darkest);
 
     --status-online: #7dffb0;  /* pale mint, distinct from the vivid accent green */
     --status-online-hover: #5ce094;

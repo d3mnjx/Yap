@@ -1,6 +1,7 @@
 // Message text to DOM nodes. The only transformations are links (MR-12, MR-13) and emoji (MR-15 to MR-17):
 // Unicode emoji become images from one set, ":shortcode:" becomes a pack image, the rest is text nodes
-// (MR-10). Nothing here uses innerHTML.
+// (MR-10). Nothing here uses innerHTML. The file also holds the random pick of a configured text (pick, fill,
+// GEN-12), the retry of an image that did not load (imageFailed), and safeHref for a URL from the server.
 
 import { el } from './dom.js';
 

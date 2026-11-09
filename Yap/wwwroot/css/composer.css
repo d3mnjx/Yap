@@ -1,10 +1,9 @@
-/* composer.css: the message input area
-   Flattened from the Blazor scoped CSS at commit 7af3454 (parent of 2c1b6c0 "Step 1: remove Blazor").
-   Selectors and declarations are copied as they were; only ::deep was removed and a root
-   class was put in front of selectors whose class names collided between components.
-   See README.md in this folder for the prefixes and the dropped rules. */
+/* composer.css: the composer under the message list: the reply bar, the input box, the tray, Send, the recorder,
+   the picker toggles and the panes the pickers mount in, the typing strip and the warning dialog (js/ui/composer.js;
+   templates t-composer and t-warning-modal). css/README.md has the map of the stylesheets. */
 
-/* ==== MessageInput (was Yap/Components/MessageInput.razor.css) ==== */
+/* ==== Composer: reply bar, input box, tray, Send, recorder, picker toggles and panes, typing strip, warning dialog, read-only bar ==== */
+/* js/ui/composer.js; t-composer, t-warning-modal */
 
 /* Reply bar above message input */
 .reply-bar {
@@ -170,7 +169,7 @@
     background: rgba(0, 0, 0, 0.85);
 }
 
-/* data-dragging is set by setupDropZone (chat.js) — drag visuals are fully client-side */
+/* data-dragging is set by the drag handlers in composer.js (IB-30) */
 .message-input-container[data-dragging] {
     background: var(--bg-secondary);
     box-shadow: inset 0 0 0 2px var(--accent-primary);
@@ -234,7 +233,7 @@
     margin-left: 8px;
     padding: 0;
     background: var(--accent-primary);
-    color: var(--text-white);
+    color: var(--accent-ink);
     border: none;
     border-radius: 50%;
     cursor: pointer;
@@ -264,7 +263,7 @@
 /* The button collapses away while the box is empty (no text, no file in the tray) AND no picker is
    open AND nothing records (:placeholder-shown reacts to the value itself; has-files, data-picker and
    data-recording are the tray, picker and recorder states composer.js flips). It collapses instead of
-   display:none so the width animates AND the Enter handler's .click() keeps a live target. */
+   display:none so the width animates. */
 .message-input-container:not([data-picker]):not(.has-files):not([data-recording]):has(.message-input:placeholder-shown) .send-button {
     flex-basis: 0;
     width: 0;
@@ -273,7 +272,7 @@
 }
 
 /* Picker open over an empty box: the button is visible (a reassurance the user asked
-   for) but dimmed — there is nothing to send yet, and HandleSend still guards. */
+   for) but dimmed — there is nothing to send yet, and send() in composer.js still guards. */
 .message-input-container[data-picker]:not(.has-files):has(.message-input:placeholder-shown) .send-button {
     background: var(--bg-muted);
     opacity: 0.5;
@@ -442,7 +441,7 @@
     transition: background-color 0.15s;
 }
 
-/* Active state rides on the container's data-picker attribute (client-owned, chat.js) */
+/* Active state rides on the container's data-picker attribute (composer.js) */
 .gif-toggle-button:hover .gif-toggle-badge,
 .message-input-container[data-picker="gif"] .gif-toggle-button .gif-toggle-badge {
     background: var(--text-primary);
@@ -502,9 +501,9 @@
     z-index: 999;
 }
 
-/* Mounted-hidden pickers: the panes live in the DOM from shortly after page load and are
-   revealed by the data-picker attribute chat.js flips on the container — opening costs
-   zero round trips. Lazy-loaded picker images don't fetch while display:none. */
+/* Mounted-hidden pickers: the pickers stay in their panes after the first open and are
+   revealed by the data-picker attribute composer.js flips on the container, so a later
+   open builds nothing. Lazy-loaded picker images don't fetch while display:none. */
 /* Flattening: with the .message-input-container prefix the backdrop part of this
    hide rule has the same specificity (0,3,0) as the reveal rule below. The reveal
    wins only because it comes later, so keep these two rules in this order. */
@@ -518,10 +517,10 @@
     display: block;
 }
 
-/* While a picker is open (data-picker set by chat.js), lift the whole input box above the
+/* While a picker is open (data-picker set by composer.js), lift the whole input box above the
    picker backdrop (z-index 999) — like .send-button — so a single click reaches the
-   textarea, focusing it AND dismissing the picker in one gesture (the focusin handler in
-   chat.js clears data-picker). The textarea is transparent now, so lifting only it would
+   textarea, focusing it AND dismissing the picker in one gesture (the draft's click handler
+   in composer.js clears data-picker). The textarea is transparent now, so lifting only it would
    float bare text over the mobile backdrop; the box brings its background along. The
    z-index is scoped to [data-picker] so the [data-dragging] "Drop images here" hint
    (container ::after) stays above the box otherwise: the box is positioned at all times
@@ -630,8 +629,8 @@
        font-size other than 16px the rem padding goes fractional (0.6875rem @ 18px =
        12.375px) while the 16px line stays 22px, so the text line sits on a half-pixel
        and iOS WebKit paints a 1px "strike-through" row across it (dark under glyphs,
-       stale pixels after a delete). 11px + 22px + 11px also matches the 44px reset
-       height chat.js applies after a send. */
+       stale pixels after a delete). 11px + 22px + 11px also gives the 44px height
+       that composer.js measures for the empty box after a send. */
     .message-input {
         font-size: 16px;
         padding: 11px 4px;
@@ -779,7 +778,7 @@
     width: 100%;
     padding: 0.75rem 1rem;
     background: var(--accent-primary);
-    color: var(--text-white);
+    color: var(--accent-ink);
     border: none;
     border-radius: 4px;
     font-size: 1rem;

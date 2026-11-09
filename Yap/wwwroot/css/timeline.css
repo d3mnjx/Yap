@@ -1,14 +1,13 @@
-/* timeline.css: the message list, history loading, image gallery modal, show-more button
-   Flattened from the Blazor scoped CSS at commit 7af3454 (parent of 2c1b6c0 "Step 1: remove Blazor").
-   Selectors and declarations are copied as they were; only ::deep was removed and a root
-   class was put in front of selectors whose class names collided between components.
-   See README.md in this folder for the prefixes and the dropped rules. */
+/* timeline.css: the gallery viewer, the message list with its loading lines and pills, and the show-more button
+   (js/ui/gallery.js and js/ui/timeline.js; templates t-gallery, t-messages, t-loading-older and t-pill). The rows
+   are in message.css. css/README.md has the map of the stylesheets. */
 
-/* ==== ImageGalleryModal (was Yap/Components/ImageGalleryModal.razor.css) ==== */
+/* ==== Gallery viewer ==== */
+/* js/ui/gallery.js; t-gallery */
 
-/* Full-screen media viewer. Layout and gestures are client-owned (see chat.js "Image gallery
-   viewer"): the strip swipes with native scroll-snap, "fill" / "dragging" / "closing" are
-   classes chat.js toggles, --drag is a 0..1 inline variable it sets during a drag-to-close. */
+/* Full-screen media viewer. Layout and gestures are client-owned (see js/ui/gallery.js): the
+   strip swipes with native scroll-snap, "fill" / "dragging" / "closing" are
+   classes gallery.js toggles, --drag is a 0..1 inline variable it sets during a drag-to-close. */
 
 .image-modal {
     position: fixed;
@@ -51,7 +50,7 @@
     scroll-snap-stop: always;   /* a fling moves one item, never three */
     display: flex;              /* fit mode: centres the picture */
     overflow: hidden;
-    /* pan-x leaves horizontal swipes to the strip. No pan-y: vertical drags reach chat.js
+    /* pan-x leaves horizontal swipes to the strip. No pan-y: vertical drags reach gallery.js
        (drag-to-close) instead of the browser, and native double-tap zoom is off, so the
        fill double-tap wins. Pinch stays native, as it always was. */
     touch-action: pan-x pinch-zoom;
@@ -88,7 +87,7 @@
 }
 
 /* Cover = scale along one axis and let the other overflow. Which axis depends on the picture's
-   aspect against the stage's, which CSS cannot compare, so chat.js adds fill-w for pictures
+   aspect against the stage's, which CSS cannot compare, so gallery.js adds fill-w for pictures
    narrower than the stage. (min-width/min-height tricks fail here: once one axis is specified
    the CSS 2.1 ratio table no longer applies, and the box stretches around a letterboxed picture.) */
 .modal-stage.fill img {
@@ -269,11 +268,12 @@
     }
 }
 
-/* ==== ChatLayout (was Yap/Components/Layout/ChatLayout.razor.css) ==== */
-/* Timeline part. The frame part of this file (.chat-container, .chat-main,
-   .messages-container, scene, sidebar backdrop, error content) is in frame.css. */
+/* ==== Message list: the scroller, the spacer, the loading lines, the top pills, the history start ==== */
+/* js/ui/timeline.js; t-messages, t-loading-tail, t-loading-older, t-catching-up */
+/* The frame around the list (.chat-container, .chat-main,
+   .messages-container, scene, sidebar backdrop, page error) is in frame.css. */
 
-/* Messages area (was ::deep in the scoped file; flat now) */
+/* Messages area */
 .messages {
     flex: 1;
     overflow-y: auto;
@@ -379,7 +379,8 @@
     font-weight: 600;
 }
 
-/* ==== ShowMoreButton (was Yap/Components/ShowMoreButton.razor.css) ==== */
+/* ==== Show more button: Load earlier, GIF picker, GIF library, Admin lists ==== */
+/* js/ui/timeline.js, js/ui/gif-picker.js, js/ui/gif-library.js, js/pages/admin.js; t-load-earlier, t-gif-library */
 
 .show-more {
     width: 100%;
@@ -397,3 +398,37 @@
     color: var(--text-primary);
     background: var(--bg-hover);
 }
+
+/* ==== New messages pill, down arrow and end of window ==== */
+/* TL-16, TL-40, TL-42; js/ui/timeline.js; t-pill, t-down-arrow, t-newer-messages */
+
+/* The New messages pill (TL-16): centred above the typing strip. */
+.new-messages-pill {
+    position: absolute; left: 50%; bottom: calc(18px + 0.75rem); transform: translateX(-50%); z-index: 5;
+    display: flex; align-items: center; gap: 0.25rem;
+    background: var(--accent-primary); color: var(--accent-ink); border: none; border-radius: 999px;
+    padding: 0.375rem 0.875rem; font-size: 0.875rem; font-weight: 600; cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* The down arrow (TL-40): a round button in the bottom right corner above the typing strip, while the bottom is more
+   than a screen away. 1.5rem from the edge keeps it clear of the 16 px scrollbar of the list. */
+.down-arrow {
+    position: absolute; right: 1.5rem; bottom: calc(18px + 0.75rem); z-index: 5;
+    display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0;
+    background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--bg-muted); border-radius: 50%;
+    cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+.down-arrow:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+/* The end of a window after a jump (TL-42): a row in the flow under the last message, a line with the text and the
+   button under it. The button wears the arrow's colours because it does what the arrow does. */
+.newer-messages { display: flex; flex-direction: column; align-items: center; gap: 0.625rem; padding: 1rem 1rem 1.25rem; }
+.newer-messages-line { display: flex; align-items: center; gap: 0.75rem; width: 100%; color: var(--text-muted); font-size: 0.8125rem; font-weight: 600; white-space: nowrap; }
+.newer-messages-line::before, .newer-messages-line::after { content: ''; flex: 1; height: 1px; background: var(--bg-muted); }
+.newer-messages-button {
+    display: flex; align-items: center; gap: 0.375rem; padding: 0.375rem 0.875rem;
+    background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--bg-muted); border-radius: 999px;
+    font-size: 0.875rem; font-weight: 600; cursor: pointer;
+}
+.newer-messages-button:hover { color: var(--text-primary); background: var(--bg-hover); }

@@ -54,7 +54,8 @@ layers or the palette):
   `Yap/wwwroot/images/themes/teahouse/<scene>/<layer>.webp`
 - `gen_theme_css.py` - derives the theme CSS from `palette.json` and writes
   `Yap/wwwroot/themes/teahouse.css`. The CSS is generated, do not hand-edit it.
-  The design behind the generator is in `docs/themes-2.0.md`.
+  The design record behind the generator left the tree with the Blazor code;
+  `Yap/wwwroot/css/README.md` says how to read it.
 - `gen_zone_coords.py` - reads the tz database of the machine (`zone.tab`,
   `zone1970.tab`, the links in `tzdata.zi`) and writes
   `Yap/wwwroot/themes/zone-coords.json`: one latitude and longitude per time zone

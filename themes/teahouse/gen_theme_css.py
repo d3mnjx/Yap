@@ -13,8 +13,9 @@ in the afternoon -> gold at sunset -> blue at dusk -> neutral at night) carry
 through the whole UI on its own.
 
 Which template a scene gets is decided by the WCAG relative luminance of its canvas
-colour, because this theme is genuinely light by day and dark by night - see
-docs/themes-2.0.md, "Teahouse is not a dark theme". The split lands at 6am and 8pm.
+colour, because this theme is genuinely light by day and dark by night. The split
+lands at 6am and 8pm. (The design record, "Teahouse is not a dark theme", left the
+tree with the Blazor code; Yap/wwwroot/css/README.md says how to read it.)
 
 Layer scaling: the header and footer strips are 450-540px and 399-549px tall, so on
 any ordinary viewport they overlap and two phases of the same sky meet in a visible
@@ -193,6 +194,10 @@ def accent_vars(light):
         "--accent-light": hsl(hh, ss * 0.9, 88),
         "--accent-focus": hsl(hh, ss + 8, ll + 7),
         "--accent-tint": hsl(hh, ss, ll, "0.15"),
+        # Text on a fill of the accent (--accent-ink, app.css). White on the bright gold
+        # of a night scene has a contrast near 2:1, so those scenes write with their
+        # darkest background. The dark gold of a day scene carries the default white.
+        **({} if light else {"--accent-ink": "var(--bg-darkest)"}),
     }
 
 
@@ -205,7 +210,8 @@ def main():
         " * Regenerate with: python3 themes/teahouse/gen_theme_css.py",
         " *",
         " * One block per time-of-day scene. data-theme is server-rendered; data-scene is",
-        " * set from the browser clock before first paint (see chat.js applyScene).",
+        " * set from the browser clock before first paint (applyScene, the inline script",
+        " * in index.html).",
         " */",
         "",
     ]
@@ -251,12 +257,12 @@ def main():
         lines.append("")
         summary.append((scene, canvas, "LIGHT" if light else "dark", denom))
 
-    # Mobile sidebar. Under 768px ChatSidebar stops being a column beside the chat and
+    # Mobile sidebar. Under 768px the sidebar stops being a column beside the chat and
     # slides in as an overlay ON TOP of it, so the same alpha that looks right on
     # desktop leaves usernames competing with the messages showing through. Lift it.
     lines.append("/* Mobile: the sidebar overlays the chat rather than sitting beside it,")
     lines.append("   so it needs more body behind the names. Breakpoint matches")
-    lines.append("   ChatSidebar.razor.css's own slide-in media query. */")
+    lines.append("   the sidebar's own slide-in media query in frame.css. */")
     lines.append("@media (max-width: 768px) {")
     for scene, canvas, mode, _ in summary:
         h2, s2, l2 = hex_to_hsl(canvas)

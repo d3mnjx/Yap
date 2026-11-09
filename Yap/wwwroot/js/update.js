@@ -1,6 +1,6 @@
 // The server's build against this page's: the strip that asks for a reload (SH-20, OF-04) and the fresh load that
-// gets the new build (OF-18). main.js shows the strip and fresh-loads a page not loaded yet (SH-50); the Settings
-// page shows the version and has a button for the same move (ST-28).
+// gets the new build (OF-18). This file shows the strip; main.js fresh-loads a page not loaded yet (SH-50); the
+// Settings page shows the version and has a button for the same move (ST-28).
 import { state, on, setUpdateAvailable, clearUpdateAvailable } from './store.js';
 import * as router from './router.js';
 

@@ -1,5 +1,7 @@
-// One stack of open layers: menus, pickers, sheets, dialogs, the gallery. Escape closes the top layer only
-// (GEN-17). A tap outside a layer closes it. The 600 px tier decides sheet or popup (GEN-18, GEN-14).
+// One stack of open layers: menus, the reaction picker, the pins panel, sheets, dialogs, the gallery. Escape closes
+// the top layer only (GEN-17). A tap outside a layer closes it. The 600 px tier decides sheet or popup (GEN-18,
+// GEN-14). The emoji and GIF pickers of the input box are not on the stack: composer.js closes them by the rules of
+// IB-42 and IB-43, and its Escape waits for the stack (IB-17).
 
 const stack = [];
 

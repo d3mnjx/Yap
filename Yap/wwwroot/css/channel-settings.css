@@ -1,0 +1,267 @@
+/* channel-settings.css: the channel settings page, which also creates a channel (js/pages/channel-settings.js,
+   templates t-channel-settings, t-pinner-row and t-reorder-item). pages.css holds the rules that this page shares
+   with other pages: the page shell, the form block and the danger items. */
+
+/* ==== Channel settings page ==== */
+/* js/pages/channel-settings.js; t-channel-settings, t-pinner-row, t-reorder-item */
+
+.page-channel .settings-section h3 {
+    margin: 0 0 0.25rem 0;
+}
+
+.page-channel .section-hint {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+/* With the page in front: the start-failure screen in index.html has its own .error-message (app.css), and this
+   rule without a root drew that text in the red box too. */
+.page-channel .error-message {
+    background: color-mix(in srgb, var(--color-danger) 15%, transparent);
+    border: 1px solid var(--color-danger);
+    border-radius: 4px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    color: var(--color-danger);
+    font-size: 0.875rem;
+}
+
+.page-channel .form-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Permission cards */
+.permission-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.permission-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    background: var(--bg-input);
+    border: 2px solid var(--border-subtle);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s, background-color 0.15s;
+}
+
+.permission-card:hover {
+    border-color: var(--text-placeholder);
+}
+
+.permission-card.selected {
+    border-color: var(--accent-primary);
+    background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+}
+
+.permission-card-radio {
+    flex-shrink: 0;
+}
+
+.radio-outer {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--text-placeholder);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s;
+}
+
+.permission-card.selected .radio-outer {
+    border-color: var(--accent-primary);
+}
+
+.radio-inner {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+}
+
+.permission-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.permission-card-title {
+    color: var(--text-white);
+    font-size: 0.9375rem;
+    font-weight: 500;
+}
+
+.permission-card-desc {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+}
+
+/* The checklist of selected pinners (AD-37) */
+.page-channel .pinners-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 0.5rem;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.page-channel .pinner-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    background: var(--bg-input);
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.page-channel .pinner-handle,
+.page-channel .pinners-empty {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+}
+
+.page-channel .pinners-empty {
+    padding: 0.5rem 0;
+}
+
+/* Reorder list */
+.reorder-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.reorder-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    background: var(--bg-input);
+    transition: background-color 0.15s;
+}
+
+.reorder-item.current {
+    background: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+
+.reorder-icon {
+    color: var(--text-placeholder);
+    font-size: 1.125rem;
+    margin-right: 0.5rem;
+    font-weight: 500;
+}
+
+.reorder-name {
+    flex: 1;
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.reorder-buttons {
+    display: flex;
+    gap: 2px;
+    margin-left: 0.5rem;
+}
+
+.reorder-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.reorder-btn:hover:not(:disabled) {
+    background: var(--bg-hover);
+    color: var(--text-white);
+    border-color: var(--text-placeholder);
+}
+
+.reorder-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* Actions */
+.page-channel .settings-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.cancel-button,
+.save-button {
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.cancel-button {
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+}
+
+.cancel-button:hover {
+    background: var(--bg-hover);
+}
+
+.save-button {
+    background: var(--accent-primary);
+    border: none;
+    color: var(--accent-ink);
+}
+
+.save-button:hover:not(:disabled) {
+    background: var(--accent-hover);
+}
+
+.save-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Flattening: prefixed although .danger-section does not collide. The markup is
+   <div class="settings-section danger-section">; without the prefix the prefixed
+   .settings-section h3 in pages.css (page shell and form block) would win and the
+   danger heading would lose its red. */
+.page-channel .danger-section h3 {
+    color: var(--color-danger);
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+    .page-channel .settings-actions {
+        flex-direction: column-reverse;
+    }
+
+    .cancel-button,
+    .save-button {
+        width: 100%;
+    }
+}

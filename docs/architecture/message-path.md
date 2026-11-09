@@ -195,7 +195,7 @@ After the response, the server queues link previews for a message without media 
 | Side | Part | Role |
 | --- | --- | --- |
 | client | `ui/composer.js` | builds the row, paints pending, clears the draft |
-| client | `offline/outbox.js`, `offline/sender.js` | the one write path and its loop |
+| client | `offline/outbox.js`, `sender.js` | the one write path and its loop |
 | client | `api.js` | fetch, credentials, reason text |
 | server | `Endpoints/MessagesEndpoints.cs` | validate, call, map the result |
 | server | `Services/Chat/ChatService.cs` | permission, dedupe, append, unread, events, persist |

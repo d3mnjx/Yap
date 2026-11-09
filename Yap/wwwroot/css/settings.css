@@ -1,0 +1,903 @@
+/* settings.css: the Settings page (js/pages/settings.js and js/pages/settings-debug.js, template t-settings and the
+   small templates that it fills, such as t-theme-card and t-session-item). pages.css holds the rules that this page
+   shares with other pages: the page shell, the form block, the toggle switch, the upload button and the GIF library. */
+
+/* ==== Settings page ==== */
+/* js/pages/settings.js, js/pages/settings-debug.js; t-settings, t-session-item, t-notif-item, t-cache-group */
+
+.page-settings .settings-container {
+    /* overflow-y: auto makes overflow-x compute to auto too, so any accidentally wide
+       section gives the whole page a sideways wobble on touch scroll — clip instead. */
+    overflow-x: hidden;
+}
+
+.page-settings .settings-section h3 {
+    margin: 0 0 1.5rem 0;
+}
+
+.profile-picture-section {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.profile-picture-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.file-input {
+    display: none;
+}
+
+.remove-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    border-radius: 4px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.remove-button:hover:not(:disabled) {
+    background: var(--bg-hover);
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+
+.remove-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Same idiom as a.message-link: --accent-focus is the one link color every
+   theme contrast-tunes, so a bare <a> never falls back to browser defaults. */
+.page-settings .form-hint a {
+    color: var(--accent-focus);
+    text-decoration: none;
+}
+
+.page-settings .form-hint a:hover {
+    text-decoration: underline;
+}
+
+/* Auto-save status indicator */
+.save-status {
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-left: auto;
+    transition: opacity 0.3s;
+}
+
+.save-status.saving {
+    color: var(--text-muted);
+}
+
+.save-status.saved {
+    color: var(--color-success);
+}
+
+.save-status.error {
+    color: var(--color-danger);
+}
+
+/* In the push column the status is a full sentence, not a row-end chip;
+   the base margin-left:auto would right-align its wrapped lines. */
+.notification-actions .save-status {
+    margin-left: 0;
+}
+
+/* Notification settings */
+.notification-status {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    margin-bottom: 1.25rem;
+}
+
+.notification-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;   /* on a 320 px phone at the 20 px text size the label and the value both wrap; without the gap they touch */
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-input);
+    border-radius: 4px;
+}
+
+.notification-label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.notification-value {
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: right;   /* a wrapped value ("none yet" on a narrow phone) keeps its right edge */
+}
+
+/* The mark before the state of this device (ST-17): a green check for On, a red crossed bell for every quiet
+   state. The bell is red even next to the grey "Off": the mark says "no notifications", the word says why.
+   The mark is inline, not a flex item: a long state ("Not set up on this server") wraps on a phone, and a flex
+   item would centre the mark across both lines and leave a hole before the right-aligned first line. */
+.status-icon {
+    width: 16px;
+    height: 16px;
+    vertical-align: -0.2em;
+    margin-right: 0.375rem;
+}
+
+.status-icon-on {
+    color: var(--color-success);
+}
+
+.status-icon-off {
+    color: var(--color-danger);
+}
+
+.notification-value.status-enabled {
+    color: var(--color-success);
+}
+
+.notification-value.status-disabled {
+    color: var(--text-muted);
+}
+
+.notification-value.status-unavailable {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.notification-value.status-denied {
+    color: var(--color-danger);
+}
+
+.notification-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.notification-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.notification-actions .upload-button,
+.notification-actions .remove-button {
+    border: none;
+}
+
+.notification-actions .upload-button:disabled,
+.notification-actions .remove-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* PWA install section */
+.pwa-installed-info {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    color: var(--color-success);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.pwa-check-icon {
+    flex-shrink: 0;
+}
+
+.pwa-description,
+.section-intro {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin: 0 0 1rem 0;
+    line-height: 1.4;
+}
+
+/* Time widget */
+.time-widget {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--bg-input);
+    border-radius: 4px;
+    padding: 0.25rem;
+    width: fit-content;
+}
+
+.time-adjust-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: var(--text-secondary);
+    font-size: 1.25rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+    user-select: none;
+}
+
+.time-adjust-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-white);
+}
+
+.current-time {
+    padding: 0 0.75rem;
+    color: var(--text-white);
+    font-size: 1.25rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    min-width: 5rem;
+    text-align: center;
+}
+
+/* Date format picker */
+.format-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.format-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.75rem;
+    background: var(--bg-input);
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color 0.15s, background-color 0.15s;
+}
+
+.format-option:hover {
+    background: var(--bg-hover);
+}
+
+.format-option.selected {
+    border-color: var(--accent-primary);
+}
+
+.format-option input[type="radio"] {
+    display: none;
+}
+
+.format-example {
+    color: var(--text-white);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    min-width: 10rem;
+}
+
+.format-label {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+}
+
+/* Passphrase field */
+.passphrase-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 0.75rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.passphrase-value {
+    flex: 1;
+    min-width: 0; /* a long login URL must shrink and wrap instead of pushing the icons out of the box */
+    overflow-wrap: anywhere;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-family: inherit;
+    letter-spacing: 0.02em;
+    user-select: all;
+}
+
+.passphrase-actions {
+    display: flex;
+    flex-wrap: wrap; /* phone width: link row holds two buttons and the expiry select */
+    gap: 8px;
+}
+
+.passphrase-actions .remove-button {
+    white-space: nowrap;
+}
+
+.passphrase-eye {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.passphrase-eye:hover {
+    color: var(--text-primary);
+}
+
+.expiry-select {
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    color: var(--text-primary);
+    padding: 0.4rem 0.5rem;
+    font-size: 0.8125rem;
+    font-family: inherit;
+}
+
+/* Kicked notice banner */
+.kicked-notice {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-warning) 35%, transparent);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.kicked-notice-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.kicked-notice-text {
+    flex: 1;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.kicked-notice-text strong {
+    color: var(--text-white);
+}
+
+.kicked-notice-dismiss {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0 0.25rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.kicked-notice-dismiss:hover {
+    color: var(--text-white);
+}
+
+/* The red notice at the top of Allow / Mute (ST-27): this device gets no notifications, and the rules below cannot
+   change that. Red on purpose: the person came to this card because the phone is quiet, and the fix is one card up. */
+.push-off-notice {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    margin-bottom: 1rem;
+    color: var(--color-danger);
+    background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-danger) 40%, transparent);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.push-off-notice-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.push-off-notice a {
+    color: inherit;
+    font-weight: 600;
+}
+
+/* Active sessions */
+.sessions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.session-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.75rem;
+    background: var(--bg-input);
+    border-radius: 4px;
+    border: 1px solid transparent;
+}
+
+.session-item.current {
+    border-color: var(--accent-primary);
+}
+
+.session-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.session-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    flex: 1;   /* the text takes what the icon and the Remove button leave, so a long platform name wraps at a space */
+    min-width: 0;
+}
+
+/* The badge and the name go onto two lines when the row is narrow: on a phone, "This device" next to
+   "Google (Chrome / Edge / Android)" does not fit beside the Remove button, and without the wrap the name
+   is squeezed into a word-per-line column. */
+.session-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.5rem;
+}
+
+.session-badge {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--accent-primary);
+    background: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+    white-space: nowrap;
+}
+
+.session-ip {
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+.session-activity {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+    /* A device row on a phone: the Remove button goes under the text, in the corner. Beside the text it left
+       a column of 119 px at the 20 px text size, and "Google (Chrome / Edge / Android)" came out one word
+       per line. The grid puts the icon in the first column and the text and the button in the second. */
+    .session-item {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.5rem 0.75rem;
+    }
+
+    .session-remove {
+        grid-column: 2;
+        justify-self: end;
+    }
+
+    .profile-picture-section {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+.page-settings .toggle-row {
+    padding: 0.75rem 0;
+}
+
+/* Theme picker */
+.theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
+}
+
+.theme-card,
+.font-size-option {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-input);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color 0.15s, transform 0.15s;
+}
+
+.theme-card {
+    gap: 0.5rem;
+    padding: 0.5rem;
+}
+
+.theme-card:hover,
+.font-size-option:hover {
+    transform: translateY(-1px);
+    border-color: var(--bg-muted);
+}
+
+.theme-card.selected,
+.font-size-option.selected {
+    border-color: var(--accent-primary);
+}
+
+.theme-card-preview {
+    position: relative;
+    height: 64px;
+    border-radius: 6px;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+}
+
+.theme-card-accent-dot {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35);
+}
+
+.theme-card-check {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-primary);
+    color: var(--accent-ink);
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.theme-card-name {
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Text size picker — same visual language as the theme cards. The Aa samples are
+   sized in px on purpose: they must show each option's absolute size and NOT
+   rescale when the root font-size changes. */
+.font-size-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.font-size-option {
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.375rem;
+    min-width: 64px;
+    padding: 0.625rem 0.75rem 0.5rem;
+}
+
+.font-size-sample {
+    color: var(--text-primary);
+    font-weight: 600;
+    line-height: 1;
+}
+
+.font-size-value {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Local Cache (PWA) debug section */
+.cache-group {
+    margin-bottom: 1rem;
+}
+
+.cache-group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.375rem;
+}
+
+.cache-group-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.cache-group-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.cache-entry-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 220px;
+    overflow-y: auto;
+    background: var(--bg-input);
+    border-radius: 4px;
+    padding: 0.375rem 0.5rem;
+}
+
+.cache-entry {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.8125rem;
+}
+
+.cache-entry-name {
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cache-entry-size {
+    color: var(--text-muted);
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+/* The emoji timing lines of the debug card (settings-debug.js emojiTimings): the name on one line and the timing under
+   it, because the timing is too long to share a row with the name on a phone. */
+.emoji-timing-entry {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.8125rem;
+    margin-bottom: 4px;
+}
+
+/* The clipboard fallback of "Copy timings": the same text in a box to select by hand. */
+.emoji-timing-text {
+    width: 100%;
+    margin-top: 6px;
+    font-size: 11px;
+}
+
+/* Collapsible "DEBUG INFO" section (native <details>) */
+.debug-info > summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    color: var(--text-white);
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.debug-info > summary::-webkit-details-marker {
+    display: none;
+}
+
+.debug-info > summary::before {
+    content: "▸";
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    transition: transform 0.15s ease;
+}
+
+.debug-info[open] > summary {
+    margin-bottom: 1.5rem;
+}
+
+.debug-info[open] > summary::before {
+    transform: rotate(90deg);
+}
+
+/* ============================================================
+   Notification settings: segmented mode pickers + per-channel list
+   ============================================================ */
+
+.notif-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.notif-row-label {
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+/* Segmented control: one row of buttons, exactly one selected. The container carries the
+   border so the buttons can sit flush against each other without doubling it. */
+.segmented {
+    display: inline-flex;
+    align-items: stretch;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--bg-input);
+}
+
+.segmented-wrap {
+    flex-wrap: wrap;
+}
+
+.seg-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    padding: 0.4rem 0.75rem;
+    min-height: 36px;   /* comfortable tap target on mobile */
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.seg-btn:last-child {
+    border-right: none;
+}
+
+.seg-btn:hover:not(.seg-selected) {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.seg-btn.seg-selected {
+    background: var(--accent-primary);
+    color: var(--accent-ink);
+}
+
+.seg-icon {
+    flex-shrink: 0;
+}
+
+.notif-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 1.25rem 0;
+}
+
+.notif-list {
+    display: flex;
+    flex-direction: column;
+    margin: 0 0 1rem 0;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.notif-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.notif-item:last-child {
+    border-bottom: none;
+}
+
+/* "New DMs" is a rule, not a conversation — set it apart from the names above it. */
+.notif-item-default {
+    background: var(--bg-hover);
+}
+
+.notif-item-default .notif-item-name {
+    font-style: italic;
+    color: var(--text-secondary);
+}
+
+.notif-item-name {
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.notif-item-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 32px;
+    flex-shrink: 0;
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.notif-item-toggle:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.notif-item-toggle.muted {
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+
+@media (max-width: 600px) {
+    /* Stack label above the picker; a three-button control does not fit beside a label
+       on a phone, and shrinking the buttons would cost the tap target. */
+    .notif-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    /* Wrap, so the third choice of a row is not clipped at the 20 px text size on a 320 px phone (U05 of the
+       2026-10-15 user test). On one line the buttons still share the width: flex-basis 0 below. */
+    .segmented {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    /* 44px is the thumb-target floor; the desktop 36px is a mouse size. The side padding is narrow so the
+       three choices of a row share one line on a 375 px phone at every text size (ST-26); the wrap above
+       is the fallback for a 320 px phone at the largest size. */
+    .seg-btn {
+        flex: 1 1 0;
+        min-height: 44px;
+        padding: 0.4rem 0.25rem;
+    }
+
+    .segmented-wrap .seg-btn {
+        flex: 1 1 auto;
+    }
+
+    .notif-item-toggle {
+        width: 44px;
+        height: 40px;
+    }
+
+    .notif-item {
+        padding: 0.625rem 0.75rem;
+    }
+}
+
+/* ==== Theme card ==== */
+/* js/pages/settings.js; t-theme-card */
+
+/* A theme card is a button: a button's default alignment leaves the preview without width. */
+.theme-card { align-items: stretch; }
+.theme-card-preview { width: 100%; }
