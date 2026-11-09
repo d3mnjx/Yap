@@ -700,7 +700,8 @@ public partial class MediaCacheService
         });
     }
 
-    private static string ComputeHash(string url)
+    // Shared with LinkPreviewService for the card files and pictures: one naming rule for Data/.
+    internal static string ComputeHash(string url)
     {
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(url));
         return Convert.ToHexString(bytes)[..16].ToLowerInvariant();

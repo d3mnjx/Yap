@@ -188,7 +188,7 @@ When the page is visible, the person is not away and the view is at the bottom, 
 
 ### Background
 
-After the response, the server queues link previews for a message without media (MR-19), and a `previews` event follows when a card is ready (MR-22). It also dispatches push notifications to people who are not online and visible (NT-25, NT-26). Neither is on the latency path.
+After the response, the server queues link previews for a message without media (MR-19), and a `previews` event follows when a card is ready (MR-22). A card is kept in memory and in `Data/link-cards/`, so a page of history carries it whatever its age; a good card is never fetched again, and a link with no card is tried again after an hour. It also dispatches push notifications to people who are not online and visible (NT-25, NT-26). Neither is on the latency path.
 
 ## What is on the path
 

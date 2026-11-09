@@ -51,7 +51,7 @@ Administration is the admin's page for the server. It covers the people, the inv
 
 **AD-11** Pending Requests shows while someone waits for approval. Each request shows the username, how long ago it arrived, "Approve" and "Reject". The list updates automatically when a request arrives. For each request, the admin also gets a message from the bot. Pending requests are lost when the server restarts.
 
-**AD-12** Link Previews has "Enable link previews" (on by default) and "Enable media caching" (off by default). When the downloader is missing, "Enable media caching" is disabled and shows a note. Both switches apply at once to every open chat.
+**AD-12** Link Previews has "Enable link previews" (on by default) and "Enable media caching" (off by default). When the downloader is missing, "Enable media caching" is disabled and shows a note. Both switches apply at once to every open chat. "Enable media caching" covers only the video and audio downloads; the server copies the pictures of link cards whenever link previews are on (MR-20).
 
 **AD-13** GIFs has the content rating of the provider: G, PG, PG-13 or R. The default is PG. A change applies to the next search. Under the rating, a row in the colour of the state shows "Provider: configured" in green or "Provider: not configured" in red. Under it, an instruction box "Klipy API key" shows the state of the key and, open, the steps to get a free key at partner.klipy.com, where to put it and that a restart applies it. The box says that own uploads, favourites and the server library work without a key. <!-- lint: allow -->
 

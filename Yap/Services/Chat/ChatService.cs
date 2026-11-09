@@ -590,11 +590,11 @@ public class ChatService
     private void QueuePreviews(ChatMessage message) => EnsurePreviews([message]);
 
     /// <summary>
-    /// The cards of a message or of a served page. Previews live in memory for an hour and not across a restart, so
-    /// a page of history has none until they are fetched again: the hub calls this for every page it serves, the
-    /// fetch runs in the background, and the "previews" message fills the rows in while the reader looks at them
-    /// (MR-22). A preview still in memory is not fetched again: the mapper already put its card into the page or
-    /// the broadcast. A media file already on disk is attached by the mapper.
+    /// The cards of a message or of a served page. A card stays in memory and on disk (Data/link-cards), so the mapper
+    /// puts it into the page whatever its age, and a good card is never fetched again. The hub calls this for every
+    /// page it serves: a link with no card, or a card without content after an hour, is fetched in the background,
+    /// and a "previews" message fills in the row while the reader looks at it (MR-22). A media file already on disk
+    /// is attached by the mapper.
     /// </summary>
     public void EnsurePreviews(IEnumerable<ChatMessage> messages)
     {
@@ -604,7 +604,7 @@ public class ChatService
             if (message.HasMedia) continue;
             foreach (var url in LinkPreviewService.ExtractUrls(message.Content).Take(LinkPreviewService.MaxLinksPerMessage))
             {
-                if (_linkPreviewService.GetCachedPreview(url) is null) _linkPreviewService.QueueFetch(message.Id, url);
+                if (LinkPreviewService.NeedsFetch(_linkPreviewService.GetCachedPreview(url))) _linkPreviewService.QueueFetch(message.Id, url);
                 if (_linkPreviewSettings.MediaCachingEnabled) _mediaCacheService.QueueDownload(message.Id, url);   // a no-op for a file on disk
             }
         }
@@ -619,7 +619,8 @@ public class ChatService
         foreach (var url in LinkPreviewService.ExtractUrls(m.Content).Take(LinkPreviewService.MaxLinksPerMessage))
         {
             var p = _linkPreviewService.GetCachedPreview(url);
-            // The file outlives the scrape: it is on disk across restarts, the scrape is in memory for an hour.
+            // A card loaded from its file after a restart has no media fields (they are not stored): the media file
+            // on disk completes it here.
             if (p?.CachedMediaUrl is null && _mediaCacheService.GetOrLoadCachedMedia(url) is { } file) p = _linkPreviewService.AttachMedia(url, file);
             if (p is null || (!p.HasContent && p.CachedMediaUrl is null)) continue;
             var media = p.CachedMediaUrl is null ? null
@@ -879,7 +880,7 @@ public class ChatService
 
     /// <summary>At start, once the GIF entries are in: the pins of messages still in memory get their media resolved
     /// again, so a pin made on an older build shows what this build shows (the whole gallery, the video itself). A
-    /// text message's pin keeps its copy: its link card is not in memory after a restart, and the copy is all there is.
+    /// text message's pin keeps its copy: its link card loads only when a page shows the link, and the copy is all there is.
     /// A picture pinned before 2026-11-04 whose message is no longer in memory gets its large URL from the medium one,
     /// by the same naming rule: the viewer's stage then shows the large file (TL-23). Its original stays unknown (the
     /// medium URL lost the extension), and the panel's Download falls back to the medium picture (TL-24).</summary>
