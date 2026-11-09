@@ -103,7 +103,7 @@ public static class AdminEndpoints
 
         // ---- Bot (AD-09) ------------------------------------------------------------------------------------
 
-        admin.MapGet("/bot", (SystemBotService bot, UserService users, ServerConfig config) =>
+        admin.MapGet("/bot", (SystemBotService bot, UserService users) =>
         {
             var user = bot.BotUserId is { } id ? users.GetById(id) : null;
             return Results.Ok(new
@@ -112,7 +112,6 @@ public static class AdminEndpoints
                 displayName = user?.DisplayName ?? bot.BotUsername,
                 avatarUrl = user?.ProfilePictureUrl,
                 customAvatar = user?.ProfilePictureUrl is { } url && url != SystemBotService.DefaultAvatarUrl,
-                serverName = config.ProjectName,
                 welcomeMessage = bot.WelcomeMessage,
                 phoneMessage = bot.PhoneMessage,
                 linkMessage = bot.LinkMessage,

@@ -2,7 +2,7 @@
 // Settings load with the page; Logs, Media and Visitors on their first open; GIFs on every open; Diagnostics
 // every 30 s while open (AD-02).
 
-import { state, on, setRegistrations } from '../store.js';
+import { state, on, setRegistrations, projectName } from '../store.js';
 import { api } from '../api.js';
 import { clone, el, replace, classes, append } from '../render/dom.js';
 import { inline } from '../render/text.js';
@@ -214,7 +214,7 @@ export function mount(root, route) {
     const avatarResult = el('span', { class: 'form-hint' });
     // The DM as a phone user with a login link would get it, from the parts as typed. The same fill as the server's.
     const drawPreview = () => {
-      const server = b?.serverName ?? 'Yap';
+      const server = projectName();
       const fill = t => t.replaceAll('{server}', server).replaceAll('{0}', server).replaceAll('{link}', `${location.origin}/invite/CODE-1234`).replaceAll('{code}', 'CODE-1234');
       preview.textContent = [welcome.value, phone.value, link.value].map(t => t.trim()).filter(Boolean).map(fill).join('\n\n');
     };

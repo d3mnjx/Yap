@@ -945,6 +945,10 @@
     scrollbar-width: none;
 }
 
+.edit-input::-webkit-scrollbar {
+    display: none;
+}
+
 .edit-input:focus {
     outline: none;
     border-color: var(--accent-primary);

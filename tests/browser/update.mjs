@@ -8,26 +8,22 @@
 //
 // The two builds: build twice in different minutes (the stamp is yyyy-MM-dd-HHmm) and copy bin/Debug/net10.0 each
 // time, for example to /tmp/yapA and /tmp/yapB. Then:
-//   npm run update -- --dllA=/tmp/yapA --dllB=/tmp/yapB [--signin] [--stuckworker] [--browser=chromium] [--port=5098]
+//   npm run update -- --dllA=/tmp/yapA --dllB=/tmp/yapB [--signin] [--stuckworker] [--browser=chromium] [--port=<n>]
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import * as pw from 'playwright';
+// The port, the paths and the waiting helpers are lib.mjs's, so --port= means one thing in every script and signIn
+// opens the server this script started (it once had its own default port, and --signin went to lib.mjs's). The
+// server start stays here: it serves two builds from one root with persistence on, which lib.mjs's does not.
+import { arg, REPO, BASE, SCRATCH, sleep, waitTrue, signIn } from './lib.mjs';
 
-const REPO = fileURLToPath(new URL('../../', import.meta.url));
-const arg = n => process.argv.find(a => a.startsWith(`--${n}=`))?.slice(n.length + 3);
 const browserName = arg('browser') ?? 'chromium';
-const PORT = Number(arg('port') ?? 5098);
-const BASE = `http://127.0.0.1:${PORT}`;
-const OUT = arg('out') ?? path.join(os.tmpdir(), 'yap-browser-tests', 'update');
+const OUT = arg('out') ?? path.join(SCRATCH, 'update');
 fs.mkdirSync(OUT, { recursive: true });
-const sleep = ms => new Promise(r => setTimeout(r, ms));
 const log = (...a) => { const line = `${new Date().toISOString().slice(11, 23)} ${a.join(' ')}`; console.log(line); fs.appendFileSync(path.join(OUT, `${browserName}.log`), line + '\n'); };
 
 async function answers() { try { return (await fetch(`${BASE}/login`)).status === 200; } catch { return false; } }
-async function waitTrue(fn, ms, every = 200) { const end = Date.now() + ms; while (Date.now() < end) { if (await fn()) return true; await sleep(every); } return false; }
 
 // One content root for both builds: the database in it keeps the account across the "deploy".
 const root = fs.mkdtempSync(path.join(OUT, 'root-'));
@@ -77,7 +73,7 @@ page.on('pageerror', e => log('pageerror', String(e).slice(0, 200)));
 let server = await startServer(dirA);
 const A = server.build;
 const signedIn = process.argv.includes('--signin');
-if (signedIn) { const { signIn } = await import('./lib.mjs'); await signIn(page, 'wrenupdate', BASE); log('signed in as wrenupdate'); }
+if (signedIn) { await signIn(page, 'wrenupdate'); log('signed in as wrenupdate'); }
 await page.goto(`${BASE}/settings`, { waitUntil: 'load' });
 log('first load of /settings on build', A);
 await waitTrue(() => page.evaluate(() => !!navigator.serviceWorker.controller), 20000);

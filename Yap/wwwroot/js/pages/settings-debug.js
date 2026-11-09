@@ -2,6 +2,7 @@
 // of this page load with their timings. Tooling for the work on the cold open, not a setting.
 
 import { build } from '../update.js';
+import { projectName } from '../store.js';
 import { clone, el, replace } from '../render/dom.js';
 import { size } from '../ui/gif-library.js';
 
@@ -86,7 +87,7 @@ export function mountDebugInfo(page) {
     }
     const buckets = Math.max(asked.length, done.length);
     const text = [
-      `Yap emoji timings - build ${build ?? '?'} - ${innerWidth}x${innerHeight} - ${navigator.userAgent}`,
+      `${projectName()} emoji timings - build ${build ?? '?'} - ${innerWidth}x${innerHeight} - ${navigator.userAgent}`,
       `marks: paint ${ms(marks.paint)}, rows ${ms(marks.rows)}, bootstrap ${ms(marks.bootstrap)}`,
       `images: ${entries.length} (first 3 s: ${cold.length}); worker ${count(cold, viaWorker)}/${count(entries, viaWorker)}; cache 0 B ${count(cold, fromCache)}/${count(entries, fromCache)}`,
       cold.length ? `first 3 s: first asked ${ms(cold[0].startTime)}, half answered by ${ms(answered[Math.floor(answered.length / 2)])}, all by ${ms(answered.at(-1))}` : 'first 3 s: no emoji images',

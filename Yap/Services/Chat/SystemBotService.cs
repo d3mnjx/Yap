@@ -22,7 +22,6 @@ public class SystemBotService
     private readonly ChatService _chatService;
     private readonly PresenceService _presence;
     private readonly AccessLinkService _accessLinks;
-    private readonly IConfiguration _configuration;
     private readonly ServerConfig _config;
     private readonly IWebHostEnvironment _env;
     private readonly ImageService _images;
@@ -68,7 +67,6 @@ public class SystemBotService
         ChatService chatService,
         PresenceService presence,
         AccessLinkService accessLinks,
-        IConfiguration configuration,
         ServerConfig config,
         IWebHostEnvironment env,
         ProxyWatch proxyWatch,
@@ -79,7 +77,6 @@ public class SystemBotService
         _chatService = chatService;
         _presence = presence;
         _accessLinks = accessLinks;
-        _configuration = configuration;
         _config = config;
         _env = env;
         _images = images;
@@ -89,16 +86,11 @@ public class SystemBotService
 
     private string SettingsFilePath => Path.Combine(_env.ContentRootPath, "Data", "bot-settings.json");
 
-    private bool BotEnabled => _configuration.GetValue<bool>("ChatSettings:Bot:Enabled", true);
-    private string BotUsernameConfig => _configuration["ChatSettings:Bot:Username"] ?? "ping";
-    private string BotDisplayNameConfig => _configuration["ChatSettings:Bot:DisplayName"] ?? "Ping";
-    private string ProjectName => _config.ProjectName;
-
     /// <summary>
     /// The first part of the welcome DM. The admin's saved text wins over appsettings, which wins over the default.
     /// {server} (or the older {0}) is the server name.
     /// </summary>
-    public string WelcomeMessage => _welcomeMessageFromFile ?? _configuration["ChatSettings:Bot:WelcomeMessage"] ?? DefaultWelcomeMessage;
+    public string WelcomeMessage => _welcomeMessageFromFile ?? _config.BotWelcomeMessage ?? DefaultWelcomeMessage;
 
     /// <summary>The part added for a person on a phone. The client turns [pwa-install] into the install link (MR-74). Empty: no phone part.</summary>
     public string PhoneMessage => _phoneMessageFromFile ?? DefaultPhoneMessage;
@@ -125,7 +117,7 @@ public class SystemBotService
     /// and cost someone their welcome.
     /// </summary>
     public string Fill(string text, (string Url, string Code)? link = null) => text
-        .Replace("{server}", ProjectName).Replace("{0}", ProjectName)
+        .Replace("{server}", _config.ProjectName).Replace("{0}", _config.ProjectName)
         .Replace("{link}", link?.Url ?? "").Replace("{code}", link?.Code ?? "");
 
     /// <summary>
@@ -137,14 +129,14 @@ public class SystemBotService
         // Load persisted settings (welcome message override)
         LoadSettings();
 
-        if (!BotEnabled)
+        if (!_config.BotEnabled)
         {
             _logger.LogInformation("System bot is disabled");
             return;
         }
 
-        var botUsername = BotUsernameConfig;
-        var botDisplayName = BotDisplayNameConfig;
+        var botUsername = _config.BotUsername;
+        var botDisplayName = _config.BotDisplayName;
 
         // Look up or create the bot user
         var botUser = _userService.GetByUsername(botUsername);
@@ -367,7 +359,7 @@ public class SystemBotService
         if (status.UntrustedPeer is null || AdminDm() is not { } channel) return;
         _proxyNoticeSent = true;
         _chatService.Send(new SendMessage(channel.Id, _botUserId, _botUsername,
-            $"⚠️ Requests reach {ProjectName} through a proxy at **{status.UntrustedPeer}** that is not in `ChatSettings:TrustedProxies`. " +
+            $"⚠️ Requests reach {_config.ProjectName} through a proxy at **{status.UntrustedPeer}** that is not in `ChatSettings:TrustedProxies`. " +
             "Every client address counts as unknown and smart login is off for everyone. " +
             "Add the proxy's address or network to TrustedProxies in Data/appsettings.json and restart. The Admin page shows the details."));
     }

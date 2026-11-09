@@ -13,6 +13,13 @@ public sealed class ServerConfig(IConfiguration configuration)
     public string Ipv4BeaconUrl => configuration["ChatSettings:Ipv4BeaconUrl"] ?? "";
     public int MaxUploadSizeMB => configuration.GetValue("ChatSettings:MaxUploadSizeMB", 100);   // IB-32
 
+    // The system bot (AD-09). The welcome text has no default here: the admin's saved text comes before the configured
+    // one, and SystemBotService keeps the default beside the other parts of the welcome DM, which appsettings cannot set.
+    public bool BotEnabled => configuration.GetValue("ChatSettings:Bot:Enabled", true);
+    public string BotUsername => configuration["ChatSettings:Bot:Username"] ?? "ping";
+    public string BotDisplayName => configuration["ChatSettings:Bot:DisplayName"] ?? "Ping";
+    public string? BotWelcomeMessage => configuration["ChatSettings:Bot:WelcomeMessage"];
+
     /// <summary>Every configured list, for a signed-in client.</summary>
     public TextsDto Texts() => new(
         RoomHeaders: List("RoomHeaders", "# {0}"),                                      // SH-05

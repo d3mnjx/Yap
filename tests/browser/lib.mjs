@@ -10,7 +10,7 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 
-const arg = name => process.argv.find(a => a.startsWith(`--${name}=`))?.slice(name.length + 3);
+export const arg = name => process.argv.find(a => a.startsWith(`--${name}=`))?.slice(name.length + 3);
 
 export const REPO = fileURLToPath(new URL('../../', import.meta.url));
 export const DLL = arg('dll') ?? path.join(REPO, 'Yap', 'bin', 'Debug', 'net10.0', 'Yap.dll');
@@ -193,10 +193,8 @@ export async function finish(browser, server) {
 // ---- sign-in and fixtures ----
 
 // Signs a page in with a new username. Returns the time of the submit (step 3 of smoke measures from it).
-// base: update.mjs runs its own server on its own port (5098) and passes its own base. With this module's BASE
-// (5097), its sign-in went to a port where no server answered, unless --port set both.
-export async function signIn(page, name, base = BASE) {
-  await page.goto(base + '/');
+export async function signIn(page, name) {
+  await page.goto(BASE + '/');
   await page.waitForSelector('.page-login .username-input', { timeout: 10000 });
   await page.fill('.username-input', name);
   await page.waitForSelector('.username-form .join-button:not([disabled])', { timeout: 5000 });   // the server's check of the name
