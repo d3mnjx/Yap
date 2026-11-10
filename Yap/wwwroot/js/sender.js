@@ -227,7 +227,11 @@ async function post() {
 // The connection is back, or the tab is visible again. An upload with no sign of life for a while is on a dead
 // socket: the browser may never report it. It is given up, and the run that follows takes it up again.
 function wake() {
-  for (const part of [...running]) if (Date.now() - part.at > STALL_MS) halt(part, false);
+  for (const row of queue) for (const part of row.parts ?? []) {
+    if (!part.job || Date.now() - part.at <= STALL_MS) continue;
+    halt(part, false);
+    changed('upload', row);   // without a network the pump starts nothing, and the square would stay "uploading"
+  }
   paused = false;
   flush();
 }
@@ -254,8 +258,7 @@ function start(row, part) {
       if (!url) part.sent = 0;   // the server lost the upload: the file goes from zero
       saveParts(row);
     },
-    onProgress: bytes => {
-      if (part.job !== job) return;
+    onProgress: bytes => {   // none comes after an abort (upload.js), so this is still the part's job
       if (bytes !== null) part.sent = bytes;
       part.at = Date.now();
       changed('upload', row);
@@ -316,7 +319,13 @@ outbox.onChange(() => { if (state.updateAvailable) yieldLock(); loaded = null; r
 // once and keeps sending (OF-17).
 let release = null;
 function requestLock() {
-  navigator.locks.request('yap-outbox-sender', { mode: 'exclusive' }, () => new Promise(resolve => { holder = true; release = resolve; paused = false; flush(); }));
+  navigator.locks.request('yap-outbox-sender', { mode: 'exclusive' }, () => new Promise(resolve => {
+    holder = true; release = resolve; paused = false;
+    // The rows in memory are as old as the last announce, and the tab that sent before does not announce an upload
+    // URL it saved. Without a fresh read this tab would send a half-uploaded file from zero.
+    loaded = null;
+    flush();
+  }));
 }
 function yieldLock() {
   if (!holder || !release) return;   // not the holder, or no Web Locks: nothing to hand over
