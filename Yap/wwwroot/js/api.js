@@ -5,10 +5,12 @@ export class ApiError extends Error {
   constructor(status, reason) { super(reason); this.status = status; }
 }
 
-// Which answers come from in front of the server, not from it: a reverse proxy (Caddy, Nginx, a tunnel) answers
-// 502, 503 or 504 by itself while the server behind it restarts. Yap sends none of the three. For a send that can
-// wait (a message of the outbox, a file of an upload) they count as no answer at all, not as a refusal.
-export const away = status => status === 502 || status === 503 || status === 504;
+// Which answers come from in front of the server, not from it. A reverse proxy (Caddy, Nginx, a tunnel) answers
+// 502, 503 or 504 by itself while the server behind it restarts. Cloudflare answers 520 to 527 when it gets no
+// usable answer from the server behind it (521: the connection was refused; 522 and 524: no answer in time), and
+// 530 when it cannot find the server or its tunnel to the server is down. Yap sends none of these. For a send that
+// can wait (a message of the outbox, a file of an upload) they count as no answer at all, not as a refusal.
+export const away = status => status === 502 || status === 503 || status === 504 || (status >= 520 && status <= 527) || status === 530;
 
 let signedOutHandler = () => {};
 // main.js installs the handler; api.js must not import the router or the store (no cycles).

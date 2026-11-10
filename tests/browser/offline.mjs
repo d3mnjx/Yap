@@ -237,23 +237,33 @@ await step(11, 'Upload while the server cannot be reached stays pending (OF-08)'
   check(ok, `sent after the server is back: ${ok} after ${Date.now() - t0} ms; pending rows left ${await A.locator('.message-group.pending').count()}; statuses ${JSON.stringify(await A.locator('.message-group .pending-status').allInnerTexts().catch(() => []))}`);
 });
 
-await step(12, 'A text stays pending while a proxy answers 502 for the server, and goes when the server is back (OF-08)', async (check) => {
-  // The browser is online and the server restarts: the reverse proxy in front of it answers the POST with a 502.
-  let down = true, tried = 0;
+await step(12, 'A text stays pending while a proxy answers 502 or Cloudflare answers 521 for the server, and goes when the server is back (OF-08)', async (check) => {
+  // The browser is online and the server restarts. The first POST gets the 502 of a reverse proxy in front of the
+  // server, the second the 521 of Cloudflare ("web server is down"), the third passes. Two codes, because the rule
+  // (`away` in js/api.js) is a list: a code that drops out of it would make a failed row after each deploy.
+  const answers = [[502, 'Bad Gateway'], [521, 'Web server is down']];
+  let tried = 0;
   const posts = /\/api\/(channels|dm)\/[^/]+\/messages$/;
-  const handler = route => down && route.request().method() === 'POST' && ++tried ? route.fulfill({ status: 502, contentType: 'text/plain', body: 'Bad Gateway' }) : route.continue();
+  const handler = route => {
+    if (route.request().method() !== 'POST' || tried >= answers.length) return route.continue();
+    const [status, body] = answers[tried++];
+    return route.fulfill({ status, contentType: 'text/plain', body });
+  };
   await ctxA.route(posts, handler);
   await A.fill('.message-input', 'sent during the restart');
   await A.press('.message-input', 'Enter');
   const r = row(A, 'sent during the restart');
-  const got = await waitTrue(() => tried > 0, 5000, 50);
-  await sleep(500);   // time for the client to act on the answer
-  const cls = (await r.count()) === 1 ? await r.getAttribute('class') : '';
-  check(got && cls.includes('pending') && !cls.includes('failed'), `the POST got a 502: ${got}; the row is pending and not failed: "${cls}"`);
-  down = false;
-  await A.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));   // a wake-up, as the hub's reconnect is one
+  const wake = () => A.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));   // a wake-up, as the hub's reconnect is one
+  for (const [n, [status]] of answers.entries()) {
+    if (n > 0) await wake();
+    const got = await waitTrue(() => tried > n, 5000, 50);
+    await sleep(500);   // time for the client to act on the answer
+    const cls = (await r.count()) === 1 ? await r.getAttribute('class') : '';
+    check(got && cls.includes('pending') && !cls.includes('failed'), `the POST got a ${status}: ${got}; the row is pending and not failed: "${cls}"`);
+  }
+  await wake();
   const sent = await waitTrue(async () => (await r.count()) === 1 && !(await r.getAttribute('class')).includes('pending'), 10000, 100);
-  check(sent && tried === 1, `sent after the server is back: ${sent}; POSTs that got the 502: ${tried}`);
+  check(sent && tried === answers.length, `sent after the server is back: ${sent}; POSTs that got no answer from the server: ${tried}`);
   await ctxA.unroute(posts, handler);
 });
 

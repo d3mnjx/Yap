@@ -8,8 +8,8 @@ server, runs its steps, prints PASS or FAIL for each step, and stops the server 
   Settings), sign-out (with a second tab of the same device) and the back button.
 - `offline.mjs` checks the offline features: the service worker, the connection dot, the outbox, a send into a
   direct message never opened on the device, a reload without a network, the return of the network, a reconnect
-  after more than a page arrived, a repeated POST, a file sent offline, a text sent while a proxy answers 502 for
-  the server, the new-version strip, a sign-out without a connection, and the clean-up of IndexedDB at sign-out.
+  after more than a page arrived, a repeated POST, a file sent offline, a text sent while a proxy answers 502 or
+  Cloudflare answers 521 for the server, the new-version strip, a sign-out without a connection, and the clean-up of IndexedDB at sign-out.
 - `features.mjs` checks replies, link cards, the image gallery, emoji sizes, pack emoji, older pages, the
   New messages pill, typing in a DM, Shift+Enter, two GIF files in one pick, the automatic read while Away, the
   keys on a GIF favourite star, an emoji pick at the 4000-character limit with Edit on a failed row, a rename
