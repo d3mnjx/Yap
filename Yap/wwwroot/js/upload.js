@@ -20,11 +20,16 @@ export function check(files, maxMB, inTray = 0) {
   return { accepted, refused };
 }
 
+// Which answers come from in front of the server, not from it: a reverse proxy (Caddy, Nginx, a tunnel) answers
+// 502, 503 or 504 by itself while the server behind it restarts. They count as no answer at all. Yap sends none
+// of the three.
+const away = status => status === 502 || status === 503 || status === 504;
+
 // The server processes a file after its last chunk; its info appears when it is done. The server answers 200 with
 // the info, 202 while it still works on the file, and 404 for an upload it does not know (TusEndpoints.cs): a 404
-// ends the polls at once, with no info. `reached` tells whether any poll got an answer: none at all means the
-// network went away, not that the server is slow. `tick` runs on every poll, a sign of life for the stall check
-// of sender.js.
+// ends the polls at once, with no info. `reached` tells whether the server answered any poll: none at all means
+// the network or the server went away, not that the server is slow. `tick` runs on every poll, a sign of life for
+// the stall check of sender.js.
 async function info(uploadUrl, attempts = 30, tick = () => {}) {
   const base = uploadUrl.slice(0, uploadUrl.lastIndexOf('/'));
   const id = uploadUrl.split('/').pop();
@@ -32,7 +37,7 @@ async function info(uploadUrl, attempts = 30, tick = () => {}) {
   for (let attempt = 0; attempt < attempts; attempt++) {
     try {
       const res = await fetch(`${base}/info/${id}`, { credentials: 'same-origin' });
-      reached = true;
+      if (!away(res.status)) reached = true;
       if (res.status === 200) return { info: await res.json(), reached };
       if (res.status === 404) return { info: null, reached };
     } catch { /* no answer: the network is away; the next poll may get through */ }
@@ -123,13 +128,14 @@ export function uploadFile(file, endpoint, { metadata = {}, url = null, onUrl = 
         onUrl(u.url);
       },
       onProgress: bytes => { if (!over) onProgress(bytes); },
-      // tus gives up after its own retries (about nine seconds). No response at all means nobody was reached. An
-      // answer's body is the server's reason (a voice message on a server without ffmpeg, IB-71); tus's own message
-      // wraps it in a paragraph of request details.
+      // tus gives up after its own retries (about nine seconds). No response at all means nobody was reached, and
+      // so does the answer of a proxy for a server that restarts (`away`): the file waits with its URL, and goes on
+      // from the server's bytes when the server is back. An answer's body is the server's reason (a voice message on
+      // a server without ffmpeg, IB-71); tus's own message wraps it in a paragraph of request details.
       onError: async error => {
         if (over) return;
         const response = error?.originalResponse;
-        if (!response) { finish({ retry: true }); return; }
+        if (!response || away(response.getStatus())) { finish({ retry: true }); return; }
         if (!urlGone(response.getStatus())) { finish(refusal(response.getBody?.()?.trim() || error?.message || 'Upload failed')); return; }
         // The HEAD that asks how far the upload is got a 404: the upload is finished, or the server does not have
         // it. The result endpoint tells which: the result, "still at work", or at once "unknown".

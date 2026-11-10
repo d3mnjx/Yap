@@ -1,8 +1,9 @@
 // The upload run (input-box.md IB-28 and IB-34, offline.md OF-10): a text that goes out while a picture uploads,
 // the state of each file and the limit of three at one time, an upload that goes on after a reload from the bytes
 // the server has, a last chunk whose answer was lost (with a reload and without one), a message that loses a
-// file the server refused, and a half-sent file the server no longer has. Whose an upload and its result are is
-// a server test (Yap.Tests/SecurityTests.cs). Run: npm run uploads (see README.md).
+// file the server refused, a half-sent file the server no longer has, and a proxy that answers 502 for a server
+// that restarts. Whose an upload and its result are, and what an error in the server's work on a finished file
+// gives, are server tests (Yap.Tests/SecurityTests.cs). Run: npm run uploads (see README.md).
 
 import crypto from 'node:crypto';
 import { chromium } from 'playwright';
@@ -218,6 +219,31 @@ await step(7, 'A half-sent file the server does not know starts again from zero 
   const first = wire.find(w => w.method === 'PATCH');
   check(created && first?.offset === 0, `a new upload was created ${wait} ms after the server said 404: ${created}; its first chunk starts at byte ${first?.offset}`);
   check(done, `the picture arrived: ${done}`);
+  await ctxA.unroute('**/api/tus/*', handler);
+});
+
+await step(8, 'A file waits while a proxy answers 502 for the server, then goes on from the bytes the server has (OF-10)', async (check) => {
+  const before = await pictures(A);
+  // 'first': the first chunk arrives. 'down': the server restarts, and the reverse proxy in front of it answers
+  // each request with a 502. 'up': everything passes.
+  let patches = 0, mode = 'first';
+  const handler = route => {
+    if (mode === 'first' && route.request().method() === 'PATCH' && ++patches > 1) mode = 'down';
+    return mode === 'down' ? route.fulfill({ status: 502, contentType: 'text/plain', body: 'Bad Gateway' }) : route.continue();
+  };
+  await ctxA.route('**/api/tus/*', handler);
+  await sendFiles(A, writePng(fixture('big3.png'), 2000, 2000, crypto.randomBytes(2000 * 2000 * 3)));
+  const r = pendingWith('big3.png');
+  // tus tries again for about nine seconds; then the file waits, and it is not a refused file
+  const waits = await waitTrue(async () => mode === 'down' && (await states(r)).join() === 'waiting', 20000, 200);
+  const failed = await A.locator('.message-group.pending.failed').count();
+  check(waits && failed === 0, `the file waits: ${waits} (states: ${(await states(r)).join()}); failed rows: ${failed}`);
+  mode = 'up'; wire = [];
+  await A.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));   // a wake-up, as the hub's reconnect is one
+  const done = await waitTrue(async () => (await pictures(A)) === before + 1, 30000, 200);
+  const creates = wire.filter(w => w.method === 'POST' && w.path === '/api/tus').length;
+  const first = wire.find(w => w.method === 'PATCH');
+  check(done && creates === 0 && first?.offset === CHUNK, `the picture arrived: ${done}; creates after the 502s: ${creates}; the first chunk after them starts at byte ${first?.offset}`);
   await ctxA.unroute('**/api/tus/*', handler);
 });
 
