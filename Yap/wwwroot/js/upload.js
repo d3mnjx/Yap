@@ -5,17 +5,21 @@ import { away } from './api.js';
 
 const EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.webm', '.mov', '.avi', '.mkv'];   // IB-31
 const MAX_FILES = 10;                                                                              // IB-32
+// A pasted picture can come with a name that has no extension. The server decides by the extension of the name alone
+// (TusEndpoints.cs) and refuses such a file, so the client gives the file its extension, from the type the browser reports.
+const PASTED = { 'image/png': '.png', 'image/jpeg': '.jpg', 'image/gif': '.gif', 'image/webp': '.webp' };
 
 // Splits a pick into the files that go to the tray and the lines of the refusal dialog (IB-35). `inTray` is
 // what waits there already: the limit is per message, not per pick (IB-32).
 export function check(files, maxMB, inTray = 0) {
   const accepted = [], refused = [];
   if (inTray + files.length > MAX_FILES) return { accepted: [], refused: ['Choose at most 10 files.'] };
-  for (const f of files) {
+  for (const picked of files) {
+    const f = !picked.name.includes('.') && PASTED[picked.type]
+      ? new File([picked], (picked.name || 'image') + PASTED[picked.type], { type: picked.type, lastModified: picked.lastModified })
+      : picked;
     const ext = '.' + f.name.split('.').pop().toLowerCase();
-    const kindOk = EXTENSIONS.includes(ext);   // the kinds of IB-31, by extension; a pasted screenshot has no name and comes as image/png
-    const pasted = !f.name.includes('.') && ['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(f.type);
-    if (!kindOk && !pasted) refused.push(`"${f.name}" — unsupported file type`);
+    if (!EXTENSIONS.includes(ext)) refused.push(`"${f.name}" — unsupported file type`);   // the kinds of IB-31, by extension
     else if (f.size > maxMB * 1024 * 1024) refused.push(`"${f.name}" — too large (${(f.size / 1024 / 1024).toFixed(0)} MB, max ${maxMB} MB)`);
     else accepted.push(f);
   }
