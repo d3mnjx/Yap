@@ -206,8 +206,11 @@ public static class TusEndpoints
                             return;
                         }
 
+                        // The extension alone decides, also for kind=gif: the file is served under it (uniqueFileName
+                        // below), and both the kind and the file name come from the client. With `kind == "gif" ||` here,
+                        // a "GIF" named x.html that failed the GIF check stayed in the uploads folder as a page of this site.
                         string type;
-                        if (kind == "gif" || _imageExtensions.Contains(extension))
+                        if (_imageExtensions.Contains(extension))
                             type = "image"; // Will be re-classified to gif below if applicable.
                         else if (VideoService.IsVideoFile(extension))
                             type = "video";

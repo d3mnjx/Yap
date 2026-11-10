@@ -280,6 +280,57 @@ public class SecurityTests : IClassFixture<YapFactory>
         finally { inTheWay.Delete(); }
     }
 
+    [Fact(DisplayName = "A file marked as a GIF keeps the extension rule: a page never reaches the uploads folder")]
+    public async Task A_gif_upload_cannot_choose_its_extension()
+    {
+        var uma = await _app.SignInAsync("uma_tus_page");
+        var page = Encoding.UTF8.GetBytes("<script>document.title = 'not a GIF'</script>");
+        string Meta(string value) => Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
+
+        var create = new HttpRequestMessage(HttpMethod.Post, "/api/tus");
+        create.Headers.Add("Tus-Resumable", "1.0.0");
+        create.Headers.Add("Upload-Length", page.Length.ToString());
+        create.Headers.Add("Upload-Metadata", $"filename {Meta("cat.htm")},kind {Meta("gif")}");
+        var created = await uma.Http.SendAsync(create);
+
+        // A server without ffmpeg refuses this file at the create: it takes only .gif and .webp as a GIF then. With
+        // ffmpeg the bytes arrive, and the check of the extension is what keeps the file out.
+        if (created.StatusCode == HttpStatusCode.Created)
+        {
+            var patch = new HttpRequestMessage(HttpMethod.Patch, created.Headers.Location!.ToString()) { Content = new ByteArrayContent(page) };
+            patch.Content.Headers.ContentType = new("application/offset+octet-stream");
+            patch.Headers.Add("Tus-Resumable", "1.0.0");
+            patch.Headers.Add("Upload-Offset", "0");
+            Assert.Equal(HttpStatusCode.NoContent, (await uma.Http.SendAsync(patch)).StatusCode);
+
+            // the uploader gets a refusal, not the URL of a page
+            var fileId = created.Headers.Location!.ToString().TrimEnd('/').Split('/').Last();
+            var info = await uma.Http.GetFromJsonAsync<JsonElement>($"/api/tus/info/{fileId}");
+            Assert.Equal("error", info.GetProperty("type").GetString());
+            Assert.False(info.TryGetProperty("url", out _));
+        }
+        else Assert.Equal(HttpStatusCode.BadRequest, created.StatusCode);
+
+        Assert.Empty(Directory.GetFiles(_app.Service<UploadPaths>().Root, "*.htm"));
+    }
+
+    [Fact(DisplayName = "A file under /uploads is never a page of the site: no type guess, and no script when opened")]
+    public async Task Uploads_are_served_as_inert_files()
+    {
+        // A page that is in the folder already, as one stored before the server checked the extension of every upload.
+        var name = $"{Guid.NewGuid():N}.html";
+        var path = Path.Combine(_app.Service<UploadPaths>().Root, name);
+        File.WriteAllText(path, "<script>document.title = 'stored'</script>");
+        try
+        {
+            var answer = await _app.CreateClient().GetAsync($"/uploads/{name}");
+            Assert.Equal(HttpStatusCode.OK, answer.StatusCode);
+            Assert.Equal("nosniff", Assert.Single(answer.Headers.GetValues("X-Content-Type-Options")));
+            Assert.Equal("sandbox", Assert.Single(answer.Headers.GetValues("Content-Security-Policy")));
+        }
+        finally { File.Delete(path); }
+    }
+
     [Fact(DisplayName = "NT-23, NT-24: a push subscription belongs to the account that registered it")]
     public async Task Push_subscriptions_belong_to_their_owner()
     {

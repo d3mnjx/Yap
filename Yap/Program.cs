@@ -335,7 +335,16 @@ app.UseStaticFiles(new StaticFileOptions
     FileProvider = new PhysicalFileProvider(uploadsRoot),
     RequestPath = "/uploads",
     ContentTypeProvider = uploadContentTypes,
-    OnPrepareResponse = cacheImmutable
+    OnPrepareResponse = ctx =>
+    {
+        cacheImmutable(ctx);
+        // A file that a person uploaded is never a page of this site. nosniff: the browser takes the type from the
+        // extension, which the server checked (TusEndpoints), and does not guess one from the bytes. sandbox: a file
+        // opened by its URL runs no script and gets no access to the site's cookie and API. This holds also for a
+        // file stored before the server checked the extension of every upload.
+        ctx.Context.Response.Headers.XContentTypeOptions = "nosniff";
+        ctx.Context.Response.Headers.ContentSecurityPolicy = "sandbox";
+    }
 });
 
 // Built-in emoji packs (wwwroot/emoji-packs/{pack}/) ship in the build output at a STABLE url, so
