@@ -31,6 +31,50 @@ public class SecurityTests : IClassFixture<YapFactory>
 
     private static readonly byte[] Png = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==");
     private static readonly byte[] Gif = Convert.FromBase64String("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7");
+    // Two red frames of 8 x 8, made with ffmpeg. The name of the format is not in the lists of TusEndpoints.
+    private static readonly byte[] Apng = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAACXBIWXMAAAABAAAAAQBPJcTWAAAACGFjVEwAAAACAAAAAPONk3AAAAAaZmNUTAAAAAAAAAAIAAAACAAAAAAAAAAAAAEABQAA+RL9XwAAABJJREFUeJxj/M+AHbDgEB+kEgDSuQEdMHaoJwAAABpmY1RMAAAAAQAAAAEAAAABAAAAAAAAAAAAAQAFAADKUJ05AAAAEGZkQVQAAAACeJxj/M/AAAADBQEBhCp0sQAAAABJRU5ErkJggg==");
+    // Two red frames, then two blue ones, 16 x 16, made with ffmpeg. An animated AVIF holds two video streams: its
+    // still picture (the first frame) and the animation.
+    private static readonly byte[] Avif = Convert.FromBase64String("AAAALGZ0eXBhdmlzAAAAAGF2aXNhdmlmbXNmMWlzbzhtaWYxbWlhZk1BMUIAAAD5bWV0YQAAAAAAAAAvaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAFBpY3R1cmVIYW5kbGVyAAAAAA5waXRtAAAAAAABAAAAHmlsb2MAAAAARAAAAQABAAAAAQAAA/AAAAAiAAAAKGlpbmYAAAAAAAEAAAAaaW5mZQIAAAAAAQAAYXYwMUNvbG9yAAAAAGppcHJwAAAAS2lwY28AAAAUaXNwZQAAAAAAAAAQAAAAEAAAABBwaXhpAAAAAAMICAgAAAAMYXYxQ4EADAAAAAATY29scm5jbHgAAgACAAIAAAAAF2lwbWEAAAAAAAAAAQABBAECgwQAAALDbW9vdgAAAGxtdmhkAAAAAAAAAAAAAAAAAAAD6AAABTYAAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAk90cmFrAAAAaHRraGQBAAADAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAf/////////8AAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAABAAAAAQAAAAAAAkZWR0cwAAABxlbHN0AAAAAQAAAAEAAAU2AAAAAAABAAAAAAG7bWRpYQAAACBtZGhkAAAAAAAAAAAAAAAAAAAwAAAAQABVxAAAAAAAL2hkbHIAAAAAAAAAAHBpY3QAAAAAAAAAAAAAAABQaWN0dXJlSGFuZGxlcgAAAAFkbWluZgAAABR2bWhkAAAAAQAAAAAAAAAAAAAAJGRpbmYAAAAcZHJlZgAAAAAAAAABAAAADHVybCAAAAABAAABJHN0YmwAAACcc3RzZAAAAAAAAAABAAAAjGF2MDEAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAEAAQAEgAAABIAAAAAAAAAAEYTGF2YzYyLjExLjEwMCBsaWJhb20tYXYxAAAAAAAAAAAY//8AAAAMYXYxQ4EADAAAAAAKZmllbAEAAAAAEHBhc3AAAAABAAAAAQAAABBjY3N0AAAAAHwAAAAAAAAYc3R0cwAAAAAAAAABAAAABAAAEAAAAAAUc3RzcwAAAAAAAAABAAAAAQAAABxzdHNjAAAAAAAAAAEAAAABAAAABAAAAAEAAAAkc3RzegAAAAAAAAAAAAAABAAAACIAAAAUAAAAHQAAABQAAAAUc3RjbwAAAAAAAAABAAAD8AAAAG9tZGF0CgoAAAABn/n/8wCAMhQQAK6AAAJAAAAAeJ2JgR9lXUOJmDISMAPAgAAABsAAAAKAAACAAHaQMhswBcEEAABGu4AAAkAAAIAAGBW8dnjpRwz8bg0yEjAGAgQEAEbAAAACgAAAgAB4oA==");
+    private static readonly byte[] Page = Encoding.UTF8.GetBytes("<script>document.title = 'not a picture'</script>");
+
+    // The tus protocol, in one place for the tests below: the create, the bytes, and the id of the upload.
+    private static Task<HttpResponseMessage> CreateUploadAsync(HttpClient http, string fileName, int length, params (string Key, string Value)[] more)
+    {
+        var metadata = more.Prepend(("filename", fileName)).Select(m => $"{m.Item1} {Convert.ToBase64String(Encoding.UTF8.GetBytes(m.Item2))}");
+        var create = new HttpRequestMessage(HttpMethod.Post, "/api/tus");
+        create.Headers.Add("Tus-Resumable", "1.0.0");
+        create.Headers.Add("Upload-Length", length.ToString());
+        create.Headers.Add("Upload-Metadata", string.Join(",", metadata));
+        return http.SendAsync(create);
+    }
+
+    private static Task<HttpResponseMessage> SendBytesAsync(HttpClient http, HttpResponseMessage created, byte[] bytes)
+    {
+        var patch = new HttpRequestMessage(HttpMethod.Patch, created.Headers.Location!.ToString()) { Content = new ByteArrayContent(bytes) };
+        patch.Content.Headers.ContentType = new("application/offset+octet-stream");
+        patch.Headers.Add("Tus-Resumable", "1.0.0");
+        patch.Headers.Add("Upload-Offset", "0");
+        return http.SendAsync(patch);
+    }
+
+    private static string FileId(HttpResponseMessage created) => created.Headers.Location!.ToString().TrimEnd('/').Split('/').Last();
+
+    /// <summary>A whole upload that the server takes at the create: the bytes go up, and the answer is the result the uploader gets.</summary>
+    private static async Task<JsonElement> UploadAsync(HttpClient http, string fileName, byte[] bytes, params (string Key, string Value)[] more)
+    {
+        var created = await CreateUploadAsync(http, fileName, bytes.Length, more);
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await SendBytesAsync(http, created, bytes)).StatusCode);
+        return await http.GetFromJsonAsync<JsonElement>($"/api/tus/info/{FileId(created)}");
+    }
+
+    /// <summary>Whether a file with exactly these bytes is anywhere under the uploads folder: the public part, and the part of tus.</summary>
+    private bool IsStored(byte[] bytes) => Directory.EnumerateFiles(_app.Service<UploadPaths>().Root, "*", SearchOption.AllDirectories).Any(path =>
+    {
+        try { return new FileInfo(path).Length == bytes.Length && File.ReadAllBytes(path).AsSpan().SequenceEqual(bytes); }
+        catch (IOException) { return false; }   // a file of another upload that went away in this moment
+    });
 
     [Fact(DisplayName = "AU-09: a forwarded header counts from a trusted proxy only; from anyone else the address is unknown")]
     public async Task Forwarded_headers_count_from_trusted_proxies_only()
@@ -189,7 +233,7 @@ public class SecurityTests : IClassFixture<YapFactory>
         Directory.CreateDirectory(_app.Service<UploadPaths>().Gifs);
         var source = Path.Combine(_app.ContentRoot, "private.gif");
         await File.WriteAllBytesAsync(source, Gif);
-        var accepted = await gifs.TryAcceptAsGifAsync(source, "image/gif", isExplicitGif: true, users.GetByUsername("olga_gif")!.Id, "private.gif");
+        var accepted = await gifs.TryAcceptAsGifAsync(source, ".gif", "image/gif", isExplicitGif: true, users.GetByUsername("olga_gif")!.Id, "private.gif");
         Assert.NotNull(accepted);
         var id = accepted!.GifEntryId;
         var lobby = _app.Service<ChatService>().LobbyId;
@@ -216,25 +260,17 @@ public class SecurityTests : IClassFixture<YapFactory>
         var uma = await _app.SignInAsync("uma_tus");
         var ulf = await _app.SignInAsync("ulf_tus");
 
-        var create = new HttpRequestMessage(HttpMethod.Post, "/api/tus");
-        create.Headers.Add("Tus-Resumable", "1.0.0");
-        create.Headers.Add("Upload-Length", Png.Length.ToString());
-        create.Headers.Add("Upload-Metadata", $"filename {Convert.ToBase64String(Encoding.UTF8.GetBytes("dot.png"))}");
-        var created = await uma.Http.SendAsync(create);
+        var created = await CreateUploadAsync(uma.Http, "dot.png", Png.Length);
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
-        var location = created.Headers.Location!.ToString();
-        var fileId = location.TrimEnd('/').Split('/').Last();
+        var fileId = FileId(created);
 
         // another person can neither see nor continue the upload
-        var peek = new HttpRequestMessage(HttpMethod.Head, location);
+        var peek = new HttpRequestMessage(HttpMethod.Head, created.Headers.Location!.ToString());
         peek.Headers.Add("Tus-Resumable", "1.0.0");
         Assert.Equal(HttpStatusCode.NotFound, (await ulf.Http.SendAsync(peek)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await SendBytesAsync(ulf.Http, created, Png)).StatusCode);
 
-        var patch = new HttpRequestMessage(HttpMethod.Patch, location) { Content = new ByteArrayContent(Png) };
-        patch.Content.Headers.ContentType = new("application/offset+octet-stream");
-        patch.Headers.Add("Tus-Resumable", "1.0.0");
-        patch.Headers.Add("Upload-Offset", "0");
-        Assert.Equal(HttpStatusCode.NoContent, (await uma.Http.SendAsync(patch)).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await SendBytesAsync(uma.Http, created, Png)).StatusCode);
 
         // the result: the uploader's only, as often as the uploader asks (an answer can be lost on the way), and without the server's path
         Assert.Equal(HttpStatusCode.Unauthorized, (await _app.CreateClient().GetAsync($"/api/tus/info/{fileId}")).StatusCode);
@@ -252,25 +288,16 @@ public class SecurityTests : IClassFixture<YapFactory>
     {
         var uma = await _app.SignInAsync("uma_tus_error");
 
-        var create = new HttpRequestMessage(HttpMethod.Post, "/api/tus");
-        create.Headers.Add("Tus-Resumable", "1.0.0");
-        create.Headers.Add("Upload-Length", Png.Length.ToString());
-        create.Headers.Add("Upload-Metadata", $"filename {Convert.ToBase64String(Encoding.UTF8.GetBytes("pack.zip"))},kind {Convert.ToBase64String(Encoding.UTF8.GetBytes("gif-pack"))}");
-        var created = await uma.Http.SendAsync(create);
+        var created = await CreateUploadAsync(uma.Http, "pack.zip", Png.Length, ("kind", "gif-pack"));
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
-        var location = created.Headers.Location!.ToString();
-        var fileId = location.TrimEnd('/').Split('/').Last();
+        var fileId = FileId(created);
 
         // The fault: a folder stands where the server puts a pack (TusEndpoints.cs), so the move of the file throws,
         // as it does on a disk that fails.
         var inTheWay = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"gif-pack-{fileId}.zip"));
         try
         {
-            var patch = new HttpRequestMessage(HttpMethod.Patch, location) { Content = new ByteArrayContent(Png) };
-            patch.Content.Headers.ContentType = new("application/offset+octet-stream");
-            patch.Headers.Add("Tus-Resumable", "1.0.0");
-            patch.Headers.Add("Upload-Offset", "0");
-            Assert.Equal(HttpStatusCode.NoContent, (await uma.Http.SendAsync(patch)).StatusCode);
+            Assert.Equal(HttpStatusCode.NoContent, (await SendBytesAsync(uma.Http, created, Png)).StatusCode);
 
             // 200 with an error, not the 202 of "still at work": the client shows the file as refused, with Retry
             var answer = await uma.Http.GetAsync($"/api/tus/info/{fileId}");
@@ -280,55 +307,107 @@ public class SecurityTests : IClassFixture<YapFactory>
         finally { inTheWay.Delete(); }
     }
 
-    [Fact(DisplayName = "A file marked as a GIF keeps the extension rule: a page never reaches the uploads folder")]
-    public async Task A_gif_upload_cannot_choose_its_extension()
+    [Fact(DisplayName = "A plain upload needs the name of a picture or a video, and the server refuses another name before the bytes flow")]
+    public async Task A_plain_upload_is_refused_by_its_name_at_the_create()
     {
-        var uma = await _app.SignInAsync("uma_tus_page");
-        var page = Encoding.UTF8.GetBytes("<script>document.title = 'not a GIF'</script>");
-        string Meta(string value) => Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
-
-        var create = new HttpRequestMessage(HttpMethod.Post, "/api/tus");
-        create.Headers.Add("Tus-Resumable", "1.0.0");
-        create.Headers.Add("Upload-Length", page.Length.ToString());
-        create.Headers.Add("Upload-Metadata", $"filename {Meta("cat.htm")},kind {Meta("gif")}");
-        var created = await uma.Http.SendAsync(create);
-
-        // A server without ffmpeg refuses this file at the create: it takes only .gif and .webp as a GIF then. With
-        // ffmpeg the bytes arrive, and the check of the extension is what keeps the file out.
-        if (created.StatusCode == HttpStatusCode.Created)
-        {
-            var patch = new HttpRequestMessage(HttpMethod.Patch, created.Headers.Location!.ToString()) { Content = new ByteArrayContent(page) };
-            patch.Content.Headers.ContentType = new("application/offset+octet-stream");
-            patch.Headers.Add("Tus-Resumable", "1.0.0");
-            patch.Headers.Add("Upload-Offset", "0");
-            Assert.Equal(HttpStatusCode.NoContent, (await uma.Http.SendAsync(patch)).StatusCode);
-
-            // the uploader gets a refusal, not the URL of a page
-            var fileId = created.Headers.Location!.ToString().TrimEnd('/').Split('/').Last();
-            var info = await uma.Http.GetFromJsonAsync<JsonElement>($"/api/tus/info/{fileId}");
-            Assert.Equal("error", info.GetProperty("type").GetString());
-            Assert.False(info.TryGetProperty("url", out _));
-        }
-        else Assert.Equal(HttpStatusCode.BadRequest, created.StatusCode);
-
-        Assert.Empty(Directory.GetFiles(_app.Service<UploadPaths>().Root, "*.htm"));
+        var uma = await _app.SignInAsync("uma_tus_name");
+        foreach (var name in new[] { "page.html", "page.svg", "noextension", "clip.m4v" })   // .m4v: a GIF source only, not a chat file
+            Assert.Equal(HttpStatusCode.BadRequest, (await CreateUploadAsync(uma.Http, name, Page.Length)).StatusCode);
+        Assert.Equal(HttpStatusCode.Created, (await CreateUploadAsync(uma.Http, "dot.PNG", Png.Length)).StatusCode);
     }
 
-    [Fact(DisplayName = "A file under /uploads is never a page of the site: no type guess, and no script when opened")]
-    public async Task Uploads_are_served_as_inert_files()
+    // These three do not depend on ffmpeg: the names pass the create on every machine, and ImageSharp reads the bytes.
+    [Theory(DisplayName = "Bytes that are not a picture never get a public URL, and the server keeps no copy of a refused file")]
+    [InlineData("dot.png", null)]      // a plain upload: before the fix it was moved into the uploads folder as it came
+    [InlineData("cat.gif", "gif")]     // marked as a GIF in the chat: before the fix it fell through "so the file isn't lost"
+    [InlineData("cat.webp", "gif")]
+    public async Task A_page_under_the_name_of_a_picture_is_refused(string name, string? kind)
     {
-        // A page that is in the folder already, as one stored before the server checked the extension of every upload.
-        var name = $"{Guid.NewGuid():N}.html";
-        var path = Path.Combine(_app.Service<UploadPaths>().Root, name);
-        File.WriteAllText(path, "<script>document.title = 'stored'</script>");
-        try
+        var uma = await _app.SignInAsync($"uma_tus_{Path.GetExtension(name).TrimStart('.')}");
+        var info = await UploadAsync(uma.Http, name, Page, kind is null ? Array.Empty<(string, string)>() : new[] { ("kind", kind) });
+
+        Assert.Equal("error", info.GetProperty("type").GetString());
+        Assert.False(info.TryGetProperty("url", out _));
+        Assert.False(IsStored(Page));   // not in the public folder, and not left with tus either: the sweep of tus never removes a finished upload
+    }
+
+    [Fact(DisplayName = "A file marked as a GIF can have any name: the server converts its bytes, and the upload itself is never a public file")]
+    public async Task A_gif_upload_is_converted_whatever_its_name_is()
+    {
+        var uma = await _app.SignInAsync("uma_tus_anim");
+        (string, string)[] toLibrary = [("kind", "gif"), ("target", "user"), ("folder", "")];
+
+        // A server without ffmpeg takes only .gif and .webp as a GIF, and refuses every other name at the create.
+        if (!GifFfmpegHelper.IsAvailable)
         {
-            var answer = await _app.CreateClient().GetAsync($"/uploads/{name}");
-            Assert.Equal(HttpStatusCode.OK, answer.StatusCode);
-            Assert.Equal("nosniff", Assert.Single(answer.Headers.GetValues("X-Content-Type-Options")));
-            Assert.Equal("sandbox", Assert.Single(answer.Headers.GetValues("Content-Security-Policy")));
+            Assert.Equal(HttpStatusCode.BadRequest, (await CreateUploadAsync(uma.Http, "anim.apng", Apng.Length, toLibrary)).StatusCode);
+            return;
         }
-        finally { File.Delete(path); }
+
+        // an animation in a format that no list names: it becomes a WebP of the server's own making
+        var gif = await UploadAsync(uma.Http, "anim.apng", Apng, toLibrary);
+        Assert.Equal("gif", gif.GetProperty("type").GetString());
+        var entry = _app.Service<GifService>().GetEntry(gif.GetProperty("gifEntryId").GetGuid())!;
+        Assert.EndsWith(".webp", entry.GifUrl);
+        var served = await _app.CreateClient().GetAsync(entry.GifUrl);
+        Assert.Equal(HttpStatusCode.OK, served.StatusCode);
+        Assert.Equal("image/webp", served.Content.Headers.ContentType?.MediaType);
+        Assert.False(IsStored(Apng));   // the upload was read where tus stored it, and is gone
+
+        // a page under the name of a page: the conversion fails, and nothing of the file stays
+        var page = await UploadAsync(uma.Http, "cat.htm", Page, toLibrary);
+        Assert.Equal("error", page.GetProperty("type").GetString());
+        Assert.False(IsStored(Page));
+        Assert.Empty(Directory.GetFiles(_app.Service<UploadPaths>().Root, "*.htm*", SearchOption.AllDirectories));
+    }
+
+    [Fact(DisplayName = "An animated AVIF stays animated: the conversion takes the stream with the animation, not the still picture before it")]
+    public async Task An_animated_avif_stays_animated()
+    {
+        var uma = await _app.SignInAsync("uma_tus_avif");
+        if (!GifFfmpegHelper.IsAvailable) return;   // no conversion on this machine
+
+        var gif = await UploadAsync(uma.Http, "two.avif", Avif, ("kind", "gif"), ("target", "user"), ("folder", ""));
+        if (gif.GetProperty("type").GetString() == "error") return;   // an ffmpeg that cannot read AVIF: nothing to compare
+
+        var entry = _app.Service<GifService>().GetEntry(gif.GetProperty("gifEntryId").GetGuid())!;
+        using var webp = SixLabors.ImageSharp.Image.Load<SixLabors.ImageSharp.PixelFormats.Rgba32>(_app.Service<UploadPaths>().PathOf(entry.GifUrl!)!);
+        var first = webp.Frames[0][8, 8];
+        var last = webp.Frames[webp.Frames.Count - 1][8, 8];
+        // Red at the start and blue at the end. Before the choice of the stream, every frame was the still picture: red.
+        Assert.True(first.R > first.B, $"first frame: {first}");
+        Assert.True(last.B > last.R, $"last frame: {last}");
+    }
+
+    [Fact(DisplayName = "/uploads serves the media files of the server and nothing else: a page in the folder has no URL, under any spelling")]
+    public async Task Uploads_serve_media_files_only()
+    {
+        var uploads = _app.Service<UploadPaths>();
+        var client = _app.CreateClient();
+        // An absolute URL: a relative one that starts with two slashes names a host, not a path.
+        Task<HttpResponseMessage> Get(string path) => client.GetAsync(new Uri($"https://localhost{path}"));
+
+        // A page that is in the folder already, as one stored before the server checked the name of every upload.
+        var page = $"{Guid.NewGuid():N}.html";
+        File.WriteAllBytes(Path.Combine(uploads.Root, page), Page);
+        // A file in the folder of tus, with the name of a picture: the folder is not public, whatever is in it.
+        var part = $"{Guid.NewGuid():N}.png";
+        File.WriteAllBytes(Path.Combine(uploads.TusTemp, part), Png);
+        var picture = $"{Guid.NewGuid():N}.png";
+        File.WriteAllBytes(Path.Combine(uploads.Root, picture), Png);
+
+        // The doubled slash: the /uploads handler does not take such a path, and the handler of wwwroot took it,
+        // because the uploads folder is inside wwwroot.
+        foreach (var path in new[] { $"/uploads/{page}", $"//uploads/{page}", $"/uploads//{page}", $"/uploads/tus-temp/{part}", $"/uploads//tus-temp/{part}", $"//uploads/tus-temp/{part}", $"//uploads/{picture}" })
+            Assert.Equal(HttpStatusCode.NotFound, (await Get(path)).StatusCode);
+
+        var answer = await Get($"/uploads/{picture}");
+        Assert.Equal(HttpStatusCode.OK, answer.StatusCode);
+        Assert.Equal("image/png", answer.Content.Headers.ContentType?.MediaType);
+        Assert.Equal("nosniff", Assert.Single(answer.Headers.GetValues("X-Content-Type-Options")));
+        // No "Content-Security-Policy: sandbox": some browsers do not play a video opened by its URL under it
+        // (Program.cs), and a file of a media type runs no script.
+        Assert.False(answer.Headers.Contains("Content-Security-Policy"));
     }
 
     [Fact(DisplayName = "NT-23, NT-24: a push subscription belongs to the account that registered it")]

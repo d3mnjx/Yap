@@ -139,6 +139,7 @@ public class GifFfmpegHelper
         if (!IsAvailable) return Task.FromResult(false);
         return LimitedAsync(async () =>
         {
+            // -map 0:n              → the stream with the animation, only for a file with more than one (AnimationStreamAsync)
             // -vcodec libwebp + multi-frame input → animated webp.
             // -loop 0               → infinite loop
             // -lossless 0 -q:v n -compression_level 4 → balanced quality/size
@@ -146,7 +147,8 @@ public class GifFfmpegHelper
             // -fps_mode passthrough → preserve frame timing (successor of the deprecated -vsync 0)
             // -map_metadata -1      → strip metadata
             // -hide_banner -nostats → stderr carries only warnings/errors, so failure logs show the cause
-            var args = $"-hide_banner -nostats -y -i \"{srcPath}\" " +
+            var map = await AnimationStreamAsync(srcPath, ct) is { } stream ? $"-map 0:{stream} " : "";
+            var args = $"-hide_banner -nostats -y -i \"{srcPath}\" {map}" +
                        $"-vf \"fps={fps},scale='min({maxWidth},iw)':-1:flags=lanczos\" " +
                        $"-vcodec libwebp -loop 0 -lossless 0 -q:v {quality} -compression_level 4 " +
                        $"-an -fps_mode passthrough -map_metadata -1 \"{dstPath}\"";
@@ -160,6 +162,30 @@ public class GifFfmpegHelper
             }
             return File.Exists(dstPath) && new FileInfo(dstPath).Length > 0;
         }, ct);
+    }
+
+    /// <summary>
+    /// The index of the video stream with the most frames, for a file that holds more than one video stream.
+    /// Null for every other file, and ffmpeg then makes its own choice. An animated AVIF holds its still picture
+    /// as stream 0 and the animation as stream 1, both with the same size: ffmpeg takes the first, and the
+    /// result was one frame (measured with ffmpeg 8.0.1). The cover picture of an MP4 is a stream of one frame too.
+    /// </summary>
+    private async Task<int?> AnimationStreamAsync(string filePath, CancellationToken ct)
+    {
+        var args = $"-v error -select_streams v -show_entries stream=index,nb_frames -of csv=p=0 \"{filePath}\"";
+        var (exitCode, stdout, _) = await RunProcessAsync("ffprobe", args, ProbeTimeoutMs, ct);
+        if (exitCode != 0) return null;
+
+        // One line per video stream: "index,frames". A container that does not count its frames (WebM, GIF)
+        // gives "N/A", and such a line does not take part.
+        var streams = new List<(int Index, long Frames)>();
+        foreach (var line in stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var fields = line.Split(',');
+            if (fields.Length >= 2 && int.TryParse(fields[0], out var index) && long.TryParse(fields[1], out var frames))
+                streams.Add((index, frames));
+        }
+        return streams.Count > 1 ? streams.MaxBy(s => s.Frames).Index : null;
     }
 
     /// <summary>Runs one ffmpeg pass inside the limit of two at a time. The GIF previews and the voice messages

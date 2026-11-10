@@ -418,12 +418,16 @@ public partial class GifService
     /// GifEntry, and the source file is consumed (deleted). Returns the new attachment, or null if
     /// the file should remain in the regular image/video pipeline.
     /// </summary>
-    public async Task<GifAttachment?> TryAcceptAsGifAsync(string sourceFilePath, string originalContentType,
+    /// <param name="sourceExtension">The extension of the name the uploader gave the file. It is a parameter, not
+    /// read from <paramref name="sourceFilePath"/>: a tus upload is read where tus stored it, under a name with no
+    /// extension, so that a file that is not a GIF never gets a public URL (TusEndpoints). It selects only between
+    /// "copy as it is" (.gif, .webp) and "transcode"; the bytes are checked on both ways.</param>
+    public async Task<GifAttachment?> TryAcceptAsGifAsync(string sourceFilePath, string sourceExtension, string originalContentType,
         bool isExplicitGif, Guid? uploaderUserId, string? originalFileName = null, CancellationToken ct = default)
     {
         if (!File.Exists(sourceFilePath)) return null;
 
-        var sourceExt = Path.GetExtension(sourceFilePath).ToLowerInvariant();
+        var sourceExt = sourceExtension.ToLowerInvariant();
         var isAnimatedImageSource = sourceExt is ".gif" or ".webp";
 
         // Only video sources require ffmpeg (they must be transcoded to animated WebP).

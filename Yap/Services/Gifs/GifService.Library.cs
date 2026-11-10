@@ -340,7 +340,7 @@ public partial class GifService
 
                     // With manifest tags the filename carries no information (export names embed
                     // an id suffix that would seed junk tags) — skip filename seeding entirely.
-                    var att = await TryAcceptAsGifAsync(tempPath, MimeFromPackExtension(ext),
+                    var att = await TryAcceptAsGifAsync(tempPath, ext, MimeFromPackExtension(ext),
                         isExplicitGif: true, actorUserId, hasManifestTags ? null : zipEntry.Name);
                     if (att == null)
                     {

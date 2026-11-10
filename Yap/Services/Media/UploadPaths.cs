@@ -10,8 +10,7 @@ public sealed class UploadPaths
     public string Root { get; }
     public string Profiles => Path.Combine(Root, "profiles");
     public string Gifs => Path.Combine(Root, "gifs");
-    public const string TusTempFolder = "tus-temp";   // also the URL segment under /uploads that Program.cs refuses to serve
-    public string TusTemp => Path.Combine(Root, TusTempFolder);
+    public string TusTemp => Path.Combine(Root, "tus-temp");   // inside the uploads root, and the /uploads handler leaves it out (Program.cs)
     public string TusResults => Path.Combine(TusTemp, "results");   // what each finished upload became (TusEndpoints); under tus-temp, so never served
 
     public UploadPaths(IConfiguration configuration, IWebHostEnvironment env)

@@ -56,8 +56,9 @@ public static class TusEndpoints
                     return Task.CompletedTask;
                 },
 
-                // Rejects doomed GIF-library creates before gigabytes flow. Advisory only — the
-                // metadata is client-controlled, so OnFileComplete re-checks authoritatively.
+                // Rejects doomed creates before gigabytes flow: a file name the server never takes, and the
+                // GIF-library cases below. Advisory only — the metadata is client-controlled, so OnFileComplete
+                // re-checks authoritatively.
                 OnBeforeCreateAsync = eventContext =>
                 {
                     string? Meta(string key) => eventContext.Metadata.TryGetValue(key, out var m)
@@ -65,6 +66,12 @@ public static class TusEndpoints
 
                     var kind = Meta("kind");
                     var target = Meta("target");
+                    var extension = Path.GetExtension(Meta("filename") ?? "").ToLowerInvariant();
+                    if (!NameIsAccepted(kind, extension))
+                    {
+                        eventContext.FailRequest("Unsupported file type");
+                        return Task.CompletedTask;
+                    }
                     if (kind == "voice")
                     {
                         // The recording cannot be served as it is (VoiceService), so without ffmpeg the upload is doomed.
@@ -76,8 +83,7 @@ public static class TusEndpoints
 
                     // Without ffmpeg, .gif/.webp still import (copied as-is) — only video
                     // conversion is off. Packs pass too; video entries inside just get skipped.
-                    if (!GifFfmpegHelper.IsAvailable && kind == "gif"
-                        && Path.GetExtension(Meta("filename") ?? "").ToLowerInvariant() is not (".gif" or ".webp"))
+                    if (!GifFfmpegHelper.IsAvailable && kind == "gif" && extension is not (".gif" or ".webp"))
                     {
                         eventContext.FailRequest("Video conversion is unavailable on this server (ffmpeg missing) — only .gif/.webp files can be imported");
                         return Task.CompletedTask;
@@ -115,6 +121,7 @@ public static class TusEndpoints
                     var mediaLog = eventContext.HttpContext.RequestServices.GetRequiredService<MediaUploadLogService>();
                     var userService = eventContext.HttpContext.RequestServices.GetRequiredService<UserService>();
                     var gifService = eventContext.HttpContext.RequestServices.GetRequiredService<GifService>();
+                    var gifFfmpeg = eventContext.HttpContext.RequestServices.GetRequiredService<GifFfmpegHelper>();
 
                     var file = await eventContext.GetFileAsync();
                     // The result file of this upload, for GET /api/tus/info. Empty means "the server still works on
@@ -124,6 +131,26 @@ public static class TusEndpoints
                     // What the uploader's GET /api/tus/info gets for this file. It is a file, not memory: the answer
                     // can be lost on the network and asked for again, also after a restart. TusCleanupService removes it.
                     void Done(object result) => File.WriteAllText(resultPath, JsonSerializer.Serialize(result, JsonSerializerOptions.Web));
+
+                    // What tus holds of this upload: the bytes, under the id, and the files beside them (<id>.metadata and
+                    // so on). EVERY end of the work below removes them, also a refusal and an error. The sweep of tus
+                    // removes only uploads that are not finished (TusCleanupService), so a finished upload that stays
+                    // here stays for good, and a person could fill the disk with files that the server refused.
+                    var tusFilePath = Path.Combine(tusStorePath, file.Id);
+                    void DropTusFiles()
+                    {
+                        try
+                        {
+                            foreach (var path in Directory.GetFiles(tusStorePath, file.Id + "*"))   // top folder only: the result file is one folder down
+                                try { File.Delete(path); } catch { }
+                        }
+                        catch { }   // the result must still be written
+                    }
+                    void Refuse(string error)
+                    {
+                        DropTusFiles();
+                        Done(new { type = "error", error });
+                    }
 
                     // An error in the work below must end as a result too. Without one the result stays "still at work":
                     // the client waits for it, sends the file again, and does the same at each wake-up, one more copy each time.
@@ -147,13 +174,6 @@ public static class TusEndpoints
 
                         var user = CurrentUser(eventContext.HttpContext, userService);
 
-                        var tusFilePath = Path.Combine(tusStorePath, file.Id);
-                        void CleanupTusMetadata()
-                        {
-                            foreach (var metaFile in Directory.GetFiles(tusStorePath, $"{file.Id}.*"))
-                                try { File.Delete(metaFile); } catch { }
-                        }
-
                         // Zip pack import. The archive must never reach the uploads folder — it would be
                         // publicly served — so it moves to the system temp dir instead, and the
                         // background import owns (and eventually deletes) it.
@@ -164,15 +184,13 @@ public static class TusEndpoints
                             {
                                 logger.LogWarning("Rejected gif-pack upload ({Reason})",
                                     user == null ? "unauthenticated" : "server target without admin");
-                                try { File.Delete(tusFilePath); } catch { }
-                                CleanupTusMetadata();
-                                Done(new { type = "error", error = "Not allowed" });
+                                Refuse("Not allowed");
                                 return;
                             }
 
                             var zipPath = Path.Combine(Path.GetTempPath(), $"gif-pack-{file.Id}.zip");
                             File.Move(tusFilePath, zipPath);
-                            CleanupTusMetadata();
+                            DropTusFiles();
 
                             var importId = gifService.StartPackImport(zipPath, user.Id, serverTarget);
                             mediaLog.Log(user.Id, user.Username, originalFileName, $"gif-pack/{importId}",
@@ -191,8 +209,7 @@ public static class TusEndpoints
                             var voicePath = Path.Combine(uploads.Root, voiceName);
                             var voice = await voiceService.TranscodeAsync(tusFilePath, voicePath);
                             var rawSize = new FileInfo(tusFilePath).Length;
-                            try { File.Delete(tusFilePath); } catch { }
-                            CleanupTusMetadata();
+                            DropTusFiles();
                             if (voice is null)
                             {
                                 logger.LogWarning("Voice message rejected: {FileName} ({Size}KB)", originalFileName, rawSize / 1024);
@@ -206,35 +223,26 @@ public static class TusEndpoints
                             return;
                         }
 
-                        // The extension alone decides, also for kind=gif: the file is served under it (uniqueFileName
-                        // below), and both the kind and the file name come from the client. With `kind == "gif" ||` here,
-                        // a "GIF" named x.html that failed the GIF check stayed in the uploads folder as a page of this site.
-                        string type;
-                        if (_imageExtensions.Contains(extension))
-                            type = "image"; // Will be re-classified to gif below if applicable.
-                        else if (VideoService.IsVideoFile(extension))
-                            type = "video";
-                        else
+                        // The file name comes from the client, so it is checked again here (NameIsAccepted). A file marked
+                        // as a GIF passes under any name, and for that reason it has no type yet: only the GIF work
+                        // below can accept it.
+                        if (!NameIsAccepted(kind, extension))
                         {
                             logger.LogWarning("Unsupported file type uploaded via tus: {Extension}", extension);
-                            Done(new { type = "error", error = "Unsupported file type" });   // without it the result stays "still at work" until the sweep
+                            Refuse("Unsupported file type");
                             return;
                         }
-
-                        var uploadsFolder = uploads.Root;
-                        var uniqueFileName = $"{Guid.NewGuid()}{extension}";
-                        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                        File.Move(tusFilePath, filePath);
-                        CleanupTusMetadata();
-
-                        var fileSize = new FileInfo(filePath).Length;
+                        var type = _imageExtensions.Contains(extension) ? "image"   // re-classified to gif below if applicable
+                            : VideoService.IsVideoFile(extension) ? "video" : null;
+                        var fileSize = new FileInfo(tusFilePath).Length;
 
                         // GIF routing: explicit kind=gif, .gif extension, or a short silent video clip.
+                        // The GIF work reads the bytes where tus stored them, and writes a file of its own into the GIF
+                        // folder. The upload itself is NOT moved into the uploads folder first: that folder is public, and
+                        // a "GIF" named x.html that failed the GIF check stayed there as a page of this site (PR 7).
                         // GifService consumes the source file on success; failure leaves it in place for the regular pipeline.
                         var isExplicitGif = kind == "gif" || extension == ".gif";
-                        var probeForGif = isExplicitGif
-                            || (type == "video" && _videoExtensionsForGifProbe.Contains(extension));
+                        var probeForGif = isExplicitGif || _videoExtensionsForGifProbe.Contains(extension);
                         var isLibraryUpload = target is "user" or "server"; // manager upload, not a chat attachment
                         if (probeForGif)
                         {
@@ -247,18 +255,16 @@ public static class TusEndpoints
                                     && fileSize + gifService.GetUserLibraryBytes(user.Id) > gifService.UserQuotaBytes;
                                 if (user == null || (target == "server" && !isAdmin) || overQuota)
                                 {
-                                    try { File.Delete(filePath); } catch { }
-                                    Done(new
-                                        { type = "error", error = overQuota ? "GIF storage quota exceeded" : "Not allowed" });
+                                    Refuse(overQuota ? "GIF storage quota exceeded" : "Not allowed");
                                     return;
                                 }
                             }
 
-                            var contentType = MimeFromExtension(extension);
                             var gifAttachment = await gifService.TryAcceptAsGifAsync(
-                                filePath, contentType, isExplicitGif, user?.Id, uploadedFileName);
+                                tusFilePath, extension, MimeFromExtension(extension), isExplicitGif, user?.Id, uploadedFileName);
                             if (gifAttachment != null)
                             {
+                                DropTusFiles();
                                 logger.LogDebug("Tus upload classified as GIF: {FileName} ({EntryId})",
                                     originalFileName, gifAttachment.GifEntryId);
                                 if (user != null)
@@ -286,20 +292,36 @@ public static class TusEndpoints
                                 });
                                 return;
                             }
-                            else if (isLibraryUpload)
+                            // A failed manager upload must not fall through into the chat media pipeline — it would
+                            // post as an orphan image nobody asked for. A file with no type has no other pipeline.
+                            if (isLibraryUpload || type == null)
                             {
-                                // A failed manager upload must not fall through into the chat media
-                                // pipeline — it would post as an orphan image nobody asked for.
-                                try { File.Delete(filePath); } catch { }
-                                Done(new { type = "error", error = "Could not process this file as a GIF" });
+                                Refuse("Could not process this file as a GIF");
                                 return;
                             }
-                            else if (isExplicitGif)
+                            if (isExplicitGif)
                             {
                                 logger.LogWarning("Explicit kind=gif upload rejected: {FileName}", originalFileName);
                                 // Fall through to regular pipeline so the file isn't lost.
                             }
                         }
+
+                        // The uploads folder is public, and a file in it has a URL that works for a year without a
+                        // sign-in. So the bytes must be a picture or a video BEFORE the file moves there: the extension
+                        // is a claim of the client, and the steps after the move swallow their errors.
+                        if (type == null || !await HoldsMediaAsync(tusFilePath, type, gifFfmpeg))
+                        {
+                            logger.LogWarning("Upload refused, its bytes are not {Type}: {FileName}", type, originalFileName);
+                            Refuse("Could not process this file");
+                            return;
+                        }
+
+                        var uploadsFolder = uploads.Root;
+                        var uniqueFileName = $"{Guid.NewGuid()}{extension}";
+                        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                        File.Move(tusFilePath, filePath);
+                        DropTusFiles();
 
                         logger.LogDebug("Tus upload complete: {FileName} ({Type}, {Size}KB)", uniqueFileName, type, fileSize / 1024);
 
@@ -356,7 +378,7 @@ public static class TusEndpoints
                     catch (Exception ex)
                     {
                         logger.LogError(ex, "The work on the finished upload {FileId} failed", file.Id);
-                        Done(new { type = "error", error = "Could not process this file" });
+                        Refuse("Could not process this file");
                     }
                 }
             }
@@ -403,12 +425,42 @@ public static class TusEndpoints
         return (long)mb * 1024 * 1024;
     }
 
+    /// <summary>
+    /// The rule of the file name, for the create and again for the finished file: the name comes from the client both
+    /// times. A plain upload is served under the extension of its name, so that must be the extension of a picture
+    /// or a video. The other kinds can have any name, because the server reads their bytes and writes files of its
+    /// own: a GIF goes through GifService, a pack through the pack import, a voice message through VoiceService.
+    /// </summary>
+    private static bool NameIsAccepted(string? kind, string extension) =>
+        kind is "gif" or "gif-pack" or "voice" || _imageExtensions.Contains(extension) || VideoService.IsVideoFile(extension);
+
+    /// <summary>
+    /// Whether the bytes are a picture or a video at all. ImageSharp reads the header of a picture, ffprobe looks
+    /// for a stream to play. It is not a check that the bytes agree with the extension: a PNG named x.jpg passes, and
+    /// that is harmless, because the /uploads handler serves only media types and tells the browser not to guess
+    /// (Program.cs). Without ffmpeg nothing on this server can read a video, and a video then passes unread.
+    /// </summary>
+    private static async Task<bool> HoldsMediaAsync(string path, string type, GifFfmpegHelper ffmpeg)
+    {
+        if (type == "image")
+        {
+            try { await SixLabors.ImageSharp.Image.IdentifyAsync(path); return true; }
+            catch { return false; }   // not a format ImageSharp knows, or a broken header
+        }
+        if (!GifFfmpegHelper.IsAvailable) return true;
+        // Sound alone passes too: a recording with no picture (a .webm of a voice recorder) plays in the video player.
+        return await ffmpeg.ProbeAsync(path) is { } probe && (probe.VideoCodec != null || probe.HasAudio);
+    }
+
     private static string MimeFromExtension(string ext) => ext switch
     {
         ".gif" => "image/gif",
         ".webp" => "image/webp",
+        ".apng" => "image/apng",
+        ".avif" => "image/avif",
         ".webm" => "video/webm",
         ".mp4" => "video/mp4",
+        ".m4v" => "video/x-m4v",
         ".mov" => "video/quicktime",
         ".mkv" => "video/x-matroska",
         _ => "application/octet-stream"

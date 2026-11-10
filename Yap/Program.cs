@@ -305,14 +305,6 @@ var uploadsRoot = uploads.Root;
 var profilesRoot = uploads.Profiles;
 Directory.CreateDirectory(profilesRoot); // PhysicalFileProvider throws if the root is missing
 
-// The unfinished uploads of tus live under the uploads root (tus-temp); nothing there is ever a public file.
-app.Use((context, next) =>
-{
-    if (!context.Request.Path.StartsWithSegments("/uploads/" + UploadPaths.TusTempFolder)) return next();
-    context.Response.StatusCode = StatusCodes.Status404NotFound;
-    return Task.CompletedTask;
-});
-
 // Profile pictures live at a STABLE path (/uploads/profiles/{userId}.webp) that's overwritten when
 // the avatar changes, so they must NOT be immutable. The stored URL carries ?v=<upload time>, so a new
 // picture is a new URL for every client (ImageService). The short max-age covers a client that still
@@ -326,24 +318,37 @@ app.UseStaticFiles(new StaticFileOptions
         ctx.Context.Response.Headers.CacheControl = "public, max-age=300"
 });
 
-// Everything else under /uploads (image thumbnails, gif/webp, video posters, voice messages) is content-addressed.
-// Registered before the generic UseStaticFiles so it wins for /uploads/* and attaches the header.
-var uploadContentTypes = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
-uploadContentTypes.Mappings[".m4a"] = "audio/mp4";   // voice messages (VoiceService); spelled out so the answer never depends on the default map
+// Everything else under /uploads (pictures and videos, their thumbnails and posters, gif/webp, voice messages) is
+// content-addressed. Registered before the generic UseStaticFiles so it wins for /uploads/* and attaches the headers.
+//
+// A file that a person uploaded is never a page of this site. Three things hold that, and each needs the others:
+// - The type map has ONLY the extensions the server itself gives a file in this folder (TusEndpoints, ImageService,
+//   VideoService, VoiceService, GifService): pictures, videos and sound. A file with another extension has no URL
+//   here. With the default map, a page that reached the folder was served as text/html on the site's own origin, and
+//   its script ran with the cookie of the person who opened it. Do NOT add a type that a browser runs or renders as
+//   a document (.html, .svg, .xml, .pdf, .js): no "Content-Security-Policy: sandbox" stands behind this map. That
+//   header was here for one commit. Under it, Firefox before 105 and some Safari versions do not play a video or a
+//   voice message that a person opens by its URL (Mozilla bug 1781063, WebKit bug 225865; read, not tested here).
+// - nosniff: the browser takes the type from this map and does not guess one from the bytes.
+// - The generic handler below does not serve the folder (FileProviderWithout). Without that, a file this handler
+//   has no type for goes on to it, and it has the full map and no headers.
+var uploadContentTypes = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+{
+    [".jpg"] = "image/jpeg", [".jpeg"] = "image/jpeg", [".png"] = "image/png", [".gif"] = "image/gif", [".webp"] = "image/webp",
+    [".mp4"] = "video/mp4", [".webm"] = "video/webm", [".mov"] = "video/quicktime", [".avi"] = "video/x-msvideo", [".mkv"] = "video/x-matroska",
+    [".m4a"] = "audio/mp4",   // voice messages (VoiceService)
+});
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(uploadsRoot),
+    // Without the folder of tus (tus-temp, inside the uploads root): an unfinished upload and the result of a
+    // finished one are nobody's public files, also not when a part of an upload has the name of a picture.
+    FileProvider = new FileProviderWithout(new PhysicalFileProvider(uploadsRoot), uploads.TusTemp),
     RequestPath = "/uploads",
     ContentTypeProvider = uploadContentTypes,
     OnPrepareResponse = ctx =>
     {
         cacheImmutable(ctx);
-        // A file that a person uploaded is never a page of this site. nosniff: the browser takes the type from the
-        // extension, which the server checked (TusEndpoints), and does not guess one from the bytes. sandbox: a file
-        // opened by its URL runs no script and gets no access to the site's cookie and API. This holds also for a
-        // file stored before the server checked the extension of every upload.
         ctx.Context.Response.Headers.XContentTypeOptions = "nosniff";
-        ctx.Context.Response.Headers.ContentSecurityPolicy = "sandbox";
     }
 });
 
@@ -371,6 +376,10 @@ app.UseStaticFiles(new StaticFileOptions
 // the service worker answers them from its cache.
 app.UseStaticFiles(new StaticFileOptions
 {
+    // Without the uploads folder, which is inside wwwroot by default. This handler has the full type map and sets no
+    // nosniff, so through it a stored page was a page of the site: /uploads/x.html when the handler above has no type
+    // for the file, and //uploads/x.html, a path the handler above does not take for its own.
+    FileProvider = new FileProviderWithout(app.Environment.WebRootFileProvider, uploadsRoot),
     OnPrepareResponse = ctx =>
     {
         var name = ctx.File.Name;
