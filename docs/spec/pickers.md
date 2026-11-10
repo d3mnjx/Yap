@@ -105,7 +105,7 @@ The emoji picker and the GIF picker open from the input box. The emoji picker pu
 
 ### Upload from the picker
 
-**PK-38** The upload button in the search row opens the file chooser for one file of type .gif, .webp, .mp4, .mov or .webm. For a file over 50 MB, "Couldn't send GIF" shows with "File is too large (max 50MB)". The picker stays open.
+**PK-38** The upload button in the search row opens the file chooser for one file of type .gif, .webp, .apng, .avif, .mp4, .m4v, .mov or .webm. When the reader chooses a file of another type, Yap still accepts the file if it can convert it (PK-40). For a file over 50 MB, "Couldn't send GIF" shows with "File is too large (max 50MB)". The picker stays open.
 
 **PK-39** While the file uploads and is processed, the button changes to a spinner. An overlay with a spinner and "Adding GIF…" covers the results. The search row and the rail stay usable. There is no progress percentage.
 
