@@ -2,11 +2,12 @@
 // the action bar with its popups, the editor, and the pending and failed states. The row draws from a
 // message object; a pending row is a message object with `pending` from sender.js.
 
-import { state, displayName, hasMedia, toggleReactionLocally, editLocally, removeLocally, toggleFavoriteLocally, redrawMessage, mayPin, isPinned, pinLocally, unpinLocally } from '../store.js';
+import { state, on, displayName, hasMedia, toggleReactionLocally, editLocally, removeLocally, toggleFavoriteLocally, redrawMessage, mayPin, isPinned, pinLocally, unpinLocally } from '../store.js';
 import { clone, el, replace, classes } from '../render/dom.js';
 import { inline, messageText, imageFailed, safeHref } from '../render/text.js';
 import { messageTime } from '../render/time.js';
 import { avatar } from '../render/avatar.js';
+import { fileThumb } from '../render/thumb.js';
 import * as hub from '../hub.js';
 import * as overlays from './overlays.js';
 import * as sender from '../sender.js';
@@ -271,26 +272,56 @@ async function react(rowNode, m, emoji) {
 function renderPending(rowNode, m) {
   const box = rowNode.querySelector('.message-pending');
   if (!m.pending) { box.remove(); return; }
-  if (m.uploading) {
-    box.hidden = false;
-    box.querySelector('.pending-files').textContent = m.uploading.names.join(', ');
-    box.querySelector('.upload-progress-fill').style.width = `${m.uploading.percent ?? 0}%`;
-    box.querySelector('.pending-status').textContent = ''; box.querySelector('.pending-reason').textContent = '';
-    box.querySelector('.pending-retry').remove(); box.querySelector('.pending-remove').remove();
-    box.querySelector('.pending-cancel').addEventListener('click', () => sender.remove(m));
-    return;
-  }
   if (m.failed) {
     box.hidden = false;
-    box.querySelector('.pending-files').remove(); box.querySelector('.upload-progress-track').remove(); box.querySelector('.pending-cancel').remove();
+    box.querySelector('.pending-thumbs').remove(); box.querySelector('.upload-progress-track').remove(); box.querySelector('.pending-cancel').remove();
     box.querySelector('.pending-status').textContent = 'Failed';
     box.querySelector('.pending-reason').textContent = m.failed;
     box.querySelector('.pending-retry').addEventListener('click', () => sender.retry(m));
     box.querySelector('.pending-remove').addEventListener('click', () => sender.remove(m));
     return;
   }
+  if (m.parts) {
+    box.hidden = false;
+    box.querySelector('.pending-status').textContent = ''; box.querySelector('.pending-reason').textContent = '';
+    box.querySelector('.pending-retry').remove(); box.querySelector('.pending-remove').remove();
+    box.querySelector('.pending-cancel').addEventListener('click', () => sender.remove(m));
+    const thumbs = box.querySelector('.pending-thumbs');
+    if (m.voice) thumbs.remove();   // one file, and the row shows its player: the one bar is its progress
+    else {
+      box.querySelector('.upload-progress-track').remove();
+      const urls = sender.thumbsOf(m);
+      replace(thumbs, m.files.map((file, i) => {
+        const item = fileThumb(file, urls[i]);
+        item.classList.add('pending-thumb');
+        item.setAttribute('role', 'img');   // the label below speaks for the square: the name of the file and its state
+        item.append(el('div', { class: 'upload-progress-track' }, el('div', { class: 'upload-progress-fill' })), el('span', { class: 'pending-mark', 'aria-hidden': 'true' }));
+        return item;
+      }));
+    }
+    drawParts(rowNode, m);
+    return;
+  }
   box.remove();
 }
+
+// The state of each file of a pending row, into the row as it stands (IB-34). A progress event draws here and
+// does not draw the row again: a new row would load every picture and every video frame again, many times a second.
+const STATE_WORDS = { waiting: 'waiting', uploading: 'uploading', done: 'uploaded' };
+const percentOf = (part, file) => file.size ? Math.round(Math.min(part.sent / file.size, 1) * 100) : 0;
+function drawParts(rowNode, m) {
+  const box = rowNode.querySelector('.message-pending');
+  if (!box || !m.parts || m.failed) return;
+  if (m.voice) { box.querySelector('.upload-progress-fill').style.width = `${percentOf(m.parts[0], m.files[0])}%`; return; }
+  box.querySelectorAll('.pending-thumb').forEach((item, i) => {
+    const part = m.parts[i], file = m.files[i];
+    item.dataset.state = part.state;
+    item.querySelector('.upload-progress-fill').style.width = `${percentOf(part, file)}%`;
+    const label = part.error ?? `${file.name} — ${STATE_WORDS[part.state]}`;   // a refusal names its file itself (upload.js)
+    item.title = label; item.setAttribute('aria-label', label);
+  });
+}
+on('upload', row => { const node = document.getElementById(`msg-${row.id}`); if (node) drawParts(node, row); });
 
 // ---- the action bar and its popups (MR-46 to MR-68) ----
 

@@ -34,18 +34,23 @@ Send appends a row and paints the pending message in the timeline. That is the w
 
 ## The sender
 
-One loop, driven by events, never by a timer:
+Two things run, both driven by events, never by a timer.
 
-1. Take the oldest `queued` row.
-2. For each attachment that is still a Blob, upload it and write the upload id back into the row.
-3. POST the message with its `clientId` and the upload ids.
-4. On 2xx, delete the row. The live update from the server paints the real message.
-5. On a network error, stop. Do nothing until a wake-up.
-6. On a 4xx, set `state = failed` and stop trying that row.
+The uploads. The files of the queued rows upload, oldest row first, at most three at one time over all rows. A browser opens six connections to one host over HTTP/1.1. Without the limit, the chunks of a slow upload fill them, and the POST of a text message waits for a free one.
+
+The post loop:
+
+1. Take the oldest `queued` row that is ready. A row with attachments is ready when its last file is uploaded. A row that is not ready is passed over, so a text sent after a video does not wait for the video.
+2. POST the message with its `clientId` and the results of its uploads.
+3. On 2xx, delete the row. The live update from the server paints the real message.
+4. On a network error, stop. Do nothing until a wake-up. A 502, 503 or 504 counts as one: a reverse proxy answers so while the server behind it restarts.
+5. On a 4xx, set `state = failed` and stop trying that row.
+
+An upload that nobody answers stops the uploads in the same way: no upload starts until a wake-up. The post loop and the uploads do not wait for each other.
 
 Wake-ups: the `online` event, a SignalR reconnect, the tab becoming visible, a new row appended. No poll, no backoff table, no attempt counter, no persisted next-attempt time.
 
-A wake-up during a run marks the run to go again when it ends. An upload with no progress for five seconds at a wake-up is given up: the files that are done stay done, the rest upload again in the run that follows. A socket that died with the network (a phone's Wi-Fi switched off mid-upload) may never report an error, and without this the loop would wait for it forever.
+A wake-up during a run marks the run to go again when it ends. An upload with no progress for five seconds at a wake-up is given up: the files that are done stay done, and the file that was given up goes on from the bytes the server has in the run that follows. A socket that died with the network (a phone's Wi-Fi switched off mid-upload) may never report an error, and without this the loop would wait for it forever.
 
 ## Server side
 
@@ -83,7 +88,7 @@ A row older than one day is marked `failed` when a tab opens. One comparison. Th
 
 Only new text messages are queued. Edits, deletes, reactions and uploads need a connection, and the UI says so when there is none. Queuing every operation is where the previous design grew its acceptance locks, its operation ids and its conflict rules. Not queuing them removes that whole class of code.
 
-Attachments are in the offline promise. The case to serve: someone loses the connection in a tunnel with pictures already picked, presses Send, and the message goes out when the connection returns. The Blobs live in the outbox row. A row may hold at most 25 MB of attachments. Above that the client refuses to queue and the composer says "Needs a connection". There is no resumable upload state. After a crash halfway through an upload, the file is uploaded again from zero, which is acceptable for a few megabytes. Added machinery: one field, one sender step, one cap.
+Attachments are in the offline promise. The case to serve: someone loses the connection in a tunnel with pictures already picked, presses Send, and the message goes out when the connection returns. The Blobs live in the outbox row. A row may hold at most 25 MB of attachments. Above that the client refuses to queue and the composer says "Needs a connection". The Blobs stay in the row until the message is sent. The upload state is a record of its own beside the row (key `upload:<clientId>` in the key-value store): for each file the tus upload URL, then the server's result or its refusal. It is not a field of the row, because IndexedDB writes a record whole, and a save after each file would write the Blobs again. After a reload or a crash, a file goes on from the offset that the server reports for its URL, and a finished file is not sent again. The server keeps nothing about an upload in memory: the id of an upload names its owner, and the result of a finished file is a small file that the client can read again, so a restart of the server and a lost answer cost nothing. Behind a reverse proxy a restart shows as a 502, 503 or 504 from the proxy. The client takes these three as no answer: the file waits with its URL, and it is not a refused file. One limit is accepted. The server expires an unfinished upload after one day, and the file then uploads again from zero. A restart in the middle of the server's work on a finished file has the same effect. A part that stays behind after "Cancel upload" (a file that was stopped and waited) also goes with the one-day expiry. Added machinery: one record, one sender step, one cap.
 
 ## What this design does not have
 

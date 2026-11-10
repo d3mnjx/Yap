@@ -85,7 +85,7 @@ The input box is the part of a conversation where the user writes and sends a me
 
 **IB-27** A send while the reply bar is open sends a reply. The bar closes immediately.
 
-**IB-28** Messages sent quickly one after another appear in the order they were sent.
+**IB-28** Messages sent quickly one after another appear in the order they were sent. A message with files appears when its last file is uploaded. The user can send more messages while files upload, and a text sent after a message with files can appear before it.
 
 ### Attachments
 
@@ -99,9 +99,9 @@ The input box is the part of a conversation where the user writes and sends a me
 
 **IB-33** Chosen, dropped and pasted files wait in a tray inside the input box, above the draft. Each file shows as a square thumbnail, 72 px on desktop and 64 px on a phone, with ✕ in its top right corner. A video shows its first frame and a play mark. ✕ removes the file from the tray. On a phone, the tray scrolls sideways. Send sends the files of the tray and the draft text together, as one message. The text is the caption of the message (MR-24). Send is visible while the tray has a file, and on desktop Enter sends with an empty draft. Nothing is uploaded before Send. Each conversation has its own tray. The tray does not survive a reload. A GIF file becomes a GIF attachment, the same as a GIF sent from the picker.
 
-**IB-34** While files upload, the pending row shows the caption when there is one, the file names, one progress bar for the whole message, and "Cancel upload". Cancel removes the pending message and discards the data already uploaded for it. Nothing is sent.
+**IB-34** While files upload, the pending row shows the caption when there is one, one square thumbnail for each file as in the tray (IB-33), and "Cancel upload". Each thumbnail shows the state of its file. A file that waits is dimmed. A file that uploads has a bar along its bottom edge. A file that is uploaded has a check mark. A file that the server refused has a warning mark. The thumbnail's tooltip gives the file name and the state, or the reason of the refusal. At most three files upload at the same time, counted over all pending messages. The other files wait, in the order they were sent. A pending voice message shows one progress bar and no thumbnail. Cancel removes the pending message and discards the data already uploaded for it. Nothing is sent.
 
-**IB-35** One dialog reports all files of a pick that are refused (wrong kind, too large, too many). The dialog title is "No file added" when no file remains, and "{s} of {t} files added" when some files remain. The dialog has one line for each refused file. The remaining files go to the tray. A failure during the upload itself shows the pending row as failed instead, with Retry and Remove. The user closes the dialog with "Got It", with ✕ or with a tap outside it. The dialog does not move focus and never closes the keyboard.
+**IB-35** One dialog reports all files of a pick that are refused (wrong kind, too large, too many). The dialog title is "No file added" when no file remains, and "{s} of {t} files added" when some files remain. The dialog has one line for each refused file. The remaining files go to the tray. A failure during the upload itself shows in the timeline instead. When the server refuses every file of a message, the pending row shows as failed, with Retry and Remove. When the server refuses some of the files, the message is sent with the other files. The refused files stay as a failed row of their own, with one reason line for each file, Retry and Remove. Retry sends them as a new message. The user closes the dialog with "Got It", with ✕ or with a tap outside it. The dialog does not move focus and never closes the keyboard.
 
 **IB-36** A send with files during a reply is a reply, as in IB-27. The reply bar closes.
 

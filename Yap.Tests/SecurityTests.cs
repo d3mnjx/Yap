@@ -236,13 +236,48 @@ public class SecurityTests : IClassFixture<YapFactory>
         patch.Headers.Add("Upload-Offset", "0");
         Assert.Equal(HttpStatusCode.NoContent, (await uma.Http.SendAsync(patch)).StatusCode);
 
-        // the result: the uploader's only, once, and without the server's path
+        // the result: the uploader's only, as often as the uploader asks (an answer can be lost on the way), and without the server's path
         Assert.Equal(HttpStatusCode.Unauthorized, (await _app.CreateClient().GetAsync($"/api/tus/info/{fileId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await ulf.Http.GetAsync($"/api/tus/info/{fileId}")).StatusCode);
         var info = await uma.Http.GetFromJsonAsync<JsonElement>($"/api/tus/info/{fileId}");
         Assert.StartsWith("/uploads/", info.GetProperty("url").GetString());
         Assert.False(info.TryGetProperty("path", out _));
-        Assert.Equal(HttpStatusCode.NotFound, (await uma.Http.GetAsync($"/api/tus/info/{fileId}")).StatusCode);
+        var again = await uma.Http.GetFromJsonAsync<JsonElement>($"/api/tus/info/{fileId}");
+        Assert.Equal(info.GetProperty("url").GetString(), again.GetProperty("url").GetString());
+        Assert.Equal(HttpStatusCode.NotFound, (await ulf.Http.GetAsync($"/api/tus/info/{fileId}")).StatusCode);   // still nobody else's
+    }
+
+    [Fact(DisplayName = "An error in the server's work on a finished upload is a refusal, not an endless \"still at work\"")]
+    public async Task A_failed_upload_gets_a_result()
+    {
+        var uma = await _app.SignInAsync("uma_tus_error");
+
+        var create = new HttpRequestMessage(HttpMethod.Post, "/api/tus");
+        create.Headers.Add("Tus-Resumable", "1.0.0");
+        create.Headers.Add("Upload-Length", Png.Length.ToString());
+        create.Headers.Add("Upload-Metadata", $"filename {Convert.ToBase64String(Encoding.UTF8.GetBytes("pack.zip"))},kind {Convert.ToBase64String(Encoding.UTF8.GetBytes("gif-pack"))}");
+        var created = await uma.Http.SendAsync(create);
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var location = created.Headers.Location!.ToString();
+        var fileId = location.TrimEnd('/').Split('/').Last();
+
+        // The fault: a folder stands where the server puts a pack (TusEndpoints.cs), so the move of the file throws,
+        // as it does on a disk that fails.
+        var inTheWay = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), $"gif-pack-{fileId}.zip"));
+        try
+        {
+            var patch = new HttpRequestMessage(HttpMethod.Patch, location) { Content = new ByteArrayContent(Png) };
+            patch.Content.Headers.ContentType = new("application/offset+octet-stream");
+            patch.Headers.Add("Tus-Resumable", "1.0.0");
+            patch.Headers.Add("Upload-Offset", "0");
+            Assert.Equal(HttpStatusCode.NoContent, (await uma.Http.SendAsync(patch)).StatusCode);
+
+            // 200 with an error, not the 202 of "still at work": the client shows the file as refused, with Retry
+            var answer = await uma.Http.GetAsync($"/api/tus/info/{fileId}");
+            Assert.Equal(HttpStatusCode.OK, answer.StatusCode);
+            Assert.Equal("error", (await answer.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("type").GetString());
+        }
+        finally { inTheWay.Delete(); }
     }
 
     [Fact(DisplayName = "NT-23, NT-24: a push subscription belongs to the account that registered it")]

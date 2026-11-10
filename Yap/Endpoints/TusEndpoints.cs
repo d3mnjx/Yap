@@ -1,6 +1,6 @@
-using System.Collections.Concurrent;
 using System.Net;
 using System.Security.Claims;
+using System.Text.Json;
 using tusdotnet;
 using tusdotnet.Models;
 using tusdotnet.Models.Configuration;
@@ -17,11 +17,6 @@ namespace Yap.Endpoints;
 
 public static class TusEndpoints
 {
-    // What a finished upload became, for the uploader's GET /api/tus/info: the id alone is no right to the answer.
-    private sealed record Completed(Guid? UserId, object Result);
-    private static readonly ConcurrentDictionary<string, Completed> _completedFiles = new();
-    // The person who created each upload in progress: a PATCH, HEAD or DELETE from anyone else gets 404.
-    private static readonly ConcurrentDictionary<string, Guid> _owners = new();
     private static readonly HashSet<string> _imageExtensions = new(StringComparer.OrdinalIgnoreCase)
         { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
     private static readonly HashSet<string> _videoExtensionsForGifProbe = new(StringComparer.OrdinalIgnoreCase)
@@ -31,11 +26,13 @@ public static class TusEndpoints
     {
         var uploads = app.Services.GetRequiredService<UploadPaths>();
         var tusStorePath = uploads.TusTemp;
-        Directory.CreateDirectory(tusStorePath);
+        Directory.CreateDirectory(uploads.TusResults);   // under the tus folder, which this creates too
 
         app.MapTus("/api/tus", async httpContext => new()
         {
-            Store = new TusDiskStore(tusStorePath),
+            // The id of an upload names its owner (UploadIds). An anonymous request never creates one: OnAuthorize refuses it first.
+            Store = new TusDiskStore(tusStorePath, false, TusDiskBufferSize.Default,
+                new UploadIds(httpContext.User.IsSignedIn() ? httpContext.User.Id() : Guid.Empty)),
             MaxAllowedUploadSizeInBytesLong = GetMaxUploadBytes(httpContext),
             Expiration = new SlidingExpiration(TimeSpan.FromHours(24)),   // an abandoned upload expires; TusCleanupService removes it
             Events = new()
@@ -51,17 +48,11 @@ public static class TusEndpoints
                         return Task.CompletedTask;
                     }
                     // An upload in progress belongs to the person who created it. Anyone else's PATCH, HEAD or
-                    // DELETE on its id gets 404, as does an id this process never saw (after a restart the client
-                    // starts the upload again).
+                    // DELETE on its id gets 404. The owner is read from the id, so this holds after a restart too,
+                    // and the person's client goes on with the upload.
                     if (eventContext.Intent is not (IntentType.CreateFile or IntentType.GetOptions)
-                        && (eventContext.FileId is not { } fileId || !_owners.TryGetValue(fileId, out var owner) || owner != eventContext.HttpContext.User.Id()))
+                        && (eventContext.FileId is not { } fileId || !UploadIds.Owns(eventContext.HttpContext.User.Id(), fileId)))
                         eventContext.FailRequest(HttpStatusCode.NotFound, "File not found");
-                    return Task.CompletedTask;
-                },
-
-                OnCreateCompleteAsync = eventContext =>
-                {
-                    _owners[eventContext.FileId] = eventContext.HttpContext.User.Id();
                     return Task.CompletedTask;
                 },
 
@@ -126,240 +117,265 @@ public static class TusEndpoints
                     var gifService = eventContext.HttpContext.RequestServices.GetRequiredService<GifService>();
 
                     var file = await eventContext.GetFileAsync();
-                    _owners.TryRemove(file.Id, out _);
-                    var metadata = await file.GetMetadataAsync(eventContext.CancellationToken);
+                    // The result file of this upload, for GET /api/tus/info. Empty means "the server still works on
+                    // the file"; it is written first, so the uploader's poll never finds a finished upload unknown.
+                    var resultPath = Path.Combine(uploads.TusResults, file.Id + ".json");
+                    File.WriteAllText(resultPath, "");
+                    // What the uploader's GET /api/tus/info gets for this file. It is a file, not memory: the answer
+                    // can be lost on the network and asked for again, also after a restart. TusCleanupService removes it.
+                    void Done(object result) => File.WriteAllText(resultPath, JsonSerializer.Serialize(result, JsonSerializerOptions.Web));
 
-                    // Null when tus metadata carried no filename; originalFileName keeps the
-                    // "unknown" placeholder for logging, but tag-seeding must not see it.
-                    var uploadedFileName = metadata.TryGetValue("filename", out var fName)
-                        ? fName.GetString(System.Text.Encoding.UTF8) : null;
-                    var originalFileName = uploadedFileName ?? "unknown";
-                    var extension = Path.GetExtension(originalFileName).ToLowerInvariant();
-                    var kind = metadata.TryGetValue("kind", out var kindMeta)
-                        ? kindMeta.GetString(System.Text.Encoding.UTF8) : null;
-                    // Library uploads (GifLibraryManager) carry a destination; chat uploads don't.
-                    var target = metadata.TryGetValue("target", out var targetMeta)
-                        ? targetMeta.GetString(System.Text.Encoding.UTF8) : null;
-                    var folder = metadata.TryGetValue("folder", out var folderMeta)
-                        ? folderMeta.GetString(System.Text.Encoding.UTF8) : null;
-
-                    var user = CurrentUser(eventContext.HttpContext, userService);
-                    // What the uploader's GET /api/tus/info gets for this file, once.
-                    void Done(object result) => _completedFiles[file.Id] = new Completed(user?.Id, result);
-
-                    var tusFilePath = Path.Combine(tusStorePath, file.Id);
-                    void CleanupTusMetadata()
+                    // An error in the work below must end as a result too. Without one the result stays "still at work":
+                    // the client waits for it, sends the file again, and does the same at each wake-up, one more copy each time.
+                    try
                     {
-                        foreach (var metaFile in Directory.GetFiles(tusStorePath, $"{file.Id}.*"))
-                            try { File.Delete(metaFile); } catch { }
-                    }
+                        var metadata = await file.GetMetadataAsync(eventContext.CancellationToken);
 
-                    // Zip pack import. The archive must never reach the uploads folder — it would be
-                    // publicly served — so it moves to the system temp dir instead, and the
-                    // background import owns (and eventually deletes) it.
-                    if (kind == "gif-pack")
-                    {
-                        var serverTarget = target == "server";
-                        if (user == null || (serverTarget && !userService.IsAdmin(user.Id)))
+                        // Null when tus metadata carried no filename; originalFileName keeps the
+                        // "unknown" placeholder for logging, but tag-seeding must not see it.
+                        var uploadedFileName = metadata.TryGetValue("filename", out var fName)
+                            ? fName.GetString(System.Text.Encoding.UTF8) : null;
+                        var originalFileName = uploadedFileName ?? "unknown";
+                        var extension = Path.GetExtension(originalFileName).ToLowerInvariant();
+                        var kind = metadata.TryGetValue("kind", out var kindMeta)
+                            ? kindMeta.GetString(System.Text.Encoding.UTF8) : null;
+                        // Library uploads (GifLibraryManager) carry a destination; chat uploads don't.
+                        var target = metadata.TryGetValue("target", out var targetMeta)
+                            ? targetMeta.GetString(System.Text.Encoding.UTF8) : null;
+                        var folder = metadata.TryGetValue("folder", out var folderMeta)
+                            ? folderMeta.GetString(System.Text.Encoding.UTF8) : null;
+
+                        var user = CurrentUser(eventContext.HttpContext, userService);
+
+                        var tusFilePath = Path.Combine(tusStorePath, file.Id);
+                        void CleanupTusMetadata()
                         {
-                            logger.LogWarning("Rejected gif-pack upload ({Reason})",
-                                user == null ? "unauthenticated" : "server target without admin");
-                            try { File.Delete(tusFilePath); } catch { }
-                            CleanupTusMetadata();
-                            Done(new { type = "error", error = "Not allowed" });
-                            return;
+                            foreach (var metaFile in Directory.GetFiles(tusStorePath, $"{file.Id}.*"))
+                                try { File.Delete(metaFile); } catch { }
                         }
 
-                        var zipPath = Path.Combine(Path.GetTempPath(), $"gif-pack-{file.Id}.zip");
-                        File.Move(tusFilePath, zipPath);
-                        CleanupTusMetadata();
-
-                        var importId = gifService.StartPackImport(zipPath, user.Id, serverTarget);
-                        mediaLog.Log(user.Id, user.Username, originalFileName, $"gif-pack/{importId}",
-                            new FileInfo(zipPath).Length, "gif-pack", ".zip");
-                        logger.LogInformation("GIF pack accepted from {User} → import {ImportId} (server: {Server})",
-                            user.Username, importId, serverTarget);
-                        Done(new { type = "gif-pack", importId });
-                        return;
-                    }
-
-                    // A voice message (IB-70). The transcode reads the tus part itself and writes the .m4a into the
-                    // uploads folder, so the raw recording, whose extension the client chose, is never a served file.
-                    if (kind == "voice")
-                    {
-                        var voiceName = $"{Guid.NewGuid()}.m4a";
-                        var voicePath = Path.Combine(uploads.Root, voiceName);
-                        var voice = await voiceService.TranscodeAsync(tusFilePath, voicePath);
-                        var rawSize = new FileInfo(tusFilePath).Length;
-                        try { File.Delete(tusFilePath); } catch { }
-                        CleanupTusMetadata();
-                        if (voice is null)
+                        // Zip pack import. The archive must never reach the uploads folder — it would be
+                        // publicly served — so it moves to the system temp dir instead, and the
+                        // background import owns (and eventually deletes) it.
+                        if (kind == "gif-pack")
                         {
-                            logger.LogWarning("Voice message rejected: {FileName} ({Size}KB)", originalFileName, rawSize / 1024);
-                            Done(new { type = "error", error = VoiceService.IsAvailable ? "Could not process this voice message" : "Voice messages are unavailable on this server (ffmpeg missing)" });
-                            return;
-                        }
-                        if (user != null)
-                            mediaLog.Log(user.Id, user.Username, originalFileName, voiceName, new FileInfo(voicePath).Length, "voice", ".m4a");
-                        logger.LogDebug("Voice message accepted: {FileName} ({Duration}ms, {RawSize}KB recorded)", voiceName, voice.DurationMs, rawSize / 1024);
-                        Done(new { type = "voice", url = $"/uploads/{voiceName}", durationMs = voice.DurationMs });
-                        return;
-                    }
-
-                    string type;
-                    if (kind == "gif" || _imageExtensions.Contains(extension))
-                        type = "image"; // Will be re-classified to gif below if applicable.
-                    else if (VideoService.IsVideoFile(extension))
-                        type = "video";
-                    else
-                    {
-                        logger.LogWarning("Unsupported file type uploaded via tus: {Extension}", extension);
-                        return;
-                    }
-
-                    var uploadsFolder = uploads.Root;
-                    var uniqueFileName = $"{Guid.NewGuid()}{extension}";
-                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                    File.Move(tusFilePath, filePath);
-                    CleanupTusMetadata();
-
-                    var fileSize = new FileInfo(filePath).Length;
-
-                    // GIF routing: explicit kind=gif, .gif extension, or a short silent video clip.
-                    // GifService consumes the source file on success; failure leaves it in place for the regular pipeline.
-                    var isExplicitGif = kind == "gif" || extension == ".gif";
-                    var probeForGif = isExplicitGif
-                        || (type == "video" && _videoExtensionsForGifProbe.Contains(extension));
-                    var isLibraryUpload = target is "user" or "server"; // manager upload, not a chat attachment
-                    if (probeForGif)
-                    {
-                        // Authoritative gate for library uploads — OnBeforeCreate only rejected
-                        // early to save bandwidth, and its inputs are client-controlled headers.
-                        if (isLibraryUpload)
-                        {
-                            var isAdmin = user != null && userService.IsAdmin(user.Id);
-                            var overQuota = user != null && !isAdmin && target == "user"
-                                && fileSize + gifService.GetUserLibraryBytes(user.Id) > gifService.UserQuotaBytes;
-                            if (user == null || (target == "server" && !isAdmin) || overQuota)
+                            var serverTarget = target == "server";
+                            if (user == null || (serverTarget && !userService.IsAdmin(user.Id)))
                             {
-                                try { File.Delete(filePath); } catch { }
-                                Done(new
-                                    { type = "error", error = overQuota ? "GIF storage quota exceeded" : "Not allowed" });
+                                logger.LogWarning("Rejected gif-pack upload ({Reason})",
+                                    user == null ? "unauthenticated" : "server target without admin");
+                                try { File.Delete(tusFilePath); } catch { }
+                                CleanupTusMetadata();
+                                Done(new { type = "error", error = "Not allowed" });
                                 return;
                             }
+
+                            var zipPath = Path.Combine(Path.GetTempPath(), $"gif-pack-{file.Id}.zip");
+                            File.Move(tusFilePath, zipPath);
+                            CleanupTusMetadata();
+
+                            var importId = gifService.StartPackImport(zipPath, user.Id, serverTarget);
+                            mediaLog.Log(user.Id, user.Username, originalFileName, $"gif-pack/{importId}",
+                                new FileInfo(zipPath).Length, "gif-pack", ".zip");
+                            logger.LogInformation("GIF pack accepted from {User} → import {ImportId} (server: {Server})",
+                                user.Username, importId, serverTarget);
+                            Done(new { type = "gif-pack", importId });
+                            return;
                         }
 
-                        var contentType = MimeFromExtension(extension);
-                        var gifAttachment = await gifService.TryAcceptAsGifAsync(
-                            filePath, contentType, isExplicitGif, user?.Id, uploadedFileName);
-                        if (gifAttachment != null)
+                        // A voice message (IB-70). The transcode reads the tus part itself and writes the .m4a into the
+                        // uploads folder, so the raw recording, whose extension the client chose, is never a served file.
+                        if (kind == "voice")
                         {
-                            logger.LogDebug("Tus upload classified as GIF: {FileName} ({EntryId})",
-                                originalFileName, gifAttachment.GifEntryId);
+                            var voiceName = $"{Guid.NewGuid()}.m4a";
+                            var voicePath = Path.Combine(uploads.Root, voiceName);
+                            var voice = await voiceService.TranscodeAsync(tusFilePath, voicePath);
+                            var rawSize = new FileInfo(tusFilePath).Length;
+                            try { File.Delete(tusFilePath); } catch { }
+                            CleanupTusMetadata();
+                            if (voice is null)
+                            {
+                                logger.LogWarning("Voice message rejected: {FileName} ({Size}KB)", originalFileName, rawSize / 1024);
+                                Done(new { type = "error", error = VoiceService.IsAvailable ? "Could not process this voice message" : "Voice messages are unavailable on this server (ffmpeg missing)" });
+                                return;
+                            }
                             if (user != null)
-                            {
-                                mediaLog.Log(user.Id, user.Username, originalFileName ?? "unknown",
-                                    $"gif/{gifAttachment.GifEntryId}", fileSize, "gif", extension);
-                            }
-
-                            // Library uploads land in their destination (folder = the manager's
-                            // currently selected folder); chat uploads stay chat-only.
-                            if (isLibraryUpload && user != null)
-                            {
-                                if (target == "server")
-                                    gifService.SetServerGif(gifAttachment.GifEntryId, isServer: true, folder);
-                                else
-                                    gifService.SetFavorite(user.Id, gifAttachment.GifEntryId, favorite: true, folder);
-                            }
-
-                            Done(new
-                            {
-                                type = "gif",
-                                gifEntryId = gifAttachment.GifEntryId,
-                                width = gifAttachment.Width,
-                                height = gifAttachment.Height
-                            });
+                                mediaLog.Log(user.Id, user.Username, originalFileName, voiceName, new FileInfo(voicePath).Length, "voice", ".m4a");
+                            logger.LogDebug("Voice message accepted: {FileName} ({Duration}ms, {RawSize}KB recorded)", voiceName, voice.DurationMs, rawSize / 1024);
+                            Done(new { type = "voice", url = $"/uploads/{voiceName}", durationMs = voice.DurationMs });
                             return;
                         }
-                        else if (isLibraryUpload)
+
+                        string type;
+                        if (kind == "gif" || _imageExtensions.Contains(extension))
+                            type = "image"; // Will be re-classified to gif below if applicable.
+                        else if (VideoService.IsVideoFile(extension))
+                            type = "video";
+                        else
                         {
-                            // A failed manager upload must not fall through into the chat media
-                            // pipeline — it would post as an orphan image nobody asked for.
-                            try { File.Delete(filePath); } catch { }
-                            Done(new { type = "error", error = "Could not process this file as a GIF" });
+                            logger.LogWarning("Unsupported file type uploaded via tus: {Extension}", extension);
+                            Done(new { type = "error", error = "Unsupported file type" });   // without it the result stays "still at work" until the sweep
                             return;
                         }
-                        else if (isExplicitGif)
+
+                        var uploadsFolder = uploads.Root;
+                        var uniqueFileName = $"{Guid.NewGuid()}{extension}";
+                        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                        File.Move(tusFilePath, filePath);
+                        CleanupTusMetadata();
+
+                        var fileSize = new FileInfo(filePath).Length;
+
+                        // GIF routing: explicit kind=gif, .gif extension, or a short silent video clip.
+                        // GifService consumes the source file on success; failure leaves it in place for the regular pipeline.
+                        var isExplicitGif = kind == "gif" || extension == ".gif";
+                        var probeForGif = isExplicitGif
+                            || (type == "video" && _videoExtensionsForGifProbe.Contains(extension));
+                        var isLibraryUpload = target is "user" or "server"; // manager upload, not a chat attachment
+                        if (probeForGif)
                         {
-                            logger.LogWarning("Explicit kind=gif upload rejected: {FileName}", originalFileName);
-                            // Fall through to regular pipeline so the file isn't lost.
+                            // Authoritative gate for library uploads — OnBeforeCreate only rejected
+                            // early to save bandwidth, and its inputs are client-controlled headers.
+                            if (isLibraryUpload)
+                            {
+                                var isAdmin = user != null && userService.IsAdmin(user.Id);
+                                var overQuota = user != null && !isAdmin && target == "user"
+                                    && fileSize + gifService.GetUserLibraryBytes(user.Id) > gifService.UserQuotaBytes;
+                                if (user == null || (target == "server" && !isAdmin) || overQuota)
+                                {
+                                    try { File.Delete(filePath); } catch { }
+                                    Done(new
+                                        { type = "error", error = overQuota ? "GIF storage quota exceeded" : "Not allowed" });
+                                    return;
+                                }
+                            }
+
+                            var contentType = MimeFromExtension(extension);
+                            var gifAttachment = await gifService.TryAcceptAsGifAsync(
+                                filePath, contentType, isExplicitGif, user?.Id, uploadedFileName);
+                            if (gifAttachment != null)
+                            {
+                                logger.LogDebug("Tus upload classified as GIF: {FileName} ({EntryId})",
+                                    originalFileName, gifAttachment.GifEntryId);
+                                if (user != null)
+                                {
+                                    mediaLog.Log(user.Id, user.Username, originalFileName ?? "unknown",
+                                        $"gif/{gifAttachment.GifEntryId}", fileSize, "gif", extension);
+                                }
+
+                                // Library uploads land in their destination (folder = the manager's
+                                // currently selected folder); chat uploads stay chat-only.
+                                if (isLibraryUpload && user != null)
+                                {
+                                    if (target == "server")
+                                        gifService.SetServerGif(gifAttachment.GifEntryId, isServer: true, folder);
+                                    else
+                                        gifService.SetFavorite(user.Id, gifAttachment.GifEntryId, favorite: true, folder);
+                                }
+
+                                Done(new
+                                {
+                                    type = "gif",
+                                    gifEntryId = gifAttachment.GifEntryId,
+                                    width = gifAttachment.Width,
+                                    height = gifAttachment.Height
+                                });
+                                return;
+                            }
+                            else if (isLibraryUpload)
+                            {
+                                // A failed manager upload must not fall through into the chat media
+                                // pipeline — it would post as an orphan image nobody asked for.
+                                try { File.Delete(filePath); } catch { }
+                                Done(new { type = "error", error = "Could not process this file as a GIF" });
+                                return;
+                            }
+                            else if (isExplicitGif)
+                            {
+                                logger.LogWarning("Explicit kind=gif upload rejected: {FileName}", originalFileName);
+                                // Fall through to regular pipeline so the file isn't lost.
+                            }
                         }
-                    }
 
-                    logger.LogDebug("Tus upload complete: {FileName} ({Type}, {Size}KB)", uniqueFileName, type, fileSize / 1024);
+                        logger.LogDebug("Tus upload complete: {FileName} ({Type}, {Size}KB)", uniqueFileName, type, fileSize / 1024);
 
-                    if (user != null)
-                    {
-                        mediaLog.Log(user.Id, user.Username, originalFileName, uniqueFileName, fileSize, type, extension);
-                    }
-
-                    if (type == "image")
-                    {
-                        var sw = System.Diagnostics.Stopwatch.StartNew();
-                        await imageService.GenerateMediumThumbnailAsync(filePath);
-                        var mediumMs = sw.ElapsedMilliseconds;
-
-                        _ = Task.Run(async () =>
+                        if (user != null)
                         {
-                            try
-                            {
-                                var swLarge = System.Diagnostics.Stopwatch.StartNew();
-                                await imageService.GenerateLargeThumbnailAsync(filePath);
-                                swLarge.Stop();
-                                mediaLog.SetCompressDuration(uniqueFileName, mediumMs + swLarge.ElapsedMilliseconds);
-                            }
-                            catch (Exception ex)
-                            {
-                                logger.LogError(ex, "Error generating large thumbnail for {FileName}", uniqueFileName);
-                            }
-                        });
-                    }
-                    else // video
-                    {
-                        if (VideoService.IsAvailable)
+                            mediaLog.Log(user.Id, user.Username, originalFileName, uniqueFileName, fileSize, type, extension);
+                        }
+
+                        if (type == "image")
                         {
-                            await videoService.GeneratePosterAsync(filePath);
+                            var sw = System.Diagnostics.Stopwatch.StartNew();
+                            await imageService.GenerateMediumThumbnailAsync(filePath);
+                            var mediumMs = sw.ElapsedMilliseconds;
 
                             _ = Task.Run(async () =>
                             {
                                 try
                                 {
-                                    var (compressedPath, durationMs) = await videoService.CompressVideoAsync(filePath);
-                                    if (compressedPath != null && durationMs > 0)
-                                        mediaLog.SetCompressDuration(uniqueFileName, durationMs);
+                                    var swLarge = System.Diagnostics.Stopwatch.StartNew();
+                                    await imageService.GenerateLargeThumbnailAsync(filePath);
+                                    swLarge.Stop();
+                                    mediaLog.SetCompressDuration(uniqueFileName, mediumMs + swLarge.ElapsedMilliseconds);
                                 }
                                 catch (Exception ex)
                                 {
-                                    logger.LogError(ex, "Error compressing video {FileName}", uniqueFileName);
+                                    logger.LogError(ex, "Error generating large thumbnail for {FileName}", uniqueFileName);
                                 }
                             });
                         }
-                    }
+                        else // video
+                        {
+                            if (VideoService.IsAvailable)
+                            {
+                                await videoService.GeneratePosterAsync(filePath);
 
-                    Done(new { url = $"/uploads/{uniqueFileName}", type });
+                                _ = Task.Run(async () =>
+                                {
+                                    try
+                                    {
+                                        var (compressedPath, durationMs) = await videoService.CompressVideoAsync(filePath);
+                                        if (compressedPath != null && durationMs > 0)
+                                            mediaLog.SetCompressDuration(uniqueFileName, durationMs);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        logger.LogError(ex, "Error compressing video {FileName}", uniqueFileName);
+                                    }
+                                });
+                            }
+                        }
+
+                        Done(new { url = $"/uploads/{uniqueFileName}", type });
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "The work on the finished upload {FileId} failed", file.Id);
+                        Done(new { type = "error", error = "Could not process this file" });
+                    }
                 }
             }
         }).RequireCors("TusUpload");
 
-        // The answer goes to the person who uploaded, once. The file id is the only key, so a guessed or leaked id
-        // must not hand someone else's file over; the server's own path stays on the server.
-        app.MapGet("/api/tus/info/{fileId}", (string fileId, ClaimsPrincipal me) =>
+        // What a finished upload became, for the person who uploaded it: a guessed or leaked id must not hand someone
+        // else's file over, and the server's own path stays on the server. Three answers: 200 with the result, as often
+        // as it is asked for; 202 while the server still works on the file; 404 for an id that is not this person's or
+        // that the server does not know, and then the client sends the file again. The 202 has no body on purpose: a
+        // client from before these answers takes every 2xx for the result, and an empty body makes it ask again.
+        app.MapGet("/api/tus/info/{fileId}", async (string fileId, ClaimsPrincipal me) =>
         {
-            if (!_completedFiles.TryGetValue(fileId, out var done) || done.UserId != me.Id())
-                return Results.NotFound(new { error = "File not found or still processing" });
-            _completedFiles.TryRemove(fileId, out _);
-            return Results.Ok(done.Result);
+            if (!UploadIds.Owns(me.Id(), fileId)) return Results.NotFound(new { error = "File not found" });   // also the check that makes the id safe as a file name
+            try
+            {
+                // Shared with the writer: OnFileComplete may write the result at this moment, and its write must not fail.
+                await using var stream = new FileStream(Path.Combine(uploads.TusResults, fileId + ".json"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                using var reader = new StreamReader(stream);
+                var result = await reader.ReadToEndAsync();
+                return result.Length == 0 ? Results.StatusCode(StatusCodes.Status202Accepted) : Results.Text(result, "application/json");
+            }
+            catch (IOException) { return Results.NotFound(new { error = "File not found" }); }   // no such file (FileNotFoundException and DirectoryNotFoundException are IOExceptions)
         }).RequireAuthorization().RequireCors("TusUpload");
     }
 

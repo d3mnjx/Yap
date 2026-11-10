@@ -11,7 +11,7 @@ import { acceptDialogs, SHOTS, sleep, waitTrue, short, row, step, stepLogs, fmt,
 // `VAR=1 node ...` does not work in the Windows shell that npm uses.
 process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = '1';
 
-const PNG = makePng(fixture('tiny.png'), [200, 120, 40], 1);   // step 8 looks for this file name in the pending row
+const PNG = makePng(fixture('tiny.png'), [200, 120, 40], 1);   // step 10 looks for this file name on the thumbnail of the pending row
 const dotState = async p => p.locator('.connection-dot').evaluate(e => ({ hidden: e.hidden, display: getComputedStyle(e).display, cls: e.className }));
 // A plain summary of the client's store, for checks that the DOM cannot show (the open conversation's identity, hasMore, the counts).
 const st = p => p.evaluate(async () => {
@@ -202,10 +202,10 @@ await step(10, 'File upload offline, then online', async (check) => {
   await sendFiles(A, PNG);
   await sleep(500);
   const modal = await A.locator('.warning-modal').isVisible().catch(() => false);
-  const r = A.locator('.message-group.pending').filter({ hasText: 'tiny.png' });
+  const r = A.locator('.message-group.pending').filter({ has: A.locator('.pending-thumb[title^="tiny.png"]') });
   const has = await waitTrue(async () => (await r.count()) === 1, 3000);
   await sleep(2000);
-  const info = has ? await r.evaluate(e => ({ cls: e.className, files: e.querySelector('.pending-files')?.textContent ?? null, status: e.querySelector('.pending-status')?.textContent ?? null, cancel: !!e.querySelector('.pending-cancel'), retry: !!e.querySelector('.pending-retry'), track: !!e.querySelector('.upload-progress-track') })) : null;
+  const info = has ? await r.evaluate(e => ({ cls: e.className, thumbs: [...e.querySelectorAll('.pending-thumb')].map(t => t.title), status: e.querySelector('.pending-status')?.textContent ?? null, cancel: !!e.querySelector('.pending-cancel'), retry: !!e.querySelector('.pending-retry'), track: !!e.querySelector('.upload-progress-track') })) : null;
   check(has && !info?.cls.includes('failed'), `pending row: ${has}; ${JSON.stringify(info)}; warning modal: ${modal}`);
   const t0 = Date.now();
   await ctxA.setOffline(false);
@@ -225,7 +225,7 @@ await step(11, 'Upload while the server cannot be reached stays pending (OF-08)'
   const before = await galleries();
   await ctxA.route('**/api/tus**', route => route.abort('connectionfailed'));   // the browser is online; the server is not reachable
   await sendFiles(A, DOWN);
-  const r = A.locator('.message-group.pending').filter({ hasText: 'down.png' });
+  const r = A.locator('.message-group.pending').filter({ has: A.locator('.pending-thumb[title^="down.png"]') });
   const has = await waitTrue(async () => (await r.count()) === 1, 3000);
   await sleep(12000);   // tus retries four times, about nine seconds, before it reports
   const info = has ? await r.evaluate(e => ({ cls: e.className, status: e.querySelector('.pending-status')?.textContent ?? null, reason: e.querySelector('.pending-reason')?.textContent ?? null })) : null;
@@ -237,7 +237,27 @@ await step(11, 'Upload while the server cannot be reached stays pending (OF-08)'
   check(ok, `sent after the server is back: ${ok} after ${Date.now() - t0} ms; pending rows left ${await A.locator('.message-group.pending').count()}; statuses ${JSON.stringify(await A.locator('.message-group .pending-status').allInnerTexts().catch(() => []))}`);
 });
 
-await step(12, 'New-version strip', async (check, notes) => {
+await step(12, 'A text stays pending while a proxy answers 502 for the server, and goes when the server is back (OF-08)', async (check) => {
+  // The browser is online and the server restarts: the reverse proxy in front of it answers the POST with a 502.
+  let down = true, tried = 0;
+  const posts = /\/api\/(channels|dm)\/[^/]+\/messages$/;
+  const handler = route => down && route.request().method() === 'POST' && ++tried ? route.fulfill({ status: 502, contentType: 'text/plain', body: 'Bad Gateway' }) : route.continue();
+  await ctxA.route(posts, handler);
+  await A.fill('.message-input', 'sent during the restart');
+  await A.press('.message-input', 'Enter');
+  const r = row(A, 'sent during the restart');
+  const got = await waitTrue(() => tried > 0, 5000, 50);
+  await sleep(500);   // time for the client to act on the answer
+  const cls = (await r.count()) === 1 ? await r.getAttribute('class') : '';
+  check(got && cls.includes('pending') && !cls.includes('failed'), `the POST got a 502: ${got}; the row is pending and not failed: "${cls}"`);
+  down = false;
+  await A.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));   // a wake-up, as the hub's reconnect is one
+  const sent = await waitTrue(async () => (await r.count()) === 1 && !(await r.getAttribute('class')).includes('pending'), 10000, 100);
+  check(sent && tried === 1, `sent after the server is back: ${sent}; POSTs that got the 502: ${tried}`);
+  await ctxA.unroute(posts, handler);
+});
+
+await step(13, 'New-version strip', async (check, notes) => {
   const cycle = async () => {
     const t0 = Date.now();
     await ctxA.setOffline(true);
@@ -278,7 +298,7 @@ await step(12, 'New-version strip', async (check, notes) => {
   await A.screenshot({ path: SHOTS + '14-notice.png' });
 });
 
-await step(13, 'Sign out without a connection does not sign out (AU-22)', async (check) => {
+await step(14, 'Sign out without a connection does not sign out (AU-22)', async (check) => {
   await ctxA.setOffline(true);
   const off = await waitTrue(async () => (await st(A)).connection === 'offline', 10000, 100);
   await A.click('.status-button');
@@ -294,7 +314,7 @@ await step(13, 'Sign out without a connection does not sign out (AU-22)', async 
   check(back && (await st(A)).user === 'boss', `after the network returns and a reload: user ${(await st(A)).user}`);
 });
 
-await step(14, 'Sign out clears IndexedDB', async (check) => {
+await step(15, 'Sign out clears IndexedDB', async (check) => {
   await A.click('.status-button');
   await A.locator('.status-dropdown [data-action="signout"]').click();
   await acceptDialogs(A);

@@ -17,6 +17,22 @@
 .message-pending .upload-progress-track { flex: 1 1 100%; }
 .message-pending button { background: none; border: 1px solid var(--bg-muted); border-radius: 4px; color: inherit; padding: 0.125rem 0.5rem; cursor: pointer; font-size: inherit; }
 .message-pending .pending-status { color: var(--color-danger); }
+.message-pending .pending-reason { white-space: pre-line; }   /* one line for each refused file */
+
+/* The files of a pending row while they upload (IB-34): the squares of the tray (css/composer.css), each with the
+   state of its file. Waiting is dimmed, uploading has a bar along the bottom edge, done has a check mark, and a
+   file the server refused has a warning mark. */
+.pending-thumbs { display: flex; flex: 1 1 100%; flex-wrap: wrap; gap: 6px; }
+.pending-thumb .upload-progress-track { position: absolute; left: 4px; right: 4px; bottom: 4px; min-width: 0; background: rgba(0, 0, 0, 0.55); }
+.pending-thumb[data-state="waiting"] .tray-media,
+.pending-thumb[data-state="waiting"] .tray-play { opacity: 0.45; }
+.pending-thumb[data-state="done"] .upload-progress-track,
+.pending-thumb[data-state="failed"] .upload-progress-track { display: none; }
+.pending-mark { display: none; position: absolute; top: 4px; right: 4px; width: 18px; height: 18px; border-radius: 50%; color: #fff; font-size: 12px; font-weight: 700; line-height: 18px; text-align: center; }
+.pending-thumb[data-state="done"] .pending-mark { display: block; background: var(--accent-primary); }
+.pending-thumb[data-state="done"] .pending-mark::after { content: "✓"; }
+.pending-thumb[data-state="failed"] .pending-mark { display: block; background: var(--color-danger); }
+.pending-thumb[data-state="failed"] .pending-mark::after { content: "!"; }
 
 /* A row's reason for two seconds (MR-75). */
 .row-reason { position: absolute; right: 1rem; top: 0.25rem; background: var(--bg-tooltip); color: #fff; font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px; z-index: 6; }

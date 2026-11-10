@@ -7,6 +7,7 @@
     "smoke": "node smoke.mjs",
     "offline": "node offline.mjs",
     "features": "node features.mjs",
+    "uploads": "node uploads.mjs",
     "pages": "node pages.mjs",
     "latency": "node latency.mjs",
     "screenshots": "node screenshots.mjs",

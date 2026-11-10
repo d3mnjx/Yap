@@ -8,8 +8,8 @@ server, runs its steps, prints PASS or FAIL for each step, and stops the server 
   Settings), sign-out (with a second tab of the same device) and the back button.
 - `offline.mjs` checks the offline features: the service worker, the connection dot, the outbox, a send into a
   direct message never opened on the device, a reload without a network, the return of the network, a reconnect
-  after more than a page arrived, a repeated POST, a file sent offline, the new-version strip, a sign-out without
-  a connection, and the clean-up of IndexedDB at sign-out.
+  after more than a page arrived, a repeated POST, a file sent offline, a text sent while a proxy answers 502 for
+  the server, the new-version strip, a sign-out without a connection, and the clean-up of IndexedDB at sign-out.
 - `features.mjs` checks replies, link cards, the image gallery, emoji sizes, pack emoji, older pages, the
   New messages pill, typing in a DM, Shift+Enter, two GIF files in one pick, the automatic read while Away, the
   keys on a GIF favourite star, an emoji pick at the 4000-character limit with Edit on a failed row, a rename
@@ -17,6 +17,12 @@ server, runs its steps, prints PASS or FAIL for each step, and stops the server 
   unpin, and a video that plays in the entry, and the jump to a message that is not loaded: the window around it
   with one server call, an older page above it, the pill, the end row under it, and the way back by the pill, the
   end row's button, the arrow, a send and a reconnect.
+- `uploads.mjs` checks the uploads of a message: a text that goes out while a picture uploads, the state of each
+  file in the pending row with three files at one time and the pictures in the order of the pick, an upload that
+  goes on after a reload from the bytes the server has, a last chunk whose answer was lost (with a reload and
+  without one), a message that goes out without a file the server refused, which stays as a failed row,
+  a half-sent file that the server no longer has, and a file that waits while a proxy answers 502 for a server
+  that restarts.
 - `pages.mjs` checks the pages of step 5: the login rules, Settings (themes, text size, profile, the login link,
   the retired secret code, sessions, mutes, time and date), the verification and link pages, an account switch that
   reaches the other tab of the device, Admin (users, invites, registration and approval, bot, debug, the
@@ -58,6 +64,7 @@ npx playwright install chromium
 npm run smoke
 npm run offline
 npm run features
+npm run uploads
 npm run pages
 npm run latency
 npm run load

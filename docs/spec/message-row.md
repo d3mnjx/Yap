@@ -188,9 +188,9 @@ A message row is one message as it appears in the conversation. The row shows wh
 
 ### Pending and failed messages
 
-**MR-69** When the reader sends a message, it appears immediately as a full row, faded, at the end of the list. The header rules of a normal row apply to it. It becomes a normal row when the server accepts it. Messages sent quickly keep their order.
+**MR-69** When the reader sends a message, it appears immediately as a full row, faded, at the end of the list. The header rules of a normal row apply to it. It becomes a normal row when the server accepts it. Messages sent quickly keep their order. A message with files becomes a normal row when its last file is uploaded, and it takes its place in the list then ([IB-28](input-box.md#IB-28)).
 
-**MR-70** While files upload, the pending row shows the file names, one progress bar for the message, and "Cancel upload". Cancel removes the pending message.
+**MR-70** While files upload, the pending row shows one thumbnail for each file with the state of that file, and "Cancel upload" ([IB-34](input-box.md#IB-34)). A pending voice message shows one progress bar. Cancel removes the pending message.
 
 **MR-71** When a message cannot be sent, its row shows "Failed", the reason, "Retry" and "Remove". Remove deletes the message from this device only. A message that waited more than one day shows as failed.
 
@@ -265,7 +265,7 @@ A message row is one message as it appears in the conversation. The row shows wh
 | Own message sent | all | Faded full row at the end, immediately. |
 | Message accepted | all | Row becomes normal. |
 | Send failed | all | "Failed", reason, Retry, Remove. |
-| Files uploading | all | File names, progress bar, "Cancel upload". |
+| Files uploading | all | One thumbnail for each file with its state, "Cancel upload". |
 | No connection, reaction, star, Save or Delete | all | Nothing changes. "Needs a connection" at the row for 2 s. |
 | Someone joins or leaves the lobby | all | Centred italic system line. |
 | Someone pins a message | all | Centred italic system line "{name} pinned a message", kept in the history. No count, no notification, no pill. An unpin shows nothing. |

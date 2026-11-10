@@ -5,6 +5,7 @@
 
 import { state, on, displayName, roomById, isReadOnly, setDraft, dmByChannel } from '../store.js';
 import { clone, el, replace } from '../render/dom.js';
+import { fileThumb } from '../render/thumb.js';
 import { inline, pick } from '../render/text.js';
 import * as hub from '../hub.js';
 import * as overlays from './overlays.js';
@@ -322,7 +323,7 @@ export function Composer(root) {
     renderTray();
   }
 
-  // Send empties the tray. The pending row shows the names and the progress, not the thumbnails (IB-34).
+  // Send empties the tray. The pending row draws the same squares from its own Blob URLs (sender.js thumbsOf, IB-34).
   function takeFiles() {
     const taken = files.splice(0);
     for (const f of taken) URL.revokeObjectURL(f.url);
@@ -334,13 +335,9 @@ export function Composer(root) {
     tray.hidden = !files.length;
     container.classList.toggle('has-files', files.length > 0);                              // Send stays visible over an empty draft (composer.css)
     replace(tray, files.map(entry => {
-      const video = entry.file.type.startsWith('video/');
-      // #t=0.001 makes Safari draw the first frame; it draws nothing for a plain metadata preload.
-      const media = video ? el('video', { class: 'tray-media', src: `${entry.url}#t=0.001`, muted: true, playsinline: true, preload: 'metadata' })
-                          : el('img', { class: 'tray-media', src: entry.url, alt: entry.file.name });
-      return el('div', { class: 'tray-item', title: entry.file.name },
-        media, video ? el('span', { class: 'tray-play', 'aria-hidden': 'true' }) : null,
-        el('button', { type: 'button', class: 'tray-remove', 'aria-label': `Remove ${entry.file.name}`, onpointerdown: e => e.preventDefault(), onclick: () => removeFile(entry) }, '✕'));   // no focus move, like + (IB-22)
+      const item = fileThumb(entry.file, entry.url);
+      item.append(el('button', { type: 'button', class: 'tray-remove', 'aria-label': `Remove ${entry.file.name}`, onpointerdown: e => e.preventDefault(), onclick: () => removeFile(entry) }, '✕'));   // no focus move, like + (IB-22)
+      return item;
     }));
   }
 

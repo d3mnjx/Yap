@@ -28,7 +28,7 @@ Yap runs in the browser and can also be installed as an app on a phone or a desk
 
 **OF-09** Without a connection, the tray of the input box holds files up to 25 MB in total. Yap refuses a pick or a send that goes over this, and the input box shows "Needs a connection".
 
-**OF-10** Yap sends pending messages in the order in which the user wrote them, as soon as a connection exists. The user sees each one change into a normal message. The user does not have to do anything. An upload that stopped when the network changed goes on when the connection returns, with the files that are not done.
+**OF-10** Yap sends pending messages in the order in which the user wrote them, as soon as a connection exists. A message with files goes when its last file is uploaded, and the messages behind it do not wait for it ([IB-28](input-box.md#IB-28)). The user sees each one change into a normal message. The user does not have to do anything. An upload that stopped goes on when the connection returns, from the bytes that the server already has. This is also true after a reload and after the app was closed. A restart of the server does not stop it. The server keeps an unfinished upload for one day after its last bytes. After that, the file uploads again from its start.
 
 **OF-11** When the server refuses a pending message, the message shows as failed, with the reason, "Retry" and "Remove". A pending message that waits for more than one day also shows as failed. Remove deletes the message from the device only.
 
