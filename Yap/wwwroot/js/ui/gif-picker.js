@@ -8,10 +8,12 @@ import { clone, el, replace } from '../render/dom.js';
 import * as overlays from './overlays.js';
 import * as router from '../router.js';
 
-// GifPicker({ onSend(gif), onWarn(title, text) }) returns { element, opened() }.
+// GifPicker({ onSend(gif), onUpload(), onWarn(title, text) }) returns { element, opened() }.
 // onSend gets { entryId, preview, isImage, width, height } for a library card, or
 // { provider: item, searchText, preview, isImage, width, height } for a provider card.
-export function GifPicker({ onSend, onWarn }) {
+// onUpload is called when an upload starts and returns the send function for its GIF: the conversation of that
+// moment gets the GIF, whatever is open when the upload ends (PK-41).
+export function GifPicker({ onSend, onUpload, onWarn }) {
   const picker = clone('t-gif-picker');
   const rail = picker.querySelector('.gif-sidebar');
   const search = picker.querySelector('.gif-search input');
@@ -56,7 +58,7 @@ export function GifPicker({ onSend, onWarn }) {
 
   for (const b of rail.querySelectorAll('.category-btn')) {
     b.addEventListener('click', () => {
-      if (b.dataset.tab === tab) return;                                                              // PK-15
+      if (b.dataset.tab === tab) return;                                                              // a tap on the active tab does nothing (PK-15)
       tab = b.dataset.tab; folder = null;
       search.value = ''; searching = null; clear.hidden = true;
       load(tab === 'browse' ? null : tab);
@@ -271,6 +273,7 @@ export function GifPicker({ onSend, onWarn }) {
     if (!file) return;
     if (state.connection !== 'connected') { overlays.reason(picker, 'Needs a connection'); return; }
     if (file.size > 50 * 1024 * 1024) { onWarn("Couldn't send GIF", 'File is too large (max 50MB)'); return; }   // PK-38
+    const send = onUpload();   // before the wait: the person may open another conversation during the upload
     uploadLabel.classList.add('is-busy'); uploadLabel.title = 'Adding GIF…';
     uploadLabel.querySelector('.gif-spinner').hidden = false; uploadLabel.querySelector('.gif-upload-icon').setAttribute('hidden', '');
     overlay.hidden = false;
@@ -278,7 +281,7 @@ export function GifPicker({ onSend, onWarn }) {
       const info = await uploadOne(file, state.config?.uploadUrl || '/api/tus', { kind: 'gif', target: 'user', folder: '' });   // favourited as unsorted, within the quota (PK-41, PK-42)
       if (info.type === 'error') { onWarn("Couldn't send GIF", info.error ?? 'Upload failed'); return; }
       if (info.type !== 'gif') { onWarn("Couldn't send GIF", 'Could not process this file as a GIF'); return; }
-      onSend({ entryId: info.gifEntryId, preview: null, isImage: true, width: info.width, height: info.height, searchText: null });   // PK-41
+      send({ entryId: info.gifEntryId, preview: null, isImage: true, width: info.width, height: info.height, searchText: null });   // PK-41
       load('favorites'); load('recent');
     } catch {
       onWarn("Couldn't send GIF", 'Upload failed');

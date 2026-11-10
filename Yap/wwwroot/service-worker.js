@@ -26,7 +26,7 @@ const SHELL_URLS = {{shell}};
 // verification page and an invite ask the server first: it answers a signed-out visitor differently there (the
 // welcome page, AD-36; the visitor log, AD-20). The stored shell is their fallback without a network (OF-06).
 const ROUTES = new RegExp('^(?:{{routes}}|/pwa-launch)$');
-const SERVER_FIRST = /^\/(?:login|verify\/[^/]+|invite\/[^/]+)?$/;
+const SERVER_FIRST = /^\/(?:login|verify\/[^/]+|invite\/[^/]+)?$/;   // update.js has a copy for reloadForNewBuild; keep the two the same
 const EMOJI_HOSTS = ['cdn.jsdelivr.net'];
 const EMOJI_PATHS = ['/emoji-fallback/', '/emoji-packs/', '/custom-emojis/'];
 const MEDIA_PATHS = ['/uploads/', '/gif-cache/', '/media-cache/'];
@@ -189,6 +189,7 @@ async function resubscribe() {
     } catch { /* best effort */ }
 }
 
+// The same as keyBytes in js/push.js. The worker is a classic script and cannot import a module, so it keeps a copy.
 function base64UrlToBytes(value) {
     const padded = value + '='.repeat((4 - value.length % 4) % 4);
     const raw = atob(padded.replace(/-/g, '+').replace(/_/g, '/'));

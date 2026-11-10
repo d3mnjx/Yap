@@ -4,7 +4,7 @@
 import { state, on, mergeMe, serverMuted, displayName, projectName } from '../store.js';
 import { build, reloadForNewBuild } from '../update.js';
 import { api } from '../api.js';
-import { clone, el, replace } from '../render/dom.js';
+import { clone, el, icon, replace } from '../render/dom.js';
 import { inline } from '../render/text.js';
 import { avatar } from '../render/avatar.js';
 import { ago, timeOf, usePreferences } from '../render/time.js';
@@ -19,20 +19,16 @@ import { confirm } from '../ui/confirm.js';
 import { mountDebugInfo } from './settings-debug.js';
 
 const FONT_SIZES = [14, 15, 16, 17, 18, 20];   // ST-10
-const BELL = '<svg class="seg-icon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg>';
-const BELL_OFF = '<svg class="seg-icon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm0-15.5c2.49 0 4 2.02 4 4.5v5h2v1H6v-1h2v-5c0-3.07 1.63-5.64 4.5-6.32V4c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v.68c-.17.04-.33.09-.5.14zM5.41 3.35L4 4.76l2.81 2.81C6.29 8.57 6 9.74 6 11v5l-2 2v1h14.24l1.35 1.35 1.41-1.41L5.41 3.35z"/></svg>';
+// The icons of this page: the name of the drawing in the icon set (index.html, t-icons) and the attributes of the use.
+const SEG = { class: 'seg-icon', width: 15, height: 15 };
+const LINE = { width: 18, height: 18 };
+const BELL = ['bell', SEG], BELL_OFF = ['bell-off', SEG], SLIDERS = ['sliders', SEG];
 // The state of this device gets a mark next to its word: a green check when the device gets notifications, a red
 // crossed bell when it does not (Off, Blocked, Not possible here, Not set up on this server). The crossed bell is
 // the app's sign for "no notifications" (the muted bells, the red notice); a cross would read as delete or close.
-const CHECK_CIRCLE = '<svg class="status-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>';
-const SLIDERS = '<svg class="seg-icon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg>';
-const EYE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
-const EYE_OFF = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
-const COPY = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
-const CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
-
-// Fixed icons of this page: the strings above are ours, not the server's, so a template is safe here.
-const icon = svg => { const t = document.createElement('template'); t.innerHTML = svg; return t.content.firstElementChild; };
+const CHECK_CIRCLE = ['check-circle', { class: 'status-icon', width: 16, height: 16 }];
+const EYE = ['eye-line', LINE], EYE_OFF = ['eye-off-line', LINE], COPY = ['copy-line', LINE];
+const CHECK = ['check', { ...LINE, 'stroke-width': 2 }];   // the symbol leaves the width to its use: the theme card's check is heavier
 
 export function mount(root, route) {
   const page = clone('t-settings');
@@ -121,10 +117,10 @@ export function mount(root, route) {
   const link = { value: null, shown: false };
   const code = { value: null, shown: false };
   function masked(node, text, shown, mask) { node.textContent = shown ? text : mask; }
-  function wireReveal(button, store, draw) { button.replaceChildren(icon(store.shown ? EYE_OFF : EYE)); button.title = store.shown ? 'Hide' : 'Reveal'; button.onclick = () => { store.shown = !store.shown; draw(); }; }
+  function wireReveal(button, store, draw) { button.replaceChildren(icon(...(store.shown ? EYE_OFF : EYE))); button.title = store.shown ? 'Hide' : 'Reveal'; button.onclick = () => { store.shown = !store.shown; draw(); }; }
   function wireCopy(button, text) {
-    button.replaceChildren(icon(COPY)); button.title = 'Copy';
-    button.onclick = async () => { try { await navigator.clipboard.writeText(text); } catch { /* no clipboard */ } button.replaceChildren(icon(CHECK)); button.title = 'Copied!'; setTimeout(() => { button.replaceChildren(icon(COPY)); button.title = 'Copy'; }, 2000); };
+    button.replaceChildren(icon(...COPY)); button.title = 'Copy';
+    button.onclick = async () => { try { await navigator.clipboard.writeText(text); } catch { /* no clipboard */ } button.replaceChildren(icon(...CHECK)); button.title = 'Copied!'; setTimeout(() => { button.replaceChildren(icon(...COPY)); button.title = 'Copy'; }, 2000); };
   }
   function drawLink() {
     const has = !!link.value;
@@ -261,7 +257,7 @@ export function mount(root, route) {
     const thisValue = $('.push-this');
     const thisState = !possible ? ['Not possible here', 'status-unavailable'] : !configured ? ['Not set up on this server', 'status-unavailable'] : blocked ? ['Blocked', 'status-denied'] : mine ? ['On', 'status-enabled'] : ['Off', 'status-disabled'];
     const on = thisState[1] === 'status-enabled';
-    const mark = icon(on ? CHECK_CIRCLE : BELL_OFF); mark.setAttribute('class', `status-icon ${on ? 'status-icon-on' : 'status-icon-off'}`);
+    const mark = icon(...(on ? CHECK_CIRCLE : BELL_OFF)); mark.setAttribute('class', `status-icon ${on ? 'status-icon-on' : 'status-icon-off'}`);
     thisValue.replaceChildren(mark, thisState[0]); thisValue.className = `notification-value push-this ${thisState[1]}`;   // push-this stays: the next draw looks it up
     $('.push-count').textContent = devices.length ? String(devices.length) : 'none yet';
     replace($('.push-list'), devices.map(d => {
@@ -326,7 +322,7 @@ export function mount(root, route) {
       const b = clone('t-seg-btn');
       const on = value === selected;
       b.classList.toggle('seg-selected', on); b.setAttribute('aria-checked', String(on));
-      replace(b.querySelector('.seg-icon-slot'), svg ? [icon(svg)] : []);
+      replace(b.querySelector('.seg-icon-slot'), svg ? [icon(...svg)] : []);
       b.querySelector('.seg-text').textContent = label;
       b.addEventListener('click', () => onPick(value));
       return b;
@@ -373,7 +369,7 @@ export function mount(root, route) {
       const b = item.querySelector('.notif-item-toggle');
       b.classList.toggle('muted', isMuted); b.setAttribute('aria-pressed', String(isMuted));
       b.title = isMuted ? 'Muted — click to allow' : 'Allowed — click to mute'; b.setAttribute('aria-label', isMuted ? 'Unmute' : 'Mute');
-      b.replaceChildren(icon(isMuted ? BELL_OFF : BELL));
+      b.replaceChildren(icon(...(isMuted ? BELL_OFF : BELL)));
       b.addEventListener('click', () => onToggle(!isMuted));
       return item;
     };

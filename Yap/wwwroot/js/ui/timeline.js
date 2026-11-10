@@ -1,6 +1,8 @@
 // The list of messages (timeline.md): the rows, the follow rule, the New messages pill, the down arrow, the end of
-// a window, older pages, the top note, the lobby lines. The rows themselves are drawn by ui/message.js. The timeline
-// is the one component that updates rows in place, because it can hold hundreds of them.
+// a window, older pages and their loading pill, the catching-up pill, the top note, the lobby lines, and the read
+// mark of the open conversation (markRead, NT-07). The exported jumpTo serves the pins panel and the reply quote
+// (TL-41). The rows themselves are drawn by ui/message.js. The timeline is the one component that updates rows in
+// place, because it can hold hundreds of them.
 
 import { state, on, prependOlder, setWindow, atTail, roomById, dmByChannel, lobby } from '../store.js';
 import { clone, el, replace } from '../render/dom.js';

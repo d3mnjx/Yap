@@ -85,24 +85,31 @@ figure.diagram svg { display: block; max-width: 100%; height: auto; }
 <div class="eyebrow">Yap · architecture</div>
 <nav class="pages" aria-label="Architecture pages"><a href="sketch.html">Architecture sketch: Yap without Blazor</a><a href="plan.html">Plan of action</a><a href="message-path.html">Message path</a><a href="presence.html">Presence</a><a href="chat-hub.html">ChatHub and read state</a><a href="auth-and-program.html">Authentication and Program.cs</a><a href="sign-in.html">Sign-in flows</a><a href="bootstrap-and-events.html">Bootstrap and events</a><a href="client.html" aria-current="page">The client</a><a href="wire-contract.html">Wire contract</a></nav>
 <h1 id="the-client">The client</h1>
-<p>The client is a set of static files in <code>wwwroot/</code>: one HTML file, CSS files, JavaScript modules, one vendored library, and a service worker. There is no build step. The browser loads the modules directly. This page gives the list of files, the role of each file, and the way they work together. The timeline, the composer, the pickers and the offline parts get their own pages later.</p>
+<p>The client is a set of static files in <code>wwwroot/</code>: one HTML file, CSS files, JavaScript modules, two vendored libraries, and a service worker. There is no build step. The browser loads the modules directly. This page gives the list of files, the role of each file, and the way they work together. The timeline, the composer, the pickers and the offline parts get their own pages later.</p>
 <h2 id="the-files">The files</h2>
 <figure class="code"><pre><code>wwwroot/
-  index.html              the one HTML page: the frame&#x27;s markup, &lt;template&gt; elements for every component, the module preload list
-  app.css                 fonts, CSS variables, resets, the body, and the rules the flattened files do not have
-  themes.css, themes/     one block per theme (as today)
-  css/
-    frame.css             header, sidebar, status menu, profile card (flattened from the old scoped files; css/README.md)
-    timeline.css          the message list, the loading pill, the top note, the gallery viewer
-    message.css           one message row: header, content, media, reactions, action bar, editor, cards
-    composer.css          the input box, the reply bar, the typing strip, the drop ring
+  index.html              the one HTML page: &lt;template&gt; elements for the frame and every component, the icon set (t-icons),
+                          the inline theme script; the server writes in the import map and the module preload list
+  app.css                 fonts, the tokens of the default theme, resets, the body, the start screens, the emoji sizes
+  themes.css              one block per theme
+  themes/teahouse.css     the Tea House theme
+  css/                    one file per part of the screen, then one per page (css/README.md is the map); in load order
+    frame.css             header, sidebar, status menu, profile card
     pickers.css           the emoji picker, the GIF picker, the phone sheet
-    pages.css             login, settings, channel settings, admin
+    timeline.css          the message list, the loading pill, the top note, the gallery viewer
+    composer.css          the input box, the reply bar, the typing strip, the drop ring
+    message.css           one message row: header, content, media, reactions, action bar, editor, cards
+    signin.css            the login, invite and verify pages
+    pages.css             the rules that several pages share, and the GIF library widget
+    admin.css             Administration
+    channel-settings.css  Create Channel and Channel Settings
+    settings.css          Settings
   js/
-    main.js               starts the app: the bootstrap, the router, the frame, the service worker, the new-version strip
-    store.js              the state object, the subscribe function, the local-first edits
+    main.js               starts the app: the stored or fetched bootstrap, the router, the frame, the import of each page, the service worker
+    update.js             the server&#x27;s build against the page&#x27;s: the new-version strip and the fresh load of a new build (SH-20, SH-50)
+    store.js              the state object, the subscribe function, every function that changes the state, the derived values
     api.js                fetch for the HTTP routes
-    hub.js                the SignalR connection, its retry loop, the hub messages, the heartbeat
+    hub.js                the SignalR connection, its retry loop, the hub messages, the heartbeat, the device id, the boot report
     router.js             URL to page, history, the last route
     session.js            sign-in and sign-out as the client sees them
     sender.js             the outbox: pending rows, uploads, the post loop, the rows on disk
@@ -111,17 +118,22 @@ figure.diagram svg { display: block; max-width: 100%; height: auto; }
     push.js               the push subscription of this device and the prompt of the installed app
     pwa.js                the install dialog, the browser&#x27;s install prompt, the add-to-home-screen guide
     scene.js              the place for the Tea House sun: the device&#x27;s time zone city, stored for the inline script
-    render/dom.js         el(), clone(), replace()
-    render/text.js        message text to DOM nodes: links, :shortcode: images, emoji images
+    data/emoji-list.js    the emoji picker&#x27;s list of Unicode emoji and their keywords, imported at the picker&#x27;s first open
+    render/dom.js         el(), clone(), replace(), classes(), and icon() for the icon set
+    render/text.js        message text to DOM nodes: links, :shortcode: images, emoji images; the random pick of a
+                          configured text; the retry of an image that did not load; safeHref
     render/time.js        timestamps with the account&#x27;s zone, clock and date order
     render/avatar.js      the avatar and the gradient of a username
-    ui/frame.js           header, status chip and menu, connection dot, sidebar, profile card
-    ui/timeline.js        the list, the follow rule, the pill, older pages, the lobby lines
+    ui/frame.js           the frame and its header: the title, the status chip and menu, the connection dot, the pin
+                          button, the mailbox, the people button; the profile card
+    ui/sidebar.js         the sidebar of the frame: the rooms, and the people list, which draws only the rows in view
+    ui/timeline.js        the list, the follow rule, the pills, older pages, the lobby lines, the read mark, jumpTo
     ui/message.js         one message row and its popups
-    ui/composer.js        the input box and the pickers&#x27; host
+    ui/composer.js        the input box, the pickers&#x27; host, the tray of picked files, the voice recorder&#x27;s controls
     ui/emoji-picker.js    the emoji picker, for the composer and for reactions
     ui/gif-picker.js      the GIF picker
     ui/gallery.js         the image viewer
+    ui/video.js           the video player of a row and of a pin, and the loop of a GIF that is a video file (MR-27, MR-29)
     ui/overlays.js        the layer stack, Escape, taps outside, popup placement
     ui/gif-library.js     the GIF library manager of Settings and of the admin&#x27;s server library
     ui/confirm.js         the app&#x27;s own dialogs in the theme, confirm() and notice(), never the browser&#x27;s
@@ -129,22 +141,23 @@ figure.diagram svg { display: block; max-width: 100%; height: auto; }
     ui/recorder.js        the microphone recorder of the input box and the waveform it measures (IB-67 to IB-69)
     ui/tooltip.js         the explanation bubbles of the admin pages (AD-25)
     ui/voice.js           the voice message player of a row, and the bars that it and the recorder draw (MR-76)
-    offline/db.js         the IndexedDB database
-    offline/snapshot.js   the stored bootstrap and the stored conversation tails
+    offline/db.js         the IndexedDB database: the outbox, the snapshots and a small key-value store
+    offline/snapshot.js   the stored bootstrap, the stored conversation tails and the drafts
     offline/outbox.js     the unsent messages on disk
     pages/chat.js         a room or a direct message
     pages/login.js        the login page
     pages/verify.js       the code for a known name
     pages/invite.js       an invite or a login link
     pages/settings.js     Settings
+    pages/settings-debug.js   the DEBUG INFO card of Settings (ST-25)
     pages/channel-settings.js   Create Channel and Channel Settings
-    pages/admin.js        Administration
+    pages/admin.js        Administration: a short mount, then one function per tab in screen order
   lib/signalr.min.js      vendored
   lib/tus.min.js          vendored
   service-worker.js       the shell cache by build, the emoji cache, the media cache, push, the notification tap</code></pre></figure>
 <p>Four kinds of module:</p>
-<div class="tablewrap"><table><thead><tr><th>Kind</th><th>Modules</th><th>Role</th></tr></thead><tbody><tr><td>core</td><td><code>store</code>, <code>api</code>, <code>hub</code>, <code>router</code></td><td>hold the state and talk to the server. They know nothing about the DOM.</td></tr><tr><td>render</td><td><code>render/*</code></td><td>turn a value into DOM nodes or strings. No DOM state; <code>text</code> keeps the emoji image rules it was given and <code>time</code> the account's format, nothing else.</td></tr><tr><td>ui</td><td><code>ui/*</code></td><td>one visible component each. A component reads the store, draws itself, and reacts to input.</td></tr><tr><td>pages</td><td><code>pages/*</code></td><td>one route each. A page mounts the components it needs and removes them when the route changes.</td></tr></tbody></table></div>
-<p><code>session</code>, <code>sender</code>, <code>upload</code>, <code>notify</code> and the offline modules are helpers. They are called by the ui modules, by <code>main</code> and by <code>hub</code>.</p>
+<div class="tablewrap"><table><thead><tr><th>Kind</th><th>Modules</th><th>Role</th></tr></thead><tbody><tr><td>core</td><td><code>store</code>, <code>api</code>, <code>hub</code>, <code>router</code></td><td>hold the state and talk to the server. They draw nothing. <code>hub</code> listens to document events (input and visibility, for the heartbeat and the reconnect) and asks <code>render/text.js</code> to load again the images that failed while the network was poor (MR-15).</td></tr><tr><td>render</td><td><code>render/*</code></td><td>turn a value into DOM nodes or strings. They hold no component. <code>dom</code> keeps the templates it looked up, <code>text</code> keeps the emoji image rules it was given and the images that failed to load, and <code>time</code> keeps the account's format.</td></tr><tr><td>ui</td><td><code>ui/*</code></td><td>one visible component each. A component reads the store, draws itself, and reacts to input. <code>overlays</code> (the layer stack) and <code>recorder</code> (the microphone) serve the components and are not components themselves.</td></tr><tr><td>pages</td><td><code>pages/*</code></td><td>one route each. A page mounts the components it needs and removes them when the route changes. <code>settings-debug</code> is one card of the Settings page.</td></tr></tbody></table></div>
+<p><code>session</code>, <code>sender</code>, <code>upload</code>, <code>notify</code>, <code>push</code>, <code>pwa</code>, <code>update</code>, <code>scene</code> and the offline modules are services. Each one owns a task of the app that is not a component. <code>main</code>, the pages, the ui modules, <code>hub</code> and the other services call them. Two services draw: <code>update</code> shows the new-version strip, and <code>pwa</code> shows the install dialog. <code>data/emoji-list.js</code> holds data only, and the emoji picker imports it at its first open.</p>
 <h2 id="how-the-modules-depend-on-each-other">How the modules depend on each other</h2>
 <figure class="diagram">
 <svg viewBox="0 0 860 420" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Sans, Segoe UI, system-ui, sans-serif" font-size="13">
@@ -187,7 +200,7 @@ figure.diagram svg { display: block; max-width: 100%; height: auto; }
   <text x="545" y="227" class="t">store.js</text>
   <path d="M450 164 L 520 198" class="e"/>
   <path d="M410 300 L 470 240" class="e"/>
-  <text x="400" y="268" class="s">read, subscribe</text>
+  <text x="400" y="268" class="s">read, subscribe, change</text>
 
   <rect x="680" y="200" width="150" height="44" class="core"/>
   <text x="755" y="227" class="t">hub.js</text>
@@ -198,8 +211,6 @@ figure.diagram svg { display: block; max-width: 100%; height: auto; }
   <rect x="470" y="290" width="150" height="44" class="core"/>
   <text x="545" y="317" class="t">api.js</text>
   <path d="M410 320 H 468" class="e"/>
-  <path d="M545 288 V 246" class="e"/>
-  <text x="590" y="268" class="s">writes</text>
 
   <rect x="680" y="290" width="150" height="44" class="box"/>
   <text x="755" y="317" class="t">sender.js</text>
@@ -207,32 +218,40 @@ figure.diagram svg { display: block; max-width: 100%; height: auto; }
   <path d="M755 288 V 246" class="e"/>
   <text x="790" y="268" class="s">wakes on connect</text>
 
-  <text x="430" y="410" class="s">Arrows mean "calls". The ui modules read the store and call api and hub. Only hub, api and the sender write to the store.</text>
+  <text x="430" y="410" class="s">Arrows mean "calls". Every change of the state goes through a function of store.js, which tells the listeners.</text>
 </svg>
-<figcaption>The dependency graph has no cycles. The core modules know nothing about the DOM. The ui modules know nothing about SignalR or fetch.</figcaption>
+<figcaption>The one cycle in the graph is between ui/message.js and ui/timeline.js, which import each other: the reply quote of a row calls jumpTo, and the timeline draws its rows with renderRow. It works because neither module uses the other while it loads. The core modules draw nothing. The ui modules know nothing about SignalR.</figcaption>
 </figure>
 <h2 id="the-store">The store</h2>
 <p>The store is one plain object and one function. The object holds all data the client has. The function lets a component ask for a call when a part of the data changes.</p>
+<p>Every change of the object goes through a function of <code>store.js</code>, and that function calls <code>changed(part, detail)</code>. The hub module, the sender, <code>session</code>, <code>update</code>, <code>main</code>, the pages and the ui modules call these functions. A ui module calls them for its local-first edits. The one direct write is in <code>main.js</code>, which assigns the stored drafts to <code>state.drafts</code> at start, before any page is mounted, and fires no change.</p>
 <figure class="code"><span class="lang">js</span><pre><code><span class="c">// js/store.js (sketch)</span>
 <span class="k">export</span> <span class="k">const</span> state = {
   connection: <span class="s">&#x27;connecting&#x27;</span>,    <span class="c">// &#x27;connecting&#x27; | &#x27;connected&#x27; | &#x27;reconnecting&#x27; | &#x27;offline&#x27; | &#x27;signedOut&#x27;</span>
+  connectionFailed: <span class="k">false</span>,     <span class="c">// the last connect attempt failed: the catching-up pill stops spinning (TL-39)</span>
   user: <span class="k">null</span>, config: <span class="k">null</span>, texts: <span class="k">null</span>,
   rooms: [], users: {}, presence: {}, dms: [], unread: {}, mutes: <span class="k">null</span>, emoji: <span class="k">null</span>, favoriteGifIds: <span class="k">new</span> <span class="t">Set</span>(),
-  open: <span class="k">null</span>,                  <span class="c">// { channelId, messages: [], hasMore, hasNewer, restricted, typists: [], following: true }</span>
+  emojiImages: <span class="k">null</span>,           <span class="c">// where emoji pictures come from (render/text.js useImages)</span>
+  open: <span class="k">null</span>,                  <span class="c">// { channelId, partner, messages, hasMore, hasNewer, restricted, typists: { username: expiresAt },</span>
+                               <span class="c">//   pins, fromDevice, loading }</span>
   pending: [],                 <span class="c">// outbox rows of the open conversation, drawn as faded rows</span>
-  drafts: {},                  <span class="c">// conversation key -&gt; { text, replyToId }; a room by its id, a direct message by &#x27;dm:&#x27; and the partner</span>
+  drafts: {},                  <span class="c">// conversation key -&gt; { text, replyToId, replyToName }; a room by its id, a direct message by &#x27;dm:&#x27; and the partner</span>
+  registrations: [],           <span class="c">// admins: the waiting list (AD-11)</span>
+  updateAvailable: <span class="k">false</span>,      <span class="c">// the server runs a newer build (SH-20)</span>
 };
 
 <span class="k">const</span> listeners = <span class="k">new</span> <span class="t">Map</span>();   <span class="c">// part name -&gt; Set of functions</span>
 
-<span class="k">export</span> <span class="k">function</span> on(part, fn) {           <span class="c">// call fn when this part changes; returns the function that stops it</span>
+<span class="k">export</span> <span class="k">function</span> on(part, fn) {           <span class="c">// call fn(detail) when this part changes; returns the function that stops it</span>
   <span class="k">if</span> (!listeners.has(part)) listeners.set(part, <span class="k">new</span> <span class="t">Set</span>());
   listeners.get(part).add(fn);
   <span class="k">return</span> () =&gt; listeners.get(part).<span class="k">delete</span>(fn);
 }
 
-<span class="k">export</span> <span class="k">function</span> changed(...parts) {      <span class="c">// the writer calls this after it changed state</span>
-  <span class="k">for</span> (<span class="k">const</span> part <span class="k">of</span> parts) <span class="k">for</span> (<span class="k">const</span> fn <span class="k">of</span> listeners.get(part) ?? []) fn();
+<span class="k">export</span> <span class="k">function</span> changed(part, detail) {  <span class="c">// the writer calls this after it changed state</span>
+  <span class="k">for</span> (<span class="k">const</span> fn <span class="k">of</span> listeners.get(part) ?? []) {
+    <span class="k">try</span> { fn(detail); } <span class="k">catch</span> (e) { console.error(e); }   <span class="c">// one bad listener never stops the others</span>
+  }
 }
 
 <span class="k">export</span> <span class="k">function</span> applyBootstrap(doc) {    <span class="c">// replaces the shared data as a whole; see the wire contract, &quot;Bootstrap&quot;</span>
@@ -240,130 +259,158 @@ figure.diagram svg { display: block; max-width: 100%; height: auto; }
   <span class="t">Object</span>.assign(state, { user: doc.user, config: doc.config, texts: doc.texts, rooms: doc.rooms,
     users: <span class="t">Object</span>.fromEntries(doc.users.map(u =&gt; [u.username, u])), presence: doc.presence, dms: doc.dms,
     unread: doc.unread, mutes: doc.mutes, emoji: doc.emoji, favoriteGifIds: <span class="k">new</span> <span class="t">Set</span>(doc.favoriteGifIds), emojiImages });
-  changed(<span class="s">&#x27;emojiImages&#x27;</span>, <span class="s">&#x27;user&#x27;</span>, <span class="s">&#x27;rooms&#x27;</span>, <span class="s">&#x27;users&#x27;</span>, <span class="s">&#x27;presence&#x27;</span>, <span class="s">&#x27;dms&#x27;</span>, <span class="s">&#x27;unread&#x27;</span>, <span class="s">&#x27;mutes&#x27;</span>, <span class="s">&#x27;emoji&#x27;</span>, <span class="s">&#x27;favoriteGifIds&#x27;</span>);   <span class="c">// the rules first: the others draw names with them</span>
+  <span class="k">for</span> (<span class="k">const</span> part <span class="k">of</span> [<span class="s">&#x27;emojiImages&#x27;</span>, <span class="s">&#x27;user&#x27;</span>, <span class="s">&#x27;config&#x27;</span>, <span class="s">&#x27;texts&#x27;</span>, <span class="s">&#x27;rooms&#x27;</span>, <span class="s">&#x27;users&#x27;</span>, <span class="s">&#x27;presence&#x27;</span>, <span class="s">&#x27;dms&#x27;</span>, <span class="s">&#x27;unread&#x27;</span>,
+                      <span class="s">&#x27;mutes&#x27;</span>, <span class="s">&#x27;emoji&#x27;</span>, <span class="s">&#x27;favoriteGifIds&#x27;</span>]) changed(part);   <span class="c">// the rules first: the others draw names with them</span>
 }</code></pre></figure>
-<p>The part names are the field names of the bootstrap document, plus <code>connection</code>, <code>open</code>, <code>pending</code> and <code>drafts</code>. There is no diffing. A component that listens to <code>rooms</code> redraws its room list. A room list has at most a few dozen rows, so a full redraw is cheap. The message list is the one component that updates rows in place, because it can hold hundreds of rows. The timeline page describes that.</p>
+<p>The part names are the fields of the bootstrap document, plus <code>connection</code>, <code>open</code>, <code>messages</code>, <code>typists</code>, <code>pins</code>, <code>pending</code>, <code>drafts</code> and <code>registrations</code>. The parts <code>messages</code>, <code>typists</code> and <code>pins</code> are fields of <code>state.open</code>. The part <code>connection</code> also announces <code>updateAvailable</code> and <code>connectionFailed</code>. Two parts are events with no state: <code>incoming</code> (a hub message arrived) and <code>gifImport</code> (the progress of a GIF import). The header of <code>store.js</code> has the table of the parts and the detail that each part carries; for example, the detail of <code>messages</code> says what changed in the rows. There is no diffing. A component that listens to <code>rooms</code> redraws its room list. A room list has at most a few dozen rows, so a full redraw is cheap. The message list is the one component that updates rows in place, because it can hold hundreds of rows. The timeline page describes that.</p>
 <p><code>open.messages</code> is one range of the conversation with no gap. After an open it ends at the newest message (a tail). After a jump to a row that is not loaded (<code>setWindow</code>, TL-41) it is the window from the hub's <code>around</code>, and <code>open.hasNewer</code> is true. Other modules ask <code>atTail()</code> and do not read the field. In a window the store inserts no live message: <code>addMessage</code> signals <code>{ type: &#x27;missed&#x27; }</code> and the timeline shows the pill. Edits, reactions, cards and deletes reach only the rows of the window. The way back is a fresh open (the chat page's <code>open</code>, the same as after a reconnect), and <code>setOpen</code> always makes a tail. The device stores no window (OF-14).</p>
 <h2 id="the-hub-module">The hub module</h2>
-<p><code>hub.js</code> owns the SignalR connection. It does three things: it keeps the connection alive, it writes hub messages into the store, and it offers <code>invoke</code> to the ui modules.</p>
+<p><code>hub.js</code> owns the SignalR connection. It keeps the connection alive, writes the hub messages into the store, and offers <code>invoke</code> and <code>send</code> to the ui modules. It also holds the device id, the heartbeat, the boot report (AD-41) and <code>looking()</code>, which says whether the person reads the open conversation (NT-07).</p>
 <figure class="code"><span class="lang">js</span><pre><code><span class="c">// js/hub.js (sketch)</span>
 <span class="k">import</span> * as store <span class="k">from</span> <span class="s">&#x27;./store.js&#x27;</span>;
 <span class="k">import</span> { api } <span class="k">from</span> <span class="s">&#x27;./api.js&#x27;</span>;
-<span class="k">import</span> * as sender <span class="k">from</span> <span class="s">&#x27;./sender.js&#x27;</span>;
 
 <span class="k">const</span> connection = <span class="k">new</span> signalR.<span class="t">HubConnectionBuilder</span>()
-  .withUrl(<span class="s">`/hub?device=${deviceId()}`</span>)          <span class="c">// the device id is a random id in localStorage (AU-19)</span>
+  .withUrl(<span class="s">`/hub?device=${deviceId()}`</span>,           <span class="c">// the device id is a random id in localStorage (AU-19)</span>
+    { skipNegotiation: <span class="k">true</span>, transport: signalR.<span class="t">HttpTransportType</span>.<span class="t">WebSockets</span> })
   .build();
 
-connection.on(<span class="s">&#x27;message&#x27;</span>,        m =&gt; store.addMessage(m));
+connection.on(<span class="s">&#x27;message&#x27;</span>,        m =&gt; { store.changed(<span class="s">&#x27;incoming&#x27;</span>, m); store.addMessage(m); });   <span class="c">// &#x27;incoming&#x27; feeds the sound (NT-13)</span>
 connection.on(<span class="s">&#x27;messageEdited&#x27;</span>,  m =&gt; store.replaceMessage(m));
 connection.on(<span class="s">&#x27;messageDeleted&#x27;</span>, (channelId, id) =&gt; store.removeMessage(channelId, id));
-connection.on(<span class="s">&#x27;pins&#x27;</span>,           (channelId, pins) =&gt; store.setPins(channelId, pins));
 connection.on(<span class="s">&#x27;reactions&#x27;</span>,      (id, reactions) =&gt; store.setReactions(id, reactions));
 connection.on(<span class="s">&#x27;previews&#x27;</span>,       (id, previews) =&gt; store.setPreviews(id, previews));
 connection.on(<span class="s">&#x27;typing&#x27;</span>,         (channelId, username, on) =&gt; store.setTyping(channelId, username, on));
 connection.on(<span class="s">&#x27;unread&#x27;</span>,         (channelId, count) =&gt; store.setUnread(channelId, count));
-connection.on(<span class="s">&#x27;presence&#x27;</span>,       (username, status, kind) =&gt; store.setPresence(username, status, kind));
+connection.on(<span class="s">&#x27;presences&#x27;</span>,      list =&gt; store.setPresences(list));        <span class="c">// one tick of changes, in order</span>
 connection.on(<span class="s">&#x27;profile&#x27;</span>,        u =&gt; store.setUser(u));
 connection.on(<span class="s">&#x27;accountDeleted&#x27;</span>, username =&gt; store.removeUser(username));
 connection.on(<span class="s">&#x27;rooms&#x27;</span>,          rooms =&gt; store.setRooms(rooms));
+connection.on(<span class="s">&#x27;pins&#x27;</span>,           (channelId, pins) =&gt; store.setPins(channelId, pins));
 connection.on(<span class="s">&#x27;dm&#x27;</span>,             dm =&gt; store.addDm(dm));
 connection.on(<span class="s">&#x27;me&#x27;</span>,             partial =&gt; store.mergeMe(partial));
 connection.on(<span class="s">&#x27;gifFavorites&#x27;</span>,   ids =&gt; store.setFavoriteGifs(ids));
+connection.on(<span class="s">&#x27;pending&#x27;</span>,        list =&gt; store.setRegistrations(list));    <span class="c">// the admins&#x27; waiting list (AD-11)</span>
+connection.on(<span class="s">&#x27;gifImport&#x27;</span>,      progress =&gt; store.changed(<span class="s">&#x27;gifImport&#x27;</span>, progress));
 connection.on(<span class="s">&#x27;signedOut&#x27;</span>,      () =&gt; signedOut());   <span class="c">// stop, then the handler main.js installs: session.signedOut({ elsewhere: true }) (AU-21)</span>
 
-connection.onclose(() =&gt; { setState(navigator.onLine ? <span class="s">&#x27;reconnecting&#x27;</span> : <span class="s">&#x27;offline&#x27;</span>); retryLater(); });
+connection.onclose(() =&gt; { store.setConnection(navigator.onLine ? <span class="s">&#x27;reconnecting&#x27;</span> : <span class="s">&#x27;offline&#x27;</span>); scheduleRetry(); });
+
+<span class="k">export</span> <span class="k">function</span> onConnected(fn) { connectedHooks.add(fn); }   <span class="c">// the chat page re-opens its conversation, the sender posts the outbox</span>
 
 <span class="k">export</span> <span class="k">async</span> <span class="k">function</span> connect() {
-  setState(state.connection === <span class="s">&#x27;connecting&#x27;</span> ? <span class="s">&#x27;connecting&#x27;</span> : <span class="s">&#x27;reconnecting&#x27;</span>);
-  <span class="k">try</span> { <span class="k">await</span> connection.start(); } <span class="k">catch</span> { retryLater(); <span class="k">return</span>; }
-  setState(<span class="s">&#x27;connected&#x27;</span>);
-  <span class="k">const</span> [doc] = <span class="k">await</span> <span class="t">Promise</span>.all([api.get(<span class="s">&#x27;/api/bootstrap&#x27;</span>), reopen()]);   <span class="c">// one round trip; the hub is already connected</span>
-  store.applyBootstrap(doc);
-  sender.wake();                                                            <span class="c">// post what queued while offline (OF-10)</span>
+  store.setConnection(everConnected ? <span class="s">&#x27;reconnecting&#x27;</span> : <span class="s">&#x27;connecting&#x27;</span>);
+  <span class="k">try</span> { <span class="k">await</span> connection.start(); } <span class="k">catch</span> { scheduleRetry(); <span class="k">return</span>; }
+  store.setConnection(<span class="s">&#x27;connected&#x27;</span>);
+  <span class="k">const</span> [bootstrap] = <span class="k">await</span> <span class="t">Promise</span>.allSettled([api.get(<span class="s">&#x27;/api/bootstrap&#x27;</span>), ...[...connectedHooks].map(fn =&gt; fn())]);   <span class="c">// one round trip</span>
+  <span class="k">if</span> (bootstrap.status === <span class="s">&#x27;fulfilled&#x27;</span>) store.applyBootstrap(bootstrap.value);
 }
 
 <span class="k">export</span> <span class="k">async</span> <span class="k">function</span> invoke(method, ...args) {        <span class="c">// the ui calls this; a refusal comes back as { error }</span>
-  <span class="k">if</span> (state.connection !== <span class="s">&#x27;connected&#x27;</span>) <span class="k">return</span> { error: <span class="s">&#x27;Needs a connection&#x27;</span> };
-  <span class="k">return</span> connection.invoke(method, ...args);
+  <span class="k">if</span> (!connected()) <span class="k">return</span> { error: <span class="s">&#x27;Needs a connection&#x27;</span> };
+  <span class="k">try</span> { <span class="k">return</span> <span class="k">await</span> connection.invoke(method, ...args); }
+  <span class="k">catch</span> { <span class="k">return</span> { error: <span class="s">&#x27;Something went wrong&#x27;</span> }; }
 }
 
 <span class="c">// Reconnect: a timer with a growing delay, capped at 30 s, plus an attempt at once on each of these (OF-13).</span>
-addEventListener(<span class="s">&#x27;online&#x27;</span>, retryNow);
-document.addEventListener(<span class="s">&#x27;visibilitychange&#x27;</span>, () =&gt; { <span class="k">if</span> (document.visibilityState === <span class="s">&#x27;visible&#x27;</span>) retryNow(); });
-<span class="k">export</span> { retryNow as reconnectNow };                   <span class="c">// the connection dot calls this on tap (SH-18)</span></code></pre></figure>
+addEventListener(<span class="s">&#x27;online&#x27;</span>, reconnectNow);
+document.addEventListener(<span class="s">&#x27;visibilitychange&#x27;</span>, () =&gt; { <span class="k">if</span> (document.visibilityState === <span class="s">&#x27;visible&#x27;</span>) reconnectNow(); });
+<span class="k">export</span> <span class="k">function</span> reconnectNow() { ... }                 <span class="c">// the connection dot calls this on tap (SH-18)</span></code></pre></figure>
+<p>The hub module does not import the sender. <code>sender.js</code> registers <code>hub.onConnected(wake)</code>, and the chat page registers its re-open the same way. After every connect the hooks run in parallel with the bootstrap request.</p>
 <p>The client runs its own retry loop instead of SignalR's automatic reconnect. SignalR's reconnect stops after its list of delays ends, and it has no function for "try now". The spec wants a retry on <code>online</code>, on a visible tab, and on a tap of the dot, with no end (OF-13).</p>
 <h2 id="the-api-module">The api module</h2>
-<p><code>api.js</code> is a thin function over <code>fetch</code>. It sends and receives JSON, sends the cookie, and converts a refusal into a reason the ui can show.</p>
+<p><code>api.js</code> is a thin function over <code>fetch</code>. It sends and receives JSON, sends the cookie, and converts a refusal into a reason the ui can show. A <code>FormData</code> body goes as it is. The module imports nothing: <code>main.js</code> installs the handler of a 401, so <code>api.js</code> needs neither the router nor the store.</p>
 <figure class="code"><span class="lang">js</span><pre><code><span class="c">// js/api.js (sketch)</span>
 <span class="k">export</span> <span class="k">class</span> <span class="t">ApiError</span> <span class="k">extends</span> <span class="t">Error</span> { constructor(status, reason) { <span class="k">super</span>(reason); <span class="k">this</span>.status = status; } }
 
 <span class="k">async</span> <span class="k">function</span> request(method, url, body) {
+  <span class="k">const</span> init = { method, credentials: <span class="s">&#x27;same-origin&#x27;</span> };
+  <span class="k">if</span> (body <span class="k">instanceof</span> <span class="t">FormData</span>) init.body = body;                              <span class="c">// the browser sets the multipart boundary</span>
+  <span class="k">else</span> <span class="k">if</span> (body !== <span class="k">undefined</span>) { init.headers = { <span class="s">&#x27;content-type&#x27;</span>: <span class="s">&#x27;application/json&#x27;</span> }; init.body = <span class="t">JSON</span>.stringify(body); }
   <span class="k">let</span> res;
-  <span class="k">try</span> { res = <span class="k">await</span> fetch(url, { method, credentials: <span class="s">&#x27;same-origin&#x27;</span>, headers: body &amp;&amp; { <span class="s">&#x27;content-type&#x27;</span>: <span class="s">&#x27;application/json&#x27;</span> },
-                                 body: body &amp;&amp; <span class="t">JSON</span>.stringify(body) }); }
+  <span class="k">try</span> { res = <span class="k">await</span> fetch(url, init); }
   <span class="k">catch</span> { <span class="k">throw</span> <span class="k">new</span> <span class="t">ApiError</span>(<span class="n">0</span>, <span class="s">&#x27;Needs a connection&#x27;</span>); }                       <span class="c">// network error (GEN-10)</span>
   <span class="k">if</span> (res.ok) <span class="k">return</span> res.status === <span class="n">204</span> ? <span class="k">null</span> : res.json();
   <span class="k">if</span> (res.status === <span class="n">401</span>) signedOutHandler();                                  <span class="c">// main.js installs session.signedOut({ elsewhere: true }): the login page says so (AU-21)</span>
   <span class="k">const</span> problem = <span class="k">await</span> res.json().<span class="k">catch</span>(() =&gt; <span class="k">null</span>);
-  <span class="k">throw</span> <span class="k">new</span> <span class="t">ApiError</span>(res.status, problem?.detail ?? <span class="s">&#x27;Something went wrong&#x27;</span>);   <span class="c">// ProblemDetails (GEN-02)</span>
+  <span class="k">throw</span> <span class="k">new</span> <span class="t">ApiError</span>(res.status, problem?.detail ?? problem?.title ?? <span class="s">&#x27;Something went wrong&#x27;</span>);   <span class="c">// ProblemDetails (GEN-02)</span>
 }
 
 <span class="k">export</span> <span class="k">const</span> api = { get: url =&gt; request(<span class="s">&#x27;GET&#x27;</span>, url), post: (url, body) =&gt; request(<span class="s">&#x27;POST&#x27;</span>, url, body),
                      put: (url, body) =&gt; request(<span class="s">&#x27;PUT&#x27;</span>, url, body), patch: (url, body) =&gt; request(<span class="s">&#x27;PATCH&#x27;</span>, url, body),
-                     <span class="k">delete</span>: url =&gt; request(<span class="s">&#x27;DELETE&#x27;</span>, url) };</code></pre></figure>
+                     <span class="k">delete</span>: (url, body) =&gt; request(<span class="s">&#x27;DELETE&#x27;</span>, url, body) };</code></pre></figure>
 <h2 id="how-a-component-is-written">How a component is written</h2>
-<p>A component is a function. It receives the element it draws into. It draws from the store, subscribes to the parts it needs, and returns a function that removes the subscriptions. Example: the room list in the sidebar.</p>
-<figure class="code"><span class="lang">js</span><pre><code><span class="c">// js/ui/frame.js (sketch of one component)</span>
-<span class="k">import</span> { state, on } <span class="k">from</span> <span class="s">&#x27;../store.js&#x27;</span>;
-<span class="k">import</span> { el, clone } <span class="k">from</span> <span class="s">&#x27;../render/dom.js&#x27;</span>;
-<span class="k">import</span> { navigate } <span class="k">from</span> <span class="s">&#x27;../router.js&#x27;</span>;
+<p>A component is a function. It receives the element it draws into. It draws from the store, subscribes to the parts it needs, and returns a function that removes the subscriptions. When its owner needs more, it returns an object with that function: the sidebar also returns <code>toggle</code>. Example: the room list of the sidebar.</p>
+<figure class="code"><span class="lang">js</span><pre><code><span class="c">// js/ui/sidebar.js (sketch: the rooms of the sidebar)</span>
+<span class="k">import</span> { state, on, isMuted, showsBell } <span class="k">from</span> <span class="s">&#x27;../store.js&#x27;</span>;
+<span class="k">import</span> { clone, replace, classes } <span class="k">from</span> <span class="s">&#x27;../render/dom.js&#x27;</span>;
+<span class="k">import</span> { inline } <span class="k">from</span> <span class="s">&#x27;../render/text.js&#x27;</span>;
+<span class="k">import</span> * as router <span class="k">from</span> <span class="s">&#x27;../router.js&#x27;</span>;
 
-<span class="k">export</span> <span class="k">function</span> <span class="t">RoomList</span>(root) {
-  <span class="k">function</span> render() {
-    root.replaceChildren(...state.rooms.map(room =&gt; {
+<span class="k">export</span> <span class="k">function</span> <span class="t">Sidebar</span>(frame, profile) {           <span class="c">// frame.js passes the frame and the functions of its profile card</span>
+  <span class="k">function</span> renderRooms() {
+    replace(frame.querySelector(<span class="s">&#x27;.rooms-list&#x27;</span>), state.rooms.map(room =&gt; {
       <span class="k">const</span> row = clone(<span class="s">&#x27;t-room-row&#x27;</span>);                                   <span class="c">// &lt;template id=&quot;t-room-row&quot;&gt; in index.html</span>
-      row.querySelector(<span class="s">&#x27;.name&#x27;</span>).textContent = room.name;
-      row.classList.toggle(<span class="s">&#x27;open&#x27;</span>, room.id === state.open?.channelId);
-      row.classList.toggle(<span class="s">&#x27;muted&#x27;</span>, isMuted(room.id));
-      <span class="k">const</span> count = state.unread[room.id] ?? <span class="n">0</span>;
-      row.querySelector(<span class="s">&#x27;.badge&#x27;</span>).textContent = isMuted(room.id) || !count ? <span class="s">&#x27;&#x27;</span> : <span class="t">String</span>(count);   <span class="c">// SH-22, SH-23</span>
-      row.querySelector(<span class="s">&#x27;.dot&#x27;</span>).hidden = !(isMuted(room.id) &amp;&amp; count);
-      row.querySelector(<span class="s">&#x27;.bell&#x27;</span>).hidden = !state.mutes.channels[room.id];
-      row.querySelector(<span class="s">&#x27;.gear&#x27;</span>).hidden = !state.user.isAdmin;
-      row.addEventListener(<span class="s">&#x27;click&#x27;</span>, () =&gt; navigate(<span class="s">`/room/${room.id}`</span>));
+      replace(row.querySelector(<span class="s">&#x27;.room-name&#x27;</span>), inline(room.name));       <span class="c">// an emoji in a name is an image too</span>
+      <span class="k">const</span> isOpen = state.open?.channelId === room.id;
+      <span class="k">const</span> count = isOpen ? <span class="n">0</span> : (state.unread[room.id] ?? <span class="n">0</span>);           <span class="c">// the open room shows no mark (SH-22)</span>
+      <span class="k">const</span> muted = isMuted(room.id);
+      classes(row, { active: isOpen, <span class="s">&#x27;has-unread&#x27;</span>: count &gt; <span class="n">0</span> &amp;&amp; !muted });
+      row.querySelector(<span class="s">&#x27;.mute-bell&#x27;</span>).hidden = !showsBell(room.id);
+      row.querySelector(<span class="s">&#x27;.unread-dot&#x27;</span>).hidden = !(count &gt; <span class="n">0</span> &amp;&amp; muted);
+      <span class="k">const</span> badge = row.querySelector(<span class="s">&#x27;.unread-badge&#x27;</span>);
+      badge.hidden = !(count &gt; <span class="n">0</span> &amp;&amp; !muted);
+      badge.textContent = <span class="t">String</span>(count);
+      row.querySelector(<span class="s">&#x27;.room-settings&#x27;</span>).hidden = !state.user.isAdmin;  <span class="c">// the gear</span>
+      row.addEventListener(<span class="s">&#x27;click&#x27;</span>, () =&gt; router.navigate(router.roomPath(room, lobbyId())));
       <span class="k">return</span> row;
     }));
   }
-  <span class="k">const</span> offs = [<span class="s">&#x27;rooms&#x27;</span>, <span class="s">&#x27;unread&#x27;</span>, <span class="s">&#x27;mutes&#x27;</span>, <span class="s">&#x27;open&#x27;</span>, <span class="s">&#x27;user&#x27;</span>].map(part =&gt; on(part, render));
-  render();
-  <span class="k">return</span> () =&gt; offs.forEach(off =&gt; off());
+  <span class="k">const</span> offs = [<span class="s">&#x27;rooms&#x27;</span>, <span class="s">&#x27;unread&#x27;</span>, <span class="s">&#x27;mutes&#x27;</span>, <span class="s">&#x27;open&#x27;</span>, <span class="s">&#x27;user&#x27;</span>].map(part =&gt; on(part, renderRooms));
+  renderRooms();
+  <span class="k">return</span> { toggle, unmount: () =&gt; offs.forEach(off =&gt; off()) };
 }</code></pre></figure>
+<p><code>frame.js</code> mounts the frame once. Its <code>mount(appRoot)</code> clones <code>t-frame</code>, wires the header (the title, the status chip and its menu, the connection dot, the pin button, the mailbox and the people button), and returns the content column for the page. It calls <code>Sidebar(frame, profile)</code>, which draws the rooms and the people and returns <code>{ toggle, unmount }</code>. The profile card stays in <code>frame.js</code>. The sidebar gets the card's functions (<code>openProfile</code>, <code>closeProfile</code>, <code>toggleProfile</code>) as an argument, because an import of <code>frame.js</code> from <code>sidebar.js</code> would make a cycle. The people list does not draw every row: it lists every account (two thousand on the test server), so it draws the rows in view plus a margin, at most every 250 ms.</p>
 <p>Rules every component follows:</p>
-<ul><li>Text goes into the DOM with <code>textContent</code> or through <code>render/text.js</code>. No component uses <code>innerHTML</code> with data from the server. This is the whole XSS story.</li><li>A component draws from the store only. It does not keep a second copy of the data.</li><li>A user action changes the store first, then calls <code>api</code> or <code>hub</code>. The component redraws from the store at once (GEN-01). When the call fails, the action puts the store back and shows the reason (GEN-02). Example, a reaction:</li></ul>
+<ul><li>Text goes into the DOM with <code>textContent</code> or through <code>render/text.js</code>. No module of the client assigns <code>innerHTML</code>, and an icon comes from the icon set (below), not from a string of SVG. This is the whole XSS story.</li><li>A component draws from the store only. It does not keep a second copy of the data.</li><li>A user action changes the store first, then calls <code>api</code> or <code>hub</code>. The component redraws from the store at once (GEN-01). When the call fails, the action puts the store back and shows the reason (GEN-02). Example, a reaction:</li></ul>
 <figure class="code"><span class="lang">js</span><pre><code><span class="k">async</span> <span class="k">function</span> toggleReaction(message, emoji) {
   store.toggleReactionLocally(message.id, emoji, state.user.username);     <span class="c">// the pill changes now (MR-40)</span>
   <span class="k">const</span> result = <span class="k">await</span> hub.invoke(<span class="s">&#x27;react&#x27;</span>, message.id, emoji);
   <span class="k">if</span> (result?.error) { store.toggleReactionLocally(message.id, emoji, state.user.username); showReason(rowOf(message), result.error); }
 }</code></pre></figure>
-<ul><li>A component never talks to SignalR or <code>fetch</code> directly. It calls <code>hub.invoke</code> or <code>api.*</code>.</li></ul>
+<ul><li>A component never talks to SignalR. It calls <code>hub.invoke</code> or <code>hub.send</code>.</li><li>A component sends HTTP through <code>api.*</code>. The sign-in pages (<code>login.js</code>, <code>verify.js</code>, <code>invite.js</code>) are the exception: they post the sign-in with <code>fetch</code>. The server refuses a wrong code with a 401, and <code>api.js</code> reads a 401 as a dead cookie and runs the signed-out handler. <code>login.js</code> also reads the status itself, because a 202 means that the sign-in waits for an admin's approval (AU-05), and <code>api.js</code> gives the caller the body only. The gallery also calls <code>fetch</code>, for the file that the share sheet sends. Outside the components, <code>upload.js</code> asks the TUS server for the state of a file, <code>scene.js</code> loads the time zone table, <code>hub.js</code> sends the IPv4 beacon, and <code>main.js</code> makes the installed app's hand-off (OF-03).</li></ul>
 <h2 id="the-router-and-the-pages">The router and the pages</h2>
 <p><code>router.js</code> maps the URL to a page module (SH-42). It listens to <code>popstate</code> for the back button (SH-44) and offers <code>navigate(path)</code> for links. It stores the last conversation route in localStorage, and <code>/</code> opens it (SH-43).</p>
-<div class="tablewrap"><table><thead><tr><th>Route</th><th>Page</th><th>Inside the frame</th></tr></thead><tbody><tr><td><code>/</code>, <code>/lobby</code>, <code>/room/{id}</code>, <code>/dm/{username}</code></td><td><code>pages/chat.js</code></td><td>yes</td></tr><tr><td><code>/settings</code></td><td><code>pages/settings.js</code></td><td>yes (ST-03)</td></tr><tr><td><code>/channel/new</code>, <code>/channel/{id}/settings</code></td><td><code>pages/channel-settings.js</code></td><td>yes</td></tr><tr><td><code>/admin</code></td><td><code>pages/admin.js</code></td><td>no (AD-01)</td></tr><tr><td><code>/login</code>, <code>/verify/{username}</code>, <code>/invite/{code}</code></td><td><code>pages/login.js</code>, <code>verify.js</code>, <code>invite.js</code></td><td>no</td></tr><tr><td>anything else</td><td><code>pages/not-found.js</code></td><td>no</td></tr></tbody></table></div>
+<div class="tablewrap"><table><thead><tr><th>Route</th><th>Page</th><th>Inside the frame</th></tr></thead><tbody><tr><td><code>/</code>, <code>/lobby</code>, <code>/room/{id}</code>, <code>/dm/{username}</code></td><td><code>pages/chat.js</code></td><td>yes</td></tr><tr><td><code>/settings</code></td><td><code>pages/settings.js</code></td><td>yes (ST-03)</td></tr><tr><td><code>/channel/new</code>, <code>/channel/{id}/settings</code></td><td><code>pages/channel-settings.js</code></td><td>yes</td></tr><tr><td><code>/admin</code></td><td><code>pages/admin.js</code></td><td>no (AD-01)</td></tr><tr><td><code>/login</code>, <code>/verify/{username}</code>, <code>/invite/{code}</code></td><td><code>pages/login.js</code>, <code>verify.js</code>, <code>invite.js</code></td><td>no</td></tr><tr><td>anything else</td><td>no page module; <code>main.js</code> draws the <code>t-not-found</code> template</td><td>no</td></tr></tbody></table></div>
 <p>A page module exports one function, <code>mount(root, params)</code>. It returns the function that unmounts the page. The frame is mounted once and stays while the route moves between chat, settings and channel settings. Only the content column changes. This keeps the sidebar, the header and the hub connection alive across these pages (SH-01, ST-03).</p>
 <figure class="code"><span class="lang">js</span><pre><code><span class="c">// js/pages/chat.js (sketch)</span>
-<span class="k">export</span> <span class="k">function</span> mount(root, { roomId, dmUser }) {
-  <span class="k">const</span> unmounts = [ <span class="t">Timeline</span>(root.querySelector(<span class="s">&#x27;.timeline&#x27;</span>)), <span class="t">Composer</span>(root.querySelector(<span class="s">&#x27;.composer&#x27;</span>)) ];
-  openConversation(roomId, dmUser);           <span class="c">// paints the snapshot, invokes openRoom or openDm, replaces</span>
-  <span class="k">return</span> () =&gt; unmounts.forEach(u =&gt; u());
+<span class="k">export</span> <span class="k">function</span> mount(root, params) {
+  <span class="k">const</span> timelineRoot = el(<span class="s">&#x27;div&#x27;</span>, { <span class="k">class</span>: <span class="s">&#x27;timeline-root&#x27;</span>, style: { display: <span class="s">&#x27;contents&#x27;</span> } });
+  <span class="k">const</span> composerRoot = el(<span class="s">&#x27;div&#x27;</span>, { <span class="k">class</span>: <span class="s">&#x27;composer-root&#x27;</span>, style: { display: <span class="s">&#x27;contents&#x27;</span> } });
+  root.replaceChildren(timelineRoot, composerRoot);
+  <span class="k">const</span> unmounts = [<span class="t">Timeline</span>(timelineRoot, { reopen: () =&gt; open() }), <span class="t">Composer</span>(composerRoot)];
+  <span class="k">const</span> target = resolve(params);               <span class="c">// a room or a direct message; an unknown one leads to the lobby (SH-43)</span>
+  paintStored(target);                          <span class="c">// the device&#x27;s copy of the tail at once (TL-02)</span>
+  <span class="k">const</span> open = () =&gt; openConversation(target);  <span class="c">// openRoom or openDm on the hub; the answer replaces the copy</span>
+  open();
+  <span class="k">const</span> offConnected = hub.onConnected(open);   <span class="c">// after a reconnect: the newest messages again (TL-35)</span>
+  <span class="k">return</span> () =&gt; { offConnected(); unmounts.forEach(u =&gt; u()); closeOpen(); };
 }</code></pre></figure>
+<p>A new route goes into more places than the table of <code>router.js</code>. The comment at that table names them: <code>main.js</code> (<code>pages</code>, and <code>framed</code> or <code>anonymous</code>), the pages that <code>session.js</code> returns to after a sign-in, and the server's <code>Routes</code> in <code>Endpoints/ShellEndpoints.cs</code>, which also gives the service worker its route list.</p>
 <h2 id="start-up">Start-up</h2>
-<ol><li>The browser loads <code>index.html</code>. The service worker answers it, and every file of the shell, from the device's copy (OF-18), so nothing waits for the network before the first paint; a first visit and a new build fetch them. An inline script reads the cached theme and text size from localStorage and sets them on <code>&lt;html&gt;</code>, before the first paint. Without this the page would flash the default theme. The same script sets the Tea House scene (ST-09): it computes sunrise and sunset for the place <code>scene.js</code> stored (the device's time zone city) and divides the day among seven scenes and the night among five.</li><li>The browser loads <code>main.js</code> and its imports. The server writes an import map and a <code>&lt;link rel=&quot;modulepreload&quot;&gt;</code> for every module into <code>index.html</code> (<code>ShellAssets</code>), so every module has a URL with the build stamp and the browser requests all of them at once instead of one level at a time.</li><li><code>main.js</code> reads the stored bootstrap document from IndexedDB and applies it: the frame paints with the last known state, and the chat page paints the stored tail of the conversation (TL-02), under a "Catching up…" pill until the server answers (TL-39). <code>hub.connect()</code> starts at once. Without a stored document (a first load, or after a sign-out) <code>main.js</code> requests <code>GET /api/bootstrap</code> first: without <code>user</code> in the answer, the router shows the login, verify or invite page with the texts from the answer.</li><li>The hub connects over a direct WebSocket, without the negotiate round trip. When that socket does not open, it builds the connection again with negotiation and every transport, and keeps that for the page.</li><li>When the hub is connected, the hub module requests the bootstrap and opens the current conversation, in parallel. The document replaces the stored one, and no change can fall between it and the first hub message (wire contract, "Bootstrap"). A load with a stored copy makes this one bootstrap request and no other.</li><li>The sender wakes and posts the outbox.</li></ol>
+<ol><li>The browser loads <code>index.html</code>. The service worker answers it, and every file of the shell, from the device's copy (OF-18), so nothing waits for the network before the first paint; a first visit and a new build fetch them. The root, the login page, the verification page and an invite are different: the worker asks the server first there, because the server answers a signed-out visitor differently (the welcome page, AD-36), and the stored page is the fallback without a network. An inline script reads the cached theme and text size from localStorage and sets them on <code>&lt;html&gt;</code>, before the first paint. Without this the page would flash the default theme. The same script sets the Tea House scene (ST-09): it computes sunrise and sunset for the place <code>scene.js</code> stored (the device's time zone city) and divides the day among seven scenes and the night among five.</li><li>The browser loads <code>main.js</code> and its imports. The server writes an import map and a <code>&lt;link rel=&quot;modulepreload&quot;&gt;</code> for every module into <code>index.html</code> (<code>ShellAssets</code>), so every module has a URL with the build stamp and the browser requests all of them at once instead of one level at a time.</li><li><code>main.js</code> reads the stored bootstrap document from IndexedDB and applies it: the frame paints with the last known state, and the chat page paints the stored tail of the conversation (TL-02), under a "Catching up…" pill until the server answers (TL-39). <code>hub.connect()</code> starts at once. Without a stored document (a first load, or after a sign-out) <code>main.js</code> requests <code>GET /api/bootstrap</code> first: without <code>user</code> in the answer, the router shows the login, verify or invite page with the texts from the answer.</li><li>The hub connects over a direct WebSocket, without the negotiate round trip. When that socket does not open, it builds the connection again with negotiation and every transport, and keeps that for the page.</li><li>When the hub is connected, the hub module requests the bootstrap and runs the connected hooks, in parallel. The chat page's hook opens the current conversation. The document replaces the stored one, and no change can fall between it and the first hub message (wire contract, "Bootstrap"). A load with a stored copy makes this one bootstrap request and no other.</li><li>The sender's hook wakes the sender, and it posts the outbox (OF-10).</li></ol>
 <p>A reconnect runs step 5 and 6 only. The view keeps its position, the draft and the pending rows stay (TL-35).</p>
 <h2 id="overlays-and-input-rules">Overlays and input rules</h2>
-<p><code>ui/overlays.js</code> owns one stack of open layers: menus, pickers, sheets, dialogs, the gallery. Escape closes the top layer only (GEN-17). A tap outside a layer closes it. On a window of 600 px or less, a menu or a picker opens as a bottom sheet over a dimmed page (GEN-18). The width tier is a CSS media query; the JavaScript reads the same query with <code>matchMedia</code> where it must choose a behaviour (IB-08, GEN-14).</p>
+<p><code>ui/overlays.js</code> owns one stack of open layers: menus, the reaction picker, the pins panel, sheets, dialogs, the gallery. Escape closes the top layer only (GEN-17). A tap outside a layer closes it. On a window of 600 px or less, a menu or a picker opens as a bottom sheet over a dimmed page (GEN-18). The width tier is a CSS media query; the JavaScript reads the same query with <code>matchMedia</code> where it must choose a behaviour (IB-08, GEN-14).</p>
+<p>The emoji picker and the GIF picker of the input box are not on the stack. <code>composer.js</code> closes them by the rules of IB-42 and IB-43. Its own Escape handler closes a picker only while the stack is empty, so a dialog above the picker closes first (IB-17).</p>
+<h2 id="the-icon-set">The icon set</h2>
+<p>Every drawing of an icon exists once, as <code>&lt;symbol id=&quot;i-name&quot;&gt;</code> inside <code>&lt;template id=&quot;t-icons&quot;&gt;</code> in <code>index.html</code>. A template uses an icon with <code>&lt;svg data-icon=&quot;name&quot;&gt;</code>. The first <code>clone()</code> of a template copies the symbol's attributes and drawing into each such <code>&lt;svg&gt;</code> of the template itself, so every later clone is plain inline SVG at no extra cost. JavaScript that builds a node calls <code>icon(name, attrs)</code> from <code>render/dom.js</code>. An attribute that the use sets stays: the theme card draws the check with a heavier stroke than the symbol's.</p>
+<p>A use is a copy, not a <code>&lt;use href=&quot;#i-name&quot;&gt;</code> reference. The page has <code>&lt;base href=&quot;/&quot;&gt;</code>, so a fragment reference means the document "/". That document is this page on the root route only, and browsers differ in whether they look for the target in the page. A copy also leaves nothing to resolve.</p>
+<h2 id="templates-and-javascript">Templates and JavaScript</h2>
+<p><code>index.html</code> holds a <code>&lt;template&gt;</code> for the frame and for every component, and <code>clone(id)</code> returns a copy of its first element. The JavaScript finds the parts of a copy by these conventions:</p>
+<ul><li>A class finds a part of a template, for example <code>row.querySelector(&#x27;.room-name&#x27;)</code>.</li><li>A <code>data-</code> attribute picks one item of a set: the actions of a menu (<code>[data-action=&quot;settings&quot;]</code>), the statuses of the status menu (<code>[data-status]</code>), the tabs of a picker (<code>data-tab</code>, <code>data-combined-tab</code>).</li><li>An id is for a label and its <code>for</code> attribute, or for a single element at the body level (<code>#app</code>, <code>#notice</code>, <code>#start-loading</code>). Two more uses exist. The hash of a route names a section (<code>/settings#notification-settings</code>), and a message row has the id <code>msg-{id}</code>, so a late answer finds the row after a redraw replaced its node.</li><li>A bare tag selector finds an element only when the template, or the part of it, has one element of that kind: the <code>h3</code> of <code>t-header-back</code>, the <code>strong</code> of the reply bar.</li><li>The browser tests in <code>tests/browser</code> select many elements by class name. A change of a class name must also change the tests.</li></ul>
 <h2 id="what-is-not-in-the-client">What is not in the client</h2>
-<ul><li>No framework, no virtual DOM, no bundler, no transpiler. The files in <code>wwwroot/js</code> are what the browser runs.</li><li>No HTML from the server. The server sends data.</li><li>No second copy of history. The timeline holds the open conversation only. The snapshot store holds the last tail per conversation for offline reads (OF-06). The outbox holds unsent messages (OF-08). Nothing else is stored.</li><li>No merge logic. The bootstrap replaces, the events update.</li></ul>
+<ul><li>No framework, no virtual DOM, no bundler, no transpiler. The files in <code>wwwroot/js</code> are what the browser runs.</li><li>No HTML from the server. The server sends data.</li><li>No second copy of history. The timeline holds the open conversation only. The snapshot store holds the last tail per conversation for offline reads (OF-06). The outbox holds unsent messages (OF-08). The key-value store holds the drafts (IB-53). Nothing else of the conversations is stored in IndexedDB. The service worker keeps the pictures and videos of the conversations in its media cache, for reading offline.</li><li>No merge logic. The bootstrap replaces, the events update.</li></ul>
 <footer>Source: <code>docs/architecture/client.md</code>. Edit the Markdown, then run <code>python3 docs/architecture/tools/build.py</code>.</footer>
 </main>
 </body>

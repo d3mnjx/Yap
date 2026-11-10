@@ -1,6 +1,7 @@
 // Start-up (client.md, "Start-up"): the stored bootstrap, or the fetched one on a first load, then the router, the
 // frame and the page; the hub connects at once and requests the bootstrap. The pages inside the frame share one
-// mounted frame (SH-01).
+// mounted frame (SH-01). The rule IDs in the comments of the client, such as SH-01, are defined in docs/spec; the
+// prefix table is in docs/spec/README.md.
 
 import { state, on, applyBootstrap, applyAnonymous } from './store.js';
 import { build, reloadForNewBuild } from './update.js';
@@ -159,11 +160,14 @@ async function start() {
   if (doc?.user) {
     applyBootstrap(doc);
     hub.connect();
+    // Written without a store function, the one such write in the client: no page is mounted yet, and changed('drafts')
+    // would only make snapshot.js store the same drafts again. Only with an account: without one the device is being
+    // emptied (clearAll below, which nothing awaits), and a read at that moment brought a leftover draft into the page.
+    state.drafts = await snapshot.loadDrafts();
   } else {
     if (doc) applyAnonymous(doc);                            // the login texts, without an account
     snapshot.clearAll();                                     // nothing of a previous account stays for the next one (GEN-05)
   }
-  state.drafts = await snapshot.loadDrafts();
   document.getElementById('start-loading')?.remove();   // the first page paints next: the spinner of a start with nothing stored goes (SH-51). Optional: an old page under a new script (SH-50) has no spinner
   router.start();
 }

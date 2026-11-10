@@ -4,6 +4,11 @@
 const LAST_ROUTE = 'yap.lastRoute';
 const FRESH_LOAD_TO = 'yap.freshLoadTo';   // one route for the next load only: a fresh load of a new build comes in through '/'
 
+// A route lives in more places than this table. main.js loads a page from `pages` and puts it in `framed` or in
+// `anonymous`. session.js keeps a list of the account's pages that a sign-in returns to (signedOut). The server
+// answers only the paths in Endpoints/ShellEndpoints.cs Routes with the shell, and the service worker gets its route
+// list from there. A sign-in page, which the server answers differently for a signed-out visitor, is also in
+// SERVER_FIRST of update.js and of service-worker.js.
 const patterns = [
   [/^\/$/, () => ({ page: 'chat', lobby: true })],
   [/^\/lobby$/, () => ({ page: 'chat', lobby: true })],
@@ -54,7 +59,7 @@ export function navigate(path, { replace = false } = {}) {
 export function rememberRoute(path) { write(LAST_ROUTE, path); }
 
 // The route a fresh load of a new build comes back to. The load goes in through '/' so that the server answers it
-// (main.js reloadForNewBuild), and '/' alone would open the last conversation (SH-43), not the settings page the
+// (update.js reloadForNewBuild), and '/' alone would open the last conversation (SH-43), not the settings page the
 // person was on. Session storage: the same tab, the next load only.
 export function keepForFreshLoad(route) { try { sessionStorage.setItem(FRESH_LOAD_TO, route); } catch { /* private mode: '/' opens the last conversation */ } }
 function takeFreshLoadRoute() {

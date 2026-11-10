@@ -1,0 +1,1533 @@
+/* admin.css: the Admin page (js/pages/admin.js, templates t-admin and t-toggle-row; the explanation bubble of
+   js/ui/tooltip.js). pages.css holds the rules that the Admin page shares with other pages, such as the toggle
+   switch, the danger items and the GIF library. */
+
+/* ==== Admin page ==== */
+/* js/pages/admin.js, js/ui/tooltip.js; t-admin */
+
+.admin-page {
+    --admin-column: 640px;   /* every form and settings box on the page: one width, so the tabs line up (AD-09, AD-10) */
+    display: flex;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Desktop sidebar */
+.admin-sidebar {
+    width: 180px;
+    flex-shrink: 0;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border-dark);
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 0.75rem;
+    gap: 0.25rem;
+}
+
+.admin-sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0 0.25rem;
+    margin-bottom: 1rem;
+}
+
+.admin-sidebar-header h2 {
+    color: var(--text-white);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.page-admin .back-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.page-admin .back-button:hover {
+    background: var(--bg-hover);
+    color: var(--text-white);
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.75rem;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+    width: 100%;
+    text-align: left;
+}
+
+.nav-item:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.nav-item.active {
+    background: var(--accent-tint);
+    color: var(--text-white);
+}
+
+/* Mobile tab bar (hidden on desktop) */
+.admin-tabs {
+    display: none;
+}
+
+/* Main content */
+.admin-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+/* The admin's standing warning (ProxyWatch): red, above every tab, until the server is configured. */
+.admin-warning {
+    margin: 0 0 16px;
+    padding: 12px 16px;
+    border: 1px solid var(--color-danger);
+    border-left-width: 6px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+}
+.admin-warning p { margin: 6px 0 0; }
+.admin-warning pre {
+    margin: 6px 0 0;
+    padding: 8px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.25);
+    overflow-x: auto;
+}
+
+.page-admin .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.page-admin .section-header h3 {
+    color: var(--text-white);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.section-count {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+}
+
+/* Table. The wrapper is a box that scrolls both ways, at most 70 % of the viewport tall. The admin tables
+   outgrow a narrow window sideways and a long list downwards. In a wrapper that only scrolled sideways, the
+   sideways scrollbar sat at the bottom of the whole table, off screen with many rows; in a box never taller
+   than the viewport it is always in reach. The box is also what the sticky header holds to: sticky holds to
+   the nearest scrolling ancestor, and this wrapper is one anyway (overflow-x: auto makes overflow-y auto too),
+   so a header could never hold to the page scroller above it. */
+.table-wrapper {
+    overflow: auto;
+    max-height: 70vh;
+    border-radius: 8px;
+    border: 1px solid var(--border-dark);
+}
+
+/* Both scrollbars in the theme's colours, in a lane wide enough to take with the mouse: the browser's own bar
+   on Windows 11 is a hairline that grows on hover, and the sideways one is easy to miss. The thumb is an 8 px
+   pill in a 14 px lane; the transparent border keeps the whole lane as the grab area. The standard properties
+   are for Firefox alone, inside the @supports: in Chrome 121+ a scrollbar-color on the element switches the
+   ::-webkit-scrollbar rules off. */
+.table-wrapper::-webkit-scrollbar { width: 14px; height: 14px; }
+.table-wrapper::-webkit-scrollbar-track, .table-wrapper::-webkit-scrollbar-corner { background: transparent; }
+.table-wrapper::-webkit-scrollbar-thumb {
+    background: var(--bg-muted);
+    background-clip: padding-box;   /* after the shorthand, which would reset it */
+    border: 3px solid transparent;
+    border-radius: 7px;
+}
+.table-wrapper::-webkit-scrollbar-thumb:hover { background-color: var(--text-muted); }
+@supports not selector(::-webkit-scrollbar) {
+    .table-wrapper { scrollbar-color: var(--bg-muted) transparent; }
+}
+
+/* The header row stays while the rows scroll. */
+.table-wrapper th {
+    position: sticky;
+    top: 0;
+    z-index: 1;   /* a row with opacity (a closed connection in Diagnostics) is a stacking context that would paint over the header */
+    background: var(--bg-sidebar);   /* the thead background stays behind when the cells stick */
+    box-shadow: inset 0 -1px 0 var(--border-dark);   /* the line under the header: a collapsed border is painted by the table and stays behind too */
+}
+
+/* A table wider than its box slides when the header row is dragged (admin.js, pannable). The hand shows only then. */
+.table-wrapper.can-pan th { cursor: grab; }
+.table-wrapper.panning, .table-wrapper.panning * { cursor: grabbing; user-select: none; }
+
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.users-table thead {
+    background: var(--bg-sidebar);
+}
+
+.users-table th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+.users-table td {
+    padding: 0.75rem 1rem;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-dark);
+    vertical-align: middle;
+}
+
+.users-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.users-table tbody tr:hover {
+    background: var(--bg-hover);
+}
+
+/* User cell */
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 180px;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.page-admin .user-name {
+    color: var(--text-white);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.page-admin .admin-badge {
+    font-size: 0.75rem;
+    margin-left: 0.25rem;
+}
+
+.user-username {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+/* Status pill */
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.page-admin .status-pill .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.status-pill.online {
+    background: color-mix(in srgb, var(--status-online) 15%, transparent);
+    color: var(--status-online);
+}
+
+.page-admin .status-pill.online .status-dot {
+    background: var(--status-online);
+}
+
+.status-pill.away {
+    background: color-mix(in srgb, var(--status-away) 15%, transparent);
+    color: var(--status-away);
+}
+
+.page-admin .status-pill.away .status-dot {
+    background: var(--status-away);
+}
+
+.status-pill.invisible {
+    background: color-mix(in srgb, var(--status-invisible) 15%, transparent);
+    color: var(--status-invisible);
+}
+
+.page-admin .status-pill.invisible .status-dot {
+    background: var(--status-invisible);
+}
+
+.status-pill.offline {
+    background: color-mix(in srgb, var(--status-invisible) 10%, transparent);
+    color: var(--text-muted);
+}
+
+.page-admin .status-pill.offline .status-dot {
+    background: var(--text-muted);
+}
+
+/* PWA cell */
+.pwa-cell {
+    white-space: nowrap;
+}
+
+.pwa-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--status-online) 12%, transparent);
+    color: var(--status-online);
+}
+
+/* Date & action cells */
+.date-cell {
+    white-space: nowrap;
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+}
+
+.action-cell {
+    white-space: nowrap;
+}
+
+.action-type {
+    display: block;
+    color: var(--text-primary);
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+.action-date {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+/* IP tags */
+.ip-cell {
+    min-width: 120px;
+}
+
+.ip-tag {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    background: var(--bg-input);
+    border-radius: 3px;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-family: monospace;
+    margin: 0.125rem 0.25rem 0.125rem 0;
+}
+
+/* Locale cell */
+.locale-cell {
+    white-space: nowrap;
+}
+
+.locale-tz {
+    display: block;
+    color: var(--text-primary);
+    font-size: 0.8125rem;
+}
+
+.locale-lang {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.no-data {
+    color: var(--text-muted);
+}
+
+/* Clickable rows */
+.clickable-row {
+    cursor: pointer;
+}
+
+.clickable-row.selected {
+    background: var(--accent-tint);
+}
+
+.clickable-row.selected:hover {
+    background: var(--accent-tint);
+}
+
+/* User detail panel */
+.user-detail-panel {
+    margin-top: 1.5rem;
+    border: 1px solid var(--border-dark);
+    border-radius: 8px;
+    background: var(--bg-sidebar);
+    padding: 1.25rem;
+}
+
+/* Inline expand row: detail panel rendered directly beneath the selected user row */
+.detail-row > td {
+    padding: 0;
+    border-bottom: 1px solid var(--border-dark);
+}
+
+.detail-row .user-detail-panel {
+    margin: 0;
+    border-radius: 0;
+    border-left: 3px solid var(--accent-primary);
+}
+
+.detail-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-dark);
+}
+
+.detail-header-info {
+    flex: 1;
+}
+
+.detail-header-info h4 {
+    color: var(--text-white);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.detail-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.detail-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-white);
+}
+
+.detail-loading {
+    color: var(--text-muted);
+    padding: 1rem 0;
+}
+
+.detail-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.detail-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.625rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.tag-green {
+    background: color-mix(in srgb, var(--status-online) 15%, transparent);
+    color: var(--status-online);
+}
+
+.tag-muted {
+    background: color-mix(in srgb, var(--status-invisible) 10%, transparent);
+    color: var(--text-muted);
+}
+
+/* Theme swatch inside the detail-panel theme tag */
+.theme-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    margin-right: 0.375rem;
+    flex-shrink: 0;
+}
+
+/* Theme usage stats (Users tab) */
+.theme-stats-header {
+    margin-top: 2rem;
+}
+
+.theme-stats {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.theme-stat-card {
+    background: var(--bg-sidebar);
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-width: 130px;
+}
+
+.theme-stat-card.unused {
+    opacity: 0.45;
+}
+
+.theme-stat-swatch {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+    flex-shrink: 0;
+}
+
+.theme-stat-accent {
+    position: absolute;
+    right: -1px;
+    bottom: -1px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    /* ring matches the card background so the dot reads as sitting on the swatch */
+    border: 2px solid var(--bg-sidebar);
+}
+
+.theme-stat-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.theme-stat-pct {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 400;
+}
+
+.detail-tables {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.detail-section h5 {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin: 0 0 0.5rem 0;
+}
+
+.detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+}
+
+.detail-table th {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    color: var(--text-muted);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+.detail-table td {
+    padding: 0.5rem 0.75rem;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-dark);
+}
+
+.detail-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.ip-mono {
+    font-family: monospace;
+    font-size: 0.8125rem;
+}
+
+.ua-cell {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    word-break: break-all;
+    max-width: 600px;
+}
+
+/* The admin's Danger Zone (AD-38 to AD-40), under the Users tab: the room page's danger items in the admin's own
+   box, with a full red frame. The items share the unprefixed rules in pages.css (.danger-item and friends). */
+.page-admin .danger-section {
+    max-width: var(--admin-column);
+    margin-top: 2rem;
+    padding: 1.25rem;
+    border: 1px solid var(--color-danger);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+}
+
+.page-admin .danger-section h3 {
+    margin: 0 0 1rem;
+    color: var(--color-danger);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.page-admin .danger-item + .danger-item,
+.danger-found {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-dark);
+}
+
+.danger-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.page-admin .danger-select { max-width: 220px; }
+.page-admin .danger-days { width: 5rem; }
+
+.danger-unit,
+.danger-found-ago {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+}
+
+.danger-found-title,
+.danger-result {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+.danger-result { margin-top: 1rem; }
+
+.danger-found ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    margin: 0.75rem 0 1rem;
+    padding: 0;
+    list-style: none;
+}
+
+.danger-found li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.danger-found-username {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+}
+
+@media (max-width: 600px) {
+    .danger-controls { width: 100%; flex-wrap: wrap; }
+    .page-admin .danger-select { max-width: none; flex: 1; }
+}
+
+/* Debug section */
+.debug-form,
+.bot-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: var(--admin-column);
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 1.25rem;
+}
+
+.page-admin .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.page-admin .form-group label {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.page-admin .form-group select,
+.page-admin .form-group input,
+.page-admin .form-input {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-dark);
+    border-radius: 4px;
+    color: var(--text-primary);
+    padding: 0.5rem 0.625rem;
+    font-size: 0.875rem;
+}
+
+.page-admin .form-group select:focus,
+.page-admin .form-group input:focus,
+.page-admin .form-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+.generate-btn,
+.save-btn {
+    background: var(--accent-primary);
+    color: var(--accent-ink);
+    border: none;
+    border-radius: 4px;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.generate-btn:hover:not(:disabled),
+.save-btn:hover:not(:disabled) {
+    opacity: 0.85;
+}
+
+.generate-btn:disabled,
+.save-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.debug-result {
+    color: var(--status-online);
+    font-size: 0.8125rem;
+    padding: 0.5rem 0.625rem;
+    background: color-mix(in srgb, var(--status-online) 10%, transparent);
+    border-radius: 4px;
+}
+
+/* Bot settings (the hint and the save result serve the other tabs too) */
+.page-admin .form-input.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.page-admin .form-textarea {
+    resize: vertical;
+    min-height: 60px;
+    font-family: inherit;
+    line-height: 1.4;
+}
+
+.page-admin .form-hint {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.bot-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.save-result {
+    color: var(--status-online);
+    font-size: 0.8125rem;
+}
+
+/* Bot (AD-09): the picture and the preview of the welcome DM */
+.bot-avatar { display: flex; align-items: center; gap: 1rem; }
+.bot-avatar-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.bot-preview {
+    margin: 0;
+    padding: 0.75rem;
+    border-radius: 4px;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.page-admin .bot-hours { width: 6rem; }   /* a number of hours, not a text column */
+
+/* Registration settings */
+.registration-settings,
+.pending-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-width: var(--admin-column);
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.page-admin .toggle-row {
+    padding: 1rem 1.25rem;
+    transition: background-color 0.15s;
+    border-bottom: 1px solid var(--border-dark);
+}
+
+.page-admin .toggle-row:last-child {
+    border-bottom: none;
+}
+
+.page-admin .toggle-row:hover {
+    background: var(--bg-hover);
+}
+
+/* The GIF provider's state in the Settings tab (AD-13): a row of its own, not a footnote. */
+.provider-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.25rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-danger);
+}
+.provider-status.on { color: var(--color-success); }
+
+/* Deployment how-to boxes — read-only setup instructions for appsettings-level options */
+.howto-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-width: var(--admin-column);
+}
+
+.howto-box {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.howto-box summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    list-style: none;
+    transition: background-color 0.15s;
+}
+
+.howto-box summary::-webkit-details-marker {
+    display: none;
+}
+
+.howto-box summary:hover {
+    background: var(--bg-hover);
+}
+
+.howto-status {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+.howto-status.on {
+    color: var(--status-online);
+}
+
+.howto-body {
+    padding: 0 1.25rem 1rem;
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+}
+
+.howto-body p {
+    margin: 0.5rem 0;
+}
+
+.howto-body ol {
+    margin: 0.5rem 0;
+    padding-left: 1.25rem;
+}
+
+.howto-body li {
+    margin: 0.25rem 0;
+}
+
+.howto-body code {
+    background: var(--bg-primary);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    overflow-wrap: anywhere;
+}
+
+/* Pending users list */
+.pending-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid var(--border-dark);
+}
+
+.pending-item:last-child {
+    border-bottom: none;
+}
+
+.pending-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.pending-username {
+    color: var(--text-white);
+    font-weight: 500;
+    font-size: 0.9375rem;
+}
+
+.pending-time {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.pending-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.approve-btn {
+    background: var(--status-online);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.approve-btn:hover {
+    opacity: 0.85;
+}
+
+.reject-btn {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-dark);
+    border-radius: 4px;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.reject-btn:hover {
+    color: var(--color-danger);
+    border-color: var(--color-danger);
+}
+
+/* The filled red button: a delete for good that stands next to a blue action (the Media tab's "Delete {n}
+   uploads" after the find). The outlined .reject-btn is too quiet for it: on the box's own background it reads
+   as a disabled control. The size matches .upload-button, its neighbour. */
+.danger-btn {
+    background: var(--color-danger);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.danger-btn:hover:not(:disabled) {
+    opacity: 0.85;
+}
+
+.danger-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.refresh-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.refresh-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-white);
+}
+
+/* Mobile layout */
+@media (max-width: 600px) {
+    .admin-page {
+        flex-direction: column;
+    }
+
+    .admin-sidebar {
+        display: none;
+    }
+
+    .admin-tabs {
+        display: flex;
+        overflow-x: auto;
+        background: var(--bg-sidebar);
+        border-bottom: 1px solid var(--border-dark);
+        padding: 0 0.5rem;
+        gap: 0;
+        flex-shrink: 0;
+    }
+
+    .tab-item {
+        padding: 0.75rem 1rem;
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: color 0.15s, border-color 0.15s;
+    }
+
+    .tab-item:hover {
+        color: var(--text-primary);
+    }
+
+    .tab-item.active {
+        color: var(--text-white);
+        border-bottom-color: var(--accent-primary);
+    }
+
+    .admin-content {
+        padding: 1rem;
+    }
+
+    .page-admin .section-header {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .log-filters {
+        flex-direction: column;
+    }
+}
+
+/* Action Logs */
+
+.log-filters {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.log-filter-select,
+.log-filter-input {
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-dark);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 0.8125rem;
+}
+
+.log-filter-select {
+    min-width: 180px;
+}
+
+.log-filter-input {
+    flex: 1;
+    max-width: 250px;
+}
+
+.log-filter-select:focus,
+.log-filter-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+.logs-table .date-cell {
+    white-space: nowrap;
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-family: monospace;
+}
+
+.logs-table .info-cell {
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.action-pill {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+}
+
+.action-login {
+    background: color-mix(in srgb, var(--status-online) 15%, transparent);
+    color: var(--status-online);
+}
+
+.action-logout {
+    background: color-mix(in srgb, var(--status-invisible) 15%, transparent);
+    color: var(--text-muted);
+}
+
+.action-smart {
+    background: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+    color: var(--accent-primary);
+}
+
+.action-video {
+    background: color-mix(in srgb, var(--status-away) 10%, transparent);
+    color: var(--status-away);
+}
+
+.action-join {
+    background: color-mix(in srgb, var(--status-away) 12%, transparent);
+    color: var(--status-away);
+}
+
+.action-default {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+.log-load-more {
+    display: flex;
+    justify-content: center;
+    padding: 1rem 0;
+}
+
+.log-empty {
+    color: var(--text-muted);
+    text-align: center;
+    padding: 2rem 0;
+    font-size: 0.875rem;
+}
+
+/* Preview thumbnails in the Media and GIFs tables */
+.admin-thumb {
+    height: 40px;
+    max-width: 72px;
+    object-fit: cover;
+    border-radius: 4px;
+    background: var(--bg-secondary);
+    display: block;
+}
+
+/* A voice message's player in the Media table: narrow, so the row keeps the height of a thumbnail (AD-19). */
+.admin-audio {
+    display: block;
+    width: 180px;
+    height: 32px;
+}
+
+/* Inline tag editing in the GIFs table */
+.page-admin .gif-tags-cell {
+    min-width: 200px;
+}
+
+/* Flattening: the Admin tag editor rules are scoped to .gif-tags-cell, not only
+   .page-admin. The Admin page also renders the GIF library manager, which uses the
+   same .gif-tag* class names with different rules (see .gif-library in pages.css). */
+.page-admin .gif-tags-cell .gif-tags-view {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    cursor: pointer;
+    padding: 4px;
+    margin: -4px;
+    border-radius: 6px;
+}
+
+.page-admin .gif-tags-cell .gif-tags-view:hover {
+    background: var(--bg-hover);
+}
+
+.page-admin .gif-tags-cell .gif-tag-chip {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border-radius: 10px;
+    padding: 2px 8px;
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+
+.page-admin .gif-tags-cell .gif-tags-empty {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 0.8rem;
+}
+
+.page-admin .gif-tags-cell .gif-tags-edit {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.page-admin .gif-tags-cell .gif-tags-input {
+    flex: 1;
+    min-width: 140px;
+    background: var(--bg-input);
+    color: var(--text-primary);
+    border: 1px solid var(--border-dark);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.82rem;
+}
+
+.page-admin .gif-tags-cell .gif-tags-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+.page-admin .gif-tags-cell .gif-tags-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+    border: none;
+    border-radius: 6px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    line-height: 1;
+}
+
+.page-admin .gif-tags-cell .gif-tags-btn:hover {
+    color: var(--text-primary);
+}
+
+.page-admin .gif-tags-cell .gif-tags-btn.save {
+    color: var(--color-success);
+}
+
+/* Media stats cards */
+.media-stats {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.media-stat-card {
+    background: var(--bg-sidebar);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 100px;
+}
+
+.media-stat-label {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.media-stat-value {
+    color: var(--text-white);
+    font-size: 1.125rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.page-admin .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.page-admin .status-dot.status-online {
+    background: var(--color-success);
+}
+
+.page-admin .status-dot.status-offline {
+    background: var(--color-danger);
+}
+
+@media (max-width: 600px) {
+    .theme-stats,
+    .media-stats {
+        gap: 0.5rem;
+    }
+
+    .theme-stat-card,
+    .media-stat-card {
+        flex: 1 1 calc(50% - 0.5rem);
+        min-width: 0;
+    }
+}
+
+/* Media clean-up (AD-19) */
+.media-prune {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    background: var(--bg-sidebar);
+}
+.media-prune-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
+.media-prune-scan { display: flex; align-items: center; gap: 0.375rem; font-size: 0.8125rem; color: var(--text-secondary); cursor: pointer; }
+/* .page-admin in front: it must beat .page-admin .section-hint by specificity, not by source order. */
+.page-admin .media-prune .section-hint { margin: 0.5rem 0 0; }
+
+/* Diagnostics */
+.diag-stats {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.diag-charts {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.diag-chart-card {
+    background: var(--bg-sidebar);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.diag-chart-card h4 {
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin: 0 0 0.75rem 0;
+}
+
+/* Server load: the title and its range select on one line. */
+.diag-card-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.75rem; }
+/* .diag-chart-card in front: it must beat .diag-chart-card h4 by specificity, not by source order. */
+.diag-chart-card .diag-card-head h4 { margin: 0; }
+/* Two classes: it must beat .log-filter-select (the same element) by specificity, not by source order. */
+.log-filter-select.diag-range { padding: 0.25rem 0.5rem; font-size: 0.8125rem; }
+
+.diag-chart-wrapper {
+    position: relative;
+    height: 200px;
+}
+
+/* Diagnostics, latency by user (AD-26): a connection row sits under its user, so its first cell steps in. */
+.logs-table td.diag-indent { padding-left: 28px; }
+
+/* Server GIF library subsection in the GIFs tab */
+.server-gif-library {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.server-gif-library h4 {
+    margin: 0 0 0.35rem 0;
+    font-size: 0.95rem;
+}
+
+.page-admin .section-hint {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    margin: 0 0 0.9rem 0;
+}
+
+.action-pill.server-pill {
+    background: var(--accent-primary);
+    color: var(--accent-ink);
+    margin-left: 4px;
+}
+
+/* Per-row actions in the GIFs table */
+.gif-actions-cell {
+    white-space: nowrap;
+}
+
+.gif-row-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: none;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    margin-right: 4px;
+}
+
+.gif-row-btn:hover {
+    color: var(--text-primary);
+}
+
+.gif-row-btn.active {
+    background: var(--accent-primary);
+    color: var(--accent-ink);
+}
+
+.gif-row-btn.danger:hover {
+    color: var(--color-danger);
+}
+
+@media (max-width: 600px) {
+    .diag-stats {
+        gap: 0.5rem;
+    }
+
+    .diag-chart-wrapper {
+        height: 160px;
+    }
+}
+
+/* Invites section */
+.invite-create {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.invite-hint {
+    display: block;
+    max-width: 640px;
+    line-height: 1.5;
+}
+
+.link-cell {
+    white-space: nowrap;
+}
+
+.link-code {
+    font-family: monospace;
+    font-size: 0.8125rem;
+    user-select: all;
+    margin-right: 0.25rem;
+}
+
+/* .refresh-btn is display:flex (block-level), which would drop the copy icon under the URL */
+.link-cell .refresh-btn {
+    display: inline-flex;
+    vertical-align: middle;
+}
+
+.link-hidden {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+}
+
+.link-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+.link-expiry {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-dark);
+    border-radius: 4px;
+    color: var(--text-primary);
+    padding: 0.25rem 0.375rem;
+    font-size: 0.75rem;
+}
+
+/* The explanation bubble (js/ui/tooltip.js): one node on <body>, placed by script, so a table that scrolls
+   sideways cannot clip it. Larger type than the native title, wraps at 280 px, shows on touch too. */
+.admin-tip {
+    position: fixed;
+    z-index: 1200;
+    max-width: 280px;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    background: var(--bg-darkest);
+    color: var(--text-primary);
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    white-space: pre-line;
+    pointer-events: none;   /* never between the pointer and the element that owns the bubble */
+}
+.page-admin [data-tip] { cursor: help; }
+.page-admin th[data-tip] { text-decoration: underline dotted; text-underline-offset: 3px; }
+
+/* ==== Page height: the admin page fills the window ==== */
+
+/* The admin page fills the window inside the flex column of #app. */
+#app > .page-admin { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+#app > .page-admin > .admin-page { flex: 1; min-height: 0; }

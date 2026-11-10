@@ -56,6 +56,6 @@ This page holds the rules that every component follows. A component page can mak
 
 **GEN-21** Drafts and unsent messages are kept through a reload, a new version and the error screen.
 
-**GEN-22** A change made on another device or by another person shows at once. The one exception is the Users table of the administration page, which is read when that page loads.
+**GEN-22** A change made on another device or by another person shows at once. The one exception is the Users table of the administration page, which is read when its tab opens.
 
 **GEN-23** These belong to the account: the profile, the theme and text size, the time format and the status. The mutes, the recent emoji, the favourites and the unread counts also belong to the account. These belong to the device: the drafts, the pending messages, the cached conversations, the notification subscription, the last route and the dismissed prompts.

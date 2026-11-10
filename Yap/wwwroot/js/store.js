@@ -1,6 +1,25 @@
 // The state of the client: one object, one subscribe function. The bootstrap document replaces the
-// shared parts whole; hub messages update one part each (bootstrap-and-events.md). Only hub.js, api
-// callers and the outbox sender write here. Components read and subscribe; they keep no second copy.
+// shared parts whole; hub messages update one part each (bootstrap-and-events.md). Every change of `state`
+// goes through a function of this module, and that function calls changed(part). The one exception is the
+// start: main.js puts the drafts of the device into state.drafts before a page is mounted. Components read
+// and subscribe; they keep no second copy.
+//
+// The parts, by the name that changed() fires and on() listens to, and the detail each one carries:
+//   connection      state.connection, connectionFailed and updateAvailable. setUpdateAvailable announces a new
+//                   build on this part, and sender.js listens for it.
+//   user, config, texts, rooms, dms, unread, mutes, emoji, favoriteGifIds, emojiImages
+//                   the bootstrap field of the same name, and the hub messages that change it
+//   users           state.users; { removed: username } when an account is deleted (removeUser)
+//   presence        state.presence; { changes } with one tick of the hub's list (setPresences), none from a bootstrap
+//   open            state.open: a conversation opens or closes
+//   messages        state.open.messages; { type, ... } says what changed (see "the open conversation" below)
+//   typists         state.open.typists
+//   pins            state.open.pins
+//   pending         state.pending; { type: 'queued' } for a send (sender.js)
+//   drafts          state.drafts
+//   registrations   state.registrations, the admins' waiting list
+//   incoming        an event with no state: a hub message arrived, and the detail is the message (notify.js)
+//   gifImport       an event with no state: the progress of a GIF import (ui/gif-library.js)
 
 export const state = {
   connection: 'connecting',     // 'connecting' | 'connected' | 'reconnecting' | 'offline' | 'signedOut'
@@ -8,10 +27,14 @@ export const state = {
   user: null, config: null, texts: null,
   rooms: [], users: {}, presence: {}, dms: [], unread: {}, mutes: null, emoji: null, favoriteGifIds: new Set(),
   emojiImages: null,            // where emoji pictures come from (render/text.js useImages); part of the bootstrap, so the stored copy paints with it
-  open: null,                   // { channelId, partner, messages, hasMore, hasNewer, restricted, typists: { username: expiresAt }, pins }
+  open: null,                   // { channelId, partner, messages, hasMore, hasNewer, restricted, typists: { username: expiresAt }, pins,
+                                //   fromDevice, loading }: the open answer (wire-contract.md) and the fields this client adds
                                 // hasNewer: the rows are a window that ends before the newest message (TL-41); a tail has false
+                                // fromDevice: the rows are the device's stored copy (TL-39); a stored tail also brings `at`
+                                // loading: an empty placeholder waits for the first answer (chat.js, TL-02)
+                                // channelId is null for a direct message opened offline for the first time (OF-08)
   pending: [],                  // outbox rows of the open conversation, drawn as faded rows (OF-08)
-  drafts: {},                   // conversation key (offline/snapshot.js keyOf) -> { text, replyToId }
+  drafts: {},                   // conversation key (offline/snapshot.js keyOf) -> { text, replyToId, replyToName }
   registrations: [],            // admins: the waiting list (AD-11)
   updateAvailable: false,       // the server runs a newer build (SH-20)
 };
@@ -398,7 +421,12 @@ export function reset() {
   changed('messages', { type: 'reset' });
 }
 
+// channelId is the conversation key of keyOf (offline/snapshot.js): a room id, or 'dm:' and the partner.
 export function setDraft(channelId, draft) {
+  // Nobody is signed in, so nobody has a draft (GEN-05). reset() tells the composer that its conversation closed, and
+  // the composer saves the text of its box at that moment: without this line the text came back into state.drafts
+  // after the sign-out, went to the device half a second later, and showed in the input box of the next account.
+  if (!state.user) return;
   if (draft?.text || draft?.replyToId) state.drafts[channelId] = draft; else delete state.drafts[channelId];
   changed('drafts');   // offline/snapshot.js keeps them on the device (IB-53)
 }
@@ -436,6 +464,9 @@ export function showsBell(channelId) {
   if (roomById(channelId)) return mutes.roomMode === 'individual' && mutes.channels[channelId] === true;   // the person's own choice, not the default
   return isMuted(channelId);
 }
+
+// The people online, for the header's button and the sidebar's heading. Invisible people are absent from the map (PR-05).
+export const onlineCount = () => Object.keys(state.presence).length;
 
 // The mailbox leaves out the open conversation (SH-09); the app badge counts it too (NT-11).
 export function unreadTotal({ exceptOpen = false } = {}) {

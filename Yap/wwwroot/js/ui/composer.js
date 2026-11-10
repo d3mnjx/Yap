@@ -1,6 +1,7 @@
-// The input box (input-box.md): the typing strip, the reply bar, the pill with +, the draft, the toggles and
-// Send, the read-only bar, the pickers, drafts per conversation, uploads. Every action here is local first;
-// the server learns of a message through sender.js (IB-10, IB-24).
+// The input box (input-box.md): the typing strip, the reply bar, the pill with + and its menu, the draft, the
+// toggles and Send, the read-only bar, the pickers, drafts per conversation, the tray of picked files, and the
+// voice recorder (IB-67 to IB-70). Every action here is local first; the server learns of a message through
+// sender.js (IB-10, IB-24).
 
 import { state, on, displayName, roomById, isReadOnly, setDraft, dmByChannel } from '../store.js';
 import { clone, el, replace } from '../render/dom.js';
@@ -144,7 +145,7 @@ export function Composer(root) {
   }, { signal });
   area.addEventListener('keydown', e => {
     if (e.key !== 'Enter' || e.isComposing) return;                                       // IB-13
-    if (overlays.isTouch() || e.shiftKey) return;                                          // IB-11, IB-12
+    if (overlays.isTouch() || e.shiftKey) return;                                          // Enter is a newline on touch, where only Send sends (IB-12), and with Shift (IB-11)
     e.preventDefault();
     send();
   });
@@ -370,7 +371,7 @@ export function Composer(root) {
   // ---- the pickers (IB-38 to IB-48) ----
 
   const handlers = {
-    insert: insertEmoji, sendGif, warn,
+    insert: insertEmoji, sendGif, gifUpload, warn,
     toKeyboard: () => { closePicker(); area.focus(); },      // the keyboard takes the sheet's place (IB-66)
     toggleFull: () => sizeSheet(!container.dataset.sheet),   // IB-66
   };
@@ -378,7 +379,7 @@ export function Composer(root) {
   function mountPickers() {
     pickers ??= {
       emoji: EmojiPicker({ onPick: v => pickers.current.insert(v) }),
-      gif: GifPicker({ onSend: g => pickers.current.sendGif(g), onWarn: (t, m) => pickers.current.warn(t, m) }),
+      gif: GifPicker({ onSend: g => pickers.current.sendGif(g), onUpload: () => pickers.current.gifUpload(), onWarn: (t, m) => pickers.current.warn(t, m) }),
       combined: null, current: handlers,
     };
     pickers.current = handlers;
@@ -410,7 +411,7 @@ export function Composer(root) {
       replace(gifPane, [gif.element]);
     }
   }
-  overlays.phone.addEventListener('change', () => { closePicker(); layoutPickers(); }, { signal });   // IB-43
+  overlays.phone.addEventListener('change', () => { closePicker(); layoutPickers(); }, { signal });   // a width that crosses 600 px closes the picker (IB-43)
 
   function openPicker(which) {
     mountPickers();
@@ -453,6 +454,8 @@ export function Composer(root) {
     });
   }
   for (const backdrop of box.querySelectorAll('.emoji-picker-backdrop')) backdrop.addEventListener('click', closePicker);
+  // These two pickers are not on the layer stack, so overlays.js never closes them on Escape. A layer of the stack,
+  // such as the warning dialog of a GIF upload, takes Escape first (IB-17).
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && container.dataset.picker && !overlays.anyOpen()) closePicker(); }, { signal });   // IB-17
 
   // IB-44: at the caret, before a selection, at the end when the draft was never focused.
@@ -474,6 +477,19 @@ export function Composer(root) {
     row.tappedAt = performance.now();
   }
 
+  // The send function for a GIF whose upload starts now (PK-41): the GIF goes where the person picked the file. The
+  // upload takes seconds, and the pickers outlive a change of conversation, so a send at the end through
+  // pickers.current reached whatever conversation was open by then. Still there: as a tap on a card, so the reply bar
+  // counts and the picker closes. Elsewhere by then, or this box is gone: a plain GIF; a reply that was open stays in
+  // the draft of its conversation.
+  function gifUpload() {
+    const at = key, to = target;
+    return gif => {
+      if (key === at && !signal.aborted) sendGif(gif);
+      else if (to && state.user) sender.queueMessage({ ...to, replyToId: null, gif });   // no account after a sign-out: nothing goes
+    };
+  }
+
   // the toggle's random silhouette (IB-45)
   const icon = box.querySelector('.emoji-toggle-icon');
   const randomCell = () => {
@@ -484,6 +500,7 @@ export function Composer(root) {
   randomCell();
   emojiToggle.addEventListener('mouseenter', randomCell);
 
+  // The 'messages' reset comes with every setOpen and closeOpen, and also with store.reset() at a sign-out, which fires no 'open'.
   const offs = [on('messages', d => { if (d?.type === 'reset') onOpen(); }), on('typists', renderTyping), on('rooms', renderReadOnly), on('user', renderReadOnly), on('texts', renderPlaceholder), on('users', renderTyping)];
   if (pickers) { pickers.current = handlers; layoutPickers(); }
   onOpen();

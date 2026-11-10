@@ -5,7 +5,7 @@
 // The bars are one canvas per row, not 48 elements, redrawn while the message plays. Their colours come from the
 // stylesheet (--voice-bar and --voice-bar-played on .voice-bars), so a theme shows at the next draw.
 
-import { el } from '../render/dom.js';
+import { el, icon } from '../render/dom.js';
 
 const SPEEDS = [1, 1.5, 2];
 const FLAT = new Array(48).fill(0.25);   // a message whose recorder measured nothing
@@ -110,5 +110,5 @@ audio.addEventListener('ended', () => { const view = current?.view; current = nu
 audio.addEventListener('error', () => { const view = current?.view; current = null; if (view) draw(view); });
 
 const speedLabel = () => `${speed}×`;
-const playIcon = () => { const s = el('span', { class: 'play-icon', 'aria-hidden': 'true' }); s.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>'; return s; };
-const pauseIcon = () => { const s = el('span', { class: 'pause-icon', 'aria-hidden': 'true' }); s.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>'; return s; };
+const playIcon = () => el('span', { class: 'play-icon', 'aria-hidden': 'true' }, icon('play', { width: 18, height: 18 }));
+const pauseIcon = () => el('span', { class: 'pause-icon', 'aria-hidden': 'true' }, icon('pause', { width: 18, height: 18 }));

@@ -20,6 +20,7 @@ namespace Yap.Endpoints;
 /// </summary>
 public static class ShellEndpoints
 {
+    // The client's routes. wwwroot/js/router.js has their patterns and names the other places a new route needs.
     private static readonly string[] Routes =
     [
         "/", "/lobby", "/room/{id:guid}", "/dm/{user}", "/settings", "/admin",

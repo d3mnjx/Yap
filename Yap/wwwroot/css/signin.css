@@ -1,0 +1,408 @@
+/* signin.css: the three sign-in pages, Login, Invite and Verify (js/pages/login.js, invite.js and verify.js;
+   templates t-login, t-invite and t-verify). The three pages share one look, so their common rules are written once,
+   in the Invite section. pages.css holds the rules that the other pages share. */
+
+/* ==== Invite page, and the rules the three sign-in pages share ==== */
+/* js/pages/invite.js; t-invite */
+
+/* Same visual language as the login and verification pages. */
+.invite-container,
+.username-container,
+.verify-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: var(--bg-header);
+}
+
+.invite-container h2 {
+    color: var(--text-white);
+    margin-bottom: 1.5rem;
+    font-size: 2rem;
+    text-align: center;
+    padding: 0 1rem;
+}
+
+.invite-card,
+.username-form,
+.verify-form {
+    display: flex;
+    background: var(--bg-sidebar);
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px 0 rgba(0,0,0,.2);
+    margin: 0 1rem;
+}
+
+.invite-card,
+.username-form {
+    flex-direction: column;
+    gap: 0.75rem;
+    max-width: 500px;
+}
+
+.invite-card {
+    align-items: stretch;
+}
+
+.invite-text {
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    margin: 0;
+    text-align: center;
+}
+
+.invite-text strong {
+    color: var(--text-white);
+}
+
+.invite-form-row {
+    display: flex;
+    gap: 1rem;
+    align-items: start;
+}
+
+.invite-input,
+.username-input,
+.verify-input {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: 3px;
+    width: 300px;
+    background: var(--bg-input);
+    color: var(--text-primary);
+    transition: border-color 0.3s;
+}
+
+.invite-input,
+.username-input {
+    min-width: 0;
+    flex-shrink: 1;
+}
+
+.invite-input:focus,
+.username-input:focus,
+.verify-input:focus {
+    outline: none;
+    border-color: var(--accent-focus);
+}
+
+.invite-input.invalid,
+.invite-input.invalid:focus,
+.username-input.invalid,
+.username-input.invalid:focus,
+.verify-input.invalid {
+    border-color: var(--color-danger);
+}
+
+.invite-button,
+.join-button,
+.verify-button {
+    padding: 0.75rem 2rem;
+    background: var(--accent-primary);
+    color: var(--accent-ink);
+    border: none;
+    border-radius: 3px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.invite-button,
+.join-button {
+    white-space: nowrap;
+}
+
+.invite-button:hover:not(:disabled),
+.join-button:hover:not(:disabled),
+.verify-button:hover:not(:disabled) {
+    background: var(--accent-hover);
+}
+
+.invite-button:disabled,
+.join-button:disabled,
+.verify-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.invite-secondary {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    text-align: center;
+    text-decoration: underline;
+}
+
+.invite-secondary:hover {
+    color: var(--text-primary);
+}
+
+.page-invite .validation-error {
+    color: var(--color-danger);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+:is(.page-invite, .page-login) .build-info {
+    position: absolute;
+    bottom: 1rem;
+    color: var(--bg-muted);
+    font-size: 0.7rem;
+    font-family: monospace;
+}
+
+@media (max-width: 600px) {
+    .invite-container h2 {
+        font-size: 1.5rem;
+    }
+
+    .invite-card,
+    .username-form,
+    .verify-form {
+        width: 90%;
+        max-width: 300px;
+    }
+
+    .invite-form-row {
+        flex-direction: column;
+    }
+
+    .invite-input,
+    .invite-button,
+    .username-input,
+    .join-button,
+    .verify-input,
+    .verify-button {
+        width: 100%;
+    }
+}
+
+/* ==== Login page ==== */
+/* js/pages/login.js; t-login */
+
+/* The title of the login page */
+.username-container h2 {
+    color: var(--text-white);
+    margin-bottom: 2rem;
+    font-size: 2.5rem;
+    white-space: pre-line;
+    text-align: center;
+}
+
+/* AU-21: the notice after a sign-out from elsewhere */
+.signed-out-notice {
+    margin: 0 0 1rem;
+    padding: 0.6rem 0.9rem;
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border-dark);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.username-form-row {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    align-items: start;
+}
+
+@media (max-width: 600px) {
+    .username-form-row {
+        flex-direction: column;
+    }
+
+    .username-container h2 {
+        font-size: 1.75rem;
+        text-align: center;
+        padding: 0 1rem;
+    }
+}
+
+.page-login .validation-error {
+    color: var(--color-danger);
+    font-size: 1rem;
+    text-align: center;
+}
+
+.new-account-hint {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.new-account-hint strong {
+    color: var(--text-secondary);
+}
+
+.retry-link {
+    display: block;
+    margin: 0.75rem auto 0;
+    padding: 0.5rem 1.5rem;
+    background: var(--accent-primary);
+    border: none;
+    border-radius: 3px;
+    color: var(--accent-ink);
+    text-decoration: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: background 0.3s;
+}
+
+.retry-link:hover {
+    background: var(--accent-hover);
+}
+
+/* Multi-device guide (neutral, instructional) */
+.multidevice-guide {
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border-dark);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    text-align: left;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.multidevice-guide strong {
+    color: var(--text-white);
+}
+
+.multidevice-guide ol {
+    margin: 0.75rem 0;
+    padding-left: 1.25rem;
+}
+
+.multidevice-guide ol li {
+    margin-bottom: 0.375rem;
+}
+
+.multidevice-guide .retry-link {
+    margin-top: 0.5rem;
+}
+
+/* Closed registration state */
+.closed-message {
+    background: var(--bg-sidebar);
+    padding: 1.5rem 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px 0 rgba(0,0,0,.2);
+    text-align: center;
+    margin: 0 1rem;
+    max-width: 400px;
+}
+
+.closed-message p {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Waiting for approval state */
+.waiting-message {
+    background: var(--bg-sidebar);
+    padding: 1.5rem 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px 0 rgba(0,0,0,.2);
+    text-align: center;
+    margin: 0 1rem;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.waiting-message p {
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.waiting-hint {
+    color: var(--text-muted) !important;
+    font-size: 0.8125rem !important;
+}
+
+.waiting-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border-dark);
+    border-top-color: var(--accent-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 0.5rem;
+}
+
+.rejection-notice {
+    color: var(--color-danger) !important;
+    font-size: 0.875rem !important;
+    margin-top: 0.5rem !important;
+}
+
+/* ==== Verify page ==== */
+/* js/pages/verify.js; t-verify */
+
+.verify-container h2 {
+    color: var(--text-white);
+    margin-bottom: 0.5rem;
+    font-size: 2rem;
+}
+
+.verify-hint {
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    margin-bottom: 1.5rem;
+}
+
+.verify-form {
+    gap: 1rem;
+}
+
+@media (max-width: 600px) {
+    .verify-form {
+        flex-direction: column;
+    }
+
+    .verify-container h2 {
+        font-size: 1.5rem;
+        text-align: center;
+        padding: 0 1rem;
+    }
+}
+
+.input-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.page-verify .validation-error {
+    color: var(--color-danger);
+    font-size: 0.75rem;
+}
+
+.back-link {
+    margin-top: 1rem;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.85rem;
+    text-decoration: underline;
+}
+
+.back-link:hover {
+    color: var(--text-primary);
+}

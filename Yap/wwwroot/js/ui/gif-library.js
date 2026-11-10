@@ -1,6 +1,7 @@
 // The GIF library manager (settings.md ST-21 to ST-24; admin.md AD-21): the person's pool, or the server
 // library for the admin. Folders, tags, add, import, export, delete. The same component in both places;
-// `server` picks the routes and the wording.
+// `server` picks the routes and the wording. The file also exports size(), a byte count as text, which the
+// admin page and the debug card of Settings use.
 
 import { state, on } from '../store.js';
 import { api } from '../api.js';

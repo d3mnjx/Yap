@@ -118,7 +118,9 @@ export function queueMessage(message) {
   const row = newRow(message);
   queue.push(row);
   paused = false;   // a send is a wake-up (offline-design-notes.md)
-  publish(row, { type: 'queued' });   // the timeline goes to the bottom for a send only (TL-14)
+  // 'queued' moves the timeline to the bottom, for a send only (TL-14) and only for a send into the open conversation:
+  // an uploaded GIF may go to a conversation that the person left during the upload (composer.js gifUpload, PK-41).
+  publish(row, state.open && keyOf(row) === keyOf(state.open) ? { type: 'queued' } : undefined);
   flush();
   return row;
 }
