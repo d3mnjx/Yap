@@ -43,7 +43,7 @@ The post loop:
 1. Take the oldest `queued` row that is ready. A row with attachments is ready when its last file is uploaded. A row that is not ready is passed over, so a text sent after a video does not wait for the video.
 2. POST the message with its `clientId` and the results of its uploads.
 3. On 2xx, delete the row. The live update from the server paints the real message.
-4. On a network error, stop. Do nothing until a wake-up.
+4. On a network error, stop. Do nothing until a wake-up. A 502, 503 or 504 counts as one: a reverse proxy answers so while the server behind it restarts.
 5. On a 4xx, set `state = failed` and stop trying that row.
 
 An upload that nobody answers stops the uploads in the same way: no upload starts until a wake-up. The post loop and the uploads do not wait for each other.

@@ -237,7 +237,27 @@ await step(11, 'Upload while the server cannot be reached stays pending (OF-08)'
   check(ok, `sent after the server is back: ${ok} after ${Date.now() - t0} ms; pending rows left ${await A.locator('.message-group.pending').count()}; statuses ${JSON.stringify(await A.locator('.message-group .pending-status').allInnerTexts().catch(() => []))}`);
 });
 
-await step(12, 'New-version strip', async (check, notes) => {
+await step(12, 'A text stays pending while a proxy answers 502 for the server, and goes when the server is back (OF-08)', async (check) => {
+  // The browser is online and the server restarts: the reverse proxy in front of it answers the POST with a 502.
+  let down = true, tried = 0;
+  const posts = /\/api\/(channels|dm)\/[^/]+\/messages$/;
+  const handler = route => down && route.request().method() === 'POST' && ++tried ? route.fulfill({ status: 502, contentType: 'text/plain', body: 'Bad Gateway' }) : route.continue();
+  await ctxA.route(posts, handler);
+  await A.fill('.message-input', 'sent during the restart');
+  await A.press('.message-input', 'Enter');
+  const r = row(A, 'sent during the restart');
+  const got = await waitTrue(() => tried > 0, 5000, 50);
+  await sleep(500);   // time for the client to act on the answer
+  const cls = (await r.count()) === 1 ? await r.getAttribute('class') : '';
+  check(got && cls.includes('pending') && !cls.includes('failed'), `the POST got a 502: ${got}; the row is pending and not failed: "${cls}"`);
+  down = false;
+  await A.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));   // a wake-up, as the hub's reconnect is one
+  const sent = await waitTrue(async () => (await r.count()) === 1 && !(await r.getAttribute('class')).includes('pending'), 10000, 100);
+  check(sent && tried === 1, `sent after the server is back: ${sent}; POSTs that got the 502: ${tried}`);
+  await ctxA.unroute(posts, handler);
+});
+
+await step(13, 'New-version strip', async (check, notes) => {
   const cycle = async () => {
     const t0 = Date.now();
     await ctxA.setOffline(true);
@@ -278,7 +298,7 @@ await step(12, 'New-version strip', async (check, notes) => {
   await A.screenshot({ path: SHOTS + '14-notice.png' });
 });
 
-await step(13, 'Sign out without a connection does not sign out (AU-22)', async (check) => {
+await step(14, 'Sign out without a connection does not sign out (AU-22)', async (check) => {
   await ctxA.setOffline(true);
   const off = await waitTrue(async () => (await st(A)).connection === 'offline', 10000, 100);
   await A.click('.status-button');
@@ -294,7 +314,7 @@ await step(13, 'Sign out without a connection does not sign out (AU-22)', async 
   check(back && (await st(A)).user === 'boss', `after the network returns and a reload: user ${(await st(A)).user}`);
 });
 
-await step(14, 'Sign out clears IndexedDB', async (check) => {
+await step(15, 'Sign out clears IndexedDB', async (check) => {
   await A.click('.status-button');
   await A.locator('.status-dropdown [data-action="signout"]').click();
   await acceptDialogs(A);

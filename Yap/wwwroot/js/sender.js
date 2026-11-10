@@ -14,7 +14,7 @@
 // few seconds, and the file goes on from the bytes the server has (OF-10).
 
 import { state, changed, setPending, addMessage, on, hasMedia } from './store.js';
-import { api, ApiError } from './api.js';
+import { api, ApiError, away } from './api.js';
 import * as hub from './hub.js';
 import * as outbox from './offline/outbox.js';
 import { keyOf } from './offline/snapshot.js';
@@ -219,7 +219,9 @@ async function post() {
         if (row.tappedAt) hub.report('send', performance.now() - row.tappedAt);   // AD-26: tap to own row rendered; a tap of this tab only
         publish();
       } catch (e) {
-        if (e instanceof ApiError && (e.status === 0 || e.status === 409)) break;   // no network, or the first copy is still being stored
+        // No network, a proxy that answers for a server that restarts, or the first copy is still being stored:
+        // the row waits for the next wake-up. A failed row here would ask the person to press Retry after each deploy.
+        if (e instanceof ApiError && (e.status === 0 || e.status === 409 || away(e.status))) break;
         fail(row, e instanceof ApiError ? e.message : 'Could not send');
       }
     }

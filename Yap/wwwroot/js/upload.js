@@ -1,6 +1,8 @@
 // Files to the TUS endpoint: one file of a message, with its progress, which can go on from where an earlier try
 // stopped (IB-29 to IB-37), and one file with metadata for the GIF library (PK-38, ST-22). lib/tus.min.js defines `tus`.
 
+import { away } from './api.js';
+
 const EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.webm', '.mov', '.avi', '.mkv'];   // IB-31
 const MAX_FILES = 10;                                                                              // IB-32
 
@@ -20,14 +22,9 @@ export function check(files, maxMB, inTray = 0) {
   return { accepted, refused };
 }
 
-// Which answers come from in front of the server, not from it: a reverse proxy (Caddy, Nginx, a tunnel) answers
-// 502, 503 or 504 by itself while the server behind it restarts. They count as no answer at all. Yap sends none
-// of the three.
-const away = status => status === 502 || status === 503 || status === 504;
-
 // The server processes a file after its last chunk; its info appears when it is done. The server answers 200 with
 // the info, 202 while it still works on the file, and 404 for an upload it does not know (TusEndpoints.cs): a 404
-// ends the polls at once, with no info. `reached` tells whether the server answered any poll: none at all means
+// ends the polls at once, with no info. `reached` tells whether the server answered any poll (a proxy's answer for it does not count, `away`): none at all means
 // the network or the server went away, not that the server is slow. `tick` runs on every poll, a sign of life for
 // the stall check of sender.js.
 async function info(uploadUrl, attempts = 30, tick = () => {}) {
