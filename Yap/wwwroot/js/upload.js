@@ -20,10 +20,11 @@ export function check(files, maxMB, inTray = 0) {
   return { accepted, refused };
 }
 
-// The server processes a file after its last chunk; its info appears when it is done. `reached` tells whether any
-// poll got an answer: none at all means the network went away, not that the server is slow. `tick` runs on every
-// poll, a sign of life for the stall check of sender.js; a tick that returns false ends the polls (the upload was
-// aborted: the server gives the result once, and a poll nobody waits for would take it from the next try).
+// The server processes a file after its last chunk; its info appears when it is done. The server answers 200 with
+// the info, 202 while it still works on the file, and 404 for an upload it does not know (TusEndpoints.cs): a 404
+// ends the polls at once, with no info. `reached` tells whether any poll got an answer: none at all means the
+// network went away, not that the server is slow. `tick` runs on every poll, a sign of life for the stall check
+// of sender.js.
 async function info(uploadUrl, attempts = 30, tick = () => {}) {
   const base = uploadUrl.slice(0, uploadUrl.lastIndexOf('/'));
   const id = uploadUrl.split('/').pop();
@@ -32,9 +33,10 @@ async function info(uploadUrl, attempts = 30, tick = () => {}) {
     try {
       const res = await fetch(`${base}/info/${id}`, { credentials: 'same-origin' });
       reached = true;
-      if (res.ok) return { info: await res.json(), reached };
+      if (res.status === 200) return { info: await res.json(), reached };
+      if (res.status === 404) return { info: null, reached };
     } catch { /* no answer: the network is away; the next poll may get through */ }
-    if (tick() === false) break;
+    tick();
     await new Promise(r => setTimeout(r, 1000));
   }
   return { info: null, reached };
@@ -69,8 +71,8 @@ export async function uploadOne(file, endpoint, metadata = {}) {
 }
 
 // Which answers on an upload URL mean "this URL cannot be used", not "this file is refused": 404, the server does
-// not know the upload (a restart: it keeps the owners in memory, TusEndpoints.cs); 409 and 423, it still holds the
-// lock of a request that died with the network. tus has retried 409 and 423 for nine seconds by then.
+// not have the upload (it removed it after a day without a chunk, or it has finished it); 409 and 423, it still
+// holds the lock of a request that died with the network. tus has retried 409 and 423 for nine seconds by then.
 const urlGone = status => status === 404 || status === 409 || status === 423;
 
 // One file to the TUS endpoint. Returns { promise, abort }. The promise resolves to one of
@@ -93,10 +95,10 @@ export function uploadFile(file, endpoint, { metadata = {}, url = null, onUrl = 
 
   // The server processes the file after its last byte; the result appears when it is done.
   const result = async at => {
-    const { info: got, reached } = await info(at, 30, () => { if (over) return false; onProgress(null); });
+    const { info: got, reached } = await info(at, 30, () => { if (!over) onProgress(null); });
     if (got?.type === 'error') return refusal(got.error ?? 'Upload failed');   // the server took the file and refused it (a voice message it could not transcode)
     if (got) return { info: got };
-    return reached ? null : { retry: true };   // null: the server answers and has no result
+    return reached ? null : { retry: true };   // null: the server answers and has no result (it does not know the upload, or it never finished the file)
   };
 
   const fromZero = () => {
@@ -114,8 +116,8 @@ export function uploadFile(file, endpoint, { metadata = {}, url = null, onUrl = 
       metadata: { filename: file.name, filetype: file.type, ...metadata },
       onUploadUrlAvailable: () => {
         // From here tus has no endpoint. With one, it answers a 404 on the HEAD of a retry by creating a new upload
-        // by itself, and a 404 there can also mean "finished": the server forgets the owner at the last byte
-        // (TusEndpoints.cs). A last chunk whose answer was lost would go again from zero, as a second copy.
+        // by itself, and a 404 there can also mean "finished": the server moves a finished file out of the tus
+        // store (TusEndpoints.cs). A last chunk whose answer was lost would go again from zero, as a second copy.
         // Without an endpoint the 404 comes to onError, which asks for the result first.
         u.options.endpoint = null;
         onUrl(u.url);
@@ -129,8 +131,8 @@ export function uploadFile(file, endpoint, { metadata = {}, url = null, onUrl = 
         const response = error?.originalResponse;
         if (!response) { finish({ retry: true }); return; }
         if (!urlGone(response.getStatus())) { finish(refusal(response.getBody?.()?.trim() || error?.message || 'Upload failed')); return; }
-        // The HEAD that asks how far the upload is got a 404: the upload is finished, or the server lost it. The
-        // server has the result only after it processed the file, so this polls as after an upload.
+        // The HEAD that asks how far the upload is got a 404: the upload is finished, or the server does not have
+        // it. The result endpoint tells which: the result, "still at work", or at once "unknown".
         if (response.getStatus() === 404 && error.originalRequest?.getMethod() === 'HEAD') {
           const done = await result(u.url);
           if (over) return;

@@ -236,13 +236,15 @@ public class SecurityTests : IClassFixture<YapFactory>
         patch.Headers.Add("Upload-Offset", "0");
         Assert.Equal(HttpStatusCode.NoContent, (await uma.Http.SendAsync(patch)).StatusCode);
 
-        // the result: the uploader's only, once, and without the server's path
+        // the result: the uploader's only, as often as the uploader asks (an answer can be lost on the way), and without the server's path
         Assert.Equal(HttpStatusCode.Unauthorized, (await _app.CreateClient().GetAsync($"/api/tus/info/{fileId}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await ulf.Http.GetAsync($"/api/tus/info/{fileId}")).StatusCode);
         var info = await uma.Http.GetFromJsonAsync<JsonElement>($"/api/tus/info/{fileId}");
         Assert.StartsWith("/uploads/", info.GetProperty("url").GetString());
         Assert.False(info.TryGetProperty("path", out _));
-        Assert.Equal(HttpStatusCode.NotFound, (await uma.Http.GetAsync($"/api/tus/info/{fileId}")).StatusCode);
+        var again = await uma.Http.GetFromJsonAsync<JsonElement>($"/api/tus/info/{fileId}");
+        Assert.Equal(info.GetProperty("url").GetString(), again.GetProperty("url").GetString());
+        Assert.Equal(HttpStatusCode.NotFound, (await ulf.Http.GetAsync($"/api/tus/info/{fileId}")).StatusCode);   // still nobody else's
     }
 
     [Fact(DisplayName = "NT-23, NT-24: a push subscription belongs to the account that registered it")]

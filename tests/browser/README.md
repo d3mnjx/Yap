@@ -20,7 +20,8 @@ server, runs its steps, prints PASS or FAIL for each step, and stops the server 
 - `uploads.mjs` checks the uploads of a message: a text that goes out while a picture uploads, the state of each
   file in the pending row with three files at one time and the pictures in the order of the pick, an upload that
   goes on after a reload from the bytes the server has, a last chunk whose answer was lost (with a reload and
-  without one), and a message that goes out without a file the server refused, which stays as a failed row.
+  without one), a message that goes out without a file the server refused, which stays as a failed row, a
+  half-sent file that the server no longer has, and the owner check of an upload and of its result.
 - `pages.mjs` checks the pages of step 5: the login rules, Settings (themes, text size, profile, the login link,
   the retired secret code, sessions, mutes, time and date), the verification and link pages, an account switch that
   reaches the other tab of the device, Admin (users, invites, registration and approval, bot, debug, the

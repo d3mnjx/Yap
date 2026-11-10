@@ -1,6 +1,6 @@
-using System.Collections.Concurrent;
 using System.Net;
 using System.Security.Claims;
+using System.Text.Json;
 using tusdotnet;
 using tusdotnet.Models;
 using tusdotnet.Models.Configuration;
@@ -17,11 +17,6 @@ namespace Yap.Endpoints;
 
 public static class TusEndpoints
 {
-    // What a finished upload became, for the uploader's GET /api/tus/info: the id alone is no right to the answer.
-    private sealed record Completed(Guid? UserId, object Result);
-    private static readonly ConcurrentDictionary<string, Completed> _completedFiles = new();
-    // The person who created each upload in progress: a PATCH, HEAD or DELETE from anyone else gets 404.
-    private static readonly ConcurrentDictionary<string, Guid> _owners = new();
     private static readonly HashSet<string> _imageExtensions = new(StringComparer.OrdinalIgnoreCase)
         { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
     private static readonly HashSet<string> _videoExtensionsForGifProbe = new(StringComparer.OrdinalIgnoreCase)
@@ -35,7 +30,9 @@ public static class TusEndpoints
 
         app.MapTus("/api/tus", async httpContext => new()
         {
-            Store = new TusDiskStore(tusStorePath),
+            // The id of an upload names its owner (UploadIds). An anonymous request never creates one: OnAuthorize refuses it first.
+            Store = new TusDiskStore(tusStorePath, false, TusDiskBufferSize.Default,
+                new UploadIds(httpContext.User.IsSignedIn() ? httpContext.User.Id() : Guid.Empty)),
             MaxAllowedUploadSizeInBytesLong = GetMaxUploadBytes(httpContext),
             Expiration = new SlidingExpiration(TimeSpan.FromHours(24)),   // an abandoned upload expires; TusCleanupService removes it
             Events = new()
@@ -51,17 +48,11 @@ public static class TusEndpoints
                         return Task.CompletedTask;
                     }
                     // An upload in progress belongs to the person who created it. Anyone else's PATCH, HEAD or
-                    // DELETE on its id gets 404, as does an id this process never saw (after a restart the client
-                    // starts the upload again).
+                    // DELETE on its id gets 404. The owner is read from the id, so this holds after a restart too,
+                    // and the person's client goes on with the upload.
                     if (eventContext.Intent is not (IntentType.CreateFile or IntentType.GetOptions)
-                        && (eventContext.FileId is not { } fileId || !_owners.TryGetValue(fileId, out var owner) || owner != eventContext.HttpContext.User.Id()))
+                        && (eventContext.FileId is not { } fileId || !UploadIds.Owns(eventContext.HttpContext.User.Id(), fileId)))
                         eventContext.FailRequest(HttpStatusCode.NotFound, "File not found");
-                    return Task.CompletedTask;
-                },
-
-                OnCreateCompleteAsync = eventContext =>
-                {
-                    _owners[eventContext.FileId] = eventContext.HttpContext.User.Id();
                     return Task.CompletedTask;
                 },
 
@@ -126,7 +117,11 @@ public static class TusEndpoints
                     var gifService = eventContext.HttpContext.RequestServices.GetRequiredService<GifService>();
 
                     var file = await eventContext.GetFileAsync();
-                    _owners.TryRemove(file.Id, out _);
+                    // The result file of this upload, for GET /api/tus/info. Empty means "the server still works on
+                    // the file"; it is written first, so the uploader's poll never finds a finished upload unknown.
+                    Directory.CreateDirectory(uploads.TusResults);
+                    var resultPath = Path.Combine(uploads.TusResults, file.Id + ".json");
+                    File.WriteAllText(resultPath, "");
                     var metadata = await file.GetMetadataAsync(eventContext.CancellationToken);
 
                     // Null when tus metadata carried no filename; originalFileName keeps the
@@ -144,8 +139,9 @@ public static class TusEndpoints
                         ? folderMeta.GetString(System.Text.Encoding.UTF8) : null;
 
                     var user = CurrentUser(eventContext.HttpContext, userService);
-                    // What the uploader's GET /api/tus/info gets for this file, once.
-                    void Done(object result) => _completedFiles[file.Id] = new Completed(user?.Id, result);
+                    // What the uploader's GET /api/tus/info gets for this file. It is a file, not memory: the answer
+                    // can be lost on the network and asked for again, also after a restart. TusCleanupService removes it.
+                    void Done(object result) => File.WriteAllText(resultPath, JsonSerializer.Serialize(result, JsonSerializerOptions.Web));
 
                     var tusFilePath = Path.Combine(tusStorePath, file.Id);
                     void CleanupTusMetadata()
@@ -352,14 +348,23 @@ public static class TusEndpoints
             }
         }).RequireCors("TusUpload");
 
-        // The answer goes to the person who uploaded, once. The file id is the only key, so a guessed or leaked id
-        // must not hand someone else's file over; the server's own path stays on the server.
-        app.MapGet("/api/tus/info/{fileId}", (string fileId, ClaimsPrincipal me) =>
+        // What a finished upload became, for the person who uploaded it: a guessed or leaked id must not hand someone
+        // else's file over, and the server's own path stays on the server. Three answers: 200 with the result, as often
+        // as it is asked for; 202 while the server still works on the file; 404 for an id that is not this person's or
+        // that the server does not know, and then the client sends the file again. The 202 has no body on purpose: a
+        // client from before these answers takes every 2xx for the result, and an empty body makes it ask again.
+        app.MapGet("/api/tus/info/{fileId}", async (string fileId, ClaimsPrincipal me) =>
         {
-            if (!_completedFiles.TryGetValue(fileId, out var done) || done.UserId != me.Id())
-                return Results.NotFound(new { error = "File not found or still processing" });
-            _completedFiles.TryRemove(fileId, out _);
-            return Results.Ok(done.Result);
+            if (!UploadIds.Owns(me.Id(), fileId)) return Results.NotFound(new { error = "File not found" });   // also the check that makes the id safe as a file name
+            try
+            {
+                // Shared with the writer: OnFileComplete may write the result at this moment, and its write must not fail.
+                await using var stream = new FileStream(Path.Combine(uploads.TusResults, fileId + ".json"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                using var reader = new StreamReader(stream);
+                var result = await reader.ReadToEndAsync();
+                return result.Length == 0 ? Results.StatusCode(StatusCodes.Status202Accepted) : Results.Text(result, "application/json");
+            }
+            catch (IOException) { return Results.NotFound(new { error = "File not found" }); }   // no such file (FileNotFoundException and DirectoryNotFoundException are IOExceptions)
         }).RequireAuthorization().RequireCors("TusUpload");
     }
 

@@ -1,7 +1,8 @@
 // The upload run (input-box.md IB-28 and IB-34, offline.md OF-10): a text that goes out while a picture uploads,
 // the state of each file and the limit of three at one time, an upload that goes on after a reload from the bytes
-// the server has, a last chunk whose answer was lost (with a reload and without one), and a message that loses a
-// file the server refused. Run: npm run uploads (see README.md).
+// the server has, a last chunk whose answer was lost (with a reload and without one), a message that loses a
+// file the server refused, a half-sent file the server no longer has, and whose an upload and its result are.
+// Run: npm run uploads (see README.md).
 
 import crypto from 'node:crypto';
 import { chromium } from 'playwright';
@@ -124,9 +125,9 @@ await step(3, 'An upload goes on after a reload from the bytes the server has (O
   await ctxA.unroute('**/api/tus/*', handler);
 });
 
-// The last chunk reaches the server, which processes the file, and its answer never reaches the client. `after`
-// runs once that has happened. Until open() every later request to the upload endpoint fails; from then the first
-// two polls for the result get the 404 of a server that still works on the file.
+// The last chunk reaches the server, which processes the file, and its answer never reaches the client. Until
+// open() every later request to the upload endpoint fails; from then the first two polls for the result get the
+// 202 of a server that still works on the file.
 async function loseLastAnswer(file) {
   let lost = false, opened = false, early = 2;
   const bytes = async route => {
@@ -136,31 +137,33 @@ async function loseLastAnswer(file) {
     lost = true;
     await route.abort('connectionfailed');
   };
-  const poll = route => !opened ? route.abort('connectionfailed') : early-- > 0 ? route.fulfill({ status: 404, contentType: 'application/json', body: '{"error":"File not found or still processing"}' }) : route.continue();
+  const poll = route => !opened ? route.abort('connectionfailed') : early-- > 0 ? route.fulfill({ status: 202, body: '' }) : route.continue();
   await ctxA.route('**/api/tus/*', bytes);
   await ctxA.route('**/api/tus/info/*', poll);
   await sendFiles(A, file);
   await waitTrue(() => lost, 10000, 50);
-  return { lost: () => lost, open() { opened = true; wire = []; }, async stop() { await ctxA.unroute('**/api/tus/*', bytes); await ctxA.unroute('**/api/tus/info/*', poll); } };
+  return { lost: () => lost, open() { opened = true; }, async stop() { await ctxA.unroute('**/api/tus/*', bytes); await ctxA.unroute('**/api/tus/info/*', poll); } };
 }
 
 await step(4, 'A last chunk whose answer was lost is not sent again after a reload', async (check) => {
   const before = await pictures(A);
   const net = await loseLastAnswer(makePng(fixture('lost.png'), [20, 20, 20]));
   check(net.lost(), `the server took the last chunk and the answer was dropped: ${net.lost()}`);
+  wire = [];
   await A.reload();
   await A.waitForSelector('.message-input', { timeout: 10000 });
   net.open();
   await A.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));   // a wake-up, as the hub's reconnect is one
   const done = await waitTrue(async () => (await pictures(A)) === before + 1, 20000, 200);
   const sent = wire.filter(w => w.method === 'PATCH' || (w.method === 'POST' && w.path === '/api/tus'));
-  check(done && sent.length === 0, `the picture arrived: ${done}; creates and chunks after the reload: ${sent.length} (${JSON.stringify(wire.map(w => `${w.method} ${w.path.replace(/[0-9a-f]{32}/, 'id')}`))})`);
+  check(done && sent.length === 0, `the picture arrived: ${done}; creates and chunks after the reload: ${sent.length} (${JSON.stringify(wire.map(w => `${w.method} ${w.path.replace(/[0-9a-f]{64}/, 'id')}`))})`);
   await net.stop();
 });
 
 await step(5, 'A last chunk whose answer was lost is not sent again in the same session', async (check) => {
   const before = await pictures(A);
   const net = await loseLastAnswer(makePng(fixture('lost2.png'), [90, 90, 90]));
+  wire = [];
   net.open();   // no reload: tus asks at once how far the upload is, and the server says 404
   await A.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   const done = await waitTrue(async () => (await pictures(A)) === before + 1, 20000, 200);
@@ -186,6 +189,55 @@ await step(6, 'A message goes out without the file the server refused, and the f
   if (left) await failed.locator('.pending-retry').click();
   const again = await waitTrue(async () => (await pictures(A)) === before + 2 && (await A.locator('.message-group.pending').count()) === 0, 15000, 200);
   check(again && (await waitTrue(async () => (await pictures(B)) >= 2, 5000)), `Retry sent the file as a second message: ${again}; pending rows left: ${await A.locator('.message-group.pending').count()}`);
+});
+
+await step(7, 'A half-sent file the server does not know starts again from zero at once', async (check) => {
+  const before = await pictures(A);
+  // 'cut': the first chunk arrives, the next ones do not. 'block': nothing arrives, so the page that is about to
+  // go cannot act on what follows. 'gone': the next offset request gets the 404 of an upload the server removed
+  // (the one-day expiry), then everything passes.
+  let patches = 0, mode = 'cut';
+  const handler = route => {
+    const method = route.request().method();
+    if (mode === 'block' || (mode === 'cut' && method === 'PATCH' && ++patches > 1)) return route.abort('connectionfailed');
+    if (mode === 'gone' && method === 'HEAD') { mode = 'open'; return route.fulfill({ status: 404, body: 'File not found' }); }
+    return route.continue();
+  };
+  await ctxA.route('**/api/tus/*', handler);
+  await sendFiles(A, writePng(fixture('big2.png'), 2000, 2000, crypto.randomBytes(2000 * 2000 * 3)));
+  await waitTrue(() => patches > 1, 20000, 100);
+  mode = 'block';
+  await A.reload();
+  await A.waitForSelector('.message-input', { timeout: 10000 });
+  mode = 'gone'; wire = [];
+  const t0 = Date.now();
+  await A.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));   // a wake-up, as the hub's reconnect is one
+  const created = await waitTrue(() => wire.some(w => w.method === 'POST' && w.path === '/api/tus'), 10000, 100);
+  const wait = Date.now() - t0;
+  const done = await waitTrue(async () => (await pictures(A)) === before + 1, 30000, 200);
+  const first = wire.find(w => w.method === 'PATCH');
+  check(created && first?.offset === 0, `a new upload was created ${wait} ms after the server said 404: ${created}; its first chunk starts at byte ${first?.offset}`);
+  check(done, `the picture arrived: ${done}`);
+  await ctxA.unroute('**/api/tus/*', handler);
+});
+
+await step(8, 'An upload and its result belong to the person who sent the file', async (check) => {
+  const before = await pictures(A);
+  const hold = await holdUploads();
+  await sendFiles(A, makePng(fixture('mine.png'), [250, 250, 20]));
+  await waitTrue(() => [...names.values()].includes('mine.png'), 5000, 50);
+  const id = [...names].find(([, name]) => name === 'mine.png')?.[0];
+  const head = page => page.evaluate(id => fetch(`/api/tus/${id}`, { method: 'HEAD', headers: { 'Tus-Resumable': '1.0.0' }, credentials: 'same-origin' }).then(r => r.status), id);
+  const result = page => page.evaluate(id => fetch(`/api/tus/info/${id}`, { credentials: 'same-origin' }).then(async r => ({ status: r.status, body: await r.text() })), id);
+  const [mine, theirs] = [await head(A), await head(B)];
+  check([200, 204].includes(mine) && theirs === 404, `the offset request while the file uploads: the sender ${mine}, another person ${theirs}`);
+  hold.release();
+  const done = await waitTrue(async () => (await pictures(A)) === before + 1, 15000, 200);
+  const [first, second, other] = [await result(A), await result(A), await result(B)];
+  check(done && first.status === 200 && second.status === 200 && first.body === second.body && first.body.includes('/uploads/'),
+    `the sender reads the result two times: ${first.status}, ${second.status}; the same: ${first.body === second.body}`);
+  check(other.status === 404, `another person asks for the result: ${other.status}`);
+  await hold.stop();
 });
 
 await finish(browser, server);
