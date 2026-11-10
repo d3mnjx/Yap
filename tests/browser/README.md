@@ -17,6 +17,10 @@ server, runs its steps, prints PASS or FAIL for each step, and stops the server 
   unpin, and a video that plays in the entry, and the jump to a message that is not loaded: the window around it
   with one server call, an older page above it, the pill, the end row under it, and the way back by the pill, the
   end row's button, the arrow, a send and a reconnect.
+- `uploads.mjs` checks the uploads of a message: a text that goes out while a picture uploads, the state of each
+  file in the pending row with three files at one time and the pictures in the order of the pick, an upload that
+  goes on after a reload from the bytes the server has, a last chunk whose answer was lost (with a reload and
+  without one), and a message that goes out without a file the server refused, which stays as a failed row.
 - `pages.mjs` checks the pages of step 5: the login rules, Settings (themes, text size, profile, the login link,
   the retired secret code, sessions, mutes, time and date), the verification and link pages, an account switch that
   reaches the other tab of the device, Admin (users, invites, registration and approval, bot, debug, the
@@ -58,6 +62,7 @@ npx playwright install chromium
 npm run smoke
 npm run offline
 npm run features
+npm run uploads
 npm run pages
 npm run latency
 npm run load

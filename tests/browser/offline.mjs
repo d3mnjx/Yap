@@ -11,7 +11,7 @@ import { acceptDialogs, SHOTS, sleep, waitTrue, short, row, step, stepLogs, fmt,
 // `VAR=1 node ...` does not work in the Windows shell that npm uses.
 process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = '1';
 
-const PNG = makePng(fixture('tiny.png'), [200, 120, 40], 1);   // step 8 looks for this file name in the pending row
+const PNG = makePng(fixture('tiny.png'), [200, 120, 40], 1);   // step 10 looks for this file name on the thumbnail of the pending row
 const dotState = async p => p.locator('.connection-dot').evaluate(e => ({ hidden: e.hidden, display: getComputedStyle(e).display, cls: e.className }));
 // A plain summary of the client's store, for checks that the DOM cannot show (the open conversation's identity, hasMore, the counts).
 const st = p => p.evaluate(async () => {
@@ -202,10 +202,10 @@ await step(10, 'File upload offline, then online', async (check) => {
   await sendFiles(A, PNG);
   await sleep(500);
   const modal = await A.locator('.warning-modal').isVisible().catch(() => false);
-  const r = A.locator('.message-group.pending').filter({ hasText: 'tiny.png' });
+  const r = A.locator('.message-group.pending').filter({ has: A.locator('.pending-thumb[title^="tiny.png"]') });
   const has = await waitTrue(async () => (await r.count()) === 1, 3000);
   await sleep(2000);
-  const info = has ? await r.evaluate(e => ({ cls: e.className, files: e.querySelector('.pending-files')?.textContent ?? null, status: e.querySelector('.pending-status')?.textContent ?? null, cancel: !!e.querySelector('.pending-cancel'), retry: !!e.querySelector('.pending-retry'), track: !!e.querySelector('.upload-progress-track') })) : null;
+  const info = has ? await r.evaluate(e => ({ cls: e.className, thumbs: [...e.querySelectorAll('.pending-thumb')].map(t => t.title), status: e.querySelector('.pending-status')?.textContent ?? null, cancel: !!e.querySelector('.pending-cancel'), retry: !!e.querySelector('.pending-retry'), track: !!e.querySelector('.upload-progress-track') })) : null;
   check(has && !info?.cls.includes('failed'), `pending row: ${has}; ${JSON.stringify(info)}; warning modal: ${modal}`);
   const t0 = Date.now();
   await ctxA.setOffline(false);
@@ -225,7 +225,7 @@ await step(11, 'Upload while the server cannot be reached stays pending (OF-08)'
   const before = await galleries();
   await ctxA.route('**/api/tus**', route => route.abort('connectionfailed'));   // the browser is online; the server is not reachable
   await sendFiles(A, DOWN);
-  const r = A.locator('.message-group.pending').filter({ hasText: 'down.png' });
+  const r = A.locator('.message-group.pending').filter({ has: A.locator('.pending-thumb[title^="down.png"]') });
   const has = await waitTrue(async () => (await r.count()) === 1, 3000);
   await sleep(12000);   // tus retries four times, about nine seconds, before it reports
   const info = has ? await r.evaluate(e => ({ cls: e.className, status: e.querySelector('.pending-status')?.textContent ?? null, reason: e.querySelector('.pending-reason')?.textContent ?? null })) : null;

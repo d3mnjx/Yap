@@ -433,7 +433,8 @@
                 <div class="message-cards"></div>
                 <div class="reactions-display"></div>
                 <div class="message-pending" hidden>
-                    <span class="pending-files"></span>
+                    <!-- One square for each file while the files upload (IB-34); a voice message has the bar instead. ui/message.js fills both. -->
+                    <div class="pending-thumbs"></div>
                     <div class="upload-progress-track"><div class="upload-progress-fill"></div></div>
                     <span class="pending-status"></span>
                     <span class="pending-reason"></span>

@@ -1,5 +1,5 @@
 // The outbox on disk (offline-design-notes.md, "The outbox"): one IndexedDB row per unsent message, with
-// the picked files as Blobs until they are uploaded. sender.js owns the rows in memory and mirrors every
+// the picked files as Blobs until the message is sent. sender.js owns the rows in memory and mirrors every
 // change here, so the next open tab sends what this one could not (OF-08, OF-10).
 
 import * as db from './db.js';
@@ -14,8 +14,15 @@ function serialisable(row) {
 }
 
 export const save = row => db.put(db.STORES.outbox, serialisable(row));
-export const remove = row => db.del(db.STORES.outbox, row.clientId);
-export const clear = () => db.clear(db.STORES.outbox);
+export const remove = row => Promise.all([db.del(db.STORES.outbox, row.clientId), db.del(db.STORES.kv, uploadsKey(row))]);
+export const clear = () => db.clear(db.STORES.outbox);   // the upload states go with the key-value store (snapshot.js clearAll, at the same sign-out)
+
+// How far the files of a row are: for each file, in the order of row.files, { url, info, error } (sender.js). It is
+// a record of its own, not a field of the row: IndexedDB writes a record whole, and a save of the row after every
+// file would write the row's Blobs again each time, up to a gigabyte for one message.
+const uploadsKey = row => `upload:${row.clientId}`;
+export const saveUploads = (row, parts) => db.put(db.STORES.kv, parts, uploadsKey(row));
+export const loadUploads = row => db.get(db.STORES.kv, uploadsKey(row));
 
 // The rows of this device, oldest first, as plain data; sender.js turns them into pending rows again.
 export async function loadAll() {
