@@ -1,8 +1,8 @@
 // The upload run (input-box.md IB-28 and IB-34, offline.md OF-10): a text that goes out while a picture uploads,
 // the state of each file and the limit of three at one time, an upload that goes on after a reload from the bytes
 // the server has, a last chunk whose answer was lost (with a reload and without one), a message that loses a
-// file the server refused, a half-sent file the server no longer has, and whose an upload and its result are.
-// Run: npm run uploads (see README.md).
+// file the server refused, and a half-sent file the server no longer has. Whose an upload and its result are is
+// a server test (Yap.Tests/SecurityTests.cs). Run: npm run uploads (see README.md).
 
 import crypto from 'node:crypto';
 import { chromium } from 'playwright';
@@ -219,25 +219,6 @@ await step(7, 'A half-sent file the server does not know starts again from zero 
   check(created && first?.offset === 0, `a new upload was created ${wait} ms after the server said 404: ${created}; its first chunk starts at byte ${first?.offset}`);
   check(done, `the picture arrived: ${done}`);
   await ctxA.unroute('**/api/tus/*', handler);
-});
-
-await step(8, 'An upload and its result belong to the person who sent the file', async (check) => {
-  const before = await pictures(A);
-  const hold = await holdUploads();
-  await sendFiles(A, makePng(fixture('mine.png'), [250, 250, 20]));
-  await waitTrue(() => [...names.values()].includes('mine.png'), 5000, 50);
-  const id = [...names].find(([, name]) => name === 'mine.png')?.[0];
-  const head = page => page.evaluate(id => fetch(`/api/tus/${id}`, { method: 'HEAD', headers: { 'Tus-Resumable': '1.0.0' }, credentials: 'same-origin' }).then(r => r.status), id);
-  const result = page => page.evaluate(id => fetch(`/api/tus/info/${id}`, { credentials: 'same-origin' }).then(async r => ({ status: r.status, body: await r.text() })), id);
-  const [mine, theirs] = [await head(A), await head(B)];
-  check([200, 204].includes(mine) && theirs === 404, `the offset request while the file uploads: the sender ${mine}, another person ${theirs}`);
-  hold.release();
-  const done = await waitTrue(async () => (await pictures(A)) === before + 1, 15000, 200);
-  const [first, second, other] = [await result(A), await result(A), await result(B)];
-  check(done && first.status === 200 && second.status === 200 && first.body === second.body && first.body.includes('/uploads/'),
-    `the sender reads the result two times: ${first.status}, ${second.status}; the same: ${first.body === second.body}`);
-  check(other.status === 404, `another person asks for the result: ${other.status}`);
-  await hold.stop();
 });
 
 await finish(browser, server);

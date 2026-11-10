@@ -26,7 +26,7 @@ public static class TusEndpoints
     {
         var uploads = app.Services.GetRequiredService<UploadPaths>();
         var tusStorePath = uploads.TusTemp;
-        Directory.CreateDirectory(tusStorePath);
+        Directory.CreateDirectory(uploads.TusResults);   // under the tus folder, which this creates too
 
         app.MapTus("/api/tus", async httpContext => new()
         {
@@ -119,7 +119,6 @@ public static class TusEndpoints
                     var file = await eventContext.GetFileAsync();
                     // The result file of this upload, for GET /api/tus/info. Empty means "the server still works on
                     // the file"; it is written first, so the uploader's poll never finds a finished upload unknown.
-                    Directory.CreateDirectory(uploads.TusResults);
                     var resultPath = Path.Combine(uploads.TusResults, file.Id + ".json");
                     File.WriteAllText(resultPath, "");
                     var metadata = await file.GetMetadataAsync(eventContext.CancellationToken);
@@ -210,6 +209,7 @@ public static class TusEndpoints
                     else
                     {
                         logger.LogWarning("Unsupported file type uploaded via tus: {Extension}", extension);
+                        Done(new { type = "error", error = "Unsupported file type" });   // without it the result stays "still at work" until the sweep
                         return;
                     }
 
