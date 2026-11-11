@@ -40,15 +40,14 @@ public class BotTests(YapFactory app) : IClassFixture<YapFactory>
         return signedIn;
     }
 
-    /// <summary>Connects and waits until the hub has run the connection: the client's start returns before the server's
-    /// OnConnectedAsync ends, and the bot decides on the return notice inside that method.</summary>
+    /// <summary>Connects. ConnectAsync returns after the server's OnConnectedAsync, and the bot decides on the return
+    /// notice inside that method. Do not wait for the session count in its place: the session is there a moment
+    /// before the bot decides, and a test that changed StartedAt in that moment got the wrong notice.</summary>
     private static async Task<Microsoft.AspNetCore.SignalR.Client.HubConnection> JoinAsync(YapFactory app, SignedIn person, int sessions = 1)
     {
         var hub = await person.ConnectAsync();
-        var presence = app.Service<PresenceService>();
         var id = app.Service<UserService>().GetByUsername(person.Username)!.Id;
-        for (var tries = 0; tries < 50 && presence.SessionsOf(id).Count < sessions; tries++) await Task.Delay(50);
-        Assert.Equal(sessions, presence.SessionsOf(id).Count);
+        Assert.Equal(sessions, app.Service<PresenceService>().SessionsOf(id).Count);
         return hub;
     }
 

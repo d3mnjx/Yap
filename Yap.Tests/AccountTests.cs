@@ -28,15 +28,7 @@ public class AccountTests : IClassFixture<YapFactory>
         var closed = new Expectation<bool>();
         phone.Closed += _ => { closed.Set(true); return Task.CompletedTask; };
 
-        // The hub records a connection a moment after ConnectAsync returns, so the list is asked for until both
-        // devices are there. One question at once found 1 device or none in 11 runs of 120.
-        var devices = 0;
-        for (var i = 0; i < 50 && devices < 2; i++)
-        {
-            if (i > 0) await Task.Delay(100);
-            devices = (await grace.Http.GetFromJsonAsync<JsonElement>("/api/account/devices?device=laptop")).GetProperty("devices").GetArrayLength();
-        }
-        Assert.Equal(2, devices);
+        Assert.Equal(2, (await grace.Http.GetFromJsonAsync<JsonElement>("/api/account/devices?device=laptop")).GetProperty("devices").GetArrayLength());
 
         // the laptop connected a moment ago: in its first hour it cannot sign the others out (AU-20)
         var tooNew = await grace.Http.PostAsJsonAsync("/api/account/devices/sign-out-others", new { deviceId = "laptop" });
@@ -48,17 +40,11 @@ public class AccountTests : IClassFixture<YapFactory>
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("yap_auth=", response.Headers.GetValues("Set-Cookie").First());   // the caller keeps a session, with the new token
 
-        // Known: this line still fails about 1 run in 120 ("No Boolean arrived"), and the cause is in this test's
-        // connection, not in the server. The server sends "signedOut" and then changes the token (a probe of 240
-        // runs: always in this order). The phone here is on long polling with the old token in a fixed header, so
-        // its next poll is a 401 less than 1 ms after the message, and the client can close before it reads the
-        // message it already has. A browser is on a WebSocket. The way out is a WebSocket for the test connections.
         await told.Within();
         await closed.Within();
-        // What the server did: it ended the phone's session and kept the laptop's. Not laptop.State: this test
-        // connection sends the old token with each long poll (a browser takes the new cookie from the answer), so
-        // its next poll is a 401 and it closes by itself, in 4 runs of 480 before this line.
+        // The server ended the phone's session and kept the laptop's, and the laptop's connection stays open.
         Assert.Equal(["laptop"], _app.Service<PresenceService>().SessionsOf(users.GetByUsername("grace_devices")!.Id).Select(s => s.DeviceId));
+        Assert.Equal(HubConnectionState.Connected, laptop.State);
         await laptop.DisposeAsync();
     }
 
@@ -71,15 +57,8 @@ public class AccountTests : IClassFixture<YapFactory>
         var users = _app.Service<UserService>();
         users.RecordDevice(users.GetByUsername("olga_devices")!.Id, "desk-7f3a91c2", DateTime.UtcNow - TimeSpan.FromHours(2));
 
-        // What the phone, in its first hour, can read about the account's devices. The hub records a connection a
-        // moment after ConnectAsync returns, so the list is asked for until both rows are there.
-        var list = "";
-        for (var i = 0; i < 50; i++)
-        {
-            list = await olga.Http.GetStringAsync("/api/account/devices?device=phone-5d2e80b4");
-            if (JsonDocument.Parse(list).RootElement.GetProperty("devices").GetArrayLength() == 2) break;
-            await Task.Delay(100);
-        }
+        // What the phone, in its first hour, can read about the account's devices.
+        var list = await olga.Http.GetStringAsync("/api/account/devices?device=phone-5d2e80b4");
         Assert.Equal(2, JsonDocument.Parse(list).RootElement.GetProperty("devices").GetArrayLength());
         // The id of the desk is the proof of the desk's age. With it, the phone signed the desk out.
         Assert.DoesNotContain("desk-7f3a91c2", list);
@@ -97,8 +76,8 @@ public class AccountTests : IClassFixture<YapFactory>
         var desk = await admin.ConnectAsync("desk-91c27f3a");
 
         // The id of the desk is the proof of the desk's age. A new device of the same admin account read it here and
-        // signed the desk out with it. The hub records a connection a moment after ConnectAsync returns, and a close
-        // a moment after the dispose, so each answer is asked for until the row is there.
+        // signed the desk out with it. The hub records a close a moment after the dispose, so each answer is asked
+        // for until the row is there.
         async Task<string> AnswerWithARowInAsync(string list, Action? first = null)
         {
             var answer = "";
