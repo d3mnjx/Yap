@@ -46,7 +46,9 @@ public partial class MediaCacheService
     // 11 minutes. The Admin toggle text (wwwroot/js/pages/admin.js) and docs/spec/admin.md
     // quote this limit to the admin; change all three together.
     private const int MaxDurationSeconds = 660;
-    private const long MaxFileSizeBytes = 200 * 1024 * 1024; // 200MB safety limit
+    // 250 MB safety limit, checked after the download. Sized for the duration limit above:
+    // 11 minutes of 720p60 at about 3 Mbit/s is near 250 MB, and 200 MB rejected such files.
+    private const long MaxFileSizeBytes = 250 * 1024 * 1024;
     private const int DownloadTimeoutMs = 300_000; // 5 minutes
     private const int MetadataTimeoutMs = 15_000; // 15 seconds for metadata check
     private static readonly TimeSpan FailureCacheTtl = TimeSpan.FromHours(1);
