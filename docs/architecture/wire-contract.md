@@ -171,7 +171,7 @@ All anonymous except sign-out. The reasons behind each are on the [sign-in page]
 | `PUT /api/account/avatar` (multipart), `DELETE /api/account/avatar` | (new) |
 | `GET /api/account/location` | Country suggestion from the address; 204 when unknown (new). |
 | `GET /api/account/locale-options` | `{ dateOrders[], clocks[], cultures[{ name, nativeName }], current: { order, clock, culture } }`: the Time & Date cards in the language's order (ST-19, ST-20) (new). |
-| `GET /api/account/devices?device=` | One row per device, tabs share a row; `device` marks the caller's row as current (AU-19) (new). |
+| `GET /api/account/devices?device=` | One row per device, tabs share a row; `device` marks the caller's row as current (AU-19) (new). A row has no device id: a device knows only its own, and proves its age with it (AU-20). |
 | `POST /api/account/devices/sign-out-others` `{ deviceId, pushEndpoint? }` | Rotates the token, keeps this device's cookie and push subscription (AU-20) (new). |
 | `GET /api/account/link`, `POST /api/account/link`, `DELETE /api/account/link`, `PUT /api/account/link/expiry` | Login link (AU-11): the current one with its code and URL, a new one, revoke, expiry (new). The `url` carries `ChatSettings:PublicOrigin`, or else the address this person's own requests used; another person's Host header never reaches it (AU-15). |
 | `GET /api/account/passphrase`, `POST /api/account/passphrase`, `DELETE /api/account/passphrase` | Secret code (AU-13, retired): reveal, replace an existing code (410 for an account without one), disable (new). |

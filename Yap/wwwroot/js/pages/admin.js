@@ -41,7 +41,11 @@ const TABS = [
   ['visitors', 'Visitors', visitors],
   ['debug', 'Debug', debug],
 ];
+// The script runs in the admin's page, with the admin's sign-in, so the browser checks its bytes against the hash
+// before it runs them (as for the install guide, pwa.js). A new version needs a new hash:
+//   curl -s <url> | openssl dgst -sha384 -binary | openssl base64 -A
 const CHART_CDN = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js';
+const CHART_HASH = 'sha384-NrKB+u6Ts6AtkIhwPixiKTzgSKNblyhlk0Sohlgar9UHUBzai/sgnNNWWd291xqt';
 
 export function mount(root, route) {
   if (!state.user?.isAdmin) { router.navigate('/lobby', { replace: true }); return () => {}; }   // AD-01
@@ -793,7 +797,7 @@ function diagnostics(host) {
   async function drawCharts(series, seconds) {   // AD-28: Chart.js from the CDN, loaded on the first open of the tab
     if (!window.Chart) {
       await new Promise(resolve => {
-        const s = el('script', { src: CHART_CDN });
+        const s = el('script', { src: CHART_CDN, integrity: CHART_HASH, crossorigin: 'anonymous' });
         s.addEventListener('load', resolve);
         s.addEventListener('error', resolve);
         document.head.append(s);

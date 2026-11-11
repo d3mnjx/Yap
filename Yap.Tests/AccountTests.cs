@@ -46,6 +46,34 @@ public class AccountTests : IClassFixture<YapFactory>
         await laptop.DisposeAsync();
     }
 
+    [Fact(DisplayName = "AU-20: the device list gives no device id, so a new device cannot name an older one")]
+    public async Task The_device_list_gives_no_device_id()
+    {
+        var olga = await _app.SignInAsync("olga_devices");
+        var desk = await olga.ConnectAsync("desk-7f3a91c2");
+        var phone = await olga.ConnectAsync("phone-5d2e80b4");
+        var users = _app.Service<UserService>();
+        users.RecordDevice(users.GetByUsername("olga_devices")!.Id, "desk-7f3a91c2", DateTime.UtcNow - TimeSpan.FromHours(2));
+
+        // What the phone, in its first hour, can read about the account's devices. The hub records a connection a
+        // moment after ConnectAsync returns, so the list is asked for until both rows are there.
+        var list = "";
+        for (var i = 0; i < 50; i++)
+        {
+            list = await olga.Http.GetStringAsync("/api/account/devices?device=phone-5d2e80b4");
+            if (JsonDocument.Parse(list).RootElement.GetProperty("devices").GetArrayLength() == 2) break;
+            await Task.Delay(100);
+        }
+        Assert.Equal(2, JsonDocument.Parse(list).RootElement.GetProperty("devices").GetArrayLength());
+        // The id of the desk is the proof of the desk's age. With it, the phone signed the desk out.
+        Assert.DoesNotContain("desk-7f3a91c2", list);
+
+        var withItsOwnId = await olga.Http.PostAsJsonAsync("/api/account/devices/sign-out-others", new { deviceId = "phone-5d2e80b4" });
+        Assert.Equal(HttpStatusCode.Forbidden, withItsOwnId.StatusCode);
+        await desk.DisposeAsync();
+        await phone.DisposeAsync();
+    }
+
     [Fact(DisplayName = "SH-33: a new account reaches the open clients as a profile message")]
     public async Task New_account_is_announced()
     {

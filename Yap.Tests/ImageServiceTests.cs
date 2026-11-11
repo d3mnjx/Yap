@@ -49,6 +49,19 @@ public class ImageServiceTests : IClassFixture<YapFactory>
         finally { dir.Delete(recursive: true); }
     }
 
+    [Fact(DisplayName = "A thumbnail keeps the size of a small file and of a narrow picture, up to 16 MP")]
+    public void Thumbnail_width_has_a_pixel_limit()
+    {
+        Assert.Equal(800, ImageService.ThumbnailWidth(1700, 1300, ImageService.SizeMedium, smallFile: false));     // a photo
+        Assert.Equal(1920, ImageService.ThumbnailWidth(1920, 1080, ImageService.SizeMedium, smallFile: true));     // a small screenshot keeps its size
+        Assert.Equal(1080, ImageService.ThumbnailWidth(1080, 10000, ImageService.SizeLarge, smallFile: false));    // a long screenshot, 11 MP
+        // One colour: 300 KB on disk. Before the limit the "thumbnail" was the whole picture, 100 MP, encoded again.
+        Assert.Equal(4000, ImageService.ThumbnailWidth(10000, 10000, ImageService.SizeMedium, smallFile: true));
+        // Narrow and very tall: no wider than the thumbnail, so it was never made smaller either.
+        var width = ImageService.ThumbnailWidth(800, 60000, ImageService.SizeMedium, smallFile: false);
+        Assert.InRange((long)width * (60000L * width / 800), 15_000_000, 16_000_000);
+    }
+
     [Fact(DisplayName = "SH-48: the large URL of an old pin's medium URL follows the naming rule; another URL has none")]
     public void Large_url_of_a_medium_url()
     {

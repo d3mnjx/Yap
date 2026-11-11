@@ -316,6 +316,66 @@ public class SecurityTests : IClassFixture<YapFactory>
         Assert.Equal(HttpStatusCode.Created, (await CreateUploadAsync(uma.Http, "dot.PNG", Png.Length)).StatusCode);
     }
 
+    [Fact(DisplayName = "The size cap of an upload follows the kind that tus reads, not a text somewhere in the metadata")]
+    public async Task The_cap_of_a_pack_needs_the_kind_of_a_pack()
+    {
+        var uma = await _app.SignInAsync("uma_tus_cap");
+        const int large = 300 * 1024 * 1024;   // over the cap of a chat upload (100 MB), under the cap of a pack (1024 MB); no byte is sent
+        Assert.Equal(HttpStatusCode.RequestEntityTooLarge, (await CreateUploadAsync(uma.Http, "big.mp4", large)).StatusCode);
+        // "xkind" is no kind for tus, so this is a plain chat upload. Before the fix it was created: the cap came from
+        // a search for the text of the pair "kind gif-pack" in the header, and that text is in "xkind gif-pack" too.
+        Assert.Equal(HttpStatusCode.RequestEntityTooLarge, (await CreateUploadAsync(uma.Http, "big.mp4", large, ("xkind", "gif-pack"))).StatusCode);
+        Assert.Equal(HttpStatusCode.Created, (await CreateUploadAsync(uma.Http, "pack.zip", large, ("kind", "gif-pack"))).StatusCode);
+
+        // A create that names its length later, on a PATCH, gets no cap at all from tus. The server offers no such create.
+        var deferred = new HttpRequestMessage(HttpMethod.Post, "/api/tus");
+        deferred.Headers.Add("Tus-Resumable", "1.0.0");
+        deferred.Headers.Add("Upload-Defer-Length", "1");
+        deferred.Headers.Add("Upload-Metadata", $"filename {Convert.ToBase64String(Encoding.UTF8.GetBytes("big.mp4"))}");
+        Assert.False((await uma.Http.SendAsync(deferred)).IsSuccessStatusCode);
+    }
+
+    [Fact(DisplayName = "The media of a message are plain URLs of uploads: a browser resolves a URL before it asks")]
+    public async Task Media_urls_stay_inside_the_uploads()
+    {
+        var mia = await _app.SignInAsync("mia_media_url");
+        var lobby = _app.Service<ChatService>().LobbyId;
+        Task<HttpResponseMessage> Send(object body) => mia.Http.PostAsJsonAsync($"/api/channels/{lobby}/messages", body);
+
+        // Each of these starts with /uploads/, and a browser asks for another path of this server, with the reader's cookie.
+        foreach (var url in new[]
+                 {
+                     "/uploads/../api/invite/zzz.png", "/uploads/a/../../api/invite/zzz.png", "/uploads/%2e%2e/api/invite/zzz.png",
+                     "/uploads/..\\api\\invite\\zzz.png", "/uploads/./dot.png", "/uploads//dot.png", "/uploads/dot.png?x=1", "/uploads/dot.png#x",
+                 })
+        {
+            Assert.Equal(HttpStatusCode.BadRequest, (await Send(new { clientId = Guid.NewGuid(), images = new[] { url } })).StatusCode);
+            Assert.Equal(HttpStatusCode.BadRequest, (await Send(new { clientId = Guid.NewGuid(), videos = new[] { url } })).StatusCode);
+            Assert.Equal(HttpStatusCode.BadRequest, (await Send(new { clientId = Guid.NewGuid(), voice = new { url, durationMs = 1000, peaks = "0369" } })).StatusCode);
+        }
+        // The form that the upload endpoint gives.
+        Assert.Equal(HttpStatusCode.OK, (await Send(new { clientId = Guid.NewGuid(), images = new[] { $"/uploads/{Guid.NewGuid()}.png" } })).StatusCode);
+    }
+
+    [Fact(DisplayName = "A picture with more pixels than the server decodes is refused with the reason, whatever the size of its file")]
+    public async Task A_picture_with_too_many_pixels_is_refused()
+    {
+        // One colour, 7200 x 7200: 52 MP in a file of some KB. The server decodes a picture whole for its thumbnails,
+        // so the size of the file is no limit for the memory. Before the fix this upload got a URL and its thumbnails.
+        using var stream = new MemoryStream();
+        using (var picture = new SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.L8>(7200, 7200))
+            await SixLabors.ImageSharp.ImageExtensions.SaveAsPngAsync(picture, stream);
+        var bytes = stream.ToArray();
+        Assert.True(bytes.Length < 1024 * 1024, "the test picture must be a small file");
+
+        var pia = await _app.SignInAsync("pia_pixels");
+        var info = await UploadAsync(pia.Http, "huge.png", bytes);
+        Assert.Equal("error", info.GetProperty("type").GetString());
+        Assert.Contains("too many pixels (7200 x 7200, max 50 megapixels)", info.GetProperty("error").GetString());
+        Assert.False(info.TryGetProperty("url", out _));
+        Assert.False(IsStored(bytes));
+    }
+
     // These three do not depend on ffmpeg: the names pass the create on every machine, and ImageSharp reads the bytes.
     [Theory(DisplayName = "Bytes that are not a picture never get a public URL, and the server keeps no copy of a refused file")]
     [InlineData("dot.png", null)]      // a plain upload: before the fix it was moved into the uploads folder as it came

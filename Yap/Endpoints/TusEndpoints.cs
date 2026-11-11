@@ -5,6 +5,7 @@ using tusdotnet;
 using tusdotnet.Models;
 using tusdotnet.Models.Configuration;
 using tusdotnet.Models.Expiration;
+using tusdotnet.Parsers;
 using tusdotnet.Stores;
 using Yap.Services;
 using Yap.Services.Gifs;
@@ -21,6 +22,8 @@ public static class TusEndpoints
         { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
     private static readonly HashSet<string> _videoExtensionsForGifProbe = new(StringComparer.OrdinalIgnoreCase)
         { ".mp4", ".webm", ".mov", ".mkv" };
+    // How Upload-Metadata is read. One value for tus and for GetMaxUploadBytes, so both see the same kind.
+    private const MetadataParsingStrategy MetadataStrategy = MetadataParsingStrategy.AllowEmptyValues;
 
     public static void MapTusEndpoints(this WebApplication app)
     {
@@ -34,6 +37,12 @@ public static class TusEndpoints
             Store = new TusDiskStore(tusStorePath, false, TusDiskBufferSize.Default,
                 new UploadIds(httpContext.User.IsSignedIn() ? httpContext.User.Id() : Guid.Empty)),
             MaxAllowedUploadSizeInBytesLong = GetMaxUploadBytes(httpContext),
+            MetadataParsingStrategy = MetadataStrategy,
+            // The length of an upload is fixed at its create, where tus checks it against the cap above. With
+            // "creation-defer-length" a client names the length later, on a PATCH, and tusdotnet 2.11 checks no cap
+            // there: a deferred chat upload took 300 MB under a cap of 100 MB (tested 2026-11-11). Yap's client
+            // never defers the length.
+            AllowedExtensions = TusExtensions.All.Except(TusExtensions.CreationDeferLength),
             Expiration = new SlidingExpiration(TimeSpan.FromHours(24)),   // an abandoned upload expires; TusCleanupService removes it
             Events = new()
             {
@@ -316,6 +325,15 @@ public static class TusEndpoints
                             return;
                         }
 
+                        // A picture is decoded whole for its thumbnails, and each reader's browser decodes it too. The
+                        // size of the file is no limit for that (ImageService.MaxPixels), so the pixels have their own.
+                        if (type == "image" && await ImageService.OverMaxPixelsAsync(tusFilePath) is { } size)
+                        {
+                            logger.LogWarning("Upload refused, {Width} x {Height} pixels: {FileName}", size.Width, size.Height, originalFileName);
+                            Refuse($"Picture has too many pixels ({size.Width} x {size.Height}, max {ImageService.MaxPixels / 1_000_000} megapixels)");
+                            return;
+                        }
+
                         var uploadsFolder = uploads.Root;
                         var uniqueFileName = $"{Guid.NewGuid()}{extension}";
                         var filePath = Path.Combine(uploadsFolder, uniqueFileName);
@@ -407,8 +425,8 @@ public static class TusEndpoints
     /// <summary>
     /// Per-request upload ceiling. Zip pack imports get their own (much larger) cap than chat
     /// attachments — with a multi-GB library quota, the chat cap would be a wall. The kind is
-    /// sniffed from the create POST's Upload-Metadata header ("gif-pack" base64-encoded), the
-    /// only place it's visible before tusdotnet validates Upload-Length against this limit.
+    /// read from the create POST's Upload-Metadata header, the only place it's visible before
+    /// tusdotnet validates Upload-Length against this limit.
     /// </summary>
     // The TUS events run after UseAuthentication, so the principal is set; OnAuthorize already refused anonymous calls.
     private static User? CurrentUser(HttpContext http, UserService users) =>
@@ -417,8 +435,13 @@ public static class TusEndpoints
     private static long GetMaxUploadBytes(HttpContext httpContext)
     {
         var config = httpContext.RequestServices.GetRequiredService<IConfiguration>();
-        var isGifPack = httpContext.Request.Headers.TryGetValue("Upload-Metadata", out var meta)
-                        && meta.ToString().Contains("kind Z2lmLXBhY2s=");
+        // Parsed as tus parses it, and the key must be "kind". A search for the text "kind Z2lmLXBhY2s=" (gif-pack in
+        // base64) anywhere in the header also found it in another key, such as "xkind": tus then saw no kind, so
+        // the file was a plain chat upload for the rest of this class, and here it got the cap of a pack.
+        var isGifPack = httpContext.Request.Headers.TryGetValue("Upload-Metadata", out var header)
+                        && MetadataParser.ParseAndValidate(MetadataStrategy, header.ToString()) is { Success: true } parsed
+                        && parsed.Metadata.TryGetValue("kind", out var kind)
+                        && kind.GetString(System.Text.Encoding.UTF8) == "gif-pack";
         var mb = isGifPack
             ? config.GetValue("ChatSettings:GifSettings:MaxPackSizeMB", 1024)
             : config.GetValue("ChatSettings:MaxUploadSizeMB", 100);
