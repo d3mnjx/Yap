@@ -92,7 +92,7 @@ public static class AccountEndpoints
         account.MapGet("/devices", (ClaimsPrincipal me, string? device, PresenceService presence, UserService users) =>
             Results.Ok(new DevicesDto(presence.SessionsOf(me.Id())
                 .GroupBy(s => s.DeviceId)
-                .Select(g => new DeviceDto(g.Key, g.Any(s => s.IsMobile), g.First().ClientIp, g.Max(s => s.LastHeartbeatAt), g.Key == device))
+                .Select(g => new DeviceDto(g.Any(s => s.IsMobile), g.First().ClientIp, g.Max(s => s.LastHeartbeatAt), g.Key == device))
                 .OrderByDescending(d => d.Current).ThenByDescending(d => d.LastActiveAt)
                 .ToList(), users.SignOutOthersAllowedAt(me.Id(), device))));
 
@@ -103,7 +103,9 @@ public static class AccountEndpoints
             if (user is null) return Results.Unauthorized();
             // A device in its first hour cannot do this (AU-20): the bot's message about a new sign-in reaches that
             // device too, and a person who got in through smart login must not sign the owner out. The client
-            // shows the button disabled; the check here is the one that counts.
+            // shows the button disabled; the check here is the one that counts. The id in the body is the only thing
+            // that tells the devices of one account apart (they share the cookie), so it must stay known to its own
+            // device alone: see DeviceDto.
             if (users.SignOutOthersAllowedAt(user.Id, body.DeviceId) is { } allowedAt && allowedAt > DateTime.UtcNow)
                 return Results.Problem("Available one hour after this device signed in", statusCode: 403);
 
@@ -193,7 +195,10 @@ public static class AccountEndpoints
 public sealed record AccountPatch(string? DisplayName, string? Bio, string? Location, string? Theme, int? FontSize,
     string? TimeZone, string? Locale, string? DateFormat, bool? SmartLoginOptOut);
 
-public sealed record DeviceDto(string DeviceId, bool IsMobile, string? Ip, DateTime LastActiveAt, bool Current);
+/// <summary>A row of the device list. It has NO device id, and must not get one: the id is what a device proves its
+/// age with (AU-20). With the ids in this list, a device in its first hour read the id of an older device here and
+/// sent it with "sign out all other devices", and the server checked the age of the older device.</summary>
+public sealed record DeviceDto(bool IsMobile, string? Ip, DateTime LastActiveAt, bool Current);
 
 /// <summary>The device list and when this device may sign the others out: now, or the end of its first hour (AU-20).</summary>
 public sealed record DevicesDto(List<DeviceDto> Devices, DateTime SignOutOthersAllowedAt);
