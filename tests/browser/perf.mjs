@@ -17,6 +17,7 @@
 // Run from tests/browser (Node and Playwright only; build each worktree first with dotnet build):
 //   node perf.mjs --seed                        build the seed once (about 1.5 minutes), into --seed-dir
 //   node perf.mjs --a=<worktree>:<label> --b=<worktree>:<label>
+//   node perf.mjs --record [--a=<worktree>]     one build on the full plan, kept in perf-history/ (perf-history.mjs)
 // Options: --profiles=far,near,lan  --journeys=cold-open,...  --full (every journey)  --n=5
 //   --out=<dir> (report.md, runs.json, browser-log.txt, a screenshot per failed run)  --seed-dir=<dir>
 //   --runs-dir=<dir> (the servers' content roots)  --port-a=5301  --port-b=5302 (each proxy listens 100 above)
@@ -31,6 +32,7 @@ import { REPO, startServer, watchContext, watchPage, logs, waitTrue } from './li
 import { startProxy } from './proxy.mjs';
 import { SERVER_ARGS, buildSeed, readSeed, copySeed, signInToken } from './perf-seed.mjs';
 import { JOURNEYS, instruments, warmUp } from './perf-journeys.mjs';
+import { saveRecord, machine } from './perf-history.mjs';
 
 const arg = (name, fallback) => process.argv.find(a => a.startsWith(`--${name}=`))?.slice(name.length + 3) ?? fallback;
 const flag = name => process.argv.includes(`--${name}`);
@@ -64,20 +66,32 @@ const HOME = path.join(os.homedir(), 'yap-perf');   // the seed, the servers' ro
 const seedDir = path.resolve(arg('seed-dir', path.join(HOME, 'seed')));
 const runsDir = path.resolve(arg('runs-dir', path.join(HOME, 'runs')));
 const n = Number(arg('n', 5));
+// --record keeps the run in perf-history/. Records are compared with each other weeks apart, so each one is one build
+// on one fixed plan at the default repetitions: the same rows in every record, and no cell that a narrower run left out.
+// The plan is every journey on every profile, but the two reaction-picker journeys on `near` only. They time the
+// page's own work (five opens and the cells they build), and they cost 6 minutes a profile: the record of 2026-11-11
+// with them on all three profiles took 33.5 minutes, 17.7 of them theirs.
+const recording = flag('record');
+if (recording && ['b', 'journeys', 'profiles', 'n'].some(name => arg(name)) || recording && flag('full')) throw new Error('--record measures one build on its own plan: leave out --b, --journeys, --profiles, --n and --full');
+const RECORD_PLAN = Object.fromEntries(Object.keys(PROFILES).map(p => [p, ALL_JOURNEYS.filter(j => p === 'near' || !j.includes('picker-reaction'))]));
+const full = flag('full');
 // profile -> its journeys: --full every one on every chosen profile; --journeys the same list on every chosen profile;
 // otherwise the default plan, cut to --profiles when given.
-const profiles = arg('profiles')?.split(',') ?? (flag('full') ? Object.keys(PROFILES) : Object.keys(DEFAULT_PLAN));
-const plan = Object.fromEntries(profiles.map(p => [p, flag('full') ? ALL_JOURNEYS : arg('journeys')?.split(',') ?? DEFAULT_PLAN[p] ?? ALL_JOURNEYS]));
+const profiles = recording ? Object.keys(RECORD_PLAN) : arg('profiles')?.split(',') ?? (full ? Object.keys(PROFILES) : Object.keys(DEFAULT_PLAN));
+const plan = recording ? RECORD_PLAN : Object.fromEntries(profiles.map(p => [p, full ? ALL_JOURNEYS : arg('journeys')?.split(',') ?? DEFAULT_PLAN[p] ?? ALL_JOURNEYS]));
 for (const p of profiles) if (!(p in PROFILES)) throw new Error(`unknown profile ${p}; known: ${Object.keys(PROFILES).join(', ')}`);
 for (const j of Object.values(plan).flat()) if (!JOURNEYS[j]) throw new Error(`unknown journey ${j}; known: ${ALL_JOURNEYS.join(', ')}`);
 
 // A side is one build: a worktree with Yap/bin/Debug/net10.0/Yap.dll and its own Yap/wwwroot.
 function side(key, spec, port) {
+  // The label follows the last colon. A colon at index 1 is a Windows drive ("D:\PROJECTS\Yap"), not a label.
   const at = spec.lastIndexOf(':');
-  const dir = path.resolve(at > 0 ? spec.slice(0, at) : spec);
-  let commit = '';
-  try { commit = execFileSync('git', ['-C', dir, 'log', '-1', '--format=%h %s'], { encoding: 'utf8' }).trim(); } catch { /* not a git folder */ }
-  return { key, label: at > 0 ? spec.slice(at + 1) : key, dir, port, commit,
+  const dir = path.resolve(at > 1 ? spec.slice(0, at) : spec);
+  const git = (...args) => { try { return execFileSync('git', ['-C', dir, ...args], { encoding: 'utf8' }).trim(); } catch { return ''; /* not a git folder */ } };
+  // --abbrev: %h alone gives the shortest unique name, 7 letters in a shallow clone and 8 in the full repo.
+  return { key, label: at > 1 ? spec.slice(at + 1) : key, dir, port, commit: git('log', '-1', '--abbrev=8', '--format=%h %s'),
+    // Uncommitted changes to the app make the commit a wrong name for the build; a record marks it.
+    dirty: !!git('status', '--porcelain', '--', 'Yap'),
     dll: path.join(dir, 'Yap', 'bin', 'Debug', 'net10.0', 'Yap.dll'), wwwroot: path.join(dir, 'Yap', 'wwwroot') };
 }
 const sides = [side('A', arg('a', REPO), Number(arg('port-a', 5301)))];
@@ -207,12 +221,39 @@ function failed(profile, journey, s, rep, e) {
 
 const withTimeout = (promise, ms) => Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error(`no end after ${ms / 1000} s`)), ms))]);
 
+// How fast this machine is at this minute: a fixed piece of work on a blank page, five times (arithmetic, then 5,000
+// rows built, laid out and removed). It has nothing of the app in it. A record carries it per profile, because the
+// sandbox is a VM on a desktop that does other work: on 2026-11-11 the same build changed rooms on `lan` in 43 ms and,
+// an hour later, in 73 ms. Two records compare on `lan` and `near` only as far as this number agrees.
+async function machineCheck() {
+  const ctx = await browser.newContext(DESKTOP);
+  try {
+    const page = await ctx.newPage();
+    return await page.evaluate(() => {
+      const times = [];
+      for (let run = 0; run < 5; run++) {
+        const t0 = performance.now();
+        let x = 0;
+        for (let i = 0; i < 3e7; i++) x = (x * 31 + i) % 1000003;
+        const box = document.createElement('div');
+        for (let i = 0; i < 5000; i++) { const row = document.createElement('p'); row.textContent = `row ${i} ${x}`; box.append(row); }
+        document.body.append(box);
+        void box.offsetHeight;   // the layout is part of the work
+        box.remove();
+        times.push(performance.now() - t0);
+      }
+      return times;
+    });
+  } finally { await ctx.close(); }
+}
+
 for (const s of sides) await warmUp(site(s, 'lan')).catch(e => console.log(`warm-up of ${s.key} failed: ${e.message.split('\n')[0]}`));
 
 for (const profile of profiles) {
   const sites = sides.map(s => site(s, profile));
   for (const s of sides) s.proxy.set(PROFILES[profile]);
   console.log(`\n== ${profile} (${DESCRIBE[profile]})`);
+  if (recording) (await machineCheck()).forEach((ms, i) => record(profile, 'machine', sides[0], i + 1, [['fixed work ms', ms]]));
   for (const journey of plan[profile]) {
     const j = JOURNEYS[journey];
     const t0 = Date.now();
@@ -250,15 +291,22 @@ function fmt(x) {
 }
 function minutes(ms) { return `${Math.floor(ms / 60000)} min ${Math.round(ms % 60000 / 1000)} s`; }
 
-function profileTables(profile) {
+// The metrics of a profile, in the order the runs produced them, and the numbers of one of them for one side.
+function metricsOf(profile) {
   const rows = [];
   for (const r of records.filter(r => r.profile === profile)) {
     if (!rows.some(x => x.journey === r.journey && x.metric === r.metric)) rows.push({ journey: r.journey, metric: r.metric });
   }
-  const stats = (row, key) => {
-    const v = records.filter(r => r.profile === profile && r.journey === row.journey && r.metric === row.metric && r.side === key).map(r => r.value);
-    return { median: median(v), min: v.length ? Math.min(...v) : null, max: v.length ? Math.max(...v) : null, count: v.length };
-  };
+  return rows;
+}
+function statsOf(profile, row, key) {
+  const v = records.filter(r => r.profile === profile && r.journey === row.journey && r.metric === row.metric && r.side === key).map(r => r.value);
+  return { median: median(v), min: v.length ? Math.min(...v) : null, max: v.length ? Math.max(...v) : null, count: v.length };
+}
+
+function profileTables(profile) {
+  const rows = metricsOf(profile);
+  const stats = (row, key) => statsOf(profile, row, key);
   const [A, B] = sides;
   const lines = [`## ${profile} (${DESCRIBE[profile]})`, '', `Journeys: ${plan[profile].join(', ')}.`, ''];
   if (!B) {
@@ -284,14 +332,27 @@ function profileTables(profile) {
 
 const header = [
   `# Yap responsiveness: ${sides.map(s => `${s.key} = ${s.label}`).join(', ')}`, '',
-  `${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC. Wall time ${minutes(wall)}. ${n} repetitions${flag('full') ? ', every journey (--full)' : ''}.`, '',
+  `${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC. Wall time ${minutes(wall)}. ${n} repetitions${recording ? ', the plan of a record (--record)' : full ? ', every journey (--full)' : ''}.`, '',
   ...sides.map(s => `- ${s.key} (${s.label}): ${s.dir}, ${s.commit || 'no git'}; the server answered ${s.server.startMs} ms after its start (the seed loads into memory first).`),
   `- Seed: ${seed.messages} messages, ${seed.reactions} reactions, ${seed.images} pictures, ${seed.gifs} GIFs (${seedDir}, built ${seed.createdAt}). The person: ${seed.measured}.`,
   '- Times in ms. Opens: phases from the navigation start; the other journeys: from the click, the key or the scroll, in the page\'s clock.',
   '',
 ];
+// --record: the run goes into perf-history/, and the report ends with the comparison against the record before it. A
+// run with failures is kept too, with their count: its other cells are still good, and it took a quarter of an hour.
+let history = '';
+if (recording) {
+  const [A] = sides;
+  const [commit, ...subject] = A.commit.split(' ');
+  const rows = profiles.flatMap(p => metricsOf(p).map(row => {
+    const s = statsOf(p, row, 'A');
+    return [p, row.journey, row.metric, Math.round(s.median * 10) / 10, s.min, s.max, s.count];
+  }));
+  history = saveRecord({ date: new Date(started).toISOString().slice(0, 16).replace('T', ' '), commit: commit || 'no-git', subject: subject.join(' '), dirty: A.dirty,
+    machine: machine(), chromium: browser.version(), n, failed: errors.length, minutes: Math.round(wall / 60000) }, rows, DESCRIBE);
+}
 const report = [...header, ...profiles.map(profileTables).flatMap(t => [t, '']),
-  errors.length ? `## Runs that failed\n\n${errors.map(e => `- ${e}`).join('\n')}\n` : 'All runs ended.\n'].join('\n');
+  errors.length ? `## Runs that failed\n\n${errors.map(e => `- ${e}`).join('\n')}\n` : 'All runs ended.\n', history].join('\n');
 console.log('\n' + report);
 fs.writeFileSync(path.join(outDir, 'report.md'), report);
 fs.writeFileSync(path.join(outDir, 'runs.json'), JSON.stringify({ sides: sides.map(({ key, label, dir, commit }) => ({ key, label, dir, commit })), n, plan, wallMs: wall, records }, null, 1));

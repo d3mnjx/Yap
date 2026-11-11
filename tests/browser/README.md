@@ -116,6 +116,48 @@ TLS, the emoji images come from the real CDN outside the proxy, and the phone is
 CPU. The resume pauses the page in the debugger, because a freeze through `Page.setWebLifecycleState` does not stop
 the timers of this headless Chromium.
 
+### Records over time
+
+`--record` measures one build and keeps the result in the repo, so that the numbers of today compare with the numbers
+of next month:
+
+```
+dotnet build Yap                  # in the checkout to measure
+npm run perf -- --record          # about 22 minutes; --a=<checkout> measures another built checkout
+```
+
+A record always runs the same plan at five repetitions, so every record holds the same rows: every journey on every
+profile, but the two reaction-picker journeys on `near` only (they time the page's own work and cost 6 minutes a
+profile). `--record` refuses `--b`, `--journeys`, `--profiles`, `--n` and `--full` for that reason. The run writes one
+JSON file into `perf-history/` (every metric with its median, min and max) and writes `perf-history/README.md` again:
+one table per profile, one row per record. The report of the run ends with a comparison against the record before
+it. It takes the last record of the same machine when there is one. Commit the new JSON file and the README.
+
+Each profile of a record starts with a machine check: a fixed piece of work on a blank page, with nothing of the app
+in it. It says how fast the machine was at that minute.
+
+Rules for a record that is worth a comparison:
+
+- Run it on a quiet machine. A build or a browser suite that runs at the same time takes CPU from the pages, and the
+  `lan` and `near` numbers rise with no change in the app. Two records compare on `lan` and `near` only as far as
+  their machine checks agree.
+- Nothing else may stop the server. A cleanup by process name (`pkill -f "[Y]ap.dll"`) from another session killed
+  the server of a record run on 2026-11-11.
+- Compare records of one machine. On `far` the link is most of every number (a cold open takes the same 18.3 s with
+  a four times slower CPU), so `far` moves little between machines. `lan` and `near` follow the machine's speed.
+- Measure a commit that is on origin, not a working tree. A build with uncommitted changes to the app gets a `*`
+  after its commit, and a local commit can get a new name in a rebase: the record then names a commit that nobody
+  finds. (The two records of 2026-11-11 were measured two test-only commits ahead of origin and carry the name of
+  the last pushed commit, whose app code is the same.)
+- A record shows a trend. For a question about one change, measure the two builds side by side in one run (`--a`
+  and `--b`): between two records `near` moves by up to 10% and `lan` by up to 20% with no change in the app. Inside
+  one run the two builds alternate, and the noise is 1.5% on `near` and 5 to 17% on `lan`.
+- In the sandbox, measure a clone outside the shared tree, so the Linux build output stays out of the Windows tree:
+  `git clone --depth 1 file:///d/PROJECTS/Yap $HOME/yap-perf/src`, `dotnet build` in its `Yap` folder, then
+  `npm run perf -- --record --a=$HOME/yap-perf/src` from this folder.
+- The seed lives in `~/yap-perf/seed`, outside the repo. A new machine or sandbox builds it again with `--seed`. The
+  seed's random choices come from a fixed number, so every build of the seed holds the same people and messages.
+
 ## The service worker and the offline script
 
 Playwright applies `setOffline` to a service worker only when the environment variable
