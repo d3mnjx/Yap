@@ -85,8 +85,12 @@ public sealed class ChatHubBroadcaster(IHubContext<ChatHub> hub, ChatService cha
     {
         _stopping.Cancel();
         if (_unreadLoop is not null) await _unreadLoop;
-        foreach (var off in _unsubscribe) off();
-        _unsubscribe.Clear();
+        // The list is taken under a lock, and the handlers go after it. The stop can run two times at once: under
+        // the test host 3 class clean-ups in 120 failed here with "Collection was modified", and the only other
+        // writer of the list after the start is the Clear of this method.
+        Action[] offs;
+        lock (_unsubscribe) { offs = [.. _unsubscribe]; _unsubscribe.Clear(); }
+        foreach (var off in offs) off();
     }
 
     // The two batches of a tick: the latest unread counts, one call per person and channel, and the presence

@@ -109,6 +109,15 @@ public static class AccountEndpoints
             if (users.SignOutOthersAllowedAt(user.Id, body.DeviceId) is { } allowedAt && allowedAt > DateTime.UtcNow)
                 return Results.Problem("Available one hour after this device signed in", statusCode: 403);
 
+            // The other devices are told FIRST, before the token changes. A connection on long polling sends a new
+            // request, with its cookie, each time one is answered, and after the rotation that request is a 401: the
+            // device loses its connection with no word and learns of the sign-out from the failure. With the rotation
+            // first, the 401 came before "signedOut" was sent in 9 runs of 480 of the test of AU-20 (2026-11-11; a
+            // probe showed the 401 5 to 23 ms after the POST). Told now, the message leaves with the request that is
+            // already waiting. A WebSocket sends no new request, so it never had this order problem.
+            foreach (var session in presence.SessionsOf(user.Id).Where(s => s.DeviceId != body.DeviceId))
+                await hub.Clients.Client(session.ConnectionId).SendAsync("signedOut");
+
             var token = users.RotateToken(user.Id);                    // every other cookie fails the lookup from now on
             if (token is null) return Results.Problem("Failed", statusCode: 500);
             AuthCookie.Set(response, token);                            // this browser keeps its session; its other tabs share the cookie
@@ -123,11 +132,9 @@ public static class AccountEndpoints
             foreach (var sub in push.GetSubscriptions(user.Username).Where(s => s.Endpoint != body.PushEndpoint).ToList())
                 await push.RemoveOwnAsync(user.Username, sub.Endpoint);     // NT-24
 
+            // Also a connection that opened after the telling above: its cookie is dead now, and it is not this device.
             foreach (var session in presence.SessionsOf(user.Id).Where(s => s.DeviceId != body.DeviceId))
-            {
-                await hub.Clients.Client(session.ConnectionId).SendAsync("signedOut");
                 presence.End(session);
-            }
             return Results.Ok(new { passphrase });
         });
 

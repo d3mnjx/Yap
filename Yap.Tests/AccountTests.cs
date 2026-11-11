@@ -28,8 +28,15 @@ public class AccountTests : IClassFixture<YapFactory>
         var closed = new Expectation<bool>();
         phone.Closed += _ => { closed.Set(true); return Task.CompletedTask; };
 
-        var devices = await grace.Http.GetFromJsonAsync<JsonElement>("/api/account/devices?device=laptop");
-        Assert.Equal(2, devices.GetProperty("devices").GetArrayLength());
+        // The hub records a connection a moment after ConnectAsync returns, so the list is asked for until both
+        // devices are there. One question at once found 1 device or none in 11 runs of 120.
+        var devices = 0;
+        for (var i = 0; i < 50 && devices < 2; i++)
+        {
+            if (i > 0) await Task.Delay(100);
+            devices = (await grace.Http.GetFromJsonAsync<JsonElement>("/api/account/devices?device=laptop")).GetProperty("devices").GetArrayLength();
+        }
+        Assert.Equal(2, devices);
 
         // the laptop connected a moment ago: in its first hour it cannot sign the others out (AU-20)
         var tooNew = await grace.Http.PostAsJsonAsync("/api/account/devices/sign-out-others", new { deviceId = "laptop" });
@@ -41,9 +48,17 @@ public class AccountTests : IClassFixture<YapFactory>
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("yap_auth=", response.Headers.GetValues("Set-Cookie").First());   // the caller keeps a session, with the new token
 
+        // Known: this line still fails about 1 run in 120 ("No Boolean arrived"), and the cause is in this test's
+        // connection, not in the server. The server sends "signedOut" and then changes the token (a probe of 240
+        // runs: always in this order). The phone here is on long polling with the old token in a fixed header, so
+        // its next poll is a 401 less than 1 ms after the message, and the client can close before it reads the
+        // message it already has. A browser is on a WebSocket. The way out is a WebSocket for the test connections.
         await told.Within();
         await closed.Within();
-        Assert.Equal(HubConnectionState.Connected, laptop.State);
+        // What the server did: it ended the phone's session and kept the laptop's. Not laptop.State: this test
+        // connection sends the old token with each long poll (a browser takes the new cookie from the answer), so
+        // its next poll is a 401 and it closes by itself, in 4 runs of 480 before this line.
+        Assert.Equal(["laptop"], _app.Service<PresenceService>().SessionsOf(users.GetByUsername("grace_devices")!.Id).Select(s => s.DeviceId));
         await laptop.DisposeAsync();
     }
 
