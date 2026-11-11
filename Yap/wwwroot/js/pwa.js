@@ -10,7 +10,13 @@ import { projectName } from './store.js';
 let deferredPrompt = null;   // the browser's install prompt, kept until the person asks (Chromium)
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; });
 
-const GUIDE_CDN = 'https://cdn.jsdelivr.net/gh/philfung/add-to-homescreen@3.5/dist';
+// The install guide is another project's script, and it runs in this page with the person's sign-in. So the URL
+// names one commit (the one of the tag 3.5; a tag can move, a commit cannot), and the browser checks the bytes
+// against the hashes below before it runs or applies them. A new version of the guide needs a new commit AND new hashes:
+//   curl -s <url> | openssl dgst -sha384 -binary | openssl base64 -A
+const GUIDE_CDN = 'https://cdn.jsdelivr.net/gh/philfung/add-to-homescreen@1033167baf095bb1fbe3b19f4e609e3b418eff88/dist';
+const GUIDE_SCRIPT_HASH = 'sha384-6/A3whvakEx697GhdLzQEVYH+vfp9KbTOgY6LzQUJbmm3sSBDz3ztz6ZbObZj9Ct';
+const GUIDE_STYLE_HASH = 'sha384-PIkABVwl02o9piowBl3l7xC3cKa3Yz8VZ4KN3sM6f157TIOWj61AZTrKJoPbGYDw';
 
 // The dialog: first how to replace an older install, then the browser's install or the guide (SH-40).
 export function openInstallDialog() {
@@ -46,8 +52,9 @@ function showGuide() {
     window.AddToHomeScreen({ appName: projectName(), appIconUrl: 'icon-192.png', assetUrl: `${GUIDE_CDN}/assets/img/`, allowClose: true, showArrow: true }).show('en');
   };
   if (window.AddToHomeScreen) { start(); return; }
-  document.head.append(el('link', { rel: 'stylesheet', href: `${GUIDE_CDN}/add-to-homescreen.min.css` }));
-  const script = el('script', { src: `${GUIDE_CDN}/add-to-homescreen.min.js` });
+  // crossorigin: without it the browser cannot read the bytes of another origin, and refuses a tag with an integrity.
+  document.head.append(el('link', { rel: 'stylesheet', href: `${GUIDE_CDN}/add-to-homescreen.min.css`, integrity: GUIDE_STYLE_HASH, crossorigin: 'anonymous' }));
+  const script = el('script', { src: `${GUIDE_CDN}/add-to-homescreen.min.js`, integrity: GUIDE_SCRIPT_HASH, crossorigin: 'anonymous' });
   script.addEventListener('load', start);
   document.body.append(script);
 }

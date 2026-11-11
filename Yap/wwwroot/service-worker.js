@@ -49,8 +49,9 @@ self.addEventListener('fetch', event => {
     if (request.method !== 'GET') return;
     const url = new URL(request.url);
     if (url.origin !== self.location.origin) {
-        // The emoji's CDN also serves the admin's chart script and the install guide (admin.js, pwa.js): plain script
-        // and link tags, whose opaque answer cannot be read into the worker's memory. Only images are remembered.
+        // The emoji's CDN also serves the admin's chart script and the install guide (admin.js, pwa.js): script and
+        // link tags with an integrity hash, which the browser checks on the answer it gets from here, cached or
+        // not. Only images are remembered in the worker's memory.
         if (EMOJI_HOSTS.includes(url.host)) event.respondWith(request.destination === 'image' ? rememberedFirst(request) : cacheFirst(request, EMOJI_CACHE));
         return;
     }
