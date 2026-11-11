@@ -105,19 +105,9 @@ public sealed class SignedIn(YapFactory factory, HttpClient http, string usernam
         var connection = new HubConnectionBuilder()
             .WithUrl(new Uri(YapFactory.BaseAddress, $"/hub?device={device}"), options =>
             {
-                options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler();   // for the negotiate request
+                options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler();
                 options.Headers["Cookie"] = $"yap_auth={token}";
-                // A WebSocket, as in a browser. It shows the token one time, at the start. Long polling shows this
-                // fixed header with each poll, so a test that changes the token (AU-20) got a 401 on the next poll,
-                // and the client then lost a message that came less than 1 ms before: about 1 run in 120.
-                options.Transports = HttpTransportType.WebSockets;
-                // The client's own socket cannot reach the in-memory server; the test server's socket client can.
-                options.WebSocketFactory = async (context, cancel) =>
-                {
-                    var sockets = factory.Server.CreateWebSocketClient();
-                    sockets.ConfigureRequest = request => request.Headers.Cookie = $"yap_auth={token}";
-                    return await sockets.ConnectAsync(context.Uri, cancel);
-                };
+                options.Transports = HttpTransportType.LongPolling;   // WebSockets do not run through the in-memory handler
             })
             .Build();
         await connection.StartAsync();
