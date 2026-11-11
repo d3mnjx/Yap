@@ -316,6 +316,25 @@ public class SecurityTests : IClassFixture<YapFactory>
         Assert.Equal(HttpStatusCode.Created, (await CreateUploadAsync(uma.Http, "dot.PNG", Png.Length)).StatusCode);
     }
 
+    [Fact(DisplayName = "The size cap of an upload follows the kind that tus reads, not a text somewhere in the metadata")]
+    public async Task The_cap_of_a_pack_needs_the_kind_of_a_pack()
+    {
+        var uma = await _app.SignInAsync("uma_tus_cap");
+        const int large = 300 * 1024 * 1024;   // over the cap of a chat upload (100 MB), under the cap of a pack (1024 MB); no byte is sent
+        Assert.Equal(HttpStatusCode.RequestEntityTooLarge, (await CreateUploadAsync(uma.Http, "big.mp4", large)).StatusCode);
+        // "xkind" is no kind for tus, so this is a plain chat upload. Before the fix it was created: the cap came from
+        // a search for the text of the pair "kind gif-pack" in the header, and that text is in "xkind gif-pack" too.
+        Assert.Equal(HttpStatusCode.RequestEntityTooLarge, (await CreateUploadAsync(uma.Http, "big.mp4", large, ("xkind", "gif-pack"))).StatusCode);
+        Assert.Equal(HttpStatusCode.Created, (await CreateUploadAsync(uma.Http, "pack.zip", large, ("kind", "gif-pack"))).StatusCode);
+
+        // A create that names its length later, on a PATCH, gets no cap at all from tus. The server offers no such create.
+        var deferred = new HttpRequestMessage(HttpMethod.Post, "/api/tus");
+        deferred.Headers.Add("Tus-Resumable", "1.0.0");
+        deferred.Headers.Add("Upload-Defer-Length", "1");
+        deferred.Headers.Add("Upload-Metadata", $"filename {Convert.ToBase64String(Encoding.UTF8.GetBytes("big.mp4"))}");
+        Assert.False((await uma.Http.SendAsync(deferred)).IsSuccessStatusCode);
+    }
+
     [Fact(DisplayName = "The media of a message are plain URLs of uploads: a browser resolves a URL before it asks")]
     public async Task Media_urls_stay_inside_the_uploads()
     {
