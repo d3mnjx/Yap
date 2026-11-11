@@ -316,6 +316,28 @@ public class SecurityTests : IClassFixture<YapFactory>
         Assert.Equal(HttpStatusCode.Created, (await CreateUploadAsync(uma.Http, "dot.PNG", Png.Length)).StatusCode);
     }
 
+    [Fact(DisplayName = "The media of a message are plain URLs of uploads: a browser resolves a URL before it asks")]
+    public async Task Media_urls_stay_inside_the_uploads()
+    {
+        var mia = await _app.SignInAsync("mia_media_url");
+        var lobby = _app.Service<ChatService>().LobbyId;
+        Task<HttpResponseMessage> Send(object body) => mia.Http.PostAsJsonAsync($"/api/channels/{lobby}/messages", body);
+
+        // Each of these starts with /uploads/, and a browser asks for another path of this server, with the reader's cookie.
+        foreach (var url in new[]
+                 {
+                     "/uploads/../api/invite/zzz.png", "/uploads/a/../../api/invite/zzz.png", "/uploads/%2e%2e/api/invite/zzz.png",
+                     "/uploads/..\\api\\invite\\zzz.png", "/uploads/./dot.png", "/uploads//dot.png", "/uploads/dot.png?x=1", "/uploads/dot.png#x",
+                 })
+        {
+            Assert.Equal(HttpStatusCode.BadRequest, (await Send(new { clientId = Guid.NewGuid(), images = new[] { url } })).StatusCode);
+            Assert.Equal(HttpStatusCode.BadRequest, (await Send(new { clientId = Guid.NewGuid(), videos = new[] { url } })).StatusCode);
+            Assert.Equal(HttpStatusCode.BadRequest, (await Send(new { clientId = Guid.NewGuid(), voice = new { url, durationMs = 1000, peaks = "0369" } })).StatusCode);
+        }
+        // The form that the upload endpoint gives.
+        Assert.Equal(HttpStatusCode.OK, (await Send(new { clientId = Guid.NewGuid(), images = new[] { $"/uploads/{Guid.NewGuid()}.png" } })).StatusCode);
+    }
+
     // These three do not depend on ffmpeg: the names pass the create on every machine, and ImageSharp reads the bytes.
     [Theory(DisplayName = "Bytes that are not a picture never get a public URL, and the server keeps no copy of a refused file")]
     [InlineData("dot.png", null)]      // a plain upload: before the fix it was moved into the uploads folder as it came

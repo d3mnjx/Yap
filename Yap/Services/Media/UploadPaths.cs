@@ -21,6 +21,21 @@ public sealed class UploadPaths
             : Path.GetFullPath(Path.Combine(env.ContentRootPath, configured));
     }
 
+    /// <summary>
+    /// Whether a media URL that a client sent with a message is the plain URL of a file under <c>/uploads/</c>. The
+    /// start of the text is not enough: every reader's browser resolves the URL before it asks, with the reader's
+    /// cookie, so "/uploads/../api/x" is a request to /api/x. A URL of the upload endpoint has only letters,
+    /// digits, "-", "_" and "." in its segments, and no segment starts with a dot. That leaves no "..", no empty
+    /// segment, no "%2e", no backslash (a browser reads it as a slash), no query and no fragment.
+    /// </summary>
+    public static bool IsUploadUrl(string url)
+    {
+        const string prefix = "/uploads/";
+        if (url.Length > 200 || !url.StartsWith(prefix, StringComparison.Ordinal)) return false;   // a real one has about 50 characters
+        return url[prefix.Length..].Split('/').All(segment =>
+            segment.Length > 0 && segment[0] != '.' && segment.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_' or '.'));
+    }
+
     /// <summary>The file behind an <c>/uploads/</c> URL, or null for any other URL (a pin may keep a <c>/media-cache/</c>
     /// video) and for a path that leaves the folder. The file may not exist.</summary>
     public string? PathOf(string url)

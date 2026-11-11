@@ -3,6 +3,7 @@ using Yap.Models.Chat;
 using Yap.Services.Accounts;
 using Yap.Services.Chat;
 using Yap.Services.Gifs;
+using Yap.Services.Media;
 
 namespace Yap.Endpoints;
 
@@ -33,7 +34,8 @@ public static class MessagesEndpoints
     private static async Task<IResult> SendAsync(Guid channelId, SendMessageRequest body, ClaimsPrincipal me, ChatService chat, GifService gifs, MessageMapper map)
     {
         // Media URLs come from this server's own upload endpoint. Anything else would let a message embed a
-        // remote image, which is a tracking pixel for everyone who reads the room.
+        // remote image, which is a tracking pixel for everyone who reads the room, or a path of this server
+        // outside the uploads, which every reader's browser then asks for with the reader's cookie.
         if (body.Images?.Any(NotAnUpload) == true || body.Videos?.Any(NotAnUpload) == true || (body.Voice is { } v && NotAnUpload(v.Url ?? "")))
             return Results.Problem("Media must be uploaded first.", statusCode: 400);
 
@@ -63,7 +65,7 @@ public static class MessagesEndpoints
             : Results.Problem(result.Error, statusCode: result.Status);
     }
 
-    private static bool NotAnUpload(string url) => !url.StartsWith("/uploads/", StringComparison.Ordinal);
+    private static bool NotAnUpload(string url) => !UploadPaths.IsUploadUrl(url);
 }
 
 /// <summary>The body of a send. Text, media or both. Each GIF is one entry of the library or one item from the provider.
