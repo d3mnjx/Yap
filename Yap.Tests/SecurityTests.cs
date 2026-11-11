@@ -76,6 +76,16 @@ public class SecurityTests : IClassFixture<YapFactory>
         catch (IOException) { return false; }   // a file of another upload that went away in this moment
     });
 
+    [Fact(DisplayName = "AU-20: the request log keeps no device id")]
+    public void The_request_log_keeps_no_device_id()
+    {
+        // The settings page asks for the device list with its own id in the URL, and the log stores the URL of each request.
+        var logged = Yap.Middleware.RequestLoggingMiddleware.RedactCredentials("/api/account/devices", new QueryString("?device=desk-7f3a91c2"));
+        Assert.Equal("/api/account/devices?device=REDACTED", logged);
+        // Other URLs keep their query: the log is for reading what happened.
+        Assert.Equal("/api/admin/diagnostics?seconds=3600", Yap.Middleware.RequestLoggingMiddleware.RedactCredentials("/api/admin/diagnostics", new QueryString("?seconds=3600")));
+    }
+
     [Fact(DisplayName = "AU-09: a forwarded header counts from a trusted proxy only; from anyone else the address is unknown")]
     public async Task Forwarded_headers_count_from_trusted_proxies_only()
     {

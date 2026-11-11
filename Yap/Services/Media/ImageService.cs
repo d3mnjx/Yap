@@ -103,8 +103,9 @@ public class ImageService
 
     /// <summary>
     /// How a picture from a person is decoded: within <see cref="MaxPixels"/>, or not at all (null) when one frame
-    /// alone has more. Of an animation, the frames that fit are read: a very long one gets a shorter loop as its
-    /// thumbnail, and the file itself stays as it came. EVERY full decode of such a picture goes through here. The
+    /// alone has more. Of an animation, the frames that fit are read: a very long one gets a shorter loop (a profile
+    /// picture, an APNG's thumbnail; an animated WebP is its own thumbnail then, see GenerateSingleThumbnailAsync),
+    /// and the file itself stays as it came. EVERY full decode of such a picture goes through here. The
     /// plain Image.LoadAsync(path) takes whatever the header says.
     /// </summary>
     private static DecoderOptions? WithinMaxPixels(ImageInfo info)
@@ -148,7 +149,19 @@ public class ImageService
             await Gate.WaitAsync();
             try
             {
-                if (WithinMaxPixels(await Image.IdentifyAsync(originalPath)) is not { } options) return;   // the upload endpoint refuses these; this is the guard at the decode itself
+                var info = await Image.IdentifyAsync(originalPath);
+                if (WithinMaxPixels(info) is not { } options) return;   // the upload endpoint refuses these; this is the guard at the decode itself
+                // An animation with more frames than the decode may read would loop over its first seconds only
+                // (54 frames at 1280 x 720), and the row and the viewer show nothing but the thumbnails. An animated
+                // WebP is already what a thumbnail is, a WebP that a browser plays frame by frame, so it stands in
+                // for both of its thumbnails as it came, the way a GIF is stored. The cost is disk: each thumbnail
+                // has the size of the original. Other animated formats (APNG) keep the shorter loop: their bytes
+                // are not WebP, and the thumbnail's name says WebP.
+                if (info.Metadata.DecodedImageFormat is WebpFormat && info.FrameMetadataCollection.Count > options.MaxFrames)
+                {
+                    File.Copy(originalPath, thumbPath, overwrite: true);
+                    return;
+                }
                 using var image = await Image.LoadAsync(options, originalPath);
                 image.Mutate(x => x.AutoOrient());
 

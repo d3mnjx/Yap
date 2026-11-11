@@ -100,6 +100,50 @@ public class ImageServiceTests : IClassFixture<YapFactory>
         finally { dir.Delete(recursive: true); }
     }
 
+    [Fact(DisplayName = "An animated WebP with more frames than a decode may read is its own thumbnail; a short one gets a smaller copy")]
+    public async Task A_long_animated_webp_is_its_own_thumbnail()
+    {
+        var dir = Directory.CreateTempSubdirectory("yap-image-test");
+        try
+        {
+            static async Task<byte[]> TwoFramesAsync(string path, int side)
+            {
+                using var image = new Image<Rgba32>(side, side);
+                image.Frames.CreateFrame();
+                image[0, 0] = new Rgba32(255, 0, 0, 255);   // the frames differ, so no encoder can fold them into one
+                await image.SaveAsWebpAsync(path);
+                return await File.ReadAllBytesAsync(path);
+            }
+            var service = _app.Services.GetRequiredService<ImageService>();
+
+            // Two frames of 1 x 1 on a canvas of 7000 x 7000: the canvas is what a decode pays for each frame, and
+            // 49 MP leaves room for one frame. The canvas is written into the header by hand (the VP8X chunk: three
+            // bytes each for width - 1 and height - 1, at 24 and 27), so the test encodes no 49 MP.
+            var longPath = Path.Combine(dir.FullName, "long.webp");
+            var bytes = await TwoFramesAsync(longPath, 1);
+            Assert.Equal("VP8X", System.Text.Encoding.ASCII.GetString(bytes, 12, 4));
+            foreach (var at in new[] { 24, 27 }) { bytes[at] = 0x57; bytes[at + 1] = 0x1B; bytes[at + 2] = 0; }   // 6999
+            await File.WriteAllBytesAsync(longPath, bytes);
+            var info = await Image.IdentifyAsync(longPath);
+            Assert.Equal(new Size(7000, 7000), info.Size);
+            Assert.Equal(2, info.FrameMetadataCollection.Count);   // the premise of the rule: the header read counts the frames
+
+            await service.GenerateMediumThumbnailAsync(longPath);
+            await service.GenerateLargeThumbnailAsync(longPath);
+            Assert.Equal(bytes, await File.ReadAllBytesAsync(Path.Combine(dir.FullName, "long_800px.webp")));
+            Assert.Equal(bytes, await File.ReadAllBytesAsync(Path.Combine(dir.FullName, "long_1600px.webp")));
+
+            // A short animation is decoded and encoded again, with all of its frames, as before.
+            var shortPath = Path.Combine(dir.FullName, "short.webp");
+            await TwoFramesAsync(shortPath, 1000);
+            await service.GenerateMediumThumbnailAsync(shortPath);
+            using var thumbnail = await Image.LoadAsync(Path.Combine(dir.FullName, "short_800px.webp"));
+            Assert.Equal(2, thumbnail.Frames.Count);
+            Assert.Equal(1000, thumbnail.Width);   // a small file keeps its size
+        }
+        finally { dir.Delete(recursive: true); }
+    }
+
     [Fact(DisplayName = "Of a file with pages (TIFF) only the first page is decoded: the pixel limit knows only its size")]
     public async Task Only_the_first_page_of_a_tiff_is_decoded()
     {

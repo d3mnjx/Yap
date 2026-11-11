@@ -36,7 +36,7 @@ public class RequestLoggingMiddleware
     /// Bearer credentials travel in a few URLs. Strip them before the URL reaches any sink
     /// (the CSV file and the action-log DB both get the full URL).
     /// </summary>
-    private static string RedactCredentials(string path, QueryString query)
+    internal static string RedactCredentials(string path, QueryString query)
     {
         if (path.StartsWith("/invite/", StringComparison.OrdinalIgnoreCase))
             return "/invite/REDACTED" + query;
@@ -46,6 +46,10 @@ public class RequestLoggingMiddleware
             return path;
         if (path.Equals("/pwa-launch", StringComparison.OrdinalIgnoreCase))
             return path + "?lt=REDACTED";
+        // The id of a device is the proof of its age: whoever knows it can sign the other devices out (AU-20). The
+        // device list and the Diagnostics give none, so the log must not keep the one that this request carries.
+        if (path.Equals("/api/account/devices", StringComparison.OrdinalIgnoreCase))
+            return path + "?device=REDACTED";
         return path + query;
     }
 
