@@ -1248,7 +1248,7 @@ function settings(host) {
     el('div', { class: 'registration-settings' },
       toggle('Enable link previews', 'Show OpenGraph preview cards below messages with URLs.', 'linkPreviews'),
       toggle('Enable media caching',
-        'Auto-download videos/audio from YouTube, Spotify, SoundCloud (under 10 min) for inline playback.',
+        'Auto-download videos/audio from YouTube, Spotify, SoundCloud (under 11 min) for inline playback.',
         'mediaCaching',
         { disabled: !s.mediaCachingAvailable, note: s.mediaCachingAvailable ? null : 'yt-dlp not found on this system.' })),
     el('div', { class: 'section-header', style: { marginTop: '2rem' } },

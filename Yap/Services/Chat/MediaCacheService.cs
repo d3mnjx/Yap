@@ -43,7 +43,9 @@ public partial class MediaCacheService
     public static bool IsAvailable { get; private set; }
 
 
-    private const int MaxDurationSeconds = 600; // 10 minutes
+    // 11 minutes. The Admin toggle text (wwwroot/js/pages/admin.js) and docs/spec/admin.md
+    // quote this limit to the admin; change all three together.
+    private const int MaxDurationSeconds = 660;
     private const long MaxFileSizeBytes = 200 * 1024 * 1024; // 200MB safety limit
     private const int DownloadTimeoutMs = 300_000; // 5 minutes
     private const int MetadataTimeoutMs = 15_000; // 15 seconds for metadata check
