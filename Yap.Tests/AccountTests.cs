@@ -48,17 +48,11 @@ public class AccountTests : IClassFixture<YapFactory>
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("yap_auth=", response.Headers.GetValues("Set-Cookie").First());   // the caller keeps a session, with the new token
 
-        // Known: this line still fails about 1 run in 120 ("No Boolean arrived"), and the cause is in this test's
-        // connection, not in the server. The server sends "signedOut" and then changes the token (a probe of 240
-        // runs: always in this order). The phone here is on long polling with the old token in a fixed header, so
-        // its next poll is a 401 less than 1 ms after the message, and the client can close before it reads the
-        // message it already has. A browser is on a WebSocket. The way out is a WebSocket for the test connections.
         await told.Within();
         await closed.Within();
-        // What the server did: it ended the phone's session and kept the laptop's. Not laptop.State: this test
-        // connection sends the old token with each long poll (a browser takes the new cookie from the answer), so
-        // its next poll is a 401 and it closes by itself, in 4 runs of 480 before this line.
+        // The server ended the phone's session and kept the laptop's, and the laptop's connection stays open.
         Assert.Equal(["laptop"], _app.Service<PresenceService>().SessionsOf(users.GetByUsername("grace_devices")!.Id).Select(s => s.DeviceId));
+        Assert.Equal(HubConnectionState.Connected, laptop.State);
         await laptop.DisposeAsync();
     }
 

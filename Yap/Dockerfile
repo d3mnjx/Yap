@@ -12,10 +12,12 @@ COPY --from=mwader/static-ffmpeg:9.0 /ffmpeg /ffprobe /usr/local/bin/
 # build bundles curl_cffi, which the TikTok extractor needs to impersonate a browser.
 # Without it TikTok answers server IPs with a challenge page and extraction fails
 # (verified on live 2026-09-02). The standalone build also removes the python3 dependency.
-RUN apt-get update && apt-get install -y --no-install-recommends curl \
-    && curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux -o /usr/local/bin/yt-dlp \
-    && chmod a+rx /usr/local/bin/yt-dlp \
-    && rm -rf /var/lib/apt/lists/*
+#
+# ADD, not `apt-get install curl && curl -L ...`: BuildKit downloads the file itself, so the build does
+# not need Ubuntu's package servers and the image carries no curl. On 2026-11-11 the GitHub runner could
+# not resolve archive.ubuntu.com for more than 30 minutes, and four builds in a row failed at apt, for a
+# tool whose only job was to fetch this one file. Nothing in the image calls curl at run time.
+ADD --chmod=755 https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux /usr/local/bin/yt-dlp
 # Deno is yt-dlp's JavaScript runtime for YouTube. Recent yt-dlp releases have the YouTube extractor
 # solve the player challenge in JS, which needs a runtime on PATH; without one the metadata probe
 # exits 1 with "No supported JavaScript runtime could be found" and every YouTube link silently
