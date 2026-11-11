@@ -272,8 +272,9 @@ public partial class MediaCacheService
         var outputPathAudio = Path.Combine(CacheDirectory, $"{hash}.mp3");
 
         // Try video download first — prefer H.264 for browser compatibility
-        var videoArgs = $"--no-playlist -S \"vcodec:h264\" -f \"bestvideo[height<=720]+bestaudio/best[height<=720]/best\" --merge-output-format mp4 -o \"{outputPathMp4}\" -- \"{url}\"";
-        var (exitCode, stderr) = await RunYtDlpAsync(videoArgs, DownloadTimeoutMs);
+        var (exitCode, stderr) = await RunYtDlpAsync(
+            ["--no-playlist", "-S", "vcodec:h264", "-f", "bestvideo[height<=720]+bestaudio/best[height<=720]/best", "--merge-output-format", "mp4", "-o", outputPathMp4, "--", url],
+            DownloadTimeoutMs);
 
         if (exitCode != 0)
         {
@@ -281,8 +282,8 @@ public partial class MediaCacheService
             _logger.LogDebug("Video download failed for {Url}, trying audio-only: {Err}", url, TruncateLog(stderr));
             TryDeleteFile(outputPathMp4);
 
-            var audioArgs = $"--no-playlist -x --audio-format mp3 --audio-quality 2 -o \"{outputPathAudio}\" -- \"{url}\"";
-            (exitCode, stderr) = await RunYtDlpAsync(audioArgs, DownloadTimeoutMs);
+            (exitCode, stderr) = await RunYtDlpAsync(
+                ["--no-playlist", "-x", "--audio-format", "mp3", "--audio-quality", "2", "-o", outputPathAudio, "--", url], DownloadTimeoutMs);
 
             if (exitCode != 0)
             {
@@ -402,8 +403,7 @@ public partial class MediaCacheService
 
         // Use yt-dlp's YouTube search to find and download audio
         var outputPath = Path.Combine(CacheDirectory, $"{hash}.mp3");
-        var args = $"--no-playlist -x --audio-format mp3 --audio-quality 2 \"ytsearch1:{searchQuery}\" -o \"{outputPath}\"";
-        var (exitCode, stderr) = await RunYtDlpAsync(args, DownloadTimeoutMs);
+        var (exitCode, stderr) = await RunYtDlpAsync(SpotifySearchArguments(searchQuery, outputPath), DownloadTimeoutMs);
 
         if (exitCode != 0)
         {
@@ -445,7 +445,7 @@ public partial class MediaCacheService
         // vcodec is the slideshow tell: a TikTok photo post reached through a /video/ link probes
         // fine but carries no video stream at all (vcodec "none", only the soundtrack).
         var (exitCode, output) = await RunYtDlpAsync(
-            $"--print duration --print title --print thumbnail --print vcodec --no-playlist -- \"{url}\"", MetadataTimeoutMs);
+            ["--print", "duration", "--print", "title", "--print", "thumbnail", "--print", "vcodec", "--no-playlist", "--", url], MetadataTimeoutMs);
 
         if (exitCode != 0 || string.IsNullOrWhiteSpace(output))
         {
@@ -707,22 +707,43 @@ public partial class MediaCacheService
         return Convert.ToHexString(bytes)[..16].ToLowerInvariant();
     }
 
-    private async Task<(int ExitCode, string Output)> RunYtDlpAsync(string args, int timeoutMs, string? workingDirectory = null)
+    /// <summary>
+    /// The yt-dlp call for a Spotify link: a YouTube search for the title of the Spotify page. The title is the
+    /// last argument, after "--": the person who named the track, the playlist or the podcast episode chose its
+    /// text, and after "--" yt-dlp reads no option from it, whatever it starts with.
+    /// </summary>
+    internal static string[] SpotifySearchArguments(string title, string outputPath) =>
+        ["--no-playlist", "-x", "--audio-format", "mp3", "--audio-quality", "2", "-o", outputPath, "--", $"ytsearch1:{title}"];
+
+    /// <summary>
+    /// How yt-dlp starts. The arguments are a list, never one string: a URL comes from a message and a title from
+    /// a remote page. In one string, .NET splits at each double quote, on Linux too, so a title with a quote in it
+    /// ended its argument and the rest became options of yt-dlp ("--exec" runs a command). In the list, each
+    /// value reaches yt-dlp as one argument, whatever it holds.
+    /// </summary>
+    internal static ProcessStartInfo YtDlp(IEnumerable<string> arguments, string? workingDirectory = null)
     {
-        // Without the generic extractor yt-dlp talks to the sites it knows (YouTube, TikTok, the YouTube search
-        // behind Spotify) and to nothing else: the generic one fetches any page it is given, redirects included,
-        // which is a request into the server's own network when the page says so (SSRF).
-        var psi = new ProcessStartInfo("yt-dlp", $"--use-extractors default,-generic {args}")
+        var psi = new ProcessStartInfo("yt-dlp")
         {
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
+        // Without the generic extractor yt-dlp talks to the sites it knows (YouTube, TikTok, the YouTube search
+        // behind Spotify) and to nothing else: the generic one fetches any page it is given, redirects included,
+        // which is a request into the server's own network when the page says so (SSRF).
+        psi.ArgumentList.Add("--use-extractors");
+        psi.ArgumentList.Add("default,-generic");
+        foreach (var argument in arguments) psi.ArgumentList.Add(argument);
         if (workingDirectory != null)
             psi.WorkingDirectory = workingDirectory;
+        return psi;
+    }
 
-        using var process = Process.Start(psi);
+    private async Task<(int ExitCode, string Output)> RunYtDlpAsync(IEnumerable<string> arguments, int timeoutMs, string? workingDirectory = null)
+    {
+        using var process = Process.Start(YtDlp(arguments, workingDirectory));
         if (process == null)
             return (-1, "Failed to start yt-dlp");
 

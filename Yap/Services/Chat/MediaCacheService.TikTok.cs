@@ -101,7 +101,7 @@ public partial class MediaCacheService
     private async Task<List<string>> FetchSlideUrlsAsync(string videoUrl, string workDir)
     {
         var (exitCode, output) = await RunYtDlpAsync(
-            $"--write-pages --skip-download --no-playlist -- \"{videoUrl}\"", MetadataTimeoutMs, workDir);
+            ["--write-pages", "--skip-download", "--no-playlist", "--", videoUrl], MetadataTimeoutMs, workDir);
         if (exitCode != 0)
         {
             _logger.LogWarning("yt-dlp page fetch failed for {Url} (exit {Code}): {Err}", videoUrl, exitCode, TruncateLog(output));
@@ -198,7 +198,7 @@ public partial class MediaCacheService
     private async Task<string?> DownloadSoundtrackAsync(string videoUrl, string workDir)
     {
         var (exitCode, stderr) = await RunYtDlpAsync(
-            $"--no-playlist -x --audio-format mp3 -o \"{Path.Combine(workDir, "audio.%(ext)s")}\" -- \"{videoUrl}\"", DownloadTimeoutMs);
+            ["--no-playlist", "-x", "--audio-format", "mp3", "-o", Path.Combine(workDir, "audio.%(ext)s"), "--", videoUrl], DownloadTimeoutMs);
         if (exitCode != 0)
         {
             _logger.LogDebug("Soundtrack download failed for {Url}: {Err}", videoUrl, TruncateLog(stderr));
