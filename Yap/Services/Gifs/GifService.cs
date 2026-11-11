@@ -427,6 +427,11 @@ public partial class GifService
     {
         if (!File.Exists(sourceFilePath)) return null;
 
+        // The pixel limit of a picture (IB-32). A .gif or .webp is stored as it came, so nothing after this line
+        // looks at its pixels, and each reader's browser decodes them all. The upload endpoint refuses such a file
+        // with the reason before it calls this; this line is the guard for every other way in (a file of a pack).
+        if (await ImageService.OverMaxPixelsAsync(sourceFilePath) is not null) return null;
+
         var sourceExt = sourceExtension.ToLowerInvariant();
         var isAnimatedImageSource = sourceExt is ".gif" or ".webp";
 

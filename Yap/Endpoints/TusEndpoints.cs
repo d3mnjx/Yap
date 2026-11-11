@@ -245,6 +245,18 @@ public static class TusEndpoints
                             : VideoService.IsVideoFile(extension) ? "video" : null;
                         var fileSize = new FileInfo(tusFilePath).Length;
 
+                        // A picture is decoded whole for its thumbnails, and each reader's browser decodes it too. The
+                        // size of the file is no limit for that (ImageService.MaxPixels), so the pixels have their own (IB-32).
+                        // BEFORE the GIF routing, not after it: a GIF is stored as it came and never reaches the picture
+                        // pipeline below, so with the check there a .gif of any size passed. The bytes are not known to be a
+                        // picture yet (a GIF upload can be a video); for those the answer is null, and they go on.
+                        if (await ImageService.OverMaxPixelsAsync(tusFilePath) is { } size)
+                        {
+                            logger.LogWarning("Upload refused, {Width} x {Height} pixels: {FileName}", size.Width, size.Height, originalFileName);
+                            Refuse($"Picture has too many pixels ({size.Width} x {size.Height}, max {ImageService.MaxPixels / 1_000_000} megapixels)");
+                            return;
+                        }
+
                         // GIF routing: explicit kind=gif, .gif extension, or a short silent video clip.
                         // The GIF work reads the bytes where tus stored them, and writes a file of its own into the GIF
                         // folder. The upload itself is NOT moved into the uploads folder first: that folder is public, and
@@ -322,15 +334,6 @@ public static class TusEndpoints
                         {
                             logger.LogWarning("Upload refused, its bytes are not {Type}: {FileName}", type, originalFileName);
                             Refuse("Could not process this file");
-                            return;
-                        }
-
-                        // A picture is decoded whole for its thumbnails, and each reader's browser decodes it too. The
-                        // size of the file is no limit for that (ImageService.MaxPixels), so the pixels have their own.
-                        if (type == "image" && await ImageService.OverMaxPixelsAsync(tusFilePath) is { } size)
-                        {
-                            logger.LogWarning("Upload refused, {Width} x {Height} pixels: {FileName}", size.Width, size.Height, originalFileName);
-                            Refuse($"Picture has too many pixels ({size.Width} x {size.Height}, max {ImageService.MaxPixels / 1_000_000} megapixels)");
                             return;
                         }
 

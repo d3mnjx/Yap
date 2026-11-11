@@ -44,8 +44,11 @@ const TABS = [
 // The script runs in the admin's page, with the admin's sign-in, so the browser checks its bytes against the hash
 // before it runs them (as for the install guide, pwa.js). A new version needs a new hash:
 //   curl -s <url> | openssl dgst -sha384 -binary | openssl base64 -A
-const CHART_CDN = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js';
-const CHART_HASH = 'sha384-NrKB+u6Ts6AtkIhwPixiKTzgSKNblyhlk0Sohlgar9UHUBzai/sgnNNWWd291xqt';
+// The URL must name a file of the npm package, and "chart.umd.js" is that file (it is minified as published). Do not
+// write "chart.umd.min.js": the package has no such file, so jsDelivr builds one on request and says in its first
+// lines not to pin it. When jsDelivr builds it again, its bytes change, the hash fails, and the charts are gone.
+const CHART_CDN = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.js';
+const CHART_HASH = 'sha384-G436+Z2nlA8+PNoeRvWdxKbvOf8E/y+lYxqht2iBwNHTQDV5CJr3+AGVj8fGZi5t';
 
 export function mount(root, route) {
   if (!state.user?.isAdmin) { router.navigate('/lobby', { replace: true }); return () => {}; }   // AD-01

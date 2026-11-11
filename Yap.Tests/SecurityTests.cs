@@ -376,6 +376,25 @@ public class SecurityTests : IClassFixture<YapFactory>
         Assert.False(IsStored(bytes));
     }
 
+    [Theory(DisplayName = "IB-32: a GIF has the pixel limit of a picture, in the chat and in a library")]
+    [InlineData(null)]
+    [InlineData("user")]
+    public async Task A_gif_with_too_many_pixels_is_refused(string? target)
+    {
+        // The canvas of a GIF is in its header (bytes 6 to 9), and every frame is drawn on it: 7200 x 7200 is 52 MP in
+        // a file of 42 bytes. A GIF is stored as it came, on a route of its own, and the pixel check stood after that
+        // route. So this file was accepted, and each reader's browser got the 52 MP.
+        var bytes = (byte[])Gif.Clone();
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(6), 7200);
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(8), 7200);
+
+        var gia = await _app.SignInAsync($"gia_gif_pixels_{target ?? "chat"}");
+        var info = target is null ? await UploadAsync(gia.Http, "huge.gif", bytes) : await UploadAsync(gia.Http, "huge.gif", bytes, ("target", target));
+        Assert.Equal("error", info.GetProperty("type").GetString());
+        Assert.Contains("too many pixels (7200 x 7200, max 50 megapixels)", info.GetProperty("error").GetString());
+        Assert.False(IsStored(bytes));
+    }
+
     // These three do not depend on ffmpeg: the names pass the create on every machine, and ImageSharp reads the bytes.
     [Theory(DisplayName = "Bytes that are not a picture never get a public URL, and the server keeps no copy of a refused file")]
     [InlineData("dot.png", null)]      // a plain upload: before the fix it was moved into the uploads folder as it came

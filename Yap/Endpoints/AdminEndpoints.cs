@@ -371,9 +371,12 @@ public static class AdminEndpoints
         });
     }
 
+    // No s.DeviceId here, and the page shows none. A device proves its age with its own id (AU-20), so an id that
+    // another device can read is a way to sign that device's owner out: a new device of an admin account read the
+    // id of an older one from this answer. The same rule as for the device list (AccountEndpoints.DeviceDto).
     private static object SessionRow(Session s, PresenceService presence, ChatService chat) => new
     {
-        s.ConnectionId, s.UserId, s.Username, s.DeviceId, s.IsMobile, s.Browser, s.Os, s.Pwa, s.ClientIp, s.ClientIpv4, s.Transport, s.ConnectedAt, s.Connected, s.ClosedAt, s.DroppedAt,
+        s.ConnectionId, s.UserId, s.Username, s.IsMobile, s.Browser, s.Os, s.Pwa, s.ClientIp, s.ClientIpv4, s.Transport, s.ConnectedAt, s.Connected, s.ClosedAt, s.DroppedAt,
         s.Visible, s.LastInputAt, s.LastHeartbeatAt,
         status = presence.EffectiveOf(s.UserId),
         viewing = s.Viewing is { } id && chat.GetChannel(id) is { } c ? (c.IsDirectMessage ? $"DM: {c.Participant1} ↔ {c.Participant2}" : $"#{c.Name}") : null,

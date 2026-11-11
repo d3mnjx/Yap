@@ -7,6 +7,7 @@ using Microsoft.Data.Sqlite;
 using Yap.Models.Accounts;
 
 using Yap.Services.Accounts;
+using Yap.Services.Presence;
 
 namespace Yap.Tests;
 
@@ -72,6 +73,37 @@ public class AccountTests : IClassFixture<YapFactory>
         Assert.Equal(HttpStatusCode.Forbidden, withItsOwnId.StatusCode);
         await desk.DisposeAsync();
         await phone.DisposeAsync();
+    }
+
+    [Fact(DisplayName = "AU-20: the admin's Diagnostics give no device id, for an open session and for a closed one")]
+    public async Task Diagnostics_give_no_device_id()
+    {
+        var admin = await _app.AdminAsync();
+        var desk = await admin.ConnectAsync("desk-91c27f3a");
+
+        // The id of the desk is the proof of the desk's age. A new device of the same admin account read it here and
+        // signed the desk out with it. The hub records a connection a moment after ConnectAsync returns, and a close
+        // a moment after the dispose, so each answer is asked for until the row is there.
+        async Task<string> AnswerWithARowInAsync(string list, Action? first = null)
+        {
+            var answer = "";
+            for (var i = 0; i < 50; i++)
+            {
+                first?.Invoke();
+                answer = await admin.Http.GetStringAsync("/api/admin/diagnostics");
+                if (JsonDocument.Parse(answer).RootElement.GetProperty(list).EnumerateArray().Any(s => s.GetProperty("username").GetString() == admin.Username)) return answer;
+                await Task.Delay(100);
+            }
+            Assert.Fail($"no row of the admin in \"{list}\"");
+            return answer;
+        }
+
+        Assert.DoesNotContain("desk-91c27f3a", await AnswerWithARowInAsync("sessions"));
+        await desk.DisposeAsync();
+        // A closed session stays in "sessions" for 30 s (a reload must show nothing, PR-14), and a sweep after that
+        // moves it to "recentlyClosed". The sweep takes its clock as a parameter, so the test does not wait.
+        var presence = _app.Service<PresenceService>();
+        Assert.DoesNotContain("desk-91c27f3a", await AnswerWithARowInAsync("recentlyClosed", () => presence.Sweep(DateTime.UtcNow.AddSeconds(31))));
     }
 
     [Fact(DisplayName = "SH-33: a new account reaches the open clients as a profile message")]

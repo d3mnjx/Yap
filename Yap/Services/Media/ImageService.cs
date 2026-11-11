@@ -1,5 +1,7 @@
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.Formats.Gif;
+using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Processing;
 
@@ -9,7 +11,7 @@ namespace Yap.Services.Media;
 /// - Generates WebP thumbnails on upload at two sizes: 800px (gallery) and 1600px (lightbox)
 /// - Uses SixLabors.ImageSharp for cross-platform image processing
 /// - Smart resampling: Lanczos3 for photos, Box for screenshots/graphics
-/// - Skips resizing for small files(<500KB), just converts to WebP
+/// - A small file (<500KB) keeps its size and is only converted to WebP, within the limits of ThumbnailWidth
 /// - Auto-orients images based on EXIF data
 /// </summary>
 public class ImageService
@@ -39,6 +41,9 @@ public class ImageService
     // encoder needs several times the memory of the decode. Far above every real case: a screenshot of 1080 x 10000
     // has 11 MP, a 4K screenshot 8 MP.
     private const long MaxThumbnailPixels = 16_000_000;
+    // The longest side that the WebP format can hold. The encoder throws above it, and the picture then has no
+    // thumbnail at all: a screenshot of 1080 x 20000 is within every pixel limit here and lost its thumbnails this way.
+    private const int MaxWebpSide = 16383;
 
     // Link card pictures (SaveWebpFitAsync): small and many, so a lower quality than the uploads' thumbnails.
     private static readonly WebpEncoder FitEncoder = new() { Quality = 80 };
@@ -83,11 +88,17 @@ public class ImageService
     }
 
     /// <summary>The size of a picture with more than <see cref="MaxPixels"/> in one frame, or null. Reads the header
-    /// only, so the upload endpoint can refuse such a picture with the reason before anything decodes it.</summary>
+    /// only, so the upload endpoint can refuse such a picture with the reason before anything decodes it. Null also
+    /// for bytes that are no picture: the endpoint asks before it knows what the file is (a GIF upload can be a video),
+    /// and "is it a picture" has its own check and its own refusal there.</summary>
     public static async Task<Size?> OverMaxPixelsAsync(string path)
     {
-        var info = await Image.IdentifyAsync(path);
-        return (long)info.Width * info.Height > MaxPixels ? info.Size : null;
+        try
+        {
+            var info = await Image.IdentifyAsync(path);
+            return (long)info.Width * info.Height > MaxPixels ? info.Size : null;
+        }
+        catch (ImageFormatException) { return null; }
     }
 
     /// <summary>
@@ -99,7 +110,14 @@ public class ImageService
     private static DecoderOptions? WithinMaxPixels(ImageInfo info)
     {
         var frame = Math.Max(1, (long)info.Width * info.Height);
-        return frame > MaxPixels ? null : new DecoderOptions { MaxFrames = (uint)(MaxPixels / frame) };
+        if (frame > MaxPixels) return null;
+        // More than one frame only for the formats that hold an animation: there each frame is drawn on the one
+        // canvas whose size the header gives, so "frames x canvas" is the true cost. A TIFF holds pages, each with a
+        // size of its own, and the header gives the first: with a page of 10 x 10 in front, a second page of
+        // 20000 x 20000 was within this budget, and the decoder reads every page it is allowed before it compares
+        // their sizes. One frame is all a thumbnail of such a file needs.
+        var animation = info.Metadata.DecodedImageFormat is GifFormat or WebpFormat or PngFormat;
+        return new DecoderOptions { MaxFrames = animation ? (uint)(MaxPixels / frame) : 1 };
     }
 
     /// <summary>
@@ -134,7 +152,14 @@ public class ImageService
                 using var image = await Image.LoadAsync(options, originalPath);
                 image.Mutate(x => x.AutoOrient());
 
-                await SaveThumbnailAsync(image, thumbPath, size, originalExtension, skipResizing);
+                try { await SaveThumbnailAsync(image, thumbPath, size, originalExtension, skipResizing); }
+                catch
+                {
+                    // An encoder that throws leaves the file it began. That file is no picture, the row shows it as
+                    // a broken one, and File.Exists above keeps it for good. Without it the row asks again and gets a 404.
+                    try { File.Delete(thumbPath); } catch { }
+                    throw;
+                }
             }
             finally { Gate.Release(); }
         }
@@ -155,12 +180,16 @@ public class ImageService
 
     /// <summary>The width of a thumbnail: the picture's own for a small file and for a narrow picture, else
     /// <paramref name="size"/>. Neither rule looks at the height, and a small file can hold any number of pixels (one
-    /// colour compresses to almost nothing), so the result also stays within <see cref="MaxThumbnailPixels"/>.</summary>
+    /// colour compresses to almost nothing), so the result also stays within <see cref="MaxThumbnailPixels"/>, and
+    /// neither side of the thumbnail is longer than <see cref="MaxWebpSide"/>.</summary>
     internal static int ThumbnailWidth(int imageWidth, int imageHeight, int size, bool smallFile)
     {
         var width = smallFile || imageWidth <= size ? imageWidth : size;
         var pixels = (long)width * width * imageHeight / imageWidth;
-        return pixels <= MaxThumbnailPixels ? width : Math.Max(1, (int)(width * Math.Sqrt((double)MaxThumbnailPixels / pixels)));
+        if (pixels > MaxThumbnailPixels) width = (int)(width * Math.Sqrt((double)MaxThumbnailPixels / pixels));
+        width = Math.Min(width, MaxWebpSide);                                           // a wide picture
+        width = (int)Math.Min(width, (long)MaxWebpSide * imageWidth / imageHeight);     // a tall one: the height follows the width
+        return Math.Max(1, width);
     }
 
     private static async Task SaveThumbnailAsync(Image image, string thumbPath, int size, string originalExtension, bool skipResizing)
@@ -228,6 +257,10 @@ public class ImageService
     /// </summary>
     public async Task<string?> GenerateProfilePictureAsync(Stream imageStream, Guid userId)
     {
+        // Behind the gate of the uploads, for the same reason: this decodes up to MaxPixels whole (about 200 MB) for a
+        // result of 128 px, and a person can send many pictures at once. Without the gate ten such requests held
+        // ten decodes at the same time.
+        await Gate.WaitAsync();
         try
         {
             // Ensure profiles directory exists
@@ -269,6 +302,7 @@ public class ImageService
             Console.WriteLine($"Failed to generate profile picture for user {userId}: {ex.Message}");
             return null;
         }
+        finally { Gate.Release(); }
     }
 
     /// <summary>
