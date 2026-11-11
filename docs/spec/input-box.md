@@ -95,7 +95,7 @@ The input box is the part of a conversation where the user writes and sends a me
 
 **IB-31** The accepted types are images (.jpg, .jpeg, .png, .gif, .webp) and videos (.mp4, .webm, .mov, .avi, .mkv). The box ignores dropped or pasted files of other kinds. When the user chooses a file of another kind with +, the dialog of IB-35 lists it as unsupported, and the file does not go to the tray.
 
-**IB-32** The maximum size of one file is the configured size limit. The default limit is 100 MB. One message contains at most 10 files. A pick that takes the tray over 10 files is refused, and no file of that pick goes to the tray. The refusal text is "Choose at most 10 files."
+**IB-32** The maximum size of one file is the configured size limit. The default limit is 100 MB. A picture has at most 50 megapixels. The server refuses a picture with more, and the failed row gives the reason (IB-35). One message contains at most 10 files. A pick that takes the tray over 10 files is refused, and no file of that pick goes to the tray. The refusal text is "Choose at most 10 files."
 
 **IB-33** Chosen, dropped and pasted files wait in a tray inside the input box, above the draft. Each file shows as a square thumbnail, 72 px on desktop and 64 px on a phone, with ✕ in its top right corner. A video shows its first frame and a play mark. ✕ removes the file from the tray. On a phone, the tray scrolls sideways. Send sends the files of the tray and the draft text together, as one message. The text is the caption of the message (MR-24). Send is visible while the tray has a file, and on desktop Enter sends with an empty draft. Nothing is uploaded before Send. Each conversation has its own tray. The tray does not survive a reload. A GIF file becomes a GIF attachment, the same as a GIF sent from the picker.
 
@@ -256,6 +256,7 @@ The input box is the part of a conversation where the user writes and sends a me
 | Microphone dialog | "Microphone unavailable"; "Yap cannot use the microphone. Allow it in the browser settings and try again." |
 | Recording too short | "Too short" |
 | Voice message refused, the reason in the failed row ({ext} is webm, ogg or mp4, by the browser) | `"voice.{ext}" — Voice messages are unavailable on this server (ffmpeg missing)`; `"voice.{ext}" — Could not process this voice message` |
+| Picture refused for its pixels, the reason in the failed row | `"{name}" — Picture has too many pixels ({width} x {height}, max 50 megapixels)` |
 | Pending voice row, in place of a file name | "Voice message" |
 | Tray ✕ accessible name | "Remove {file name}" |
 | GIF badge | "GIF" |

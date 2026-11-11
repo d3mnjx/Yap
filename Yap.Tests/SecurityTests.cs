@@ -357,6 +357,25 @@ public class SecurityTests : IClassFixture<YapFactory>
         Assert.Equal(HttpStatusCode.OK, (await Send(new { clientId = Guid.NewGuid(), images = new[] { $"/uploads/{Guid.NewGuid()}.png" } })).StatusCode);
     }
 
+    [Fact(DisplayName = "A picture with more pixels than the server decodes is refused with the reason, whatever the size of its file")]
+    public async Task A_picture_with_too_many_pixels_is_refused()
+    {
+        // One colour, 7200 x 7200: 52 MP in a file of some KB. The server decodes a picture whole for its thumbnails,
+        // so the size of the file is no limit for the memory. Before the fix this upload got a URL and its thumbnails.
+        using var stream = new MemoryStream();
+        using (var picture = new SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.L8>(7200, 7200))
+            await SixLabors.ImageSharp.ImageExtensions.SaveAsPngAsync(picture, stream);
+        var bytes = stream.ToArray();
+        Assert.True(bytes.Length < 1024 * 1024, "the test picture must be a small file");
+
+        var pia = await _app.SignInAsync("pia_pixels");
+        var info = await UploadAsync(pia.Http, "huge.png", bytes);
+        Assert.Equal("error", info.GetProperty("type").GetString());
+        Assert.Contains("too many pixels (7200 x 7200, max 50 megapixels)", info.GetProperty("error").GetString());
+        Assert.False(info.TryGetProperty("url", out _));
+        Assert.False(IsStored(bytes));
+    }
+
     // These three do not depend on ffmpeg: the names pass the create on every machine, and ImageSharp reads the bytes.
     [Theory(DisplayName = "Bytes that are not a picture never get a public URL, and the server keeps no copy of a refused file")]
     [InlineData("dot.png", null)]      // a plain upload: before the fix it was moved into the uploads folder as it came

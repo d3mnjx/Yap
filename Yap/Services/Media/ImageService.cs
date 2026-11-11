@@ -29,6 +29,17 @@ public class ImageService
     // while the same files passed one after another. The wait is a few hundred ms per picture.
     private static readonly SemaphoreSlim Gate = new(1, 1);
 
+    // A picture that a person uploads is decoded whole for its thumbnails and for a profile picture, at 4 bytes a
+    // pixel or more, and the size of the file says nothing about the pixels: a PNG of one colour, 10000 x 10000, is
+    // 300 KB on disk and took 2 GB of memory (measured 2026-11-11). 50 MP lets the full photo of a 50 MP phone
+    // camera through (8160 x 6120). An upload is refused by the pixels of one frame (OverMaxPixelsAsync). A decode
+    // counts all frames of an animation together and reads the ones that fit (WithinMaxPixels).
+    public const long MaxPixels = 50_000_000;
+    // A thumbnail keeps the size of a small file and the height of a tall picture (SaveThumbnailAsync), and the WebP
+    // encoder needs several times the memory of the decode. Far above every real case: a screenshot of 1080 x 10000
+    // has 11 MP, a 4K screenshot 8 MP.
+    private const long MaxThumbnailPixels = 16_000_000;
+
     // Link card pictures (SaveWebpFitAsync): small and many, so a lower quality than the uploads' thumbnails.
     private static readonly WebpEncoder FitEncoder = new() { Quality = 80 };
     // The pictures come from any page a person links to. 16 MP is far above what a 640 px result needs and keeps one
@@ -71,6 +82,26 @@ public class ImageService
         finally { Gate.Release(); }
     }
 
+    /// <summary>The size of a picture with more than <see cref="MaxPixels"/> in one frame, or null. Reads the header
+    /// only, so the upload endpoint can refuse such a picture with the reason before anything decodes it.</summary>
+    public static async Task<Size?> OverMaxPixelsAsync(string path)
+    {
+        var info = await Image.IdentifyAsync(path);
+        return (long)info.Width * info.Height > MaxPixels ? info.Size : null;
+    }
+
+    /// <summary>
+    /// How a picture from a person is decoded: within <see cref="MaxPixels"/>, or not at all (null) when one frame
+    /// alone has more. Of an animation, the frames that fit are read: a very long one gets a shorter loop as its
+    /// thumbnail, and the file itself stays as it came. EVERY full decode of such a picture goes through here. The
+    /// plain Image.LoadAsync(path) takes whatever the header says.
+    /// </summary>
+    private static DecoderOptions? WithinMaxPixels(ImageInfo info)
+    {
+        var frame = Math.Max(1, (long)info.Width * info.Height);
+        return frame > MaxPixels ? null : new DecoderOptions { MaxFrames = (uint)(MaxPixels / frame) };
+    }
+
     /// <summary>
     /// Generates only the medium (800px) thumbnail for fast initial display.
     /// </summary>
@@ -99,7 +130,8 @@ public class ImageService
             await Gate.WaitAsync();
             try
             {
-                using var image = await Image.LoadAsync(originalPath);
+                if (WithinMaxPixels(await Image.IdentifyAsync(originalPath)) is not { } options) return;   // the upload endpoint refuses these; this is the guard at the decode itself
+                using var image = await Image.LoadAsync(options, originalPath);
                 image.Mutate(x => x.AutoOrient());
 
                 await SaveThumbnailAsync(image, thumbPath, size, originalExtension, skipResizing);
@@ -121,9 +153,20 @@ public class ImageService
         return (directory, filename, extension, skipResizing);
     }
 
+    /// <summary>The width of a thumbnail: the picture's own for a small file and for a narrow picture, else
+    /// <paramref name="size"/>. Neither rule looks at the height, and a small file can hold any number of pixels (one
+    /// colour compresses to almost nothing), so the result also stays within <see cref="MaxThumbnailPixels"/>.</summary>
+    internal static int ThumbnailWidth(int imageWidth, int imageHeight, int size, bool smallFile)
+    {
+        var width = smallFile || imageWidth <= size ? imageWidth : size;
+        var pixels = (long)width * width * imageHeight / imageWidth;
+        return pixels <= MaxThumbnailPixels ? width : Math.Max(1, (int)(width * Math.Sqrt((double)MaxThumbnailPixels / pixels)));
+    }
+
     private static async Task SaveThumbnailAsync(Image image, string thumbPath, int size, string originalExtension, bool skipResizing)
     {
-        if (skipResizing || image.Width <= size)
+        var width = ThumbnailWidth(image.Width, image.Height, size, skipResizing);
+        if (width == image.Width)
         {
             // Just convert to WebP without resizing
             await image.SaveAsync(thumbPath, WebpEncoder);
@@ -139,7 +182,7 @@ public class ImageService
 
             using var resized = image.Clone(x => x.Resize(new ResizeOptions
             {
-                Size = new Size(size, 0), // 0 = maintain aspect ratio
+                Size = new Size(width, 0), // 0 = maintain aspect ratio
                 Mode = ResizeMode.Max,
                 Sampler = sampler
             }));
@@ -190,6 +233,11 @@ public class ImageService
             // Ensure profiles directory exists
             Directory.CreateDirectory(_profiles);
 
+            // Before the old picture goes: a file that is refused here leaves the person's picture as it is.
+            // The stream of a form file can be read twice.
+            if (WithinMaxPixels(await Image.IdentifyAsync(imageStream)) is not { } options) return null;
+            imageStream.Position = 0;
+
             // Delete existing profile picture if any
             var existingFiles = Directory.GetFiles(_profiles, $"{userId}.*");
             foreach (var file in existingFiles)
@@ -202,7 +250,7 @@ public class ImageService
             // whole URL, so the upload time in the query is what makes every open client fetch the new picture.
             var urlPath = $"/uploads/profiles/{userId}.webp?v={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
 
-            using var image = await Image.LoadAsync(imageStream);
+            using var image = await Image.LoadAsync(options, imageStream);
             image.Mutate(x => x
                 .AutoOrient()
                 .Resize(new ResizeOptions

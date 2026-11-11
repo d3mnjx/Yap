@@ -325,6 +325,15 @@ public static class TusEndpoints
                             return;
                         }
 
+                        // A picture is decoded whole for its thumbnails, and each reader's browser decodes it too. The
+                        // size of the file is no limit for that (ImageService.MaxPixels), so the pixels have their own.
+                        if (type == "image" && await ImageService.OverMaxPixelsAsync(tusFilePath) is { } size)
+                        {
+                            logger.LogWarning("Upload refused, {Width} x {Height} pixels: {FileName}", size.Width, size.Height, originalFileName);
+                            Refuse($"Picture has too many pixels ({size.Width} x {size.Height}, max {ImageService.MaxPixels / 1_000_000} megapixels)");
+                            return;
+                        }
+
                         var uploadsFolder = uploads.Root;
                         var uniqueFileName = $"{Guid.NewGuid()}{extension}";
                         var filePath = Path.Combine(uploadsFolder, uniqueFileName);
