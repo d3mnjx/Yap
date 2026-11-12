@@ -52,7 +52,7 @@ public sealed class ChatHub(ChatService chat, PresenceService presence, UserServ
             Abort = Context.Abort,
         };
         var joined = presence.Connect(session);
-        // After the presence call, not before: the join it raises is where the bot reads LastSeenAt as the end
+        // After the presence call, not before: the OnJoined it raises is where the bot reads LastSeenAt as the end
         // of the previous visit, for the return notice (PR-18). The stamp itself serves AD-04 (the admin list
         // orders by the newest activity) and AD-39 (the inactive sweep).
         users.UpdateLastSeen(Me);

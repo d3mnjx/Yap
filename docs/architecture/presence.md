@@ -131,13 +131,13 @@ public Task SetStatus(UserStatus status) => presence.SetChosenStatus(Context.Use
 public void Typing(Guid channelId, bool on) => presence.SetTyping(Context.ConnectionId, channelId, on);
 ```
 
-`Connect` is a join when the person had no session (PR-17), and returns that, so the hub writes the JOIN row of the action log (AD-18) with the address and the browser it alone knows. The hub stamps `LastSeenAt` after the call, not before: the join event is where the bot reads it as the end of the previous visit, for the return notice (PR-18). `Disconnect` only stamps `ClosedAt` or `DroppedAt`; the sweep does the rest. The hub also tells PresenceService the open conversation from `openRoom`, `openDm` and `leave`, for the diagnostics table and for typing.
+`Connect` is a join when the person had no session (PR-17), and returns that, so the hub writes the JOIN row of the action log (AD-18) with the address and the browser it alone knows. For a join, `Connect` also raises `OnJoined`. The hub stamps `LastSeenAt` after the call, not before: `OnJoined` is where the bot reads it as the end of the previous visit, for the return notice (PR-18). `Disconnect` only stamps `ClosedAt` or `DroppedAt`; the sweep does the rest. The hub also tells PresenceService the open conversation from `openRoom`, `openDm` and `leave`, for the diagnostics table and for typing.
 
 The heartbeat is the single source of liveness, as it is today. The client sends it every 10 seconds while visible and every 60 seconds while hidden, and at once when the tab becomes visible or hidden or the hub reconnects. The hidden beat matters: the server reads the flag for unread counts (NT-07), for push, and for the away sweep. It carries the idle time since the last input, the previous round trip and the waits the client measured since the last beat (AD-26): send, open, older, start and reconnect, each as a name and milliseconds. A hidden tab sends no round trip; its throttled timers would measure the throttle. The return value lets the client measure the round trip.
 
 ## Events out
 
-PresenceService raises three events. The broadcaster turns them into hub events.
+PresenceService raises four events. The broadcaster turns three of them into hub events.
 
 | Event | Hub event | To | Meaning |
 | --- | --- | --- | --- |
@@ -146,6 +146,8 @@ PresenceService raises three events. The broadcaster turns them into hub events.
 | `OnChosenStatusChanged(userId, status)` | `me` | the person's devices | The menu marks the chosen status on every device (PR-01). |
 
 Invisible people produce no `presence` event with any value other than offline, so they never appear to join or leave. The chip of an invisible person is grey because their own `presence` event says offline; their menu still marks Invisible from `me` (PR-05, SH-11).
+
+`OnJoined(username)` is the fourth event. `Connect` raises it for a join, which is by sessions (PR-17), so an invisible person raises it too. It has no hub event. SystemBotService is the one listener: it sends the welcome message to the person and the join or return message to the admin (AU-26, PR-18). The bot does not use the `join` kind of `OnPresenceChanged`, because an invisible person never produces it.
 
 ## What asks PresenceService
 

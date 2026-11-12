@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Data.Sqlite;
+using Yap.Models.Accounts;
 using Yap.Services.Accounts;
 using Yap.Services.Chat;
 using Yap.Services.Presence;
@@ -76,6 +77,23 @@ public class BotTests(YapFactory app) : IClassFixture<YapFactory>
         Assert.True(await BotToldAdminAsync("pr18_later is back after 3 days."));
         Assert.False(await BotToldAdminAsync("pr18_off is back", wait: false));
         Assert.False(await BotToldAdminAsync("pr18_early is back", wait: false));
+    }
+
+    [Fact(DisplayName = "PR-18: the admin hears of the return of an invisible person")]
+    public async Task Return_notice_invisible()
+    {
+        var bot = _app.Service<SystemBotService>();
+        await _app.AdminAsync();
+        bot.StartedAt = DateTime.UtcNow.AddMinutes(-10);   // past the startup quiet
+        await bot.UpdateSettingsAsync(null, null, null, 2);
+
+        var hidden = await ReturningAsync("pr18_hidden", TimeSpan.FromHours(3));
+        // Invisible before the connect: this join raises no presence event (PR-05), and the notice must not need one.
+        var id = _app.Service<UserService>().GetByUsername(hidden.Username)!.Id;
+        _app.Service<PresenceService>().SetChosenStatus(id, UserStatus.Invisible);
+
+        await using var hub = await JoinAsync(_app, hidden);
+        Assert.True(await BotToldAdminAsync("pr18_hidden is back after 3 hours."), "the bot did not tell the admin of the invisible person's return");
     }
 
     [Fact(DisplayName = "PR-18: the absence reads as whole hours, or whole days from two days on")]

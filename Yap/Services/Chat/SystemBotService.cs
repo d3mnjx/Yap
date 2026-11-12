@@ -190,7 +190,7 @@ public class SystemBotService
         _presence.RegisterPermanent(_botUserId, _botUsername);   // the bot is always online (PR-09)
 
         // Subscribe to events
-        _presence.OnPresenceChanged += HandlePresenceChanged;
+        _presence.OnJoined += HandleJoined;
         _accessLinks.OnBrakeTripped += HandleBrakeTripped;
         _chatService.OnMessageReceived += HandleMessageReceived;
 
@@ -368,9 +368,11 @@ public class SystemBotService
     /// When a person joins: a new account gets a welcome DM and the admin hears of it; an account that was
     /// away for long tells the admin that the person is back.
     /// </summary>
-    private void HandlePresenceChanged(string username, EffectiveStatus status, PresenceChange change)
+    private void HandleJoined(string username)
     {
-        if (change != PresenceChange.Join) return;   // the first connection of a person (PR-17, PR-18)
+        // OnJoined and not OnPresenceChanged: a join is by sessions (PR-17), and an invisible person raises no
+        // presence event. Every message from here goes to the admin or to the person, so nothing shows the
+        // invisible person to others (PR-05).
         if (IsBotUser(username)) return;
         // LastSeenAt is read here, inside the raise, while it still holds the end of the previous visit: the hub
         // tells PresenceService about the connection first and stamps LastSeenAt after, for this one reader.
@@ -396,7 +398,7 @@ public class SystemBotService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in bot HandlePresenceChanged for {Username}", username);
+            _logger.LogError(ex, "Error in bot HandleJoined for {Username}", username);
         }
     }
 

@@ -41,6 +41,11 @@ public sealed class PresenceService(UserService users, LoadCounters load, ILogge
     /// <summary>What others see changed: username, the new effective status, and why.</summary>
     public event Action<string, EffectiveStatus, PresenceChange>? OnPresenceChanged;
 
+    /// <summary>A person's join by sessions (PR-17): username. An invisible person raises it too, so it is only
+    /// for listeners that no other person sees (the bot's notices to the admin, PR-18). What others see goes
+    /// through <see cref="OnPresenceChanged"/>.</summary>
+    public event Action<string>? OnJoined;
+
     /// <summary>A person started or stopped typing in a conversation: channel id, username, on.</summary>
     public event Action<Guid, string, bool>? OnTypingChanged;
 
@@ -67,6 +72,10 @@ public sealed class PresenceService(UserService users, LoadCounters load, ILogge
             after = EffectiveLocked(session.UserId);
         }
         Announce(session.Username, before, after);
+        // By sessions, not by the effective status: an invisible person raises no presence event (PR-05),
+        // and the admin still hears of the return (PR-18). Raised inside Connect, so the hub's LastSeenAt
+        // stamp comes after the listener.
+        if (first) OnJoined?.Invoke(session.Username);
         return first;
     }
 
