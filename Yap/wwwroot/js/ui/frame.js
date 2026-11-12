@@ -253,9 +253,11 @@ export function openProfile(username, status, pointerEvent, button = null) {
   const about = card.querySelector('.profile-card-about'), empty = card.querySelector('.profile-card-empty');
   if (u?.bio) { replace(about.querySelector('.profile-card-bio'), inline(u.bio)); empty.remove(); }
   else { about.remove(); replace(empty, inline('No bio yet — a person of mystery 🕵️')); }
+  // The location line is commented out in index.html (the Location field of Settings is off), so `location` is
+  // null for now. The `location &&` and the `?.` look removable, but without them no profile card opens.
   const location = card.querySelector('.profile-card-location');
-  if (u?.location) { replace(location.querySelector('.meta-icon'), inline('📍')); location.querySelector('.meta-text').textContent = u.location; }
-  else location.remove();
+  if (location && u?.location) { replace(location.querySelector('.meta-icon'), inline('📍')); location.querySelector('.meta-text').textContent = u.location; }
+  else location?.remove();
   const since = card.querySelector('.profile-card-since');
   if (u?.createdAt) {
     replace(since.querySelector('.meta-icon'), inline('🗓️'));

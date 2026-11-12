@@ -411,7 +411,11 @@
                         <p class="profile-card-bio"></p>
                     </div>
                     <p class="profile-card-empty"></p>
+                    <!-- The location line is off since 2026-11-12, together with the Location field of Settings (t-settings).
+                         A person cannot change a saved location while that field is off, so the card does not show it.
+                         To bring the line back, remove this comment and nothing else: frame.js works with and without the line.
                     <div class="profile-card-meta profile-card-location"><span class="meta-icon"></span><span class="meta-text"></span></div>
+                    -->
                     <div class="profile-card-meta profile-card-since"><span class="meta-icon"></span><span class="meta-text"></span></div>
                 </div>
             </div>
