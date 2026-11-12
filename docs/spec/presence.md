@@ -2,7 +2,7 @@
 
 Presence is the information that Yap shows about the current state of each person. It shows who is online, away or invisible, when people join and leave, and who types in the open conversation. Presence appears in the people list in the sidebar, in the status chip and the online count in the header, and in the profile card. It also appears in the typing strip above the input box and in the join and leave lines in the lobby. The rules on this page specify what each of these places shows.
 
-![People list, desktop. A green dot for an online person, orange for an away person, grey for an invisible or offline one; the admin crown; the bot; the user's own row with "(you)".](img/presence-desktop-list.png)
+![People list, desktop. A green dot for an online person, orange for an away person, grey for an invisible or offline one; the admin shield; the bot's robot; the user's own row with "(you)".](img/presence-desktop-list.png)
 
 ## Rules
 

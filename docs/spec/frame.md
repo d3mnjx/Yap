@@ -8,7 +8,7 @@ The frame contains all parts around a conversation. The header shows the title, 
 
 ![Status menu, desktop. Under the chip: Online, Away, Invisible, a divider, Settings, Notification settings, Admin, Sign Out.](img/frame-desktop-status-menu.png)
 
-![Profile card, desktop, over a person's name in the sidebar. Banner, avatar, display name, @username, status line, About me, location, Member since. An admin's card adds the crown after the name.](img/frame-desktop-profile-card.png)
+![Profile card, desktop, over a person's name in the sidebar. Banner, avatar, display name, @username, status line, About me, location, Member since. An admin's card adds the shield after the name.](img/frame-desktop-profile-card.png)
 
 ![Frame, phone, sidebar open. The sidebar slid in from the right over the conversation, the header still visible above it.](img/frame-phone-sidebar.png)
 
