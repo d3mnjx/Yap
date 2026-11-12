@@ -262,6 +262,30 @@
     .message-group:hover:not(.system-message) {
         background: var(--bg-hover);
     }
+
+    /* MR-81: a row under a shared header shows its time in the avatar column while the mouse is over it, so the
+       reader sees how far the row is from the time in the header. The text is the row's data-time (ui/message.js).
+       A pseudo-element draws it: the box exists only under the mouse, and a selection across rows does not copy it.
+       A reply always has a header (MR-01), so this ::before never meets the reply line's ::before below.
+       width: the avatar column (the row's left padding, 1rem + 40px + 1rem) less 0.5rem, so the time ends 8px
+       before the text. The 600px tier has a narrower column and sets its own width.
+       top: the row's top padding plus 0.11rem. The box is as tall as the first text line. A smaller font, centred
+       in that line, stands above the baseline of the text by 0.36 of the size difference (Inter, Arial and
+       Helvetica agree within a tenth of a pixel), and the 0.11rem puts the digits back on that baseline. */
+    .message-group:not(.has-header, .system-message):hover::before {
+        content: attr(data-time);
+        position: absolute;
+        left: 0;
+        top: calc(0.125rem + 0.11rem);
+        width: calc(1rem + 40px + 0.5rem);
+        text-align: right;
+        font-size: 0.6875rem;
+        line-height: 1.375rem;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        color: var(--text-muted);
+        pointer-events: none;
+    }
 }
 
 /* Messages with header show avatar in the reserved space */
@@ -1321,6 +1345,12 @@
 
     .message-group.has-header {
         padding-left: 0.5rem;
+    }
+
+    /* The hover time (MR-81) in the narrower avatar column: 0.5rem + 40px + 0.75rem, less the same 0.5rem. Only
+       the width is here: the rule that makes the box is behind (hover: hover), so a phone still draws nothing. */
+    .message-group:not(.has-header, .system-message):hover::before {
+        width: calc(40px + 0.75rem);
     }
 
     .reply-preview {

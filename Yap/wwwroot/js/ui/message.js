@@ -5,7 +5,7 @@
 import { state, on, displayName, hasMedia, toggleReactionLocally, editLocally, removeLocally, toggleFavoriteLocally, redrawMessage, mayPin, isPinned, pinLocally, unpinLocally } from '../store.js';
 import { clone, el, replace, classes } from '../render/dom.js';
 import { inline, messageText, imageFailed, safeHref } from '../render/text.js';
-import { messageTime } from '../render/time.js';
+import { messageTime, timeOf } from '../render/time.js';
 import { avatar } from '../render/avatar.js';
 import { fileThumb } from '../render/thumb.js';
 import * as hub from '../hub.js';
@@ -71,7 +71,12 @@ export function renderRow(m, { header }) {
     replace(meta.querySelector('.message-username'), inline(displayName(m.username)));
     meta.querySelector('.bot-badge').hidden = !u?.isBot;
     meta.querySelector('.message-time').textContent = messageTime(m.timestamp);
-  } else meta.remove();
+  } else {
+    meta.remove();
+    // MR-81: the time of a row under a shared header. It is an attribute and not a node: message.css draws it in
+    // the avatar column only while the mouse is over the row, so a row that nobody points at costs nothing more.
+    row.dataset.time = timeOf(new Date(m.timestamp));
+  }
 
   renderContent(row, m);
   renderCards(row, m);
