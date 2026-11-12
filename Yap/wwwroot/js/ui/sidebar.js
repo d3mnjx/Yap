@@ -203,10 +203,8 @@ export function Sidebar(frame, profile) {
     const status = state.presence[username] ?? 'invisible';   // grey, as offline (SH-29, SH-31)
     row.querySelector('.user-status-dot').className = `user-status-dot ${status}`;
     replace(row.querySelector('.user-name'), [...inline(displayName(username)), username === me ? ' (you)' : null]);
-    row.querySelector('.admin-badge').hidden = !u?.isAdmin;
+    row.querySelector('.admin-badge').hidden = !u?.isAdmin;   // the template carries both icons
     row.querySelector('.bot-badge').hidden = !u?.isBot;
-    replace(row.querySelector('.admin-badge'), inline('👑'));
-    replace(row.querySelector('.bot-badge'), inline('🤖'));
     const dm = dmOf[username];
     const count = dm && openDm?.channelId !== dm.channelId ? (state.unread[dm.channelId] ?? 0) : 0;
     const muted = dm ? isMuted(dm.channelId) : false;

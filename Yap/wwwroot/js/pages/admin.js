@@ -20,6 +20,7 @@ import { api } from '../api.js';
 import { clone, el, replace, append } from '../render/dom.js';
 import { inline } from '../render/text.js';
 import { avatar } from '../render/avatar.js';
+import { roleBadge } from '../render/badge.js';
 import { ago } from '../render/time.js';
 import * as router from '../router.js';
 import { setTitle } from '../notify.js';
@@ -242,7 +243,7 @@ function users(host) {
             el('div', { class: 'user-info' },
               el('span', { class: 'user-name' },
                 inline(u.displayName || u.username),
-                u.isAdmin ? el('span', { class: 'admin-badge', title: 'Admin' }, inline('👑')) : null),
+                u.isAdmin ? roleBadge('admin', 14) : null),
               u.displayName ? el('span', { class: 'user-username' }, u.username) : null),
           ], 'user-cell'),
           td(el('span', { class: `status-pill ${u.status}` },

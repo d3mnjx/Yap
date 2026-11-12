@@ -98,7 +98,7 @@ The frame contains all parts around a conversation. The header shows the title, 
 
 **SH-30** The order is admins, then the bot, then the user, then everyone else. The bot slot and the user slot are used only when that person is not already placed as an admin. Everyone else is in this order: unmuted direct messages with unread first, then people online, then offline people with the most recent direct message first. Within a tier, people with the same rank are in order of display name.
 
-**SH-31** A row shows a status dot, which is green for online, orange for away and grey otherwise. It also shows the display name, " (you)" on the user's own row, and the info button where SH-34 shows one. Other icons are a crown for admins, a robot for the bot and a crossed bell for a muted direct message. The row also shows the unread mark, with the room rules. Rows show no avatar and no message preview.
+**SH-31** A row shows a status dot, which is green for online, orange for away and grey otherwise. It also shows the display name, " (you)" on the user's own row, and the info button where SH-34 shows one. Other icons are a shield for admins, a robot for the bot and a crossed bell for a muted direct message. The shield has the accent colour of the theme, and the robot has the colour of muted text. The row also shows the unread mark, with the room rules. Rows show no avatar and no message preview.
 
 **SH-32** A tap on another person opens the direct message with them and closes the sidebar on narrow screens. A tap on the user's own row, outside the info button, does nothing. The open direct message's row is highlighted.
 
@@ -108,7 +108,7 @@ The frame contains all parts around a conversation. The header shows the title, 
 
 **SH-34** Above 768 px, when the pointer is on a person's name, the profile card of that person shows next to the pointer. The card closes when the pointer leaves the name. On any touch screen, and at 768 px or less, an info button after the name opens the card. The card is centred over a dimmed page. A second tap on the button, a tap outside, Escape, or a room or person pick closes the card. A tap on the row outside the button opens the direct message. The user's own row opens the user's own card. The card shows the status at the time it opened.
 
-**SH-35** The card shows a banner in the person's avatar colours, the 80 px avatar, and the display name with the admin crown or the bot badge. It then shows "@username" and a status line "Online", "Away" or "Offline". An invisible person shows as offline. The card then shows "About me" with the bio or "No bio yet — a person of mystery 🕵️", "📍 {location}" when set, and "🗓️ Member since {Month yyyy}". It has no buttons.
+**SH-35** The card shows a banner in the person's avatar colours, the 80 px avatar, and the display name with the admin shield or the bot robot. It then shows "@username" and a status line "Online", "Away" or "Offline". An invisible person shows as offline. The card then shows "About me" with the bio or "No bio yet — a person of mystery 🕵️", "📍 {location}" when set, and "🗓️ Member since {Month yyyy}". It has no buttons.
 
 ### Sidebar on phones
 

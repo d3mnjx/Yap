@@ -69,8 +69,7 @@ export function renderRow(m, { header }) {
   if (header) {
     row.insertBefore(avatar(m.username, u?.avatarUrl, 'medium', displayName(m.username)), body);
     replace(meta.querySelector('.message-username'), inline(displayName(m.username)));
-    const bot = meta.querySelector('.bot-badge');
-    if (u?.isBot) { bot.hidden = false; replace(bot, inline('🤖')); }
+    meta.querySelector('.bot-badge').hidden = !u?.isBot;
     meta.querySelector('.message-time').textContent = messageTime(m.timestamp);
   } else meta.remove();
 

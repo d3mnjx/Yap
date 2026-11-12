@@ -23,7 +23,7 @@ Administration is the admin's page for the server. It covers the people, the inv
 
 ### Users
 
-**AD-04** The Users table lists every account, including the bot, with the newest activity first. Each row shows the avatar, the display name with the admin crown, the username and a status pill. The pill is Online, Away, Invisible or Offline, and the admin sees Invisible as Invisible. The row also shows whether the installed app was seen, the creation time and the last action. It also shows the time zone and language, and up to five recent network addresses. The table is read each time the tab opens and does not change until the next load.
+**AD-04** The Users table lists every account, including the bot, with the newest activity first. Each row shows the avatar, the display name with the admin shield, the username and a status pill. The pill is Online, Away, Invisible or Offline, and the admin sees Invisible as Invisible. The row also shows whether the installed app was seen, the creation time and the last action. It also shows the time zone and language, and up to five recent network addresses. The table is read each time the tab opens and does not change until the next load.
 
 **AD-05** A tap on a row opens its detail. The detail shows the notification devices, the installed app and the effective theme. It also has a table of addresses with countries and a table of browsers. Both tables show the last seen time.
 

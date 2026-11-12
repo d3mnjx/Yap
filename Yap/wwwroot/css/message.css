@@ -383,10 +383,11 @@
     white-space: nowrap;
 }
 
+/* The robot of a bot author (the colour is with "Role badges" in frame.css). The header row aligns its items on
+   the text baseline, and an icon has none: it would stand on the baseline, above the capitals. Centred, it sits
+   at the middle of the name. */
 .message-group .bot-badge {
-    margin-left: 0.25rem;
-    opacity: 0.8;
-    font-size: 0.85rem;
+    align-self: center;
 }
 
 /* Clickable action links in bot messages (e.g., PWA install) */

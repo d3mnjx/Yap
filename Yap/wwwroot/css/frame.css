@@ -635,16 +635,31 @@
     background: var(--status-invisible);
 }
 
-/* Admin badge */
-.users-sidebar .admin-badge {
-    margin-left: 0.25rem;
-    opacity: 0.8;
+/* Role badges: the admin shield and the bot robot after a name. They are icons of the sprite in every place that
+   shows one: the people row here, the message header (message.css), the profile card, the Users table (admin.css).
+   They were emoji pictures until 2026-11-12, and a picture keeps its own colours in every theme.
+   inline-flex: an <svg> alone in an inline span stands on a text line of its own and makes the row taller.
+   vertical-align counts only where the badge follows text in a line (the Users table); a flex row ignores it. */
+.admin-badge,
+.bot-badge {
+    display: inline-flex;
+    flex-shrink: 0;
+    vertical-align: -0.125em;
 }
 
-/* Bot badge */
-.users-sidebar .bot-badge {
+/* The accent alone is too dark for the default theme: #5865f2 on the sidebar (#2f3136) is 2.8:1. A quarter of the
+   theme's strongest text colour lifts it to 4.3:1 there. That colour is dark in the light themes, so the mix moves
+   the right way in each theme. */
+.admin-badge {
+    color: color-mix(in srgb, var(--accent-primary) 75%, var(--text-white));
+}
+
+.bot-badge {
+    color: var(--text-muted);
+}
+
+.users-sidebar :is(.admin-badge, .bot-badge) {
     margin-left: 0.25rem;
-    opacity: 0.8;
 }
 
 /* Unread dot: the quiet marker a MUTED room or DM gets instead of a count.
@@ -1092,11 +1107,6 @@
     align-items: center;
     gap: 4px;
     flex-wrap: wrap;
-}
-
-.profile-card-badge {
-    font-size: 0.85rem;
-    line-height: 1;
 }
 
 .profile-card-username {

@@ -7,6 +7,7 @@ import { state, on, displayName, unreadTotal, mergeMe, serverMuted, onlineCount 
 import { clone, el, replace, classes } from '../render/dom.js';
 import { inline, pickTemplate, fill } from '../render/text.js';
 import { avatar, gradient } from '../render/avatar.js';
+import { roleBadge } from '../render/badge.js';
 import * as hub from '../hub.js';
 import * as overlays from './overlays.js';
 import { confirm } from './confirm.js';
@@ -244,8 +245,8 @@ export function openProfile(username, status, pointerEvent, button = null) {
   card.querySelector('.profile-card-avatar').append(avatar(username, u?.avatarUrl, 'large'));
   const nameNode = card.querySelector('.profile-card-name');
   replace(nameNode, inline(displayName(username)));
-  if (u?.isAdmin) nameNode.append(el('span', { class: 'profile-card-badge', title: 'Admin' }, inline('👑')));
-  if (u?.isBot) nameNode.append(el('span', { class: 'profile-card-badge', title: 'Bot' }, inline('🤖')));
+  if (u?.isAdmin) nameNode.append(roleBadge('admin'));
+  if (u?.isBot) nameNode.append(roleBadge('bot'));
   card.querySelector('.profile-card-username').textContent = `@${username}`;
   const shown = status === 'online' || status === 'away' ? status : 'offline';
   card.querySelector('.profile-card-status-dot').className = `profile-card-status-dot ${shown}`;
