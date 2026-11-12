@@ -63,6 +63,14 @@
     width: 200px;
 }
 
+/* SR-19, SR-24: a page without a conversation (Settings, the channel pages) has no way into the search. A class of
+   the frame and not the hidden attribute: between two conversations nothing is open for a moment, and the field
+   must keep its place then (search.js renderEntry). The row's rule needs the class to win over its display below. */
+.chat-container.no-conversation .search-field-header,
+.chat-container.no-conversation .search-row {
+    display: none;
+}
+
 /* ==== The results ==== */
 /* js/ui/search.js; t-search-results, t-search-result */
 

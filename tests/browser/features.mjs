@@ -626,14 +626,18 @@ await step(17, 'Search above 768 px: the field, the panel in the place of the si
   const hint = await waitTrue(async () => (await A.locator('.search-hint').textContent().catch(() => '')) === 'Type 2 or more characters', 3000, 50);
   check(empty && emptyText.length > 0 && /^Search covers messages in # lobby since .+\.$/.test(since) && hint && await panel.isVisible(),
     `empty text ${empty} "${emptyText}"; reach line "${since}"; hint at one character ${hint}, panel open ${await panel.isVisible()}`);
+  // An emptied field keeps the panel (SR-20), and the X stays as the way out for a device with no Escape key (SR-22).
+  await searchField(A).fill('');
+  await sleep(200);
+  const xStays = (await panel.isVisible()) && await A.locator('.search-field-header .search-clear').isVisible();
   await A.locator('.search-field-header .search-clear').click();
-  const cleared = await waitTrue(async () => !(await panel.isVisible()) && await sidebar.isVisible(), 2000, 50);
+  const cleared = xStays && await waitTrue(async () => !(await panel.isVisible()) && (await sidebar.isVisible()) && !(await A.locator('.search-field-header .search-clear').isVisible()), 2000, 50);
 
   // 6. Ctrl+F puts the cursor in the field (SR-21).
   await A.locator('.message-input').click();
   await A.keyboard.press('Control+f');
   const focused = await searchField(A).evaluate(n => document.activeElement === n);
-  check(cleared && focused, `the X ends the search ${cleared}; Ctrl+F focuses the field ${focused}`);
+  check(cleared && focused, `with an empty field the panel and the X stay ${xStays}; the X ends the search ${cleared}; Ctrl+F focuses the field ${focused}`);
 
   // 7. Accent marks do not count, in the search and in the highlight (SR-04, SR-10).
   await searchField(A).fill('prilis kun');
@@ -776,7 +780,25 @@ await step(18, 'Search at 768 px or less: the sidebar row, the search screen, a 
   await N.locator('.search-screen .search-back').click();
   await waitTrue(async () => !(await screen.isVisible()), 3000, 50);
 
-  // 8. 700 px is the same design. A window that crosses 768 px ends the search (SR-31).
+  // 8. Under the screen nothing takes the focus. The Search key puts the keyboard away. A reload during a search
+  // leaves no dead step: the next search needs one Back, not two (SR-25, SR-27).
+  await openSearch();
+  await waitTrue(shown, 3000, 50);
+  const covered = await N.evaluate(() => document.querySelector('.chat-header').inert && document.querySelector('.chat-main').inert);
+  await field.press('Enter');
+  const blurred = await field.evaluate(n => document.activeElement !== n);
+  await N.reload();
+  await N.waitForSelector('.message-input', { timeout: 10000 });
+  const stateAfterReload = await N.evaluate(() => history.state);
+  const uncovered = await N.evaluate(() => !document.querySelector('.chat-header').inert && !document.querySelector('.chat-main').inert);
+  await openSearch();
+  await waitTrue(shown, 3000, 50);
+  await N.goBack();
+  const oneBack = await waitTrue(async () => !(await screen.isVisible()), 3000, 50);
+  check(covered && blurred && stateAfterReload === null && uncovered && oneBack,
+    `the frame under the screen is inert ${covered}; Enter leaves the field ${blurred}; after a reload the history state is ${JSON.stringify(stateAfterReload)} and the frame is free ${uncovered}; one Back ends the next search ${oneBack}`);
+
+  // 9. 700 px is the same design. A window that crosses 768 px ends the search (SR-31).
   await N.setViewportSize({ width: 700, height: 900 });
   await openSearch();
   const wide = await waitTrue(shown, 3000, 50);

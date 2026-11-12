@@ -20,6 +20,7 @@ import { Search } from './search.js';
 
 let frame = null;          // the mounted .chat-container
 let sidebar = null;        // its sidebar: { toggle, unmount }
+let search = null;         // its message search: { end, unmount }
 let offs = [];
 let title = { kind: 'room', text: '', partner: null };   // what the header shows
 let headerPick = { channelId: null, template: '' };
@@ -29,17 +30,20 @@ export function mount(appRoot) {
   frame = clone('t-frame');
   appRoot.replaceChildren(frame);
   sidebar = Sidebar(frame, { openProfile, closeProfile, toggleProfile });
+  search = Search(frame, { closeSidebar: () => sidebar.toggle(false) });
 
   const header = frame.querySelector('.chat-header');
   header.querySelector('.status-button').addEventListener('click', openStatusMenu);
-  header.querySelector('.mailbox-button').addEventListener('click', () => { if (narrow.matches) sidebar.toggle(true); });   // SH-09
+  // SH-09: the mailbox leads to the unread marks of the sidebar. At 768 px or less it opens the sidebar. Above that
+  // the sidebar is there, except under the results of a search: the click then ends the search (SR-22).
+  header.querySelector('.mailbox-button').addEventListener('click', () => { if (narrow.matches) sidebar.toggle(true); else search.end(); });
   header.querySelector('.pins-button').addEventListener('click', togglePins);   // SH-47
   header.querySelector('.users-toggle').addEventListener('click', () => sidebar.toggle());
   wireConnectionDot(header.querySelector('.connection-dot'));
 
   offs = [
     sidebar.unmount,
-    Search(frame, { closeSidebar: () => sidebar.toggle(false) }),
+    search.unmount,
     on('user', renderChip), on('users', renderChip), on('presence', renderChip), on('connection', renderChip),
     on('unread', renderMailbox), on('mutes', renderMailbox), on('open', renderMailbox),
     on('pins', renderPins), on('open', renderPins),
@@ -52,7 +56,7 @@ export function mount(appRoot) {
 export function unmount() {
   offs.forEach(off => off()); offs = [];
   closeProfile();
-  frame?.remove(); frame = null; sidebar = null;
+  frame?.remove(); frame = null; sidebar = null; search = null;
 }
 
 function renderAll() { renderChip(); renderMailbox(); renderPins(); renderConnection(); renderTitle(); }
@@ -71,6 +75,7 @@ export function setTitle(kind, { channelId = null, roomName = '', partner = null
 function renderTitle() {
   if (!frame) return;
   frame.dataset.context = title.kind === 'dm' ? 'dm' : 'room';
+  frame.classList.toggle('no-conversation', title.kind === 'page');   // search.css: Settings and the channel pages have nothing to search (SR-19)
   frame.querySelector('.header-line').src = title.kind === 'dm' ? '/images/purpleline01_3px.png' : '/images/turqline01_3px.png';
   const host = frame.querySelector('.header-title');
   if (title.kind === 'room') {

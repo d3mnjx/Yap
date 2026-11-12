@@ -76,7 +76,7 @@ The client has two widths at which the layout changes (GEN-14).
 
 | Width | What changes | The JavaScript reads it in |
 |---|---|---|
-| 768 px and less | The sidebar leaves its column and slides over the conversation. The header shows the people count. | `narrow` in `js/ui/sidebar.js` |
+| 768 px and less | The sidebar leaves its column and slides over the conversation. The header shows the hamburger in the place of the search field, and the search is a screen of its own. | `narrow` in `js/ui/sidebar.js` |
 | 600 px and less | The compact layout of the components: a menu or a picker opens as a sheet from the bottom. | `phone` in `js/ui/overlays.js` |
 
 A rule for a touch screen uses `(hover: none)`, not a width.
@@ -238,7 +238,7 @@ that name the class get it. 150 selectors in total. In the old markup, every pre
 | Component | File | Main classes (states in brackets) |
 |---|---|---|
 | Avatar | frame | avatar (avatar-small, avatar-medium, avatar-large), avatar-image, avatar-initials |
-| ChatHeader | frame | chat-header, back-button, dm-header-title, header-controls, mailbox-button (has-unread), mailbox-badge, pins-button, pins-badge, users-toggle, icon-hamburger, icon-people, online-count, status-dropdown-container, status-button (status-online, status-away, status-invisible), status-indicator, status-username, dropdown-backdrop, status-dropdown, dropdown-item (active, signout), dropdown-divider, status-dot (online, away, invisible) |
+| ChatHeader | frame | chat-header, back-button, dm-header-title, header-controls, mailbox-button (has-unread), mailbox-badge, pins-button, pins-badge, users-toggle, icon-hamburger, status-dropdown-container, status-button (status-online, status-away, status-invisible), status-indicator, status-username, dropdown-backdrop, status-dropdown, dropdown-item (active, signout), dropdown-divider, status-dot (online, away, invisible) |
 | ChatSidebar | frame | users-sidebar (sidebar-open), sidebar-section, rooms-list, room-item (active, has-unread), room-icon, room-name, room-settings, add-room, users-list, user-item (current-user, active-dm), user-name, user-status-dot (online, away, invisible), admin-badge, bot-badge, unread-dot, unread-badge, mute-bell, profile-info-btn, profile-popup (is-mobile; a sibling of the sidebar), profile-popup-backdrop |
 | ChatLayout | frame, timeline | chat-container (data-context), theme-scene, theme-scrim, header-line, chat-main, messages-container, sidebar-backdrop (show), error-content, error-retry-button, error-reload-button; messages, messages-flow, messages-spacer, system-message, loading-more, loading-spinner, history-start |
 | PushPermissionPrompt | frame | push-prompt-overlay (hiding), push-prompt-card, push-prompt-icon, push-prompt-heading, push-prompt-body, push-prompt-enable, push-prompt-later |

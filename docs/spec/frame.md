@@ -16,7 +16,7 @@ The frame contains all parts around a conversation. The header shows the title, 
 2. **Title area.** In a room, a title from the configured list, built from the room name. In a direct message, a back arrow and the partner's small avatar and name. On Settings, a back arrow and "Settings".
 3. **Status chip.** A small coloured chip with a dot, the user's display name and a gear. Its colour shows the user's current status. It opens the status menu.
 4. **Mailbox.** A tray icon with a red count of unread messages. It shows only when the count is above zero.
-5. **Hamburger.** At 768 px or less, a button that opens the sidebar. Above 768 px the sidebar is always visible, and the header has the [search field](search.md) in this place.
+5. **Hamburger.** At 768 px or less, a button that opens the sidebar. Above 768 px the sidebar needs no button, and the header has the [search field](search.md) in this place.
 6. **Connection dot.** A small dot at the left of the header controls, before the status chip. It shows only while the connection is not normal.
 7. **Sidebar.** A panel on the right, 240 px wide on desktop. It contains the section "ROOMS" with every room, then the people section. The people section has a title from the configured list and the online count.
 8. **Notice strip.** A one-line strip between the header line and the conversation. It shows only for a lasting state that needs an action from the user: a new version, or a sign-in.
@@ -28,7 +28,7 @@ The frame contains all parts around a conversation. The header shows the title, 
 
 **SH-01** The chat screen fills the window. The screen as a whole never scrolls. The header is at the top, with the header line below it. Below the line, the conversation is on the left and the sidebar is on the right.
 
-**SH-02** Above 768 px, the sidebar is always visible and 240 px wide. At 768 px or less, the sidebar slides in from the right over the conversation. The header then shows a hamburger in place of the people count.
+**SH-02** Above 768 px, the sidebar is visible and 240 px wide, except while the results of a search have its place ([SR-20](search.md#SR-20)). At 768 px or less, the sidebar slides in from the right over the conversation. The header then shows a hamburger.
 
 **SH-03** The frame uses a 768 px width tier and the compact components use a 600 px tier. The two tiers are intentionally different. A window between 601 and 768 px has the slide-in sidebar with desktop components.
 
@@ -42,9 +42,9 @@ The frame contains all parts around a conversation. The header shows the title, 
 
 **SH-07** On Settings, the title area shows a back arrow and "Settings". Channel settings show "#{room} Settings". A new channel shows "New Channel".
 
-**SH-08** At 768 px or less, the header has a hamburger that opens the sidebar. Above 768 px the header has no button for the sidebar, and the search field stands in that place ([SR-19](search.md#SR-19)). The number of people online is in the title of the people section ([SH-28](#SH-28)). *Why:* above 768 px the sidebar is always visible, so a button for it has nothing to do.
+**SH-08** At 768 px or less, the header has a hamburger that opens the sidebar. Above 768 px the header has no button for the sidebar, and the search field stands in that place ([SR-19](search.md#SR-19)). The number of people online is in the title of the people section ([SH-28](#SH-28)). *Why:* above 768 px the sidebar needs no button to show, so a button for it has nothing to do.
 
-**SH-09** The mailbox is a tray icon with a red count. It shows only while the total unread count is above zero. Its tooltip is "{n} unread messages". The total is the sum of the counts in the sidebar, and does not include the open conversation. On narrow screens, a tap on the mailbox opens the sidebar. See [Notifications and unread](notifications.md).
+**SH-09** The mailbox is a tray icon with a red count. It shows only while the total unread count is above zero. Its tooltip is "{n} unread messages". The total is the sum of the counts in the sidebar, and does not include the open conversation. On narrow screens, a tap on the mailbox opens the sidebar. Above 768 px, a click on the mailbox during a search ends the search, so the sidebar shows with its unread marks ([SR-22](search.md#SR-22)). See [Notifications and unread](notifications.md).
 
 **SH-10** At 600 px or less, the header has more padding, a larger title and a shorter chip name. The gaps between the header controls are 4 px, and the hamburger is narrower. At every width, a long title ends with an ellipsis 8 px before the first control.
 

@@ -468,7 +468,7 @@ export function showsBell(channelId) {
   return isMuted(channelId);
 }
 
-// The people online, for the header's button and the sidebar's heading. Invisible people are absent from the map (PR-05).
+// The people online, for the sidebar's heading (SH-28). Invisible people are absent from the map (PR-05).
 export const onlineCount = () => Object.keys(state.presence).length;
 
 // The mailbox leaves out the open conversation (SH-09); the app badge counts it too (NT-11).

@@ -45,6 +45,10 @@ export function start() {
     const last = takeFreshLoadRoute() || read(LAST_ROUTE) || '/lobby';
     history.replaceState(null, '', last); current = parse(last);
   }
+  // A reload keeps the state of the entry it happened on, but not the callbacks of the steps. A step state from
+  // before the reload would count as an open step: the first search after the reload would add a second entry with
+  // the same depth, and the first Back would land on it and close nothing.
+  if (history.state?.step) history.replaceState(null, '');
   addEventListener('popstate', e => {
     const next = parse(location.pathname + location.hash);
     if (next.path === current.path && next.hash === current.hash) { moveInPage(e.state?.step ?? 0); return; }

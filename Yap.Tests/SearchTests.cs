@@ -143,14 +143,16 @@ public class SearchTests : IClassFixture<YapFactory>
         await hub.DisposeAsync();
     }
 
-    [Fact(DisplayName = "SR-04: a text that cannot be normalized does not break the search of its conversation")]
+    [Fact(DisplayName = "SR-04: a text that cannot be normalized does not break the search, and its words are found as in any other text")]
     public async Task A_text_that_does_not_normalize()
     {
-        var (room, hub) = await RoomWith("search_broken", "fine příliš", "broken ￾ příliš", "lone \uD83D surrogate");
+        // The escapes are on purpose: U+FFFE in the source itself is a character that no editor shows.
+        var (room, hub) = await RoomWith("search_broken", "fine příliš", "broken \uFFFE příliš", "lone \uD83D surrogate, žluťoučký");
         var found = await Search(hub, room.Id, "prilis");
         Assert.Null(found.Error);
-        Assert.Contains(found.Hits, h => h.Text == "fine příliš");
-        Assert.Single((await Search(hub, room.Id, "surrogate")).Hits);
+        Assert.Equal(2, found.Total);   // the text with U+FFFE folds too: its words are found without their marks
+        Assert.Equal(2, (await Search(hub, room.Id, "PŘÍLIŠ")).Total);   // and with them
+        Assert.Single((await Search(hub, room.Id, "surrogate zlutoucky")).Hits);
         await hub.DisposeAsync();
     }
 

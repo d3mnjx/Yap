@@ -24,9 +24,13 @@ import { narrow } from './sidebar.js';
 const MIN = 2;          // SR-05; the server refuses a shorter query too (ChatService.MinQueryLength)
 const DELAY_MS = 250;   // SR-07: the pause after the last key, as in the GIF search (PK-24)
 const SLIDE_MS = 200;   // the screen's move in search.css; the screen leaves the page after it
+// SR-21: the find key is Cmd+F on Apple systems and Ctrl+F elsewhere. On a Mac, Ctrl+F in a text field is "one
+// character forward", and taking it would move the focus out of the input box in the middle of a text.
+const APPLE = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+const isFindKey = e => e.key?.toLowerCase() === 'f' && !e.altKey && !e.shiftKey && (APPLE ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey);
 
 // frame: the mounted .chat-container. closeSidebar: the frame's, because the search row sits in the slide-in sidebar.
-// Returns the unmount.
+// Returns { end, unmount }; end is for the frame's mailbox (SR-22).
 export function Search(frame, { closeSidebar }) {
   const field = frame.querySelector('.search-field-header');
   const headerInput = field.querySelector('.search-input');
@@ -35,6 +39,8 @@ export function Search(frame, { closeSidebar }) {
   const panel = frame.querySelector('.search-panel');
   const row = frame.querySelector('.search-row');
   const atResult = frame.querySelector('.search-at-result');
+  const sidebar = frame.querySelector('.users-sidebar');
+  const under = [frame.querySelector('.chat-header'), frame.querySelector('.chat-main')];   // what the search screen covers at 768 px or less
   const results = clone('t-search-results');   // one node: begin() puts it into the panel or into the screen
   const countLine = results.querySelector('.search-count');
   const statusLine = results.querySelector('.search-status');   // the same state for a screen reader (t-search-results)
@@ -52,6 +58,7 @@ export function Search(frame, { closeSidebar }) {
   let timer = 0;
   let token = 0;           // an answer counts only for the newest call
   let placeholder = null;  // the picked template (SR-32); the name of the conversation goes in at every open
+  let sidebarTop = 0;      // the sidebar's scroll position while the panel has its place: a hidden box loses it
 
   const ready = () => query.trim().length >= MIN;
 
@@ -66,11 +73,12 @@ export function Search(frame, { closeSidebar }) {
 
   // ---- the way in (SR-19, SR-24) ----
 
+  // The field and the row do not hide here while no conversation is open: a switch of the conversation closes one
+  // and opens the next after a read from the device, and a field that left for that moment moved the status chip
+  // and the mailbox 200 px and back. A page without a conversation hides both by a class of the frame (frame.js
+  // renderTitle, search.css .no-conversation).
   function renderEntry() {
     if (s && state.open?.channelId !== s.channelId) end();   // the conversation changed or closed (SR-22)
-    const can = !!state.open?.channelId;                     // a page, or a direct message that has no channel yet (OF-08): nothing to search
-    field.hidden = !can; row.hidden = !can;
-    if (!can && query) clearFields();
     if (!placeholder && state.texts) placeholder = pickTemplate(state.texts.searchPlaceholders, 'Search');
     headerInput.placeholder = screenInput.placeholder = fill(placeholder ?? 'Search', conversationName(true));
   }
@@ -79,7 +87,16 @@ export function Search(frame, { closeSidebar }) {
     query = ''; headerInput.value = ''; screenInput.value = '';
     syncClear();
   }
-  function syncClear() { for (const x of frame.querySelectorAll('.search-clear')) x.hidden = !query; }
+  function syncClear() {
+    // Above 768 px the X ends the search, so it stays while a search is open: the panel outlives an emptied field
+    // (SR-20), and a tablet with a wide window has no Escape key to end it.
+    field.querySelector('.search-clear').hidden = !query && !s;
+    screen.querySelector('.search-clear').hidden = !query;   // on the screen the X only empties the field (SR-29)
+  }
+
+  // 768 px or less: what the search screen covers must not take the focus or be read under it. Not while the
+  // conversation at a result shows: then the screen is the hidden part.
+  function cover(on) { for (const part of under) part.inert = on; }
 
   function onInput(e) {
     query = e.target.value;
@@ -105,12 +122,15 @@ export function Search(frame, { closeSidebar }) {
       screen.hidden = false; screen.inert = false; screen.classList.remove('away');
       void screen.offsetWidth;          // the screen has a box before the class arrives, so the move runs (SR-30)
       screen.classList.add('in');
+      cover(true);
       router.pushStep(() => { overlays.closeAll(); end(); });   // SR-27: Back from the results ends the search. The layers first, as every history move closes them (main.js)
     } else {
       panel.append(results);
       panel.hidden = false;
+      sidebarTop = sidebar.scrollTop;
       frame.classList.add('search-open');   // search.css: the sidebar gives its place to the panel
     }
+    syncClear();
     draw();
   }
 
@@ -173,11 +193,19 @@ export function Search(frame, { closeSidebar }) {
   function draw() {
     const count = countText(), after = tail();
     countLine.textContent = count;
+    if (s.at === 'message') drawAt();
     statusLine.textContent = count || after.map(n => n.textContent).join(' ');   // without a count: the hint, a refusal, or the empty text with the reach
     if (s.phase === 'loading' && s.hits.length) return;   // SR-14: the old results stay until the answer comes
     const nodes = s.hits.map(entry);
     replace(list, [...nodes, ...after]);
     nodes.forEach(reveal);   // needs the box, so after the nodes are in the page
+  }
+
+  // The header of the conversation at a result (SR-26). It follows the search: a result of the query before can be
+  // tapped while the answer to a longer query loads, and that answer then replaces "Searching…" here too.
+  function drawAt() {
+    atResult.querySelector('.search-at-query span').textContent = s.query;
+    atResult.querySelector('.search-at-count').textContent = countText();
   }
 
   function entry(hit) {
@@ -228,13 +256,14 @@ export function Search(frame, { closeSidebar }) {
   // keeps its list and its scroll position for the way back.
   function showMessage() {
     s.at = 'message';
-    atResult.querySelector('.search-at-query span').textContent = s.query;
-    atResult.querySelector('.search-at-count').textContent = countText();
+    drawAt();
     atResult.hidden = false;
     frame.classList.add('search-at');   // search.css: the title and the controls give their place to the search header
     screenInput.blur();
+    for (const playing of list.querySelectorAll('video')) playing.pause();   // a video of a result must not play on with sound under the conversation
     screen.classList.add('away');
     screen.inert = true;                // faded is not gone: no tap and no Tab reaches it
+    cover(false);
     router.pushStep(() => { overlays.closeAll(); showResults(); });   // SR-27: Back from the message shows the results
   }
 
@@ -245,6 +274,7 @@ export function Search(frame, { closeSidebar }) {
     frame.classList.remove('search-at');
     screen.classList.remove('away');
     screen.inert = false;
+    cover(true);
   }
 
   // ---- the end (SR-22, SR-28) ----
@@ -262,7 +292,10 @@ export function Search(frame, { closeSidebar }) {
     if (!was) return;
     panel.hidden = true;
     atResult.hidden = true;
+    cover(false);
+    const hadPanel = frame.classList.contains('search-open');
     frame.classList.remove('search-open', 'search-at');
+    if (hadPanel) sidebar.scrollTop = sidebarTop;   // the sidebar had no box under the panel, and a box that comes back starts at the top
     // The rows leave with the search: a video or a voice message that plays in a result must not play on in a list
     // that nobody sees.
     const empty = () => { if (!s) replace(list, []); };
@@ -288,7 +321,7 @@ export function Search(frame, { closeSidebar }) {
       end();
       return;
     }
-    if (e.key?.toLowerCase() !== 'f' || !(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
+    if (!isFindKey(e)) return;
     if (!state.open?.channelId || overlays.anyOpen()) return;   // no conversation, or a layer has the keys: the browser's find
     const input = narrow.matches ? screenInput : headerInput;
     if (document.activeElement === input) return;               // SR-21: a second press is the browser's find
@@ -308,6 +341,9 @@ export function Search(frame, { closeSidebar }) {
     if (s) schedule();
     screenInput.focus();
   });
+  // The Search key of a phone keyboard (enterkeyhint in the template): the search ran already, so the key only puts
+  // the keyboard away, which covers the lower half of the list.
+  screenInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) screenInput.blur(); });
   for (const back of frame.querySelectorAll('.search-back')) back.addEventListener('click', () => history.back());   // SR-27: the arrow is the Back of the browser
   row.addEventListener('click', openScreen);
   list.addEventListener('scroll', () => { if (list.scrollTop + list.clientHeight > list.scrollHeight - 400) more(); }, { passive: true, signal });
@@ -323,7 +359,7 @@ export function Search(frame, { closeSidebar }) {
   ];
   renderEntry();
 
-  return () => { end(); aborter.abort(); offs.forEach(off => off()); };
+  return { end, unmount() { end(); aborter.abort(); offs.forEach(off => off()); } };
 }
 
 // ---- the highlight (SR-10) ----

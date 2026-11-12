@@ -51,7 +51,7 @@
     box-shadow: 0 0 0 1px white;
 }
 
-/* ==== Header: title, pin and mailbox buttons, status chip and menu, people button ==== */
+/* ==== Header: title, pin and mailbox buttons, status chip and menu, hamburger ==== */
 /* js/ui/frame.js; t-frame, t-header-room, t-header-back, t-status-menu */
 
 .chat-header {
@@ -376,7 +376,7 @@
         max-width: 80px;
     }
 
-    /* Five controls on a 390 px row: the gaps and the people button's padding shrink, the hit areas keep their
+    /* Five controls on a 390 px row: the gaps and the hamburger's padding shrink, the hit areas keep their
        size (user feedback 2026-10-18). */
     .header-controls {
         gap: 0.25rem;

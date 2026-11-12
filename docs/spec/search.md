@@ -39,11 +39,11 @@ The search finds messages in the open conversation by their text. The user types
 
 **SR-07** The search runs while the user types, 250 ms after the last key. No key starts it.
 
-**SR-08** The results are message rows, the newest first. A row shows the avatar, the name, the time, the text and the media of the message: pictures, videos, GIFs and a voice message. It shows no link card, no reply quote and no reactions. A video and a voice message play in the row.
+**SR-08** The results are message rows, the newest first. A row shows the avatar, the name, the time, the text and the media of the message: pictures, videos and GIFs. It shows no link card, no reply quote and no reactions. A video plays in the row, and it stops when the results give way to a message.
 
 **SR-09** A row shows at most 6 lines of the text. When the first matched word is below the sixth line, the row shows the lines around that word, with the word on the second line. An edge where text is cut fades out.
 
-**SR-10** Each matched word is highlighted in the rows of the results. The conversation shows no highlight of words.
+**SR-10** Each matched word is highlighted in the rows of the results. A match that is inside an emoji, or that runs over the edge of a link, shows no highlight. The conversation shows no highlight of words.
 
 **SR-11** The count line shows the number of all results: "{n} results" or "1 result". The list loads 25 results, and 25 more when the user scrolls near its end. The count does not change while more results load.
 
@@ -67,9 +67,9 @@ The search finds messages in the open conversation by their text. The user types
 
 **SR-20** The results panel takes the place of the sidebar when the query has 2 characters. It stays open until the search ends, also when the query gets shorter. The panel shows and goes without animation.
 
-**SR-21** Ctrl+F, or Cmd+F on a Mac, puts the cursor in the search field while a conversation is open and no layer is open. When the cursor is already in the field, the key opens the find of the browser. At 768 px or less the key opens the search screen. *Why:* the find of the browser reads only the messages that are loaded, so it misses words that are in the conversation.
+**SR-21** Ctrl+F puts the cursor in the search field while a conversation is open and no layer is open. On an Apple device the key is Cmd+F, and Ctrl+F keeps its own meaning there. When the cursor is already in the field, the key opens the find of the browser. At 768 px or less the key opens the search screen. *Why:* the find of the browser reads only the messages that are loaded, so it misses words that are in the conversation.
 
-**SR-22** The X in the field and Escape end the search. The field is empty again, the panel goes, and the sidebar shows. The search also ends when the user leaves the conversation.
+**SR-22** The X in the field and Escape end the search. The field is empty again, the panel goes, and the sidebar shows at the place where the user left it. The X shows while the field holds text, and as long as the panel is open. A click on the mailbox also ends the search, because the unread marks are in the sidebar. The search also ends when the user leaves the conversation.
 
 **SR-23** One press of Escape closes one thing. When a layer, a picker or the editor of a message is open, Escape closes that, and the search stays ([GEN-17](general-rules.md#GEN-17)).
 
@@ -77,9 +77,9 @@ The search finds messages in the open conversation by their text. The user types
 
 **SR-24** The way into the search is the search row at the top of the sidebar. The header has no search control. A tap on the row closes the sidebar and opens the search screen, with the cursor in the field.
 
-**SR-25** The search screen covers the frame. Its header has a back arrow and the field. The count line names the conversation: "{n} results · {name}". The results fill the rest of the screen, and the input box is not on it.
+**SR-25** The search screen covers the frame. Its header has a back arrow and the field. The count line names the conversation: "{n} results · {name}". The results fill the rest of the screen, and the input box is not on it. The Search key of the keyboard closes the keyboard. Nothing under the screen takes the focus.
 
-**SR-26** A tap on a result shows the conversation at the message, under the search header. The search header has a back arrow, the query with a magnifier, and the count line. The status chip, the pin button, the mailbox and the hamburger do not show. A direct message gets the same header in the place of its own. The search keeps the query, the results and the place in the list.
+**SR-26** A tap on a result shows the conversation at the message, under the search header. The search header has a back arrow, the query with a magnifier, and the count line. The status chip, the pin button, the mailbox and the hamburger do not show. A direct message gets the same header in the place of its own. The search keeps the query, the results and the place in the list. When the answer to a newer query comes while the message shows, the search header shows that query and its count.
 
 **SR-27** Back goes one step back: from a message to the results, at the same place in the list, and from the results to the conversation, which ends the search. The back arrow of the header, the Back of the browser, the Back button and the Back swipe of a phone all do the same. The conversation is not loaded again by a step back.
 
@@ -108,8 +108,10 @@ The search finds messages in the open conversation by their text. The user types
 | No connection | all | "Needs a connection" in the place of the results. The results show when the connection returns. |
 | Click on a result, above 768 px | mouse, keyboard | The message centred and highlighted in the conversation. The panel stays. |
 | X or Escape, above 768 px | mouse, keyboard | The field empty, the sidebar back. |
+| Field emptied by hand, above 768 px | keyboard | The panel stays with the hint. The X stays and ends the search. |
+| Click on the mailbox during a search, above 768 px | mouse | The search is over. The sidebar shows the unread marks. |
 | Escape with a picker open | keyboard | The picker closes. The search stays. |
-| Ctrl+F | keyboard | The cursor in the field. A second press opens the find of the browser. |
+| Ctrl+F, or Cmd+F on an Apple device | keyboard | The cursor in the field. A second press opens the find of the browser. |
 | Tap on the search row | touch, mouse | The sidebar closes. The search screen slides in, with the hint and the cursor in the field. |
 | Tap on a result, 768 px or less | touch, mouse | The screen fades. The conversation at the message, under the search header. |
 | Back at a message from a result | touch, mouse, keyboard | The results, at the same place in the list. |

@@ -417,18 +417,22 @@ public class ChatService
 
         lock (LockOf(channelId))
         {
-            var end = all.Count;   // exclusive: the page is all[start..end)
-            if (before is { } cursor)
-            {
-                end = all.FindIndex(m => m.Id == cursor.Id);
-                if (end < 0) end = all.FindIndex(m => m.Timestamp >= cursor.Timestamp);
-                if (end < 0) end = all.Count;
-            }
+            var end = EndBefore(all, before);   // exclusive: the page is all[start..end)
             var first = FirstVisible(all, cutoff);
             var start = Math.Max(first, end - count);
             var page = start < end ? all.GetRange(start, end - start) : [];
             return (page, start > first, first > 0);
         }
+    }
+
+    // Where a page that ends before the cursor message stops, exclusive: all.Count without a cursor. The cursor is
+    // found by id; when that message was deleted meanwhile, the timestamp takes over (TL-06). Call under the lock.
+    private static int EndBefore(List<ChatMessage> all, (DateTime Timestamp, Guid Id)? before)
+    {
+        if (before is not { } cursor) return all.Count;
+        var end = all.FindIndex(m => m.Id == cursor.Id);
+        if (end < 0) end = all.FindIndex(m => m.Timestamp >= cursor.Timestamp);
+        return end < 0 ? all.Count : end;
     }
 
     // The oldest message the viewer may see (TL-05), or all.Count when the cutoff hides every message. Call under the lock.
@@ -480,7 +484,8 @@ public class ChatService
             return ([], null, false, null, "Conversation not found.");
         var cutoff = Cutoff(channel, viewerId);
         var words = SearchWords(query);
-        var paged = beforeId is not null && beforeTimestamp is not null;
+        (DateTime, Guid)? before = beforeId is { } id && beforeTimestamp is { } time ? (time, id) : null;
+        var paged = before is not null;
 
         // Only the copy runs under the lock. The match reads and folds every text, and a send to this conversation
         // must not wait for it (chat-hub.md: nothing slow under the lock). A text edited meanwhile is read as either
@@ -490,13 +495,7 @@ public class ChatService
         lock (LockOf(channelId))
         {
             var first = FirstVisible(all, cutoff);
-            var end = all.Count;   // exclusive, as in Page: the cursor by id, by time when that message was deleted meanwhile
-            if (paged)
-            {
-                end = all.FindIndex(m => m.Id == beforeId);
-                if (end < 0) end = all.FindIndex(m => m.Timestamp >= beforeTimestamp);
-                if (end < 0) end = all.Count;
-            }
+            var end = EndBefore(all, before);
             visible = first < end ? all.GetRange(first, end - first) : [];
             since = first < all.Count ? all[first].Timestamp : null;
         }
@@ -508,8 +507,7 @@ public class ChatService
         {
             var m = visible[i];
             if (m.Kind != MessageKind.Normal) continue;   // SR-01: a system line is not a result. A message without text needs no check: an empty text holds no word
-            var text = TextFold.Fold(m.Content);
-            if (!words.All(word => text.Contains(word, StringComparison.Ordinal))) continue;
+            if (!TextFold.HoldsAll(m.Content, words)) continue;
             matches++;
             if (hits.Count < count) hits.Add(m);
             else if (paged) break;   // a later page gives no total: one match past the page says there is more
