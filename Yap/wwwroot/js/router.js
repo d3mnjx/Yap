@@ -1,5 +1,6 @@
 // URL to page (SH-42). The back button works because every navigation is a history entry (SH-44). The
-// last conversation route is kept in localStorage, and '/' opens it (SH-43).
+// last conversation route is kept in localStorage, and '/' opens it (SH-43). A part of a page can add history
+// entries of its own, the steps below (SR-27).
 
 const LAST_ROUTE = 'yap.lastRoute';
 const FRESH_LOAD_TO = 'yap.freshLoadTo';   // one route for the next load only: a fresh load of a new build comes in through '/'
@@ -44,13 +45,49 @@ export function start() {
     const last = takeFreshLoadRoute() || read(LAST_ROUTE) || '/lobby';
     history.replaceState(null, '', last); current = parse(last);
   }
-  addEventListener('popstate', () => { current = parse(location.pathname + location.hash); handler(current); });
+  addEventListener('popstate', e => {
+    const next = parse(location.pathname + location.hash);
+    if (next.path === current.path && next.hash === current.hash) { moveInPage(e.state?.step ?? 0); return; }
+    steps = [];   // another page: its mount ends whatever had steps, and their entries stay behind in the history
+    current = next; handler(current);
+  });
   handler(current);
+}
+
+// ---- steps: history entries that are not pages (SR-27) ----
+// A page is drawn again on every history move (the handler above unmounts and mounts it), which would reset an open
+// conversation. A step is an entry with the same address and a callback for Back: the narrow search adds one for
+// its result list and one for the message of a result, so the Back of the phone and of the browser go one screen
+// back, as the header's arrow does. The entry carries its depth in the history state; the callbacks live here.
+// This module owns the count and the removal: a caller never moves the history itself.
+let steps = [];   // the Back callbacks of the open steps, the oldest first
+
+export function pushStep(onBack) {
+  steps.push(onBack);
+  history.pushState({ step: steps.length }, '');
+}
+
+// The owner of the steps ended by another way than Back: its entries leave the history. Nothing moves when no step
+// is open, which is also the case after a navigation: navigate() and a move to another page forget the steps first,
+// and a history.go from here would then walk off the new page.
+export function dropSteps() {
+  const count = steps.length;
+  steps = [];
+  if (count) history.go(-count);
+}
+
+// A history move that stays on the page. Back closes the steps above the new depth, the newest first. Forward can
+// land on the entry of a step that is closed (its callback is gone): the history goes back to the open depth, so
+// the next Back is not a press that does nothing.
+function moveInPage(depth) {
+  if (depth > steps.length) { history.go(steps.length - depth); return; }
+  while (steps.length > depth) steps.pop()();
 }
 
 export function navigate(path, { replace = false } = {}) {
   if (path === '/') path = read(LAST_ROUTE) || '/lobby';   // SH-43
   if (path === location.pathname + location.hash && !replace) return;
+  steps = [];   // see dropSteps: the page that had steps is about to unmount
   history[replace ? 'replaceState' : 'pushState'](null, '', path);
   current = parse(path);
   handler(current);

@@ -4,7 +4,7 @@
 // (TL-41). The rows themselves are drawn by ui/message.js. The timeline is the one component that updates rows in
 // place, because it can hold hundreds of them.
 
-import { state, on, prependOlder, setWindow, atTail, roomById, dmByChannel, lobby } from '../store.js';
+import { state, on, changed, prependOlder, setWindow, atTail, roomById, dmByChannel, lobby } from '../store.js';
 import { clone, el, replace } from '../render/dom.js';
 import { inline, pick } from '../render/text.js';
 import { messageTime } from '../render/time.js';
@@ -55,6 +55,9 @@ export function Timeline(root, { reopen }) {
     const lastSeen = [...rows.values()].reduce((t, r) => r.message.timestamp > t ? r.message.timestamp : t, '');   // the newest row the person had
     const leftWindow = shownWindow && atTail();   // the rows before this reset were a window: the kept place belongs to them (TL-41)
     shownWindow = !atTail();
+    // SR-28: a window gave way to the newest messages without a control of this list, which is a reconnect. A jump
+    // is not that: its target can be in a window that reaches the newest message, and the person asked for the target.
+    if (leftWindow && !target) changed('tail');
     // The rows of the same conversation whose message did not change stay: the node moves into the new order instead
     // of being drawn again. At every open the server's rows follow the device's copy, nearly always the same fifty,
     // and drawing them again asked for every emoji image once more; on the iPhone every <img> is a request of its
@@ -205,6 +208,7 @@ export function Timeline(root, { reopen }) {
     // A send in a window goes to the present first (TL-14, TL-41): the reset of the fresh open draws the pending row at
     // the bottom. Without a connection there is no open: the row shows under the window at once (OF-08), and the
     // reconnect's open brings the present. Other changes draw here as usual: a failed row from before the jump stays.
+    if (detail?.type === 'queued') changed('tail');   // SR-28: a send goes to the present, in a window and at the tail
     if (detail?.type === 'queued' && !atTail() && state.connection === 'connected') { reopen(); return; }
     pendingNodes.forEach(n => n.remove()); pendingNodes = [];
     let prev = state.open?.messages.at(-1) ?? null;
@@ -441,8 +445,9 @@ export function Timeline(root, { reopen }) {
   function toBottom() {
     if (!atTail()) {
       if (state.connection !== 'connected') { overlays.reason(list.parentElement, 'Needs a connection'); return; }   // GEN-02; the reconnect's open goes to the bottom
-      reopen(); return;
+      changed('tail'); reopen(); return;
     }
+    changed('tail');   // SR-28: the pill, the arrow and the end row's button all come through here; a scroll never does
     following = true; scrollToBottom(); hidePill(); hideDown(); markReadIfSeen();
   }
 

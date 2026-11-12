@@ -50,9 +50,9 @@ await step(3, 'Sign in guest, presence in A', async (check, notes) => {
   const dt = Date.now() - tSubmit;
   check(ok && dt <= 3000, `A shows guest user-item without reload: ${ok}, ${dt} ms after guest's submit`);
   const users = await A.locator('.users-list .user-item').allInnerTexts();
-  const count = (await A.locator('.online-count').textContent())?.trim();
-  // The bot counts as online, so the number is 3 with two people; the brief asked to report it, not to fail on it.
-  check(true, `online-count "${count}"; users-list: ${users.map(t => t.replace(/\s+/g, ' ').trim()).join(' | ')}; people-header "${(await A.locator('.people-header').textContent())?.trim()}"`);
+  // The count of people online is in the people title of the sidebar (SH-28); the header has no people button
+  // above 768 px (SH-08). The bot counts as online, so the number is 3 with two people; reported, not asserted.
+  check(true, `users-list: ${users.map(t => t.replace(/\s+/g, ' ').trim()).join(' | ')}; people-header "${(await A.locator('.people-header').textContent())?.trim()}"`);
 });
 
 await step(4, 'Send "hello from boss"', async (check) => {
@@ -277,9 +277,8 @@ const P = await ctxP.newPage(); watchPage(P, 'phone');
 await step(15, 'Phone layout', async (check) => {
   await signIn(P, 'guest2');
   const ham = await P.locator('.icon-hamburger').isVisible();
-  const ppl = await P.locator('.icon-people').isVisible();
   const sb = await P.locator('.users-sidebar').getAttribute('class');
-  check(ham && !sb.includes('sidebar-open'), `hamburger visible ${ham} (people icon visible ${ppl}), sidebar class "${sb}", path ${new URL(P.url()).pathname}`);
+  check(ham && !sb.includes('sidebar-open'), `hamburger visible ${ham}, sidebar class "${sb}", path ${new URL(P.url()).pathname}`);
   await P.click('.users-toggle');
   const open = await waitTrue(async () => (await P.locator('.users-sidebar').getAttribute('class')).includes('sidebar-open'), 2000);
   check(open, `after toggle: "${await P.locator('.users-sidebar').getAttribute('class')}"`);

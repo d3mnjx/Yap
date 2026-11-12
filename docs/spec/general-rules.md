@@ -38,7 +38,7 @@ This page holds the rules that every component follows. A component page can mak
 
 **GEN-13** A theme changes colours, patterns, tints and glows. A theme never changes behaviour, the sizes of controls or the meaning of the status colours.
 
-**GEN-14** Two width tiers apply. The 768 px tier controls the sidebar and the people count. The 600 px tier controls the compact components and the header's density. Both tiers depend on the width, not on the device. Hover and touch rules depend on the input, not on the width.
+**GEN-14** Two width tiers apply. The 768 px tier controls the sidebar, the hamburger and the form of the search. The 600 px tier controls the compact components and the header's density. Both tiers depend on the width, not on the device. Hover and touch rules depend on the input, not on the width.
 
 **GEN-15** On a phone, every text field uses 16 px text, so the page never zooms when a field gets focus.
 

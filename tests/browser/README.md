@@ -16,7 +16,9 @@ server, runs its steps, prints PASS or FAIL for each step, and stops the server 
   of the open room, the media of a pin: the gallery viewer over the pins panel, its close order, its close on an
   unpin, and a video that plays in the entry, and the jump to a message that is not loaded: the window around it
   with one server call, an older page above it, the pill, the end row under it, and the way back by the pill, the
-  end row's button, the arrow, a send and a reconnect.
+  end row's button, the arrow, a send and a reconnect. It also checks the message search: above 768 px the field,
+  the panel in the place of the sidebar, the highlight, a long text, Escape and Ctrl+F; at 768 px or less the
+  sidebar row, the search screen, a result, the steps back, "Go to newest", a reconnect and the two width tiers.
 - `uploads.mjs` checks the uploads of a message: a text that goes out while a picture uploads, the state of each
   file in the pending row with three files at one time and the pictures in the order of the pick, an upload that
   goes on after a reload from the bytes the server has, a last chunk whose answer was lost (with a reload and

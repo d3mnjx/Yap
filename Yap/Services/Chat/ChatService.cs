@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Yap.Configuration;
+using Yap.Helpers;
 using Yap.Models.Accounts;
 using Yap.Models.Admin;
 using Yap.Models.Chat;
@@ -464,6 +465,67 @@ public class ChatService
         }
     }
 
+    public const int MaxQueryLength = 100;   // SR-05; the client's fields have the same limit
+    private const int MinQueryLength = 2;    // SR-05: one character matches nearly every message
+
+    /// <summary>SR-01 to SR-06: the messages of one conversation whose text holds every word of the query, newest
+    /// first, inside the viewer's history cutoff (TL-05). The cursor is the last result the client has, as in
+    /// <see cref="Older"/>. Total counts every match and comes only without a cursor: a count taken again for each page
+    /// would move while messages arrive (SR-11). Since is the time of the oldest message the viewer can see, null
+    /// when there is none (SR-12). Error is the refusal the reader sees; the other values are empty then.</summary>
+    public (List<ChatMessage> Hits, int? Total, bool HasMore, DateTime? Since, string? Error) Search(
+        Guid channelId, string? query, DateTime? beforeTimestamp, Guid? beforeId, int count, Guid viewerId)
+    {
+        if (!_channels.TryGetValue(channelId, out var channel) || !channel.CanAccess(viewerId) || !_channelMessages.TryGetValue(channelId, out var all))
+            return ([], null, false, null, "Conversation not found.");
+        var cutoff = Cutoff(channel, viewerId);
+        var words = SearchWords(query);
+        var paged = beforeId is not null && beforeTimestamp is not null;
+
+        // Only the copy runs under the lock. The match reads and folds every text, and a send to this conversation
+        // must not wait for it (chat-hub.md: nothing slow under the lock). A text edited meanwhile is read as either
+        // version: the property holds one reference.
+        List<ChatMessage> visible;
+        DateTime? since;
+        lock (LockOf(channelId))
+        {
+            var first = FirstVisible(all, cutoff);
+            var end = all.Count;   // exclusive, as in Page: the cursor by id, by time when that message was deleted meanwhile
+            if (paged)
+            {
+                end = all.FindIndex(m => m.Id == beforeId);
+                if (end < 0) end = all.FindIndex(m => m.Timestamp >= beforeTimestamp);
+                if (end < 0) end = all.Count;
+            }
+            visible = first < end ? all.GetRange(first, end - first) : [];
+            since = first < all.Count ? all[first].Timestamp : null;
+        }
+        if (words.Length == 0) return ([], paged ? null : 0, false, since, null);
+
+        var hits = new List<ChatMessage>(count);
+        var matches = 0;
+        for (var i = visible.Count - 1; i >= 0; i--)
+        {
+            var m = visible[i];
+            if (m.Kind != MessageKind.Normal) continue;   // SR-01: a system line is not a result. A message without text needs no check: an empty text holds no word
+            var text = TextFold.Fold(m.Content);
+            if (!words.All(word => text.Contains(word, StringComparison.Ordinal))) continue;
+            matches++;
+            if (hits.Count < count) hits.Add(m);
+            else if (paged) break;   // a later page gives no total: one match past the page says there is more
+        }
+        return (hits, paged ? null : matches, matches > hits.Count, since, null);
+    }
+
+    // The folded words of a query (SR-03, SR-05), none when the query is too short. The cut at the limit keeps a
+    // surrogate pair whole: half an emoji is a text that Fold cannot normalize.
+    private static string[] SearchWords(string? query)
+    {
+        var text = (query ?? "").Trim();
+        if (text.Length > MaxQueryLength) text = text[..(char.IsHighSurrogate(text[MaxQueryLength - 1]) ? MaxQueryLength - 1 : MaxQueryLength)];
+        return text.Length < MinQueryLength ? [] : TextFold.Fold(text).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+    }
+
     /// <summary>A non-admin sees a room from the later of the room's history window and, when the room says so,
     /// the person's own account creation. Admins and direct messages have no cutoff (TL-05).</summary>
     private DateTime? Cutoff(Channel channel, Guid viewerId)
@@ -846,6 +908,21 @@ public class ChatService
     /// client must not build them from the medium URL, the naming rule is the server's.</summary>
     private IReadOnlyList<PinMedia> PinMediaOf(ChatMessage m)
     {
+        var list = AttachmentsOf(m);
+        if (list.Count > 0) return list;
+        var card = Previews(m).FirstOrDefault(p => p.Title is not null || p.ImageUrl is not null || p.Media is not null);
+        return card switch
+        {
+            null => [],
+            { Media: { Type: "video" } media } => [new("video", Src: media.Src, Poster: media.Poster ?? card.ImageUrl, Width: media.Width, Height: media.Height, Title: card.Title, Site: card.SiteName, Url: card.Url)],   // the size: the player's box before the poster loads, as in the row (MR-27)
+            _ => [new("link", Poster: card.ImageUrl, Title: card.Title, Site: card.SiteName, Url: card.Url)],
+        };
+    }
+
+    /// <summary>The message's own files in the shape of a pin entry: pictures, uploaded videos, GIFs, the voice note.
+    /// A search result shows these and no link card (SR-08), so the hub maps a hit with this part alone.</summary>
+    public List<PinMedia> AttachmentsOf(ChatMessage m)
+    {
         var list = new List<PinMedia>();
         foreach (var image in m.ImageUrls)
         {
@@ -868,14 +945,7 @@ public class ChatService
             list.Add(new("gif", Src: entry.Src, Width: w, Height: h, IsImage: entry.SrcIsImage));   // a GIF stays out of the viewer, as in the row (TL-22)
         }
         if (m.Voice is { } voice) list.Add(new("voice", Src: voice.Url, DurationMs: voice.DurationMs, Peaks: voice.Peaks));
-        if (list.Count > 0) return list;
-        var card = Previews(m).FirstOrDefault(p => p.Title is not null || p.ImageUrl is not null || p.Media is not null);
-        return card switch
-        {
-            null => [],
-            { Media: { Type: "video" } media } => [new("video", Src: media.Src, Poster: media.Poster ?? card.ImageUrl, Width: media.Width, Height: media.Height, Title: card.Title, Site: card.SiteName, Url: card.Url)],   // the size: the player's box before the poster loads, as in the row (MR-27)
-            _ => [new("link", Poster: card.ImageUrl, Title: card.Title, Site: card.SiteName, Url: card.Url)],
-        };
+        return list;
     }
 
     /// <summary>At start, once the GIF entries are in: the pins of messages still in memory get their media resolved

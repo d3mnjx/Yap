@@ -1,7 +1,8 @@
 // The feature run of the chat client: replies, link cards, the image gallery, emoji sizes and pack emoji,
 // older pages and the top note, the New messages pill, typing in a DM, Shift+Enter, the keys on a GIF star, the
 // emoji pick at the limit with Edit on a failed row, a rename of the open room, the media of a pin (the viewer over
-// the pins panel, a video that plays in the entry), and the jump to a row that is not loaded (the window, TL-41).
+// the pins panel, a video that plays in the entry), the jump to a row that is not loaded (the window, TL-41), and the
+// message search above and under 768 px (search.md).
 // Run: npm run features (see README.md). Screenshots go to shots/.
 
 import { chromium } from 'playwright';
@@ -553,6 +554,239 @@ await step(16, 'A jump to a row that is not loaded shows a window around it; the
   check(loadedHl && !c10.around && Math.abs(await centred('ws-120')) <= 40, `highlighted ${loadedHl}; calls ${JSON.stringify(c10)}; ${await centred('ws-120')} px from the middle`);
   await invoke('unpin', channelId, ids[50]);
   await invoke('unpin', channelId, ids[120]);
+});
+
+
+// ---- the message search (docs/spec/search.md) ----
+// The lobby holds ws-000 to ws-149 from step 16, newest last, and more rows after them.
+
+const searchField = page => page.locator('.search-field-header .search-input');
+const results = page => page.locator('.search-results .search-result');
+const countLine = page => page.locator('.search-count');
+const storeOf = page => page.evaluate(async () => { const s = (await import('/js/store.js')).state; return { connection: s.connection, window: !!s.open?.hasNewer }; });
+
+await step(17, 'Search above 768 px: the field, the panel in the place of the sidebar, a result, Escape, the hint, the empty text, Ctrl+F (SR-03 to SR-23)', async (check) => {
+  await A.goto(BASE + '/lobby');
+  await A.waitForSelector('.message-input', { timeout: 10000 });
+  const channelId = await A.evaluate(async () => (await import('/js/store.js')).state.open.channelId);
+  const post = text => api(B, 'POST', `/api/channels/${channelId}/messages`, { clientId: crypto.randomUUID(), text });
+  const long = Array.from({ length: 9 }, (_, i) => `line ${i + 1} of a long note about the move of the server`).join('\n') + '\nthe last line has the zebraword in it';
+  await post(long);
+  await post('Příliš žluťoučký kůň');
+  const panel = A.locator('.search-panel'), sidebar = A.locator('.users-sidebar');
+
+  // 1. No people button; the field is there with a placeholder. One character opens nothing; two open the panel.
+  const noPeople = (await A.locator('.icon-people').count()) === 0 && !(await A.locator('.users-toggle').isVisible());
+  const placeholder = await searchField(A).getAttribute('placeholder');
+  await searchField(A).fill('w');
+  await sleep(400);
+  const oneChar = !(await panel.isVisible()) && await sidebar.isVisible();
+  await searchField(A).fill('ws-05');
+  const opened = await waitTrue(async () => (await panel.isVisible()) && !(await sidebar.isVisible()) && (await results(A).count()) === 10, 5000, 50);
+  const count = await countLine(A).textContent();
+  const first = await results(A).first().locator('.pin-text').textContent();
+  const marks = await results(A).first().locator('mark').allTextContents();
+  check(noPeople && !!placeholder && oneChar && opened && count === '10 results' && first === 'ws-059' && marks.join('|') === 'ws-05',
+    `no people button ${noPeople}; placeholder "${placeholder}"; one character keeps the sidebar ${oneChar}; panel with 10 results ${opened}; count "${count}"; first "${first}"; marks ${JSON.stringify(marks)}`);
+  await A.screenshot({ path: SHOTS + '17-search-panel.png' });
+
+  // 2. A result that is not loaded: the window around it, the panel stays.
+  await results(A).filter({ hasText: 'ws-052' }).locator('.pin-time').click();
+  const jumped = await waitTrue(async () => ((await row(A, 'ws-052').first().getAttribute('class').catch(() => '')) ?? '').includes('highlight-message'), 5000, 50);
+  const stays = (await panel.isVisible()) && (await results(A).count()) === 10 && (await A.locator('.newer-messages').count()) === 1;
+  check(jumped && stays, `ws-052 highlighted ${jumped}; the panel stays with its results, the end row shows ${stays}`);
+
+  // 3. Escape with the focus in the messages ends the search: the sidebar is back, the field is empty.
+  await A.locator('.messages').click({ position: { x: 5, y: 5 } });
+  await A.keyboard.press('Escape');
+  const ended = await waitTrue(async () => (await sidebar.isVisible()) && !(await panel.isVisible()), 3000, 50);
+  check(ended && (await searchField(A).inputValue()) === '', `Escape ends the search ${ended}; field "${await searchField(A).inputValue()}"`);
+
+  // 4. Escape closes one thing: the emoji picker first, then the search (SR-23).
+  await A.locator('.newer-messages-button').click();
+  await waitTrue(async () => !(await storeOf(A)).window, 5000, 50);
+  await searchField(A).fill('ws-05');
+  await waitTrue(async () => (await results(A).count()) === 10, 5000, 50);
+  const cont = A.locator('.message-input-container');
+  await A.locator('.emoji-toggle-button').click();
+  const pickerOpen = await waitTrue(async () => (await cont.getAttribute('data-picker')) === 'emoji', 3000, 50);
+  await A.keyboard.press('Escape');
+  const pickerClosed = await waitTrue(async () => (await cont.getAttribute('data-picker')) === null, 2000, 50);
+  const searchKept = await panel.isVisible();
+  await A.keyboard.press('Escape');
+  const thenSearch = await waitTrue(async () => !(await panel.isVisible()), 2000, 50);
+  check(pickerOpen && pickerClosed && searchKept && thenSearch, `picker open ${pickerOpen}; first Escape closes the picker ${pickerClosed} and keeps the search ${searchKept}; second Escape ends the search ${thenSearch}`);
+
+  // 5. Nothing found: the empty text and the reach line with the name of the room. Cut to one character: the hint, the panel stays.
+  await searchField(A).fill('qqzzxxnothing');
+  const empty = await waitTrue(async () => (await A.locator('.search-empty').count()) === 1, 5000, 50);
+  const since = await A.locator('.search-since').textContent().catch(() => '');
+  const emptyText = await A.locator('.search-empty').textContent().catch(() => '');
+  await searchField(A).fill('q');
+  const hint = await waitTrue(async () => (await A.locator('.search-hint').textContent().catch(() => '')) === 'Type 2 or more characters', 3000, 50);
+  check(empty && emptyText.length > 0 && /^Search covers messages in # lobby since .+\.$/.test(since) && hint && await panel.isVisible(),
+    `empty text ${empty} "${emptyText}"; reach line "${since}"; hint at one character ${hint}, panel open ${await panel.isVisible()}`);
+  await A.locator('.search-field-header .search-clear').click();
+  const cleared = await waitTrue(async () => !(await panel.isVisible()) && await sidebar.isVisible(), 2000, 50);
+
+  // 6. Ctrl+F puts the cursor in the field (SR-21).
+  await A.locator('.message-input').click();
+  await A.keyboard.press('Control+f');
+  const focused = await searchField(A).evaluate(n => document.activeElement === n);
+  check(cleared && focused, `the X ends the search ${cleared}; Ctrl+F focuses the field ${focused}`);
+
+  // 7. Accent marks do not count, in the search and in the highlight (SR-04, SR-10).
+  await searchField(A).fill('prilis kun');
+  const folded = await waitTrue(async () => (await results(A).count()) === 1, 5000, 50);
+  const foldMarks = await results(A).first().locator('mark').allTextContents();
+  check(folded && foldMarks.join('|') === 'Příliš|kůň', `"prilis kun" finds the text ${folded}; marks ${JSON.stringify(foldMarks)}`);
+
+  // 8. A long text whose only match is in its last line shows the match inside the six lines (SR-09).
+  await searchField(A).fill('zebraword');
+  // The row of the query before stays until the answer comes (SR-14), so the wait is for this query's mark.
+  await waitTrue(async () => (await results(A).first().locator('mark').allTextContents().catch(() => [])).join('') === 'zebraword', 5000, 50);
+  const box = await results(A).first().locator('.pin-text').evaluate(text => {
+    const mark = text.querySelector('mark').getBoundingClientRect(), b = text.getBoundingClientRect();
+    return { inside: mark.top >= b.top - 1 && mark.bottom <= b.bottom + 1, lines: Math.round(b.height / parseFloat(getComputedStyle(text).lineHeight)), cut: text.className };
+  });
+  check(box.inside && box.lines === 6 && box.cut.includes('cut-top'), `the match is inside the box ${box.inside}; ${box.lines} lines; classes "${box.cut}"`);
+  await A.screenshot({ path: SHOTS + '17-search-long.png' });
+
+  // 9. 25 results, the total of all, and more on scroll (SR-11).
+  await searchField(A).fill('ws-');
+  await waitTrue(async () => (await results(A).count()) === 25, 5000, 50);
+  const total = await countLine(A).textContent();
+  await A.locator('.search-list').evaluate(e => { e.scrollTop = e.scrollHeight; });
+  const more = await waitTrue(async () => (await results(A).count()) >= 50, 5000, 50);
+  check(/^\d{3} results$/.test(total) && more && (await countLine(A).textContent()) === total, `first page 25 of "${total}"; after a scroll ${await results(A).count()} rows; the count stays`);
+  await A.keyboard.press('Escape');
+});
+
+const ctxN = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+watchContext(ctxN, 'narrow');
+const N = await ctxN.newPage(); watchPage(N, 'narrow');
+await step(18, 'Search at 768 px or less: the sidebar row, the search screen, a result, Back, "Go to newest", the width tiers (SR-24 to SR-31)', async (check) => {
+  await signIn(N, 'thumb');
+  const screen = N.locator('.search-screen'), field = N.locator('.search-screen .search-input'), at = N.locator('.search-at-result');
+  const cls = async loc => (await loc.getAttribute('class')) ?? '';
+  const shown = async () => (await screen.isVisible()) && (await cls(screen)).includes('in') && !(await cls(screen)).includes('away');
+  const openSearch = async () => { await N.click('.users-toggle'); await N.locator('.search-row').click(); };
+  const lit = text => waitTrue(async () => ((await row(N, text).first().getAttribute('class').catch(() => '')) ?? '').includes('highlight-message'), 5000, 50);
+  const tap = text => results(N).filter({ hasText: text }).locator('.pin-time').click();
+
+  // 1. The row opens the screen and closes the sidebar; the hint shows; the field has the focus.
+  await openSearch();
+  const opened = await waitTrue(shown, 3000, 50);
+  const sidebarClosed = !(await cls(N.locator('.users-sidebar'))).includes('sidebar-open');
+  const hint = await N.locator('.search-hint').textContent().catch(() => '');
+  const focus = await field.evaluate(n => document.activeElement === n);
+  check(opened && sidebarClosed && hint === 'Type 2 or more characters' && focus, `screen open ${opened}; sidebar closed ${sidebarClosed}; hint "${hint}"; focus in the field ${focus}`);
+
+  // 2. The count line names the conversation. A tap on a result that is not loaded: the message, the search header.
+  await field.fill('ws-05');
+  await waitTrue(async () => (await results(N).count()) === 10, 5000, 50);
+  const count = await countLine(N).textContent();
+  await N.screenshot({ path: SHOTS + '18-search-screen.png' });
+  await N.locator('.search-list').evaluate(e => { e.scrollTop = 120; });
+  const kept = await N.locator('.search-list').evaluate(e => e.scrollTop);
+  await N.locator('.messages').evaluate(e => { e.__kept = true; });   // the list of messages must stay the same node through every step back
+  await tap('ws-052');
+  const atMessage = await waitTrue(async () => (await at.isVisible()) && (await cls(screen)).includes('away'), 5000, 50);
+  const hl = await lit('ws-052');
+  const header = { query: await at.locator('.search-at-query span').textContent(), count: await at.locator('.search-at-count').textContent(), controls: await N.locator('.header-controls').isVisible(), title: await N.locator('.header-title').isVisible() };
+  await sleep(400);   // the fade of the screen (SR-30), so the picture shows the conversation alone
+  check(count === '10 results · # lobby' && atMessage && hl && header.query === 'ws-05' && header.count === count && !header.controls && !header.title && (await N.locator('.newer-messages').count()) === 1,
+    `count "${count}"; at the message ${atMessage}, highlighted ${hl}; header ${JSON.stringify(header)}; end row ${await N.locator('.newer-messages').count()}`);
+  await N.screenshot({ path: SHOTS + '18-search-at-result.png' });
+
+  // 3. The header's arrow shows the same list at the same place. The Back of the browser does the same, and the
+  // conversation is not drawn again. Forward lands on a closed step, and the arrow still needs one press.
+  await at.locator('.search-back').click();
+  const backToList = await waitTrue(shown, 3000, 50);
+  const place = await N.locator('.search-list').evaluate(e => e.scrollTop);
+  await tap('ws-053');
+  await waitTrue(async () => at.isVisible(), 5000, 50);
+  await N.goBack();
+  const browserBack = await waitTrue(shown, 3000, 50);
+  const sameNode = await N.locator('.messages').evaluate(e => e.__kept === true);
+  await N.goForward();
+  await sleep(400);
+  const stillList = await shown();
+  await N.locator('.search-screen .search-back').click();
+  const ended = await waitTrue(async () => !(await screen.isVisible()) && await N.locator('.header-controls').isVisible(), 3000, 50);
+  check(backToList && place === kept && browserBack && sameNode && stillList && ended && (await N.evaluate(() => history.state)) === null,
+    `arrow back to the list ${backToList}, scroll ${kept} -> ${place}; browser Back ${browserBack}, same message list ${sameNode}; after Forward the list still shows ${stillList}; one press of the arrow ends the search ${ended}; history state ${JSON.stringify(await N.evaluate(() => history.state))}`);
+
+  // 4. "Go to newest" at a result ends the search and leaves no step behind (SR-28).
+  await openSearch();
+  await field.fill('ws-05');
+  await waitTrue(async () => (await results(N).count()) === 10, 5000, 50);
+  await tap('ws-052');
+  await waitTrue(async () => at.isVisible(), 5000, 50);
+  await N.locator('.newer-messages-button').click();
+  const newest = await waitTrue(async () => !(await at.isVisible()) && !(await screen.isVisible()) && await N.locator('.header-controls').isVisible(), 5000, 50);
+  await sleep(300);
+  check(newest && (await N.evaluate(() => history.state)) === null && new URL(N.url()).pathname === '/lobby', `"Go to newest" ends the search ${newest}; history state ${JSON.stringify(await N.evaluate(() => history.state))}; path ${new URL(N.url()).pathname}`);
+
+  // 5. A result in the loaded rows: centred, no end row, the search header stays through a scroll by hand, and the
+  // down arrow ends the search.
+  await waitTrue(async () => !(await storeOf(N)).window && (await row(N, 'ws-149').count()) === 1, 5000, 50);
+  await openSearch();
+  await field.fill('ws-14');
+  await waitTrue(async () => (await results(N).count()) === 10, 5000, 50);
+  await tap('ws-140');
+  const loaded = await waitTrue(async () => at.isVisible(), 5000, 50);
+  const noEnd = (await N.locator('.newer-messages').count()) === 0;
+  // A scroll by hand starts with a finger on the list: that releases the row a jump holds in the middle (TL-41).
+  await N.locator('.messages').dispatchEvent('pointerdown');
+  await N.locator('.messages').evaluate(e => { e.scrollTop = 0; });
+  await sleep(300);
+  await N.locator('.messages').evaluate(e => { e.scrollTop = Math.max(0, e.scrollTop + 200); });
+  await sleep(300);
+  const byHand = await at.isVisible();
+  const arrow = N.locator('.down-arrow');
+  const arrowShown = await waitTrue(async () => (await arrow.count()) === 1, 3000, 50);
+  if (arrowShown) await arrow.click();
+  const arrowEnds = await waitTrue(async () => !(await at.isVisible()) && !(await screen.isVisible()), 3000, 50);
+  check(loaded && noEnd && byHand && arrowShown && arrowEnds, `at a loaded result ${loaded}, no end row ${noEnd}; a scroll by hand keeps the search ${byHand}; the down arrow shows ${arrowShown} and ends the search ${arrowEnds}`);
+
+  // 6. A reconnect under the result list keeps the query and the list (SR-28).
+  await openSearch();
+  await field.fill('ws-05');
+  await waitTrue(async () => (await results(N).count()) === 10, 5000, 50);
+  await tap('ws-052');
+  await waitTrue(async () => at.isVisible(), 5000, 50);
+  await at.locator('.search-back').click();
+  await waitTrue(shown, 3000, 50);
+  await ctxN.setOffline(true);
+  const off = await waitTrue(async () => (await storeOf(N)).connection !== 'connected', 20000, 100);
+  await ctxN.setOffline(false);
+  const on = await waitTrue(async () => { const s = await storeOf(N); return s.connection === 'connected' && !s.window; }, 30000, 100);
+  check(off && on && await shown() && (await field.inputValue()) === 'ws-05' && (await results(N).count()) === 10, `offline ${off}, connected again at the newest messages ${on}; the list still shows ${await shown()} with "${await field.inputValue()}" and ${await results(N).count()} results`);
+
+  // 7. Without a connection the search says so (SR-18).
+  await ctxN.setOffline(true);
+  await waitTrue(async () => (await storeOf(N)).connection !== 'connected', 20000, 100);
+  await field.fill('ws-06');
+  const needs = await waitTrue(async () => (await N.locator('.search-error').textContent().catch(() => '')) === 'Needs a connection', 5000, 50);
+  await ctxN.setOffline(false);
+  await waitTrue(async () => (await storeOf(N)).connection === 'connected', 30000, 100);
+  const again = await waitTrue(async () => (await results(N).count()) === 10 && (await N.locator('.search-error').count()) === 0, 5000, 50);   // ws-060 to ws-069
+  check(needs && again, `"Needs a connection" in the place of the list ${needs}; with the connection back the search runs again by itself ${again}`);
+  await N.locator('.search-screen .search-back').click();
+  await waitTrue(async () => !(await screen.isVisible()), 3000, 50);
+
+  // 8. 700 px is the same design. A window that crosses 768 px ends the search (SR-31).
+  await N.setViewportSize({ width: 700, height: 900 });
+  await openSearch();
+  const wide = await waitTrue(shown, 3000, 50);
+  const covers = await screen.evaluate(e => { const r = e.getBoundingClientRect(); return Math.round(r.width) === innerWidth && Math.round(r.top) === 0; });
+  await field.fill('ws-05');
+  await waitTrue(async () => (await results(N).count()) === 10, 5000, 50);
+  await N.screenshot({ path: SHOTS + '18-search-700.png' });
+  await N.setViewportSize({ width: 1000, height: 900 });
+  const tierEnds = await waitTrue(async () => !(await screen.isVisible()) && !(await N.locator('.search-panel').isVisible()) && (await searchField(N).inputValue()) === '', 3000, 50);
+  check(wide && covers && tierEnds && (await N.evaluate(() => history.state)) === null, `the screen at 700 px ${wide}, over the whole frame ${covers}; 1000 px ends the search ${tierEnds}; history state ${JSON.stringify(await N.evaluate(() => history.state))}`);
 });
 
 await finish(browser, server);

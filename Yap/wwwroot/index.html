@@ -98,6 +98,7 @@
          styling: two rules of the same weight are settled by the file that loads later. pages.css holds what the
          pages after it share, so it comes before them. -->
     <link rel="stylesheet" href="css/frame.css?v={{build}}" />
+    <link rel="stylesheet" href="css/search.css?v={{build}}" />
     <link rel="stylesheet" href="css/pickers.css?v={{build}}" />
     <link rel="stylesheet" href="css/timeline.css?v={{build}}" />
     <link rel="stylesheet" href="css/composer.css?v={{build}}" />
@@ -222,6 +223,7 @@
             <symbol id="i-plus-line" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></symbol>
             <symbol id="i-reply" viewBox="0 0 24 24" fill="currentColor"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></symbol>
             <symbol id="i-robot" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1.17A7 7 0 0 1 14 22h-4a7 7 0 0 1-6.83-3H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2zM9.5 13a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm5 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></symbol>
+            <symbol id="i-search" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></symbol>
             <symbol id="i-send" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></symbol>
             <symbol id="i-shield" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></symbol>
             <symbol id="i-sign-out" viewBox="0 0 24 24" fill="currentColor"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></symbol>
@@ -239,6 +241,17 @@
             <div class="theme-scrim"></div>
             <div class="chat-header">
                 <div class="header-title"></div>
+                <!-- SR-26: at 768 px or less, the header of the conversation at a search result. It takes the place
+                     of the title and of the controls (search.css), and its arrow is one step back (SR-27). -->
+                <div class="search-at-result" hidden>
+                    <button class="back-button search-back" type="button" title="Back to results" aria-label="Back to results">
+                        <svg data-icon="arrow-back" width="20" height="20"></svg>
+                    </button>
+                    <div class="search-at-lines">
+                        <div class="search-at-query"><svg data-icon="search" width="16" height="16" aria-hidden="true"></svg><span></span></div>
+                        <div class="search-at-count"></div>
+                    </div>
+                </div>
                 <div class="header-controls">
                     <button class="connection-dot" type="button" hidden></button>
                     <div class="status-dropdown-container">
@@ -256,17 +269,30 @@
                         <svg data-icon="inbox" width="20" height="20"></svg>
                         <span class="mailbox-badge"></span>
                     </button>
+                    <!-- The hamburger, at 768 px or less only (SH-08): above that the sidebar is always there, and the
+                         search field stands in this place (SR-19). -->
                     <button class="users-toggle" type="button" title="Toggle sidebar">
-                        <svg data-icon="people" class="icon-people" width="24" height="24"></svg>
                         <svg data-icon="menu" class="icon-hamburger" width="20" height="20"></svg>
-                        <span class="online-count"></span>
                     </button>
+                    <!-- SR-19: the search field of the desktop. No type=search: the browser's own clear button would
+                         stand beside ours. The accessible name is fixed, because the placeholder is a playful text. -->
+                    <label class="search-field search-field-header" hidden>
+                        <svg data-icon="search" width="16" height="16" aria-hidden="true"></svg>
+                        <input class="search-input" type="text" maxlength="100" autocomplete="off" spellcheck="false" enterkeyhint="search" aria-label="Search this conversation">
+                        <button class="search-clear" type="button" title="Clear search" aria-label="Clear search" hidden>✕</button>
+                    </label>
                 </div>
             </div>
             <img src="/images/turqline01_3px.png" class="header-line" alt="">
             <div class="chat-main">
                 <div class="messages-container"></div>
+                <!-- SR-20: the desktop results, in the place of the sidebar while a search is active. -->
+                <div class="search-panel" hidden></div>
                 <div class="users-sidebar">
+                    <!-- SR-24: the way into the search at 768 px or less. -->
+                    <button class="search-row" type="button" hidden>
+                        <svg data-icon="search" width="16" height="16" aria-hidden="true"></svg><span>Search this conversation</span>
+                    </button>
                     <div class="sidebar-section">
                         <h4>ROOMS</h4>
                         <div class="rooms-list"></div>
@@ -278,6 +304,47 @@
                 </div>
             </div>
             <div class="sidebar-backdrop"></div>
+            <!-- SR-25: the search screen of 768 px or less. It covers the header and the conversation, and it moves
+                 in as one piece (SR-30), which is why it has a header and a field of its own. -->
+            <div class="search-screen" hidden>
+                <div class="search-screen-header">
+                    <button class="back-button search-back" type="button" title="Close search" aria-label="Close search">
+                        <svg data-icon="arrow-back" width="20" height="20"></svg>
+                    </button>
+                    <label class="search-field">
+                        <svg data-icon="search" width="16" height="16" aria-hidden="true"></svg>
+                        <input class="search-input" type="text" maxlength="100" autocomplete="off" spellcheck="false" enterkeyhint="search" aria-label="Search this conversation">
+                        <button class="search-clear" type="button" title="Clear search" aria-label="Clear search" hidden>✕</button>
+                    </label>
+                </div>
+                <img src="/images/turqline01_3px.png" class="header-line" alt="">
+                <div class="search-screen-body"></div>
+            </div>
+        </div>
+    </template>
+
+    <!-- The results of a search (SR-08 to SR-15): the count line, then the list. One node, in the desktop panel or in
+         the search screen. A result is the entry of the pins panel without the unpin control and "Pinned by"
+         (js/ui/entry.js); the classes are the entry's, so its styles apply. -->
+    <template id="t-search-results">
+        <div class="search-results">
+            <!-- What a screen reader hears: every state of the search, in one live region that nobody sees. The
+                 count line alone does not say "nothing found", the hint or a refusal: those stand in the list, and
+                 the list cannot be a live region, it would read every result. -->
+            <div class="search-status" role="status"></div>
+            <div class="search-count"></div>
+            <div class="search-list"></div>
+        </div>
+    </template>
+    <template id="t-search-result">
+        <div class="pin-entry search-result" role="button" tabindex="0">
+            <div class="pin-entry-header">
+                <span class="pin-avatar"></span>
+                <span class="pin-author"></span>
+                <span class="pin-time"></span>
+            </div>
+            <div class="pin-text"></div>
+            <div class="pin-media" hidden></div>
         </div>
     </template>
 

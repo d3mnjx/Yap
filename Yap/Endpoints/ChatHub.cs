@@ -24,6 +24,7 @@ namespace Yap.Endpoints;
 public sealed class ChatHub(ChatService chat, PresenceService presence, UserService users, MessageMapper map, UserActionLogService log) : Hub
 {
     private const int PageSize = 50;   // TL-01, TL-06
+    private const int SearchPageSize = 25;   // SR-11; the server's number, so one call cannot ask for every match
 
     private Guid Me => Context.User!.Id();
     private string MyName => Context.User!.Username();
@@ -114,6 +115,16 @@ public sealed class ChatHub(ChatService chat, PresenceService presence, UserServ
         if (error is not null) return new Window([], false, false, error);
         chat.EnsurePreviews(messages);   // the cards arrive by the "previews" message (MR-22)
         return new Window(messages.Select(m => map.From(m, Me)).ToList(), hasMore, hasNewer);
+    }
+
+    /// <summary>SR-01: the messages of the open conversation that hold every word of the query, newest first. The
+    /// cursor is the last hit the client has; without one the answer starts at the newest match and carries the total.
+    /// A hit is not a message row: no reply quote, no reactions and no link card are computed for it (SR-08).</summary>
+    public SearchPage Search(Guid channelId, string? query, DateTime? beforeTimestamp, Guid? beforeId)
+    {
+        var (hits, total, hasMore, since, error) = chat.Search(channelId, query, beforeTimestamp, beforeId, SearchPageSize, Me);
+        if (error is not null) return new SearchPage([], null, false, null, error);
+        return new SearchPage(hits.Select(m => new SearchHit(m.Id, m.Username, m.Content, m.Timestamp, chat.AttachmentsOf(m))).ToList(), total, hasMore, since);
     }
 
     /// <summary>The client calls this when the page is visible, the person is not away and the view is at the bottom (NT-07).</summary>

@@ -43,7 +43,10 @@ wwwroot/
     render/time.js        timestamps with the account's zone, clock and date order
     render/avatar.js      the avatar and the gradient of a username
     ui/frame.js           the frame and its header: the title, the status chip and menu, the connection dot, the pin
-                          button, the mailbox, the people button; the profile card
+                          button, the mailbox, the hamburger; the profile card
+    ui/search.js          the message search (SR-01 to SR-32): the field of the header, the results in the place of
+                          the sidebar, and at 768 px or less the search screen and the header of a result
+    ui/entry.js           one message outside the timeline, as the pins panel and the search results draw it
     ui/sidebar.js         the sidebar of the frame: the rooms, and the people list, which draws only the rows in view
     ui/timeline.js        the list, the follow rule, the pills, older pages, the lobby lines, the read mark, jumpTo
     ui/message.js         one message row and its popups
@@ -325,7 +328,7 @@ export function Sidebar(frame, profile) {           // frame.js passes the frame
 }
 ```
 
-`frame.js` mounts the frame once. Its `mount(appRoot)` clones `t-frame`, wires the header (the title, the status chip and its menu, the connection dot, the pin button, the mailbox and the people button), and returns the content column for the page. It calls `Sidebar(frame, profile)`, which draws the rooms and the people and returns `{ toggle, unmount }`. The profile card stays in `frame.js`. The sidebar gets the card's functions (`openProfile`, `closeProfile`, `toggleProfile`) as an argument, because an import of `frame.js` from `sidebar.js` would make a cycle. The people list does not draw every row: it lists every account (two thousand on the test server), so it draws the rows in view plus a margin, at most every 250 ms.
+`frame.js` mounts the frame once. Its `mount(appRoot)` clones `t-frame`, wires the header (the title, the status chip and its menu, the connection dot, the pin button, the mailbox and the hamburger), and returns the content column for the page. It also mounts the message search (`Search(frame, …)` of `search.js`), whose field is in the header. It calls `Sidebar(frame, profile)`, which draws the rooms and the people and returns `{ toggle, unmount }`. The profile card stays in `frame.js`. The sidebar gets the card's functions (`openProfile`, `closeProfile`, `toggleProfile`) as an argument, because an import of `frame.js` from `sidebar.js` would make a cycle. The people list does not draw every row: it lists every account (two thousand on the test server), so it draws the rows in view plus a margin, at most every 250 ms.
 
 Rules every component follows:
 
@@ -346,7 +349,7 @@ async function toggleReaction(message, emoji) {
 
 ## The router and the pages
 
-`router.js` maps the URL to a page module (SH-42). It listens to `popstate` for the back button (SH-44) and offers `navigate(path)` for links. It stores the last conversation route in localStorage, and `/` opens it (SH-43).
+`router.js` maps the URL to a page module (SH-42). It listens to `popstate` for the back button (SH-44) and offers `navigate(path)` for links. It stores the last conversation route in localStorage, and `/` opens it (SH-43). A part of a page can add history entries that are not pages: `pushStep(onBack)` adds an entry with the same address, Back runs its callback and no page is mounted again, and `dropSteps()` removes the entries when their owner ends in another way. The message search at 768 px or less uses two steps, one for its result list and one for the message of a result (SR-27).
 
 | Route | Page | Inside the frame |
 | --- | --- | --- |

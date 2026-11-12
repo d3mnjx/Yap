@@ -169,7 +169,7 @@ The write is an upsert. Today the increment runs an UPDATE. The UPDATE does not 
 
 ## Locks in ChatService
 
-Messages: one lock per channel around the list. The lock covers appends, edits, deletes, and the two reads that page the list. Read states: a `ConcurrentDictionary` with one lock per record. The lock covers the increment and the clear. No code inside a lock does I/O or raises an event. Events are raised after the lock. This is the same pattern as on the presence page.
+Messages: one lock per channel around the list. The lock covers appends, edits, deletes, and the two reads that page the list. The message search copies the visible range under the lock and matches the texts outside it, so a send never waits for a search (SR-01). Read states: a `ConcurrentDictionary` with one lock per record. The lock covers the increment and the clear. No code inside a lock does I/O or raises an event. Events are raised after the lock. This is the same pattern as on the presence page.
 
 ## What the hub does not do
 

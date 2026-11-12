@@ -11,7 +11,8 @@ that the files share. The last section is the record of how these files came out
 | `app.css` | The fonts, the tokens of the default theme (`:root`), the reset, the pattern layer of a conversation, the start spinner and the start-failure screen, the shared keyframes (`fadeIn`, `spin`), `[hidden]`, the emoji sizes | `index.html`, `js/render/text.js` (emoji) |
 | `themes.css` | One block of token values per theme, and the pattern of a direct message per theme | `[data-theme]` on `<html>`, `[data-context]` on `.chat-container` |
 | `themes/teahouse.css` | The Tea House theme: one block per scene of the day. The file is generated (`themes/teahouse/gen_theme_css.py`), so edit the generator. | `[data-scene]` on `<html>`, set by the script in `index.html` |
-| `css/frame.css` | The avatar, the header, the sidebar, the frame layout with the theme scene, the push prompt, the profile card, the pins panel, the connection dot, the notice strip | `js/ui/frame.js`, `js/ui/sidebar.js`, `js/ui/pins.js`, `js/render/avatar.js`, `js/update.js` |
+| `css/frame.css` | The avatar, the header, the sidebar, the frame layout with the theme scene, the push prompt, the profile card, the pins panel, the connection dot, the notice strip | `js/ui/frame.js`, `js/ui/sidebar.js`, `js/ui/pins.js`, `js/ui/entry.js`, `js/render/avatar.js`, `js/update.js` |
+| `css/search.css` | The message search: the field of the header, the results and their rows (a row is the pin entry of `frame.css`), the search row of the sidebar, the search screen and the header of a result at 768 px or less | `js/ui/search.js`, `js/ui/entry.js` |
 | `css/pickers.css` | The picker with tabs, the emoji picker, the GIF picker | `js/ui/emoji-picker.js`, `js/ui/gif-picker.js`, `js/ui/composer.js` |
 | `css/timeline.css` | The gallery viewer, the message list with its loading row and top note, the pills over the list, the Show more button | `js/ui/timeline.js`, `js/ui/gallery.js` |
 | `css/composer.css` | The input box: the typing strip, the reply bar, the pill, the host of the pickers, the tray, the voice recorder | `js/ui/composer.js` |
@@ -94,6 +95,7 @@ These are all the `z-index` values of the client. A value ranks an element only 
 | 20 | The bubble of the connection dot | `frame.css` |
 | 98, 99 | The backdrop of the sidebar and the sidebar, when the sidebar slides over the conversation | `frame.css` |
 | 100 | The action bar of a row | `message.css` |
+| 150 | The search screen at 768 px or less: over the sidebar, under the profile card and the menus | `search.css` |
 | 199, 200 | The backdrop of the profile card and the card | `frame.css` |
 | 300 | The push prompt | `frame.css` |
 | 999 | The backdrops of the menus, the pickers and the pins panel | `frame.css`, `composer.css`, `message.css` |

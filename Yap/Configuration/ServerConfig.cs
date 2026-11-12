@@ -31,6 +31,8 @@ public sealed class ServerConfig(IConfiguration configuration)
         JoinLines: List("SystemMessages:UserJoined", "{0} joined the chat"),            // MR-73
         LeaveLines: List("SystemMessages:UserLeft", "{0} left the chat"),
         PillTexts: List("NewMessagesPill", "New messages"),                              // TL-17
+        SearchPlaceholders: List("Search:Placeholder", "Search"),                        // SR-32; {0} is the name of the conversation
+        SearchEmpty: List("Search:NoResults", "No results"),                             // SR-32; {0} is the query
         LoginHeadings: List("WelcomeMessages", "Welcome to {0}!"),                       // AU-07
         LoginButtons: List("JoinButtonTexts", "Join Chat"),
         LoginPlaceholders: List("UsernamePlaceholders", "Enter your username"));
@@ -46,6 +48,7 @@ public sealed class ServerConfig(IConfiguration configuration)
 public sealed record TextsDto(
     string[] RoomHeaders, string[] Placeholders, string[] TypingOne, string[] TypingTwo, string[] TypingMany,
     string[] PeopleHeaders, string[] JoinLines, string[] LeaveLines, string[] PillTexts,
+    string[] SearchPlaceholders, string[] SearchEmpty,
     string[] LoginHeadings, string[] LoginButtons, string[] LoginPlaceholders);
 
 public sealed record LoginTextsDto(string[] LoginHeadings, string[] LoginButtons, string[] LoginPlaceholders);

@@ -35,7 +35,8 @@ What the client keeps across a reconnect: the view position, the draft, the pend
             gifProvider: { name, configured, attributionImageUrl }, vapidPublicKey, buildStamp, smartLoginAllowed,
             themes: [ { id, name, previewBg, previewAccent, hasGradient } ] },
   texts:  { roomHeaders[], placeholders[], typingOne[], typingTwo[], typingMany[], peopleHeaders[],
-            joinLines[], leaveLines[], pillTexts[], loginHeadings[], loginButtons[], loginPlaceholders[] },
+            joinLines[], leaveLines[], pillTexts[], searchPlaceholders[], searchEmpty[],          // the two lists of the message search (SR-32)
+            loginHeadings[], loginButtons[], loginPlaceholders[] },
   rooms:  [ { id, name, description, sortOrder, adminOnly, historyLimit, sinceJoined, isLobby,     // isLobby: the room /lobby opens (SH-43); the order is the admin's (AD-33)
               pinPermission, pinners } ],                                                         // "adminOnly" | "everyone" | "selected", and the selected usernames (AD-37)
   users:  [ { username, displayName, avatarUrl, bio, location, createdAt, isAdmin, isBot } ],
@@ -64,6 +65,7 @@ The client calls the methods with these camelCase names; SignalR matches the ser
 | `leave` | | | On the way out of a conversation, to Settings, Admin or another page. Clears Viewing. |
 | `older` | channelId, beforeTimestamp, beforeId | `{ messages[], hasMore }` | Next 50 before the oldest loaded message (TL-06). The server finds the cursor by id and falls back to the timestamp when that message was deleted. History limits apply (TL-05). |
 | `around` | channelId, messageId | `{ messages[], hasMore, hasNewer, error }` | The jump to a pinned message or a reply quote (SH-49, MR-34, TL-41): 25 messages before the target, the target, and 24 after it, inside the reader's history limit (TL-05). `hasNewer` false: the window reaches the newest message, and the client treats it as a tail. A refusal comes in `error` with an empty list: "Too old to load" for a pin whose message is not in memory (SH-48), "Message not found." for an unknown id or one behind the history limit. No group join: the client reads the conversation already. |
+| `search` | channelId, query, beforeTimestamp, beforeId | `SearchPage` | The message search of the open conversation (SR-01): the messages in memory whose text holds every word of the query, newest first, 25 per call. Case and accent marks do not count (SR-04). The query needs 2 characters, and the server cuts it at 100 (SR-05). The cursor is the last hit the client has, null for the first page; the server finds it by id and falls back to the timestamp, as `older` does. History limits apply (TL-05). The match runs outside the conversation's lock. A refusal comes in `error`: "Conversation not found." for a conversation the reader cannot open. |
 | `markRead` | channelId | | The client decides by NT-06 and NT-07. Clears the whole conversation (NT-08). Dropped for a conversation the person cannot access. |
 | `typing` | channelId, on | | `on` at the first non-blank input and then at most every 2 s; `off` by IB-59. Dropped unless `channelId` is the connection's open conversation (Viewing): a typist shows only to the people who share the conversation (PR-19). |
 | `heartbeat` | visible, idleSeconds, lastRttMs, samples[] | serverTimeMs | Every 10 s visible, 60 s hidden. A sample is `{ name, ms }`; the name is send, open, older, start, reconnect or jump. A hidden tab sends no lastRttMs. Feeds presence and the latency table (AD-25, AD-26). |
@@ -120,6 +122,14 @@ Message {
   reactions: [ { emoji, users: [username] } ],      // in first-use order (MR-38)
   previews:  [ { url, siteName, title, description, imageUrl,
                  media?: { type, src, poster, width, height, durationSeconds } } ]
+}
+
+SearchPage {
+  hits: [ { messageId, username, text, timestamp, media } ],   // the fields of a Pin that the panel's entry draws, so one drawing serves both; media: the message's own files, no link card (SR-08)
+  total,      // every match, with the first page only; null on a later page, so the count does not move while messages arrive (SR-11)
+  hasMore,    // a call with the last hit as the cursor finds more
+  since,      // the time of the oldest message the reader can see: how far back the search reaches (SR-12); null when the reader sees none
+  error       // the refusal the reader sees; the other fields are empty then
 }
 
 Pin {   // a copy of what the panel shows, stored with the channel; it outlives the startup load window (SH-48)

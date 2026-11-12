@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Search · Yap spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root {
+  --bg: #f3f5f7; --surface: #ffffff; --surface-2: #e9edf1;
+  --fg: #182029; --muted: #56606e; --line: #d4dae2; --line-strong: #a9b3c0;
+  --accent: #0d6a87; --code-bg: #f8f9fb;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1115; --surface: #151a20; --surface-2: #1d232b; --fg: #e3e7ed; --muted: #97a1b0;
+    --line: #29303a; --line-strong: #3f4855; --accent: #5bb7d2; --code-bg: #11151a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1115; --surface: #151a20; --surface-2: #1d232b; --fg: #e3e7ed; --muted: #97a1b0;
+  --line: #29303a; --line-strong: #3f4855; --accent: #5bb7d2; --code-bg: #11151a; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 var(--body); -webkit-font-smoothing: antialiased; }
+main { max-width: 980px; margin: 0 auto; padding: 36px 16px 96px; display: flex; flex-direction: column; gap: 22px; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.15; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 4.5vw, 2.8rem); font-weight: 700; }
+h2 { font-size: clamp(1.4rem, 2.6vw, 1.8rem); font-weight: 600; padding-top: 22px; margin-top: 14px; border-top: 1px solid var(--line-strong); }
+h3 { font-size: 1.12rem; font-weight: 600; margin-top: 6px; }
+p, ul, ol { margin: 0; max-width: 76ch; }
+ul, ol { padding-left: 1.3em; display: flex; flex-direction: column; gap: 6px; }
+li > ul, li > ol { margin-top: 6px; }
+a { color: var(--accent); }
+code { font-family: var(--mono); font-size: 0.88em; background: var(--surface-2); padding: 0.05em 0.3em; border-radius: 3px; overflow-wrap: anywhere; }
+pre { margin: 0; padding: 12px 16px; overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--code-bg); font: 0.82rem/1.5 var(--mono); }
+pre code { background: none; padding: 0; font-size: inherit; }
+blockquote { margin: 0; padding: 10px 16px; border-left: 3px solid var(--accent); background: var(--surface); border-radius: 4px; max-width: 76ch; }
+.eyebrow { font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+nav.pages { display: flex; flex-wrap: wrap; gap: 6px 8px; }
+nav.pages a, nav.pages span { display: inline-block; padding: 3px 10px; border: 1px solid var(--line); border-radius: 4px; text-decoration: none; color: var(--fg); background: var(--surface); font-size: 0.86rem; }
+nav.pages span { color: var(--muted); border-style: dashed; }
+nav.pages a[aria-current] { border-color: var(--accent); color: var(--accent); }
+.rule { border: 1px solid var(--line); border-left: 3px solid var(--accent); background: var(--surface); border-radius: 4px; padding: 10px 14px; max-width: 76ch; scroll-margin-top: 16px; }
+.rule .id { font-family: var(--mono); font-size: 0.8rem; color: var(--accent); margin-right: 8px; }
+.rule .why { color: var(--muted); }
+figure { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+figure img { display: block; max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+figcaption { font-size: 0.9rem; color: var(--muted); max-width: 80ch; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+th, td { text-align: left; vertical-align: top; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+th { font-family: var(--display); font-weight: 600; background: var(--surface-2); white-space: nowrap; }
+tbody tr:last-child td { border-bottom: 0; }
+footer { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; }
+</style>
+</head>
+<body>
+<main>
+<div class="eyebrow">Yap · product specification</div>
+<nav class="pages" aria-label="Spec pages"><a href="index.html">Index</a><a href="yap.html">Yap</a><a href="general-rules.html">General rules</a><a href="input-box.html">Input box</a><a href="message-row.html">Message row and actions</a><a href="pickers.html">Emoji and GIF pickers</a><a href="timeline.html">Timeline and media</a><a href="frame.html">Header, sidebar and overlays</a><a href="search.html" aria-current="page">Search</a><a href="settings.html">Settings</a><a href="admin.html">Administration</a><a href="presence.html">Presence</a><a href="notifications.html">Notifications and unread</a><a href="sessions.html">Sign-in and sessions</a><a href="offline.html">Offline and installation</a></nav>
+<h1 id="search">Search</h1>
+<p>The search finds messages in the open conversation by their text. The user types a few words and gets the messages that hold all of them, the newest first. A tap on a result shows the message in the conversation. On a wide window the results stand beside the conversation. On a narrow window the search is a screen of its own, and Back returns from a message to the results.</p>
+<h2 id="anatomy">Anatomy</h2>
+<figure><img src="../img/search-desktop-results.png" alt="Search, desktop, results. The search field at the right end of the header with a query, and the results panel in the place of the sidebar: the count, message rows with the matched word highlighted, and the reach line at the end." loading="lazy"><figcaption>Search, desktop, results. The search field at the right end of the header with a query, and the results panel in the place of the sidebar: the count, message rows with the matched word highlighted, and the reach line at the end.</figcaption></figure>
+<figure><img src="../img/search-phone-results.png" alt="Search, phone, results. The search screen: a back arrow and the field in the header, the count with the name of the room, and the result rows." loading="lazy"><figcaption>Search, phone, results. The search screen: a back arrow and the field in the header, the count with the name of the room, and the result rows.</figcaption></figure>
+<figure><img src="../img/search-phone-at-result.png" alt="Search, phone, a message from a result. The conversation at the message, under a header with a back arrow, the query, and the count with the name of the room." loading="lazy"><figcaption>Search, phone, a message from a result. The conversation at the message, under a header with a back arrow, the query, and the count with the name of the room.</figcaption></figure>
+<ol><li><strong>Search field.</strong> Above 768 px, a field at the right end of the header. It shows a magnifier, a placeholder from the configured list, and an X while it holds text.</li><li><strong>Results panel.</strong> Above 768 px, a panel in the place of the sidebar, 420 px wide and at most 45 % of the window.</li><li><strong>Count line.</strong> The number of results. At 768 px or less it also names the conversation.</li><li><strong>Result.</strong> One message: the avatar, the name, the time, up to 6 lines of the text with the matched words highlighted, and the media as small pictures.</li><li><strong>Reach line.</strong> The last line of the list. It names the conversation and says how far back the search reaches.</li><li><strong>Search row.</strong> At 768 px or less, the first row of the sidebar. It opens the search screen.</li><li><strong>Search screen.</strong> At 768 px or less, a screen over the whole frame: a back arrow and the field at the top, then the count line and the results.</li><li><strong>Search header.</strong> At 768 px or less, the header of the conversation while a message from a result shows: a back arrow, the query, and the count line.</li></ol>
+<h2 id="rules">Rules</h2>
+<h3 id="what-the-search-finds">What the search finds</h3>
+<p class="rule" id="SR-01"><span class="id">SR-01</span>The search covers the open conversation only, a room or a direct message. It reads the text of messages. It does not read system lines, link cards or the names of files. A message without text is never a result.</p>
+<p class="rule" id="SR-02"><span class="id">SR-02</span>The search covers the messages that the server holds ready: the ones it loaded at its last start, and each message since then. An older message cannot be found. <em class="why">Why:</em> no other part of Yap can open such a message either, so the search reaches as far as a scroll does.</p>
+<p class="rule" id="SR-03"><span class="id">SR-03</span>The query is a list of words, divided at spaces. A message is a result when its text holds each word. The words can be in any order and at any place, also inside a longer word.</p>
+<p class="rule" id="SR-04"><span class="id">SR-04</span>Capital letters and accent marks do not count, in the query and in the text. "prilis" finds "Příliš". A letter that is a letter of its own, such as ł, ø, đ or ß, is found only as it is. A text with characters that cannot be compared in this way is searched as it is, without the accent rule.</p>
+<p class="rule" id="SR-05"><span class="id">SR-05</span>A search needs 2 characters. A query has at most 100 characters.</p>
+<p class="rule" id="SR-06"><span class="id">SR-06</span>A person finds only messages that the person can read. The history limit of a room applies (<a href="timeline.html#TL-05">TL-05</a>). A conversation that the person cannot open answers with "Conversation not found.".</p>
+<h3 id="the-results">The results</h3>
+<p class="rule" id="SR-07"><span class="id">SR-07</span>The search runs while the user types, 250 ms after the last key. No key starts it.</p>
+<p class="rule" id="SR-08"><span class="id">SR-08</span>The results are message rows, the newest first. A row shows the avatar, the name, the time, the text and the media of the message: pictures, videos, GIFs and a voice message. It shows no link card, no reply quote and no reactions. A video and a voice message play in the row.</p>
+<p class="rule" id="SR-09"><span class="id">SR-09</span>A row shows at most 6 lines of the text. When the first matched word is below the sixth line, the row shows the lines around that word, with the word on the second line. An edge where text is cut fades out.</p>
+<p class="rule" id="SR-10"><span class="id">SR-10</span>Each matched word is highlighted in the rows of the results. The conversation shows no highlight of words.</p>
+<p class="rule" id="SR-11"><span class="id">SR-11</span>The count line shows the number of all results: "{n} results" or "1 result". The list loads 25 results, and 25 more when the user scrolls near its end. The count does not change while more results load.</p>
+<p class="rule" id="SR-12"><span class="id">SR-12</span>After the last result, the reach line shows: "Search covers messages in {name} since {date}." The name is "# {room}" or the name of the partner. The date is the time of the oldest message that the person can read. When the person can read no message, no reach line shows.</p>
+<p class="rule" id="SR-13"><span class="id">SR-13</span>When nothing is found, the list shows one text from the configured list for an empty result, and the reach line under it. <em class="why">Why:</em> a playful text alone can read as a fact, and the message can be in a different conversation or before the reach.</p>
+<p class="rule" id="SR-14"><span class="id">SR-14</span>While the answer loads, the count line shows "Searching…". The results of the query before stay on the screen until the answer comes.</p>
+<p class="rule" id="SR-15"><span class="id">SR-15</span>While the query has less than 2 characters, the list shows "Type 2 or more characters" and no results.</p>
+<p class="rule" id="SR-16"><span class="id">SR-16</span>A list of results does not change by itself. A new message, an edit or a deletion shows at the next search. A tap on a result whose message is gone shows "Message not found." at the row.</p>
+<p class="rule" id="SR-17"><span class="id">SR-17</span>A tap on a result goes to the message, as a tap on a pinned message does (<a href="timeline.html#TL-41">TL-41</a>). A picture in a result is part of the row, so a tap on it also goes to the message. A refusal shows its reason at the row.</p>
+<p class="rule" id="SR-18"><span class="id">SR-18</span>Without a connection, the list shows "Needs a connection" in the place of the results. When the connection returns, the search of the query in the field runs again by itself. A refusal from the server shows its reason in the same place.</p>
+<h3 id="above-768-px">Above 768 px</h3>
+<p class="rule" id="SR-19"><span class="id">SR-19</span>The search field is at the right end of the header, 200 px wide. It shows only while a conversation is open. Its placeholder is one text from the configured list.</p>
+<p class="rule" id="SR-20"><span class="id">SR-20</span>The results panel takes the place of the sidebar when the query has 2 characters. It stays open until the search ends, also when the query gets shorter. The panel shows and goes without animation.</p>
+<p class="rule" id="SR-21"><span class="id">SR-21</span>Ctrl+F, or Cmd+F on a Mac, puts the cursor in the search field while a conversation is open and no layer is open. When the cursor is already in the field, the key opens the find of the browser. At 768 px or less the key opens the search screen. <em class="why">Why:</em> the find of the browser reads only the messages that are loaded, so it misses words that are in the conversation.</p>
+<p class="rule" id="SR-22"><span class="id">SR-22</span>The X in the field and Escape end the search. The field is empty again, the panel goes, and the sidebar shows. The search also ends when the user leaves the conversation.</p>
+<p class="rule" id="SR-23"><span class="id">SR-23</span>One press of Escape closes one thing. When a layer, a picker or the editor of a message is open, Escape closes that, and the search stays (<a href="general-rules.html#GEN-17">GEN-17</a>).</p>
+<h3 id="at-768-px-or-less">At 768 px or less</h3>
+<p class="rule" id="SR-24"><span class="id">SR-24</span>The way into the search is the search row at the top of the sidebar. The header has no search control. A tap on the row closes the sidebar and opens the search screen, with the cursor in the field.</p>
+<p class="rule" id="SR-25"><span class="id">SR-25</span>The search screen covers the frame. Its header has a back arrow and the field. The count line names the conversation: "{n} results · {name}". The results fill the rest of the screen, and the input box is not on it.</p>
+<p class="rule" id="SR-26"><span class="id">SR-26</span>A tap on a result shows the conversation at the message, under the search header. The search header has a back arrow, the query with a magnifier, and the count line. The status chip, the pin button, the mailbox and the hamburger do not show. A direct message gets the same header in the place of its own. The search keeps the query, the results and the place in the list.</p>
+<p class="rule" id="SR-27"><span class="id">SR-27</span>Back goes one step back: from a message to the results, at the same place in the list, and from the results to the conversation, which ends the search. The back arrow of the header, the Back of the browser, the Back button and the Back swipe of a phone all do the same. The conversation is not loaded again by a step back.</p>
+<p class="rule" id="SR-28"><span class="id">SR-28</span>At a message from a result, a return to the newest messages ends the search, and the regular header comes back. A return is "Go to newest", the down arrow, the new-messages pill, a send of an own message, or a reconnect. A scroll by hand never ends the search. <em class="why">Why:</em> a search header over the newest messages reads as a different place. While the results show, a reconnect changes nothing.</p>
+<p class="rule" id="SR-29"><span class="id">SR-29</span>The X in the field of the search screen empties the field, and the screen stays for a new query.</p>
+<p class="rule" id="SR-30"><span class="id">SR-30</span>The search screen slides in from the right in 0.2 s, and it slides out the same way when the search ends from the results. Between the results and a message, the screen fades in 0.15 s. With reduced motion, nothing moves.</p>
+<p class="rule" id="SR-31"><span class="id">SR-31</span>The search ends when the window crosses 768 px in either direction.</p>
+<h3 id="texts">Texts</h3>
+<p class="rule" id="SR-32"><span class="id">SR-32</span>Two texts come from configured lists, one random text per list: the placeholder of the field, where {0} is the name of the room or of the partner, and the text of an empty result, where {0} is the query. The placeholder is picked once and stays. The other texts of the search are fixed.</p>
+<h2 id="states">States</h2>
+<div class="tablewrap"><table><thead><tr><th>State or trigger</th><th>Input</th><th>What the user sees</th></tr></thead><tbody><tr><td>No search, above 768 px</td><td>all</td><td>The field in the header with its placeholder. The sidebar.</td></tr><tr><td>1 character in the field, above 768 px</td><td>keyboard</td><td>The sidebar stays.</td></tr><tr><td>2 characters, above 768 px</td><td>keyboard</td><td>The panel in the place of the sidebar. "Searching…", then the count and the results.</td></tr><tr><td>Query cut to 1 character</td><td>keyboard</td><td>The panel stays. "Type 2 or more characters".</td></tr><tr><td>Scroll near the end of the list</td><td>mouse, touch</td><td>25 more results. The reach line after the last one.</td></tr><tr><td>Nothing found</td><td>all</td><td>The empty text and the reach line.</td></tr><tr><td>No connection</td><td>all</td><td>"Needs a connection" in the place of the results. The results show when the connection returns.</td></tr><tr><td>Click on a result, above 768 px</td><td>mouse, keyboard</td><td>The message centred and highlighted in the conversation. The panel stays.</td></tr><tr><td>X or Escape, above 768 px</td><td>mouse, keyboard</td><td>The field empty, the sidebar back.</td></tr><tr><td>Escape with a picker open</td><td>keyboard</td><td>The picker closes. The search stays.</td></tr><tr><td>Ctrl+F</td><td>keyboard</td><td>The cursor in the field. A second press opens the find of the browser.</td></tr><tr><td>Tap on the search row</td><td>touch, mouse</td><td>The sidebar closes. The search screen slides in, with the hint and the cursor in the field.</td></tr><tr><td>Tap on a result, 768 px or less</td><td>touch, mouse</td><td>The screen fades. The conversation at the message, under the search header.</td></tr><tr><td>Back at a message from a result</td><td>touch, mouse, keyboard</td><td>The results, at the same place in the list.</td></tr><tr><td>Back at the results</td><td>touch, mouse, keyboard</td><td>The screen slides out. The conversation with its regular header.</td></tr><tr><td>"Go to newest" at a message from a result</td><td>touch, mouse</td><td>The newest messages with the regular header. The search is over.</td></tr><tr><td>Scroll by hand at a message from a result</td><td>touch, mouse</td><td>The search header stays.</td></tr><tr><td>X in the field of the search screen</td><td>touch, mouse</td><td>The field empty, the hint, the screen stays.</td></tr><tr><td>The window crosses 768 px</td><td>all</td><td>The search is over.</td></tr><tr><td>The user leaves the conversation</td><td>all</td><td>The search is over.</td></tr></tbody></table></div>
+<h2 id="wording">Wording</h2>
+<div class="tablewrap"><table><thead><tr><th>Where</th><th>Text</th></tr></thead><tbody><tr><td>Placeholder of the field (configured list; these are the defaults)</td><td>"search...", "find the receipts...", "dig up the lore...", "who said what...", "search {0}..."; fallback "Search"</td></tr><tr><td>Empty result (configured list; these are the defaults)</td><td>"crickets...", "nothing. nada. zilch.", "no receipts found", "nobody said {0}", "that never happened"; fallback "No results"</td></tr><tr><td>Count line</td><td>"{n} results"; "1 result"; at 768 px or less "{n} results · {name}"</td></tr><tr><td>Count line while the answer loads</td><td>"Searching…"</td></tr><tr><td>Hint</td><td>"Type 2 or more characters"</td></tr><tr><td>Reach line</td><td>"Search covers messages in {name} since {date}."</td></tr><tr><td>Search row of the sidebar; accessible name of the fields</td><td>"Search this conversation"</td></tr><tr><td>Tooltips</td><td>"Clear search"; "Close search"; "Back to results"</td></tr><tr><td>Refusals</td><td>"Needs a connection"; "Conversation not found."; "Message not found."; "Too old to load"</td></tr></tbody></table></div>
+<h2 id="related">Related</h2>
+<ul><li><a href="frame.html">Header, sidebar and overlays</a> for the header, the sidebar and the hamburger.</li><li><a href="timeline.html">Timeline and media</a> for the jump to a message, the end row and "Go to newest".</li><li><a href="general-rules.html">General rules</a> for loading states, Escape and "Needs a connection".</li><li><a href="offline.html">Offline and installation</a> for what works without a connection.</li></ul>
+<footer>Source: <code>docs/spec/search.md</code>. Edit the Markdown, then run <code>python3 docs/spec/tools/build.py</code>.</footer>
+</main>
+</body>
+</html>

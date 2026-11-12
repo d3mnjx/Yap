@@ -19,6 +19,9 @@
 //   drafts          state.drafts
 //   registrations   state.registrations, the admins' waiting list
 //   incoming        an event with no state: a hub message arrived, and the detail is the message (notify.js)
+//   tail            an event with no state: the open conversation went to its newest messages by a control of the
+//                   timeline, by a send or by a reconnect, never by a scroll (ui/timeline.js). The narrow search
+//                   ends on it (SR-28); the timeline does not know the search.
 //   gifImport       an event with no state: the progress of a GIF import (ui/gif-library.js)
 
 export const state = {

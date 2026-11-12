@@ -4,7 +4,7 @@ The frame contains all parts around a conversation. The header shows the title, 
 
 ## Anatomy
 
-![Frame, desktop, a room. The header with the room title on the left and the status chip, mailbox and people count on the right; the 3 px header line; the sidebar on the right with ROOMS and the people section.](img/frame-desktop-room.png)
+![Frame, desktop, a room. The header with the room title on the left and the status chip, the mailbox and the search field on the right; the 3 px header line; the sidebar on the right with ROOMS and the people section.](img/frame-desktop-room.png)
 
 ![Status menu, desktop. Under the chip: Online, Away, Invisible, a divider, Settings, Notification settings, Admin, Sign Out.](img/frame-desktop-status-menu.png)
 
@@ -12,11 +12,11 @@ The frame contains all parts around a conversation. The header shows the title, 
 
 ![Frame, phone, sidebar open. The sidebar slid in from the right over the conversation, the header still visible above it.](img/frame-phone-sidebar.png)
 
-1. **Header.** One row with the title area on the left. On a desktop the pin button follows the title when the conversation has pinned messages. On the right are the status chip, on a narrow window the pin button, the mailbox when there are unread messages, and the people button with the online count. Below the header is a 3 px line, turquoise in rooms and purple in direct messages.
+1. **Header.** One row with the title area on the left. On a desktop the pin button follows the title when the conversation has pinned messages. On the right are the status chip, on a narrow window the pin button, the mailbox when there are unread messages, and the search field. At 768 px or less a hamburger stands in the place of the search field. Below the header is a 3 px line, turquoise in rooms and purple in direct messages.
 2. **Title area.** In a room, a title from the configured list, built from the room name. In a direct message, a back arrow and the partner's small avatar and name. On Settings, a back arrow and "Settings".
 3. **Status chip.** A small coloured chip with a dot, the user's display name and a gear. Its colour shows the user's current status. It opens the status menu.
 4. **Mailbox.** A tray icon with a red count of unread messages. It shows only when the count is above zero.
-5. **People button.** On desktop, a people icon with the online count. On narrow screens, a hamburger that opens the sidebar.
+5. **Hamburger.** At 768 px or less, a button that opens the sidebar. Above 768 px the sidebar is always visible, and the header has the [search field](search.md) in this place.
 6. **Connection dot.** A small dot at the left of the header controls, before the status chip. It shows only while the connection is not normal.
 7. **Sidebar.** A panel on the right, 240 px wide on desktop. It contains the section "ROOMS" with every room, then the people section. The people section has a title from the configured list and the online count.
 8. **Notice strip.** A one-line strip between the header line and the conversation. It shows only for a lasting state that needs an action from the user: a new version, or a sign-in.
@@ -42,11 +42,11 @@ The frame contains all parts around a conversation. The header shows the title, 
 
 **SH-07** On Settings, the title area shows a back arrow and "Settings". Channel settings show "#{room} Settings". A new channel shows "New Channel".
 
-**SH-08** The people button shows the number of people online. Invisible people are not counted. At 768 px or less, the count is hidden and the button is a hamburger that opens the sidebar.
+**SH-08** At 768 px or less, the header has a hamburger that opens the sidebar. Above 768 px the header has no button for the sidebar, and the search field stands in that place ([SR-19](search.md#SR-19)). The number of people online is in the title of the people section ([SH-28](#SH-28)). *Why:* above 768 px the sidebar is always visible, so a button for it has nothing to do.
 
 **SH-09** The mailbox is a tray icon with a red count. It shows only while the total unread count is above zero. Its tooltip is "{n} unread messages". The total is the sum of the counts in the sidebar, and does not include the open conversation. On narrow screens, a tap on the mailbox opens the sidebar. See [Notifications and unread](notifications.md).
 
-**SH-10** At 600 px or less, the header has more padding, a larger title and a shorter chip name. The gaps between the header controls are 4 px, and the people button is narrower. At every width, a long title ends with an ellipsis 8 px before the first control.
+**SH-10** At 600 px or less, the header has more padding, a larger title and a shorter chip name. The gaps between the header controls are 4 px, and the hamburger is narrower. At every width, a long title ends with an ellipsis 8 px before the first control.
 
 ### Status chip and menu
 
@@ -114,7 +114,7 @@ The frame contains all parts around a conversation. The header shows the title, 
 
 **SH-36** The hamburger or the mailbox opens the sidebar. The sidebar slides in from the right, with its top edge below the header. The conversation stays visible and is not dimmed. The header stays usable.
 
-**SH-37** The sidebar closes on a tap outside it, on a room or person pick, on the hamburger, and on any menu item that goes to another page.
+**SH-37** The sidebar closes on a tap outside it, on a room or person pick, on the search row ([SR-24](search.md#SR-24)), on the hamburger, and on any menu item that goes to another page.
 
 ### Prompts and dialogs
 
@@ -134,7 +134,7 @@ The frame contains all parts around a conversation. The header shows the title, 
 
 **SH-43** / opens the user's last conversation on this device. If there is none, / opens the lobby. /dm/{unknown user}, /dm/{the user themself} and /room/{unknown id} go to the lobby.
 
-**SH-44** Browser back goes to the previous conversation or page. The header back arrow always goes to the lobby.
+**SH-44** Browser back goes to the previous conversation or page. The header back arrow always goes to the lobby. During a search at 768 px or less, back first goes one step back in the search ([SR-27](search.md#SR-27)).
 
 **SH-45** The tab title is "{Project} | #{room}" in a room and "{Project} | @{username}" in a direct message. On the Settings and Admin pages, it is "Settings" and "Admin". Before a page sets it, the tab shows the project name: the server writes it into the page, so the tab never shows "Yap" while the client loads. While the tab is hidden, a "({n}) " prefix counts the arrivals by the rules on the [notifications page](notifications.md). The prefix resets when the user returns.
 

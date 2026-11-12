@@ -187,6 +187,26 @@ User join and leave messages. `{0}` is the username.
 ]
 ```
 
+#### Search
+
+The message search has two lists, in the group `Search`. `Placeholder` is the text in the empty search
+field; `{0}` is the name of the room or of the person. `NoResults` shows when a search finds nothing;
+`{0}` is what the person searched for. The other texts of the search are fixed.
+
+```json
+"Search": {
+  "Placeholder": [
+    "search...",
+    "find the receipts...",
+    "search {0}..."
+  ],
+  "NoResults": [
+    "crickets...",
+    "nobody said {0}"
+  ]
+}
+```
+
 To add variations, add strings to any list. There is no registry to update.
 
 ## Technical notes

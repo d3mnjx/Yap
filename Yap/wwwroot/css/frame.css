@@ -179,9 +179,8 @@
 }
 
 .users-toggle {
-    display: flex;
+    display: none; /* SH-08: above 768 px the sidebar is always there, and the search field has this place (search.css) */
     align-items: center;
-    gap: 0.5rem;
     background: transparent;
     border: none;
     color: var(--text-secondary);
@@ -201,22 +200,9 @@
     height: 20px;
 }
 
-/* Desktop: people icon, Mobile: hamburger */
-.icon-hamburger {
-    display: none;
-}
-
 @media (max-width: 768px) {
-    .icon-people {
-        display: none;
-    }
-
-    .icon-hamburger {
-        display: block;
-    }
-
-    .online-count {
-        display: none;
+    .users-toggle {
+        display: flex;
     }
 
     /* The sidebar is a slide-in here, so the pin button goes back among the controls, before the mailbox. */
@@ -224,11 +210,6 @@
         order: 0;
         margin: 0;
     }
-}
-
-.online-count {
-    font-size: 0.875rem;
-    font-weight: 500;
 }
 
 /* Status dropdown container */

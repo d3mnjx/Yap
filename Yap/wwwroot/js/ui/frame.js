@@ -1,9 +1,9 @@
 // The frame around a conversation (frame.md): the header with the title, the connection dot, the status
-// chip and its menu, the pin button, the mailbox and the people button; the header line; the profile card.
-// The sidebar with the rooms and the people is ui/sidebar.js, mounted here with the frame. Mounted once; the
-// pages change only the content column (SH-01).
+// chip and its menu, the pin button, the mailbox and the hamburger; the header line; the profile card.
+// The sidebar with the rooms and the people is ui/sidebar.js, and the message search with its field in the header
+// is ui/search.js; both are mounted here with the frame. Mounted once; the pages change only the content column (SH-01).
 
-import { state, on, displayName, unreadTotal, mergeMe, serverMuted, onlineCount } from '../store.js';
+import { state, on, displayName, unreadTotal, mergeMe, serverMuted } from '../store.js';
 import { clone, el, replace, classes } from '../render/dom.js';
 import { inline, pickTemplate, fill } from '../render/text.js';
 import { avatar, gradient } from '../render/avatar.js';
@@ -16,6 +16,7 @@ import * as router from '../router.js';
 import * as session from '../session.js';
 import { hasQueued } from '../sender.js';
 import { Sidebar, narrow } from './sidebar.js';
+import { Search } from './search.js';
 
 let frame = null;          // the mounted .chat-container
 let sidebar = null;        // its sidebar: { toggle, unmount }
@@ -38,10 +39,10 @@ export function mount(appRoot) {
 
   offs = [
     sidebar.unmount,
+    Search(frame, { closeSidebar: () => sidebar.toggle(false) }),
     on('user', renderChip), on('users', renderChip), on('presence', renderChip), on('connection', renderChip),
     on('unread', renderMailbox), on('mutes', renderMailbox), on('open', renderMailbox),
     on('pins', renderPins), on('open', renderPins),
-    on('presence', renderCount),
     on('connection', renderConnection), on('users', renderTitle), on('texts', renderTitle),
   ];
   renderAll();
@@ -54,7 +55,7 @@ export function unmount() {
   frame?.remove(); frame = null; sidebar = null;
 }
 
-function renderAll() { renderChip(); renderMailbox(); renderPins(); renderCount(); renderConnection(); renderTitle(); }
+function renderAll() { renderChip(); renderMailbox(); renderPins(); renderConnection(); renderTitle(); }
 
 // ---- the title area (SH-05, SH-06, SH-07) and the context (SH-04) ----
 
@@ -174,7 +175,7 @@ function togglePins() {
   closePins = openPins(frame.querySelector('.pins-button'), () => { closePins = null; });
 }
 
-// ---- the mailbox and the people count (SH-08, SH-09) ----
+// ---- the mailbox (SH-09) ----
 
 function renderMailbox() {
   if (!frame) return;
@@ -183,11 +184,6 @@ function renderMailbox() {
   button.hidden = total === 0;
   button.title = `${total} unread messages`;
   button.querySelector('.mailbox-badge').textContent = String(total);
-}
-
-function renderCount() {
-  if (!frame) return;
-  frame.querySelector('.online-count').textContent = String(onlineCount());
 }
 
 // ---- the connection dot (SH-16 to SH-18) ----

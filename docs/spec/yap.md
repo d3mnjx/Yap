@@ -32,6 +32,8 @@ The emoji picker shows the user's recent emoji, the custom packs and the standar
 
 The timeline shows the newest messages at the bottom and loads older messages when the user scrolls up. While the user is at the bottom, the timeline follows new messages. While the user reads older messages, the timeline holds its position and shows a pill for new messages. An image opens in the gallery viewer. See [Timeline and media](timeline.md).
 
+The search finds messages of the open conversation by their text: all words of the query, in any order, with no regard to capital letters and accent marks. A tap on a result shows the message in the conversation. See [Search](search.md).
+
 ## Presence
 
 The sidebar lists everyone online, each with a status: online or away. The user can choose away, or away comes by itself after some minutes without input and ends with the next input. An invisible user sees everyone and appears offline to everyone except the admin. The typing strip shows who types in the open conversation. See [Presence](presence.md).

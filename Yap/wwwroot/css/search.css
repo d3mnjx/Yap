@@ -1,0 +1,328 @@
+/* The message search of a conversation (docs/spec/search.md, SR-01 to SR-32).
+   Modules: js/ui/search.js, js/ui/entry.js.
+   Templates: t-frame (the field of the header, the results panel, the search row of the sidebar, the search screen,
+   the header of a result), t-search-results, t-search-result.
+   A result is a .pin-entry: its box, header, text and media are the pins panel's rules in frame.css. This file loads
+   after frame.css and adds what only the search needs. */
+
+/* ==== The field ==== */
+/* js/ui/search.js; t-frame (.search-field in the header and in the search screen) */
+
+.search-field {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    height: 1.75rem;
+    padding: 0 0.5rem;
+    border-radius: 4px;
+    background: var(--bg-darkest);
+    color: var(--text-placeholder);
+    cursor: text;
+}
+
+.search-field:focus-within {
+    box-shadow: 0 0 0 1px var(--accent-focus);
+}
+
+.search-field svg {
+    flex-shrink: 0;
+}
+
+.search-input {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    border: none;
+    outline: none; /* the field shows the focus (above), the input is only the part that takes the text */
+    background: transparent;
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 0.875rem;
+}
+
+.search-input::placeholder {
+    color: var(--text-placeholder);
+}
+
+.search-clear {
+    flex-shrink: 0;
+    padding: 0 0.125rem;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.search-clear:hover {
+    color: var(--text-primary);
+}
+
+/* SR-19: the field of the desktop, at the right end of the header, where the people button was. */
+.search-field-header {
+    width: 200px;
+}
+
+/* ==== The results ==== */
+/* js/ui/search.js; t-search-results, t-search-result */
+
+/* SR-20: the panel takes the place of the sidebar, with no animation: a width that moves would reflow the message
+   column on every frame. At most 45 % of the window, so the messages keep room in a window near 768 px. */
+.search-panel {
+    display: flex;
+    flex: none;
+    width: min(420px, 45%);
+    min-height: 0;
+    background: var(--bg-sidebar);
+}
+
+.chat-container.search-open .users-sidebar {
+    display: none;
+}
+
+.search-results {
+    position: relative; /* the refusal text of overlays.reason anchors here */
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+}
+
+/* The live region of the results (t-search-results): read, not seen. */
+.search-status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+/* The line keeps its height when it is empty: the list under it must not jump between "Searching…" and the count. */
+.search-count {
+    flex-shrink: 0;
+    min-height: 2.25rem;
+    padding: 0.75rem 1rem 0;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.search-list {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-height: 0;
+    padding: 0.5rem;
+    overflow-y: auto;
+    overscroll-behavior: contain; /* the end of the list does not pull the page on a phone */
+    scrollbar-width: thin;
+    scrollbar-color: var(--bg-muted) transparent;
+}
+
+.search-result {
+    flex-shrink: 0;
+}
+
+/* SR-09: six lines of the text. The whole text is in the box, and search.js scrolls the box to the first match
+   when the match is below the sixth line; so no overflow: auto here, the reader does not scroll it. The line height
+   is the pin text's (frame.css), and relative makes the match's offset count from this box. */
+.search-result .pin-text {
+    position: relative;
+    max-height: calc(6 * 1.4em);
+    overflow: hidden;
+}
+
+/* A fade on the edge where text is cut. The colours of a mask are only its alpha: black shows, transparent hides. */
+.search-result .pin-text.cut-bottom {
+    -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 1.4em), transparent);
+    mask-image: linear-gradient(to bottom, black calc(100% - 1.4em), transparent);
+}
+
+.search-result .pin-text.cut-top {
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 1.4em);
+    mask-image: linear-gradient(to bottom, transparent, black 1.4em);
+}
+
+.search-result .pin-text.cut-top.cut-bottom {
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 1.4em, black calc(100% - 1.4em), transparent);
+    mask-image: linear-gradient(to bottom, transparent, black 1.4em, black calc(100% - 1.4em), transparent);
+}
+
+/* SR-10: a matched word. */
+.search-result mark {
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--color-warning) 40%, transparent);
+    color: inherit;
+}
+
+/* What follows the results: the hint, a refusal, the empty text, the reach of the search (SR-12 to SR-15). */
+.search-note {
+    flex-shrink: 0;
+    padding: 0.5rem;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    text-align: center;
+    overflow-wrap: anywhere; /* the empty text can hold the query, which has no spaces to break at */
+}
+
+.search-hint,
+.search-error,
+.search-empty {
+    padding-top: 2rem;
+}
+
+.search-empty {
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+/* ==== 768 px or less: the search row, the search screen, the header of a result ==== */
+/* js/ui/search.js; t-frame (.search-row, .search-screen, .search-at-result) */
+
+.search-row,
+.search-screen,
+.search-at-result {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .search-field-header {
+        display: none; /* SR-24: no search control in the header here; the way in is the sidebar's row */
+    }
+
+    .search-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+        margin-bottom: 1rem;
+        padding: 0.5rem 0.625rem;
+        border: none;
+        border-radius: 4px;
+        background: var(--bg-darkest);
+        color: var(--text-secondary);
+        font: inherit;
+        font-size: 0.875rem;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    /* SR-25: the screen covers the frame, its header included. SR-30: it comes from the right with the move of the
+       sidebar (frame.css .users-sidebar), and it fades while the conversation at a result shows. */
+    .search-screen {
+        position: absolute;
+        inset: 0;
+        z-index: 150; /* README.md: over the sidebar and the action bar of a row, under the profile card and the menus */
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-primary);
+        transform: translateX(100%);
+        transition: transform 0.2s ease, opacity 0.15s ease;
+    }
+
+    .search-screen.in {
+        transform: none;
+    }
+
+    .search-screen.away {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .search-screen-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: var(--bg-header);
+    }
+
+    .search-screen-header .back-button {
+        display: flex;
+        padding: 0.25rem;
+        border: none;
+        border-radius: 4px;
+        background: transparent;
+        color: var(--text-secondary);
+        cursor: pointer;
+    }
+
+    .search-screen-header .search-field {
+        flex: 1;
+        height: 2.25rem;
+    }
+
+    /* GEN-15: 16 px, or a phone zooms the page when the field gets the focus. */
+    .search-screen-header .search-input {
+        font-size: 16px;
+    }
+
+    .search-screen-body {
+        display: flex;
+        flex: 1;
+        min-height: 0;
+        background: var(--bg-sidebar);
+    }
+
+    /* SR-26: the header of the conversation at a result. The title and the controls give it their place; they are
+       not removed, the header of the conversation comes back as it was when the search ends. */
+    .chat-container.search-at .header-title,
+    .chat-container.search-at .header-controls {
+        display: none;
+    }
+
+    .chat-container.search-at .search-at-result {
+        display: flex;
+        flex: 1;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 0;
+    }
+
+    .search-at-lines {
+        min-width: 0;
+        line-height: 1.2;
+    }
+
+    .search-at-query {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        color: var(--text-white);
+        font-weight: 600;
+    }
+
+    .search-at-query svg {
+        flex-shrink: 0;
+    }
+
+    .search-at-query span,
+    .search-at-count {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .search-at-count {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .search-screen-header {
+        padding: 0.75rem 1rem; /* the phone header's padding (frame.css, SH-10) */
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .search-screen {
+        transition: none;
+    }
+}

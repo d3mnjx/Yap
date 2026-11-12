@@ -360,7 +360,6 @@ await step(3, 'Unread rooms and DMs, mutes, away and offline', async (check, not
     dave: await visible(A.locator('.users-list .user-item', { hasText: 'dave' }).locator('.unread-dot')),
     ping: await sidebar('.users-list .user-item', 'Ping'),
     mailbox: await text(A.locator('.mailbox-badge')),
-    count: await text(A.locator('.online-count')),
   };
   check(state.general === '2' && state.random && state.carol === '2' && state.dave && !state.ping && state.mailbox === '4', `alice's sidebar ${JSON.stringify(state)}`);
 });
@@ -372,6 +371,17 @@ const A = people.alice?.page;
 await picture(4, 'frame-desktop-room.png', () => A, async (A) => {
   await quiet(A); await toBottom(A); await settle(A);
   await save(A, 'frame-desktop-room.png');
+});
+
+// The search of the lobby talk (search.md): three messages name the hut.
+const hits = page => page.locator('.search-results .search-result');
+await picture(28, 'search-desktop-results.png', () => A, async (A) => {
+  await A.locator('.search-field-header .search-input').fill('hut');
+  need(await waitTrue(async () => (await hits(A).count()) === 3, 5000), 'the search did not find the three messages');
+  await settle(A);
+  await save(A, 'search-desktop-results.png');
+  await A.keyboard.press('Escape');
+  need(await waitTrue(async () => !(await A.locator('.search-panel').isVisible()), 2000), 'the search did not end');
 });
 
 await picture(5, 'notifications-desktop-sidebar.png', () => A, async (A) => {
@@ -564,6 +574,26 @@ await step(20, 'frame-phone-sidebar.png', async (check) => {
   await save(P, 'frame-phone-sidebar.png');
   await P.tap('.users-toggle');
   await waitTrue(async () => !(await P.locator('.users-sidebar').getAttribute('class')).includes('sidebar-open'), 2000);
+  await sleep(400);
+});
+
+await picture(29, 'search-phone-results.png', () => phone?.page, async (P) => {
+  await P.tap('.users-toggle');
+  await P.tap('.search-row');
+  await P.locator('.search-screen .search-input').fill('hut');
+  need(await waitTrue(async () => (await hits(P).count()) === 3, 5000), 'the search did not find the three messages');
+  await settle(P, 600);
+  await save(P, 'search-phone-results.png');
+});
+
+await picture(30, 'search-phone-at-result.png', () => phone?.page, async (P) => {
+  await hits(P).filter({ hasText: 'good soup' }).locator('.pin-time').tap();
+  need(await waitTrue(async () => P.locator('.search-at-result').isVisible(), 5000), 'the message of the result did not show');
+  await settle(P, 800);
+  await save(P, 'search-phone-at-result.png');
+  await P.tap('.search-at-result .search-back');     // one step back: the results
+  await P.tap('.search-screen .search-back');        // and one more: the search is over
+  need(await waitTrue(async () => !(await P.locator('.search-screen').isVisible()), 3000), 'the search did not end');
   await sleep(400);
 });
 

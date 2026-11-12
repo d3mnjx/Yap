@@ -24,6 +24,7 @@ Component pages and feature pages link to each other. A component page tells wha
 | [Emoji and GIF pickers](pickers.md) | PK | current |
 | [Timeline and media](timeline.md) | TL | current |
 | [Header, sidebar and overlays](frame.md) | SH | current |
+| [Search](search.md) | SR | current |
 | [Settings](settings.md) | ST | current |
 | [Administration](admin.md) | AD | current |
 | [Presence](presence.md) | PR | current |
