@@ -75,18 +75,22 @@ export function mount(root, route) {
   });
   removePicture.addEventListener('click', async () => { saving(); try { await api.delete('/api/account/avatar'); saved(); } catch { saved(status, 'Could not save. Try again.', 'error'); } });
 
+  // The Location field is commented out in index.html (its user map did not happen), so `country` and `detect`
+  // are null for now. The `if (country)`, the two `?.` and the `if (detect)` below look removable, but without
+  // them this page does not mount. With the field back in index.html, each line works as before.
   const name = $('#display-name'), bio = $('#bio'), country = $('#country'), bioCounter = $('.bio-counter');
   name.placeholder = me.username;
   $('.name-hint').textContent = `Your username is ${me.username}, but your display name can be more fun. It can contain symbols and emojis :) `;
-  name.value = me.displayName ?? ''; bio.value = me.bio ?? ''; country.value = me.location ?? '';
+  name.value = me.displayName ?? ''; bio.value = me.bio ?? ''; if (country) country.value = me.location ?? '';
   const drawCounter = () => { bioCounter.textContent = `${bio.value.length}/150`; };
   drawCounter();
   let profileTimer = 0, profileDirty = false;
-  const profileBody = () => ({ displayName: name.value, bio: bio.value, location: country.value });
+  // Without the field, `location` is undefined and JSON drops it. The server then keeps the saved location.
+  const profileBody = () => ({ displayName: name.value, bio: bio.value, location: country?.value });
   const flushProfile = async () => { if (!profileDirty) return; profileDirty = false; await patch(profileBody()); };
-  for (const input of [name, bio, country]) input.addEventListener('input', () => { profileDirty = true; drawCounter(); saving(); clearTimeout(profileTimer); profileTimer = setTimeout(flushProfile, 800); });   // ST-02
+  for (const input of [name, bio, country]) input?.addEventListener('input', () => { profileDirty = true; drawCounter(); saving(); clearTimeout(profileTimer); profileTimer = setTimeout(flushProfile, 800); });   // ST-02
   const detect = $('.detect-location');
-  api.get('/api/account/location').then(found => { if (found?.location) { detect.hidden = false; detect.addEventListener('click', () => { country.value = found.location; profileDirty = true; flushProfile(); }); } }).catch(() => {});   // ST-06
+  if (detect) api.get('/api/account/location').then(found => { if (found?.location) { detect.hidden = false; detect.addEventListener('click', () => { country.value = found.location; profileDirty = true; flushProfile(); }); } }).catch(() => {});   // ST-06
 
   // ---- Appearance and Text Size (ST-08, ST-10) ----
   const grid = $('.theme-grid');

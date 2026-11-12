@@ -218,6 +218,7 @@ Differences that remain in the rewrite, by decision (2026-10-15, after the walk 
 | AD-12 | The link preview switch applies at once to open chats | New answers follow the switch; open chats keep their cards until a reload |
 | OF-06 | Media not seen before shows "Needs a connection" | The browser's broken-image state shows instead |
 | TL-12 | Changes above the view never move the row the reader reads | Older pages are compensated and land only while the view is still (TL-06); edits and loads above rely on the browser's scroll anchoring (Safari from 27 only) |
+| ST-06 | Settings has a Location field with "Detect" | The field is off since 2026-11-12, because the user map it was made for did not happen. Its markup is commented out in index.html. The server and the profile card (SH-35) keep each saved location |
 
 ## Phases
 
