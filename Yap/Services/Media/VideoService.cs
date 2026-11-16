@@ -136,7 +136,8 @@ public class VideoService
     /// <summary>
     /// Compresses video to MP4 H.264 (background, slow).
     /// Returns the compressed file path and duration in ms, or (null, 0) on failure.
-    /// Deletes the original file after successful compression.
+    /// Deletes the original file after successful compression. A failure leaves the original as it was
+    /// and no .mp4 beside it.
     /// </summary>
     public async Task<(string? Path, long DurationMs)> CompressVideoAsync(string videoPath)
     {
@@ -158,26 +159,22 @@ public class VideoService
                 return (videoPath, 0);
             }
 
-            // If input is already .mp4, compress to a temp file then replace
-            var outputPath = compressedPath;
+            // ffmpeg never writes to the final name, also not for a .mov, where that name is free. A run that fails
+            // or that the time limit stops leaves half a file, and at the final name that half looks like a finished
+            // video to every check for the file (TusEndpoints, VideoPosterBackfill).
+            var outputPath = Path.Combine(directory, $"{filename}_compressed.mp4");
             var isInPlace = string.Equals(videoPath, compressedPath, StringComparison.OrdinalIgnoreCase);
-            if (isInPlace)
-            {
-                outputPath = Path.Combine(directory, $"{filename}_compressed.mp4");
-            }
 
             var args = $"-i \"{videoPath}\" -c:v libx264 -crf 23 -preset medium -c:a aac -b:a 128k -movflags +faststart -vf \"scale='min(1280,iw)':-2\" -y \"{outputPath}\"";
-            var exitCode = await RunFfmpegAsync(args, timeoutMs: 600_000); // 10 min timeout
+            var exitCode = await RunFfmpegAsync(args, timeoutMs: 600_000); // 10 min timeout; the client's wait is above it (WORK_MS, upload.js)
 
             if (exitCode == 0 && File.Exists(outputPath))
             {
-                if (isInPlace)
-                {
-                    // Replace original with compressed
-                    try { File.Delete(videoPath); } catch { }
-                    File.Move(outputPath, compressedPath);
-                }
-                else
+                // For an .mp4 upload the move replaces the original. This changes the bytes at a public URL that
+                // browsers keep for a year (Program.cs), so the caller must not give the URL to anyone before
+                // this method returns (TusEndpoints).
+                File.Move(outputPath, compressedPath, overwrite: true);
+                if (!isInPlace)
                 {
                     // Delete original (different extension, e.g., .mov)
                     try { File.Delete(videoPath); } catch { }
@@ -193,8 +190,7 @@ public class VideoService
             }
 
             // Cleanup temp file on failure
-            if (isInPlace && File.Exists(outputPath))
-                try { File.Delete(outputPath); } catch { }
+            try { File.Delete(outputPath); } catch { }
 
             _logger.LogWarning("Failed to compress video {VideoPath} (exit code: {ExitCode})", videoPath, exitCode);
             return (null, 0);

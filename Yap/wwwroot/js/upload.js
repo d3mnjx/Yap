@@ -31,17 +31,26 @@ export function check(files, maxMB, inTray = 0) {
 // ends the polls at once, with no info. `reached` tells whether the server answered any poll (a proxy's answer for it does not count, `away`): none at all means
 // the network or the server went away, not that the server is slow. `tick` runs on every poll, a sign of life for
 // the stall check of sender.js.
+// A 202 does not use up an attempt. The result of a video comes after its compression (TusEndpoints.cs), and a long
+// video takes minutes: with a count of 30 polls the client refused a file that the server was about to finish.
+// The server stops the compression after 10 minutes (VideoService.cs). WORK_MS is above that, as the end for a
+// server that answers 202 and never finishes.
+const WORK_MS = 12 * 60 * 1000;
 async function info(uploadUrl, attempts = 30, tick = () => {}) {
   const base = uploadUrl.slice(0, uploadUrl.lastIndexOf('/'));
   const id = uploadUrl.split('/').pop();
+  const workEnd = Date.now() + WORK_MS;
   let reached = false;
-  for (let attempt = 0; attempt < attempts; attempt++) {
+  for (let attempt = 0; attempt < attempts;) {
+    let atWork = false;
     try {
       const res = await fetch(`${base}/info/${id}`, { credentials: 'same-origin' });
       if (!away(res.status)) reached = true;
       if (res.status === 200) return { info: await res.json(), reached };
       if (res.status === 404) return { info: null, reached };
+      atWork = res.status === 202 && Date.now() < workEnd;
     } catch { /* no answer: the network is away; the next poll may get through */ }
+    if (!atWork) attempt++;
     tick();
     await new Promise(r => setTimeout(r, 1000));
   }

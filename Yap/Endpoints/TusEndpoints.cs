@@ -31,6 +31,14 @@ public static class TusEndpoints
         var tusStorePath = uploads.TusTemp;
         Directory.CreateDirectory(uploads.TusResults);   // under the tus folder, which this creates too
 
+        // An empty result file means "the server still works on the file" (OnFileCompleteAsync). No work runs at
+        // start, so an empty file here is from work that a restart stopped: the compression of a video takes minutes,
+        // and a deploy can come in that time. Its uploader's client would poll a 202 until its own limit (WORK_MS,
+        // upload.js). With a refusal the person sees a failed file at once and can send it again.
+        foreach (var result in Directory.EnumerateFiles(uploads.TusResults))
+            if (new FileInfo(result).Length == 0)
+                File.WriteAllText(result, JsonSerializer.Serialize(new { type = "error", error = "The server restarted before this file was ready" }, JsonSerializerOptions.Web));
+
         app.MapTus("/api/tus", async httpContext => new()
         {
             // The id of an upload names its owner (UploadIds). An anonymous request never creates one: OnAuthorize refuses it first.
@@ -378,6 +386,15 @@ public static class TusEndpoints
                             {
                                 await videoService.GeneratePosterAsync(filePath);
 
+                                // The result waits for the compression. The compression changes the bytes at the
+                                // video's URL (VideoService), and a browser keeps what it got from that URL for a year
+                                // (Program.cs). With the result before the compression, the message went out first:
+                                // a person who pressed play in that time kept the first bytes, and the video did not
+                                // load for that person afterwards (the lobby video of 2026-11-16, a window of 4 s).
+                                // Nobody knows the URL before the result, so nobody can ask for it earlier.
+                                // The work runs outside this request on purpose: a long video takes minutes, and a
+                                // proxy does not wait that long for the answer to the last chunk. The client polls
+                                // GET /api/tus/info, which answers 202 until Done or Refuse.
                                 _ = Task.Run(async () =>
                                 {
                                     try
@@ -385,12 +402,26 @@ public static class TusEndpoints
                                         var (compressedPath, durationMs) = await videoService.CompressVideoAsync(filePath);
                                         if (compressedPath != null && durationMs > 0)
                                             mediaLog.SetCompressDuration(uniqueFileName, durationMs);
+
+                                        // A message shows the .mp4 of a video (MessageMapper). After a failed
+                                        // compression an .mp4 upload is still there as it came. An upload of another
+                                        // format has no .mp4 then, and its message could never play.
+                                        if (File.Exists(Path.ChangeExtension(filePath, ".mp4")))
+                                        {
+                                            Done(new { url = $"/uploads/{uniqueFileName}", type });
+                                            return;
+                                        }
+                                        logger.LogWarning("Upload refused, the video did not compress: {FileName}", originalFileName);
                                     }
                                     catch (Exception ex)
                                     {
                                         logger.LogError(ex, "Error compressing video {FileName}", uniqueFileName);
                                     }
+                                    // The files of a refused upload are of no use to a message, and they are public.
+                                    try { File.Delete(filePath); File.Delete(Path.Combine(uploadsFolder, Path.GetFileNameWithoutExtension(uniqueFileName) + "_poster.webp")); } catch { }
+                                    Refuse("Could not process this video");
                                 });
+                                return;
                             }
                         }
 
