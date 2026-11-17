@@ -264,7 +264,8 @@ export async function invoke(method, ...args) {
   }
 }
 
-// Fire and forget, for typing, markRead and emojiUsed. Silently dropped without a connection.
+// Fire and forget, for typing, markRead, leave and reportLoad. Silently dropped without a connection.
+// The emoji uses do not go this way: recent-emoji.js needs the result, so it calls invoke('emojisUsed').
 export function send(method, ...args) {
   if (connected()) connection.send(method, ...args).catch(() => {});
 }

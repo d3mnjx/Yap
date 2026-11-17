@@ -113,6 +113,8 @@ figure.diagram svg { display: block; max-width: 100%; height: auto; }
     router.js             URL to page, history, the last route
     session.js            sign-in and sign-out as the client sees them
     sender.js             the outbox: pending rows, uploads, the post loop, the rows on disk
+    recent-emoji.js       the Recent emoji of the account: one path for a picker tap, a sent message and an edit; the
+                          uses that the server did not get yet stay on disk until the next connect (PK-07, PK-50, PK-51)
     upload.js             files to the TUS endpoint, with progress
     notify.js             the sound, the tab title, the app badge
     push.js               the push subscription of this device and the prompt of the installed app

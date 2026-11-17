@@ -225,7 +225,7 @@ export function Composer(root) {
     stopTyping();
     const row = sender.queueMessage({ ...target, text, replyToId: reply?.id ?? null, files: attached });
     if (!attached.length) row.tappedAt = performance.now();                                 // AD-26 measures the wire; an upload would hide it
-    if (text) recordTextEmojis(text);                                                       // after queueMessage: line 221 cleared the draft, so nothing before the queue may risk the message (PK-07)
+    if (text) recordTextEmojis(text);                                                       // after queueMessage: saveDraft() above already cleared the draft, so nothing before the queue may risk the message (PK-07)
   }
   sendButton.addEventListener('pointerdown', e => e.preventDefault());                     // never moves the focus (IB-22)
   sendButton.addEventListener('click', send);

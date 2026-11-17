@@ -462,7 +462,9 @@ public class ChatTests : IClassFixture<YapFactory>
         Assert.Equal(["🔥", "😀", "🎉"], await RecentOf(ben));
 
         await hub.InvokeAsync("EmojisUsed", Enumerable.Range(0, 30).Select(i => $"e{i}").ToArray());
-        Assert.Equal(20, (await RecentOf(ben)).Count);
+        var kept = await RecentOf(ben);
+        Assert.Equal(20, kept.Count);
+        Assert.Equal("e29", kept[0]);   // the newest use is first: of 30 uses the last 20 stay, not the first 20
         await hub.DisposeAsync();
     }
 

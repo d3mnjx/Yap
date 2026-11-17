@@ -665,7 +665,7 @@ public class UserService
             var recent = GetRecentEmojis(user.Username);
             var before = user.RecentEmojis;
             var anyValid = false;
-            foreach (var emoji in emojis.Take(20))
+            foreach (var emoji in emojis.TakeLast(20))   // the list is in the order of use, so its end holds the newest; Take(20) kept the oldest
             {
                 if (string.IsNullOrEmpty(emoji) || emoji.Length > 64) continue;
                 recent.Remove(emoji);

@@ -96,7 +96,7 @@ Attachments are in the offline promise. The case to serve: someone loses the con
 - No change tracker that numbers revisions, no digest, no overflow reset.
 - No server epoch; a deploy changes nothing on the client.
 - No retry policy; connectivity events are the retry.
-- No operation queue; one row type, a new message.
+- No operation queue; the outbox has one row type, a new message. One exception is outside the outbox: `js/recent-emoji.js` keeps the emoji uses that the server did not get yet, as one list (`pendingEmoji` in the `kv` store). A second send of that list gives the same Recent row, so the list needs no operation id and no conflict rule.
 - No second service worker and no feature probe.
 - No locks on the server beyond the one ChatService already has.
 
