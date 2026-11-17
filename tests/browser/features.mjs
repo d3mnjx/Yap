@@ -28,6 +28,10 @@ await signIn(A, 'boss'); await signIn(B, 'guest');
 console.log(`setup: A ${new URL(A.url()).pathname}, B ${new URL(B.url()).pathname}`);
 
 await step(1, 'Reply', async (check) => {
+  // The line "guest joined the chat" comes through the 250 ms presence tick, so it can arrive after the hover below.
+  // It then moves the row from under the pointer, the row loses :hover, and the click on its action bar waits
+  // until the timeout. Without this wait the step failed in 3 of 15 runs (2026-11-17).
+  await A.locator('.lobby-line', { hasText: 'guest' }).first().waitFor({ timeout: 5000 });
   await send(B, 'original');
   await row(A, 'original').waitFor({ timeout: 5000 });
   await row(A, 'original').hover();
