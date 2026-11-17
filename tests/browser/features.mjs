@@ -831,4 +831,21 @@ await step(18, 'Search at 768 px or less: the sidebar row, the search screen, a 
   check(wide && covers && tierEnds && noStep, `the screen at 700 px ${wide}, over the whole frame ${covers}; 1000 px ends the search ${tierEnds}; history state ${JSON.stringify(await N.evaluate(() => history.state))}`);
 });
 
+await step(19, 'The emoji of a sent message go to Recent, also from the keyboard, the last one first (PK-07, PK-50, PK-51)', async (check) => {
+  await A.goto(BASE + '/lobby');
+  await A.waitForSelector('.message-input', { timeout: 10000 });
+  await send(A, 'ok 🎉 → 😀');   // no tap in the picker: before 2026-11-17 a typed emoji never reached Recent
+  const recentOf = () => A.evaluate(async () => (await import('/js/store.js')).state.emoji.recent);
+  const local = await waitTrue(async () => (await recentOf()).slice(0, 2).join() === '😀,🎉', 3000, 50);
+  const server = await waitTrue(() => A.evaluate(() => fetch('/api/bootstrap').then(r => r.json()).then(d => d.emoji.recent.slice(0, 2).join() === '😀,🎉')), 5000);
+  await A.click('.emoji-toggle-button');
+  const cells = A.locator('[data-picker-pane="emoji"] [data-section="recent"] .emoji-btn');
+  await cells.first().waitFor({ timeout: 5000 });
+  const shown = await cells.evaluateAll(list => list.slice(0, 2).map(b => b.dataset.emoji).join());
+  await A.keyboard.press('Escape');
+  const all = await recentOf();
+  check(local && server && shown === '😀,🎉' && !all.includes('→'),
+    `the page's list ${local}; the server's list ${server}; the first cells "${shown}"; the arrow is not an emoji of the picker ${!all.includes('→')} ${JSON.stringify(all.slice(0, 4))}`);
+});
+
 await finish(browser, server);

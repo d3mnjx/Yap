@@ -414,6 +414,93 @@ public class ChatTests : IClassFixture<YapFactory>
         await frankHub.DisposeAsync();
     }
 
+    [Fact(DisplayName = "PK-07, PK-50: the emoji of a message go to the front of the recent emoji, the last one first, and the other device gets the list")]
+    public async Task Emojis_of_a_message_go_to_recent()
+    {
+        var ana = await _app.SignInAsync("ana_recent");
+        var other = await _app.SignInAsync("other_recent");
+        var phone = await ana.ConnectAsync("phone");
+        var laptop = await ana.ConnectAsync("laptop");
+        var seen = new Expectation<JsonElement>();
+        laptop.On<JsonElement>("me", partial => { if (partial.TryGetProperty("emoji", out var emoji)) seen.Set(emoji); });
+
+        await phone.InvokeAsync("EmojisUsed", new[] { "🎉", "😀" });
+
+        // The order of the text: the last emoji is the first cell, the same as two taps in the picker.
+        Assert.Equal(["😀", "🎉"], Strings((await seen.Within()).GetProperty("recent")));
+        Assert.Equal(["😀", "🎉"], await RecentOf(ana));
+        Assert.Empty(await RecentOf(other));
+        await phone.DisposeAsync();
+        await laptop.DisposeAsync();
+    }
+
+    [Fact(DisplayName = "PK-07, PK-51: a list that arrives a second time changes nothing and sends no event; bad entries are ignored; the list holds 20")]
+    public async Task A_repeated_emoji_list_is_harmless()
+    {
+        var ben = await _app.SignInAsync("ben_recent");
+        var hub = await ben.ConnectAsync();
+        var events = new List<List<string>>();
+        var fire = new Expectation<bool>();
+        hub.On<JsonElement>("me", partial =>
+        {
+            if (!partial.TryGetProperty("emoji", out var emoji)) return;
+            var recent = Strings(emoji.GetProperty("recent"));
+            lock (events) events.Add(recent);
+            if (recent[0] == "🔥") fire.Set(true);
+        });
+
+        // The page sends its waiting list again after each connect until an answer came (PK-51), so a repeat must be
+        // harmless. Events of one connection arrive in order: when the 🔥 event is here, an event of the repeat
+        // would be here too.
+        await hub.InvokeAsync("EmojisUsed", new[] { "🎉", "😀" });
+        await hub.InvokeAsync("EmojisUsed", new[] { "🎉", "😀" });
+        await hub.InvokeAsync("EmojisUsed", (string[]?)null);
+        await hub.InvokeAsync("EmojisUsed", new[] { "", null, new string('x', 65) });
+        await hub.InvokeAsync("EmojisUsed", new[] { "🔥" });
+        await fire.Within();
+        lock (events) Assert.Equal(2, events.Count);
+        Assert.Equal(["🔥", "😀", "🎉"], await RecentOf(ben));
+
+        await hub.InvokeAsync("EmojisUsed", Enumerable.Range(0, 30).Select(i => $"e{i}").ToArray());
+        Assert.Equal(20, (await RecentOf(ben)).Count);
+        await hub.DisposeAsync();
+    }
+
+    [Fact(DisplayName = "MR-41, MR-44: a reaction moves its emoji to the front and always sends the quick reactions; an emoji of a message does not change them")]
+    public async Task Only_reactions_change_the_quick_reactions()
+    {
+        var cleo = await _app.SignInAsync("cleo_recent");
+        var lobby = _app.Service<ChatService>().LobbyId;
+        var message = (await (await cleo.Http.PostAsJsonAsync($"/api/channels/{lobby}/messages", new { clientId = Guid.NewGuid(), text = "react to me" })).Content.ReadFromJsonAsync<MessageDto>())!;
+        var hub = await cleo.ConnectAsync();
+        var events = System.Threading.Channels.Channel.CreateUnbounded<JsonElement>();
+        hub.On<JsonElement>("me", partial => { if (partial.TryGetProperty("emoji", out var emoji)) events.Writer.TryWrite(emoji); });
+        async Task<JsonElement> Next() => await events.Reader.ReadAsync(new CancellationTokenSource(TimeSpan.FromSeconds(10)).Token);
+
+        Assert.Null(await hub.InvokeAsync<HubError?>("React", message.Id, "🔥"));
+        var added = await Next();
+        Assert.Equal("🔥", Strings(added.GetProperty("recent"))[0]);
+        Assert.Contains("🔥", Strings(added.GetProperty("quickReactions")));
+
+        // The reaction goes away. The recent list stays the same, and the event must come all the same: it is the
+        // only message that brings the new quick reactions to the person's devices.
+        Assert.Null(await hub.InvokeAsync<HubError?>("React", message.Id, "🔥"));
+        var removed = await Next();
+        Assert.Equal("🔥", Strings(removed.GetProperty("recent"))[0]);
+        Assert.DoesNotContain("🔥", Strings(removed.GetProperty("quickReactions")));
+
+        await hub.InvokeAsync("EmojisUsed", new[] { "🎉" });
+        var typed = await Next();
+        Assert.Equal(["🎉", "🔥"], Strings(typed.GetProperty("recent")));
+        Assert.DoesNotContain("🎉", Strings(typed.GetProperty("quickReactions")));
+        await hub.DisposeAsync();
+    }
+
+    private static List<string> Strings(JsonElement array) => array.EnumerateArray().Select(e => e.GetString()!).ToList();
+
+    private static async Task<List<string>> RecentOf(SignedIn person) =>
+        Strings((await person.Http.GetFromJsonAsync<JsonElement>("/api/bootstrap")).GetProperty("emoji").GetProperty("recent"));
+
     [Fact(DisplayName = "GEN-04: a reply quotes an original of the same conversation only")]
     public async Task Reply_across_conversations_is_refused()
     {

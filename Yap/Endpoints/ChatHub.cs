@@ -165,8 +165,11 @@ public sealed class ChatHub(ChatService chat, PresenceService presence, UserServ
 
     public HubError? Unpin(Guid channelId, Guid messageId) => chat.Unpin(Me, MyName, channelId, messageId) is { } error ? new(error) : null;
 
-    /// <summary>A pick in the composer's emoji picker counts as a use (IB-44, PK-07).</summary>
+    /// <summary>Kept for tabs of an older build (SH-50); remove once no tab from before 2026-11-17 can still be open.</summary>
     public void EmojiUsed(string emoji) => users.RecordEmojiUse(Me, emoji);
+
+    /// <summary>Picker or keyboard emoji used in the composer, a message or an edit (PK-07).</summary>
+    public void EmojisUsed(string[]? emojis) => users.RecordEmojiUses(Me, emojis);
 
     // ---- inside -------------------------------------------------------------------------------------------
 

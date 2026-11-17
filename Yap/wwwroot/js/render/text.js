@@ -221,3 +221,62 @@ function isEmojiOnly(text) {
   const hadEmoji = withoutPacks !== trimmed || withoutEmoji !== withoutPacks;
   return rest.length === 0 && hadEmoji;
 }
+
+// ---- picker emoji extraction for Recent (PK-07) ----
+
+const TONE_GLOBAL = /\ud83c[\udffb-\udfff]/g;
+const MOD_BASE = /^\p{Emoji_Modifier_Base}/u;
+const stripFe0f = s => s.replace(/\ufe0f/g, '');
+
+let pickerLoad = null;   // Promise<Map<string, string> | null>, built once on the first message with Unicode emoji
+
+function ensurePickerMap() {
+  return pickerLoad ??= import('../data/emoji-list.js')
+    .then(m => new Map(m.categories.flatMap(c => c.emojis).map(e => [stripFe0f(e), e])))
+    .catch(() => { pickerLoad = null; return null; });
+}
+
+function hasPackShortcode(text) {
+  SHORTCODE.lastIndex = 0;
+  let m;
+  while ((m = SHORTCODE.exec(text))) if (packs.has(m[1])) return true;
+  return false;
+}
+
+function resolvePickerEmoji(seg, byKey) {
+  const exact = byKey.get(stripFe0f(seg));
+  if (exact) return exact;
+  if (seg.match(TONE_GLOBAL)?.length === 1 && MOD_BASE.test(seg) && byKey.has(stripFe0f(seg.replace(TONE_GLOBAL, '')))) return seg;
+  return null;
+}
+
+// Every picker emoji (or single-skin-tone variant of one) and known :shortcode: in text, outside links, in text order.
+export async function extractPickerEmojis(text) {
+  if (!text) return [];
+  EMOJI.lastIndex = 0;   // EMOJI has /g: reset before .test() so an earlier match cannot make a concurrent call miss
+  const hasUnicode = EMOJI.test(text);
+  if (!hasUnicode && !hasPackShortcode(text)) return [];
+  const byKey = hasUnicode ? await ensurePickerMap() : null;
+  const links = findLinks(text);
+  const slices = [];
+  let last = 0;
+  for (const link of links) {
+    if (link.start > last) slices.push(text.slice(last, link.start));
+    last = link.end;
+  }
+  if (last < text.length) slices.push(text.slice(last));
+
+  const out = [];
+  for (const slice of slices) {
+    for (const part of splitShortcodes(slice)) {
+      if (part.shortcode) { out.push(`:${part.shortcode}:`); continue; }
+      if (!byKey) continue;
+      for (const seg of splitEmoji(part.text)) {
+        if (!seg.emoji) continue;
+        const resolved = resolvePickerEmoji(seg.emoji, byKey);
+        if (resolved) out.push(resolved);
+      }
+    }
+  }
+  return out;
+}

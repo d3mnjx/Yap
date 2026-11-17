@@ -77,7 +77,8 @@ The client calls the methods with these camelCase names; SignalR matches the ser
 | `delete` | messageId | error | Own rows only (MR-64). |
 | `pin` | channelId, messageId | error | Up to three per conversation, the newest first (MR-77, MR-78). Both people of a DM; in a room the admin, or whoever the room's pin setting allows (AD-37). Also stores a system line in the conversation, sent as a `message` with `kind: "pin"`: it counts for nobody and sends no push (MR-80). |
 | `unpin` | channelId, messageId | error | The same rights. The channel id is named because the message may be older than the ones in memory. |
-| `emojiUsed` | emoji | | A pick in the composer picker (IB-44, PK-07). |
+| `emojisUsed` | emojis | | The emoji of a pick in the composer picker, of a sent message or of a saved edit, in the order of use (PK-07, PK-50). The page sends the list again after a connect when no answer came (PK-51). |
+| `emojiUsed` | emoji | | One emoji. Only a page of a build before 2026-11-17 calls it (SH-50). |
 
 `Conversation`:
 

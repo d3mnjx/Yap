@@ -18,6 +18,7 @@ import { api } from '../api.js';
 import { openInstallDialog } from '../pwa.js';
 import { voicePlayer } from './voice.js';
 import { video, gifLoop } from './video.js';
+import { recordEditedEmojis } from '../recent-emoji.js';
 
 const MAX_TEXT = 4000;   // MR-11
 
@@ -463,13 +464,15 @@ function startEdit(rowNode, m) {
   const close = () => { if (editing?.rowNode !== rowNode) return; content.replaceChildren(...saved); rowNode.classList.remove('editing'); editing = null; redrawMessage(m.id); };
   const save = async () => {
     const text = area.value;
-    if (!text.trim() || text === m.text) { close(); return; }                                      // MR-61
-    if (m.pending) { sender.edit(m, text); close(); return; }                                      // MR-72
+    const before = m.text ?? '';                                                                    // read before editLocally, which mutates m.text in place (store.js)
+    if (!text.trim() || text === before) { close(); return; }                                      // MR-61
+    if (m.pending) { sender.edit(m, text); recordEditedEmojis(before, text); close(); return; }    // MR-72, PK-07
     if (state.connection !== 'connected') { overlays.reason(rowNode, 'Needs a connection'); return; }
     const undo = editLocally(m.id, text);
     close();
     const result = await hub.invoke('edit', m.id, text);
     if (result?.error) { undo?.(); overlays.reason(document.getElementById(`msg-${m.id}`) ?? rowNode, result.error); }
+    else recordEditedEmojis(before, text);                                                         // PK-07
   };
   box.querySelector('.edit-save').addEventListener('click', save);
   box.querySelector('.edit-cancel').addEventListener('click', close);

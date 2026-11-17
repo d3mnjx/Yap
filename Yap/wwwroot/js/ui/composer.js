@@ -17,6 +17,7 @@ import { GifPicker } from './gif-picker.js';
 import { keyOf } from '../offline/snapshot.js';
 import { record, supported as canRecord } from './recorder.js';
 import { drawBars, formatTime } from './voice.js';
+import { recordTextEmojis } from '../recent-emoji.js';
 
 const MAX_TEXT = 4000;      // IB-14
 const LIVE_BARS = 48;       // the recorder shows the last 4.8 s of levels (IB-68)
@@ -224,6 +225,7 @@ export function Composer(root) {
     stopTyping();
     const row = sender.queueMessage({ ...target, text, replyToId: reply?.id ?? null, files: attached });
     if (!attached.length) row.tappedAt = performance.now();                                 // AD-26 measures the wire; an upload would hide it
+    if (text) recordTextEmojis(text);                                                       // after queueMessage: line 221 cleared the draft, so nothing before the queue may risk the message (PK-07)
   }
   sendButton.addEventListener('pointerdown', e => e.preventDefault());                     // never moves the focus (IB-22)
   sendButton.addEventListener('click', send);

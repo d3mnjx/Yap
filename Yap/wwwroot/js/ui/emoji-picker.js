@@ -4,10 +4,11 @@
 import { state } from '../store.js';
 import { clone, el, replace } from '../render/dom.js';
 import { emojiImage, packImage } from '../render/text.js';
-import * as hub from '../hub.js';
+import { recordEmojis } from '../recent-emoji.js';
 import * as overlays from './overlays.js';
 
 const CATEGORY_NAMES = { smileys: 'Smileys', gestures: 'Gestures', animals: 'Animals', nature: 'Nature', food: 'Food', activities: 'Activities', travel: 'Travel', objects: 'Objects', symbols: 'Symbols', flags: 'Flags' };
+const baseKey = s => s.replace(/\ud83c[\udffb-\udfff]|\ufe0f/g, '');   // maps a skin-tone emoji in Recent to its base keyword entry
 
 // EmojiPicker({ onPick(emojiOrShortcode), recordUse = true }) returns { element, opened() }. opened() refreshes
 // Recent and clears the search (PK-06, PK-08) and must be called on every open. With recordUse false, the caller
@@ -21,7 +22,7 @@ export function EmojiPicker({ onPick, recordUse = true }) {
   const clear = picker.querySelector('.emoji-search-clear');
   const empty = picker.querySelector('.emoji-search-empty');
   let built = false;
-  let keywords = {};   // the list's search words, kept for Recent (PK-07); filled by build()
+  let kwByBase = new Map();   // baseKey(emoji) -> search words for Recent, including skin-tone variants (PK-07)
 
   // The first open imports the picker's list (js/data/emoji-list.js). It ships with the shell and the worker has it, so
   // the wait is a cache hit, and a closed picker costs the start nothing (PK-11). The packs are runtime data and come
@@ -31,7 +32,8 @@ export function EmojiPicker({ onPick, recordUse = true }) {
     let data;
     try { data = await import('../data/emoji-list.js'); }
     catch { built = false; return; }   // offline before the worker stored the shell: the next open tries again
-    keywords = data.keywords;
+    const keywords = data.keywords;
+    kwByBase = new Map(Object.entries(keywords).map(([e, kw]) => [baseKey(e), kw.toLowerCase()]));
     const list = [];   // { key, title, icon(), cells: [{ value, keywords, node() }] }
     list.push({ key: 'recent', title: 'Recent', icon: () => emojiImage('🕐', 'inline', { lazy: true }), cells: [] });
     for (const pack of state.emojiImages?.packs ?? []) {
@@ -63,8 +65,8 @@ export function EmojiPicker({ onPick, recordUse = true }) {
     // and the click never reached the cell (2026-10-24, "a tap on a search result inserts nothing").
     button.addEventListener('pointerdown', e => e.preventDefault());
     button.addEventListener('click', () => {
-      if (recordUse) hub.send('emojiUsed', c.value);                                 // PK-07
       onPick(c.value);                                                               // IB-44
+      if (recordUse) recordEmojis([c.value]);                                        // after onPick: a fault here never blocks the insert (PK-07)
       if (overlays.isPhone() && document.activeElement === search) search.blur();    // PK-47
     });
     return button;
@@ -77,7 +79,7 @@ export function EmojiPicker({ onPick, recordUse = true }) {
     const recent = state.emoji?.recent ?? [];
     if (!recent.length) { replace(grid, [el('div', { class: 'emoji-empty' }, 'No recent emojis yet')]); return; }
     replace(grid, recent.map(v => cell(v.startsWith(':') ? { value: v, keywords: v.toLowerCase(), title: v, node: () => packImage(v.slice(1, -1), 'text') ?? document.createTextNode(v) }
-                                                        : { value: v, keywords: (keywords[v] ?? '').toLowerCase(), node: () => emojiImage(v, 'text', { lazy: true }) })));
+                                                        : { value: v, keywords: kwByBase.get(baseKey(v)) ?? '', node: () => emojiImage(v, 'text', { lazy: true }) })));
   }
 
   function goTo(key) {

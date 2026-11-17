@@ -170,7 +170,7 @@ A message row is one message as it appears in the conversation. The row shows wh
 
 **MR-60** On a device without touch input, Enter saves and Shift+Enter adds a new line. On a device with touch input, Enter adds a new line. Escape cancels the edit. During input method composition, Enter and Escape do nothing.
 
-**MR-61** When the text is unchanged, empty or only whitespace, Save closes the editor and changes nothing. When the text is changed, Save updates the message for every reader and adds "(edited)". The edited text contains at most 4000 characters.
+**MR-61** When the text is unchanged, empty or only whitespace, Save closes the editor and changes nothing. When the text is changed, Save updates the message for every reader and adds "(edited)". An emoji that the edit brought into the text goes to the reader's recent emoji ([PK-50](pickers.md#PK-50)). The edited text contains at most 4000 characters.
 
 **MR-62** Only one editor is open at a time. Edit on another row discards the draft of the first editor. While the user edits a row, its action bar is hidden. Changes from elsewhere, such as a reaction, show on the row when the editor closes, also after a reconnect. Its link cards stay visible. When the message is deleted elsewhere, the editor disappears.
 

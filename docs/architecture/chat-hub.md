@@ -102,7 +102,8 @@ public HubError? Edit(Guid messageId, string text) => chat.Edit(Me, messageId, t
 public HubError? Delete(Guid messageId) => chat.Delete(Me, messageId);                   // MR-64
 public HubError? Pin(Guid channelId, Guid messageId) => chat.Pin(Me, MyName, channelId, messageId);       // MR-77
 public HubError? Unpin(Guid channelId, Guid messageId) => chat.Unpin(Me, MyName, channelId, messageId);
-public void EmojiUsed(string emoji) => users.RecordEmojiUse(Me, emoji);                  // IB-44
+public void EmojisUsed(string[]? emojis) => users.RecordEmojiUses(Me, emojis);           // PK-07, PK-50
+public void EmojiUsed(string emoji) => users.RecordEmojiUse(Me, emoji);                  // a page of an older build (SH-50)
 ```
 
 ChatService holds the rules. Each rule is one or two lines:

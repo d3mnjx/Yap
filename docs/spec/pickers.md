@@ -35,9 +35,13 @@ The emoji picker and the GIF picker open from the input box. The emoji picker pu
 
 **PK-06** The search compares the typed text with each emoji's keywords, and with each pack emoji's shortcode and pack keywords. Results update on every keystroke. Results stay grouped under their section headers, with Recent first. A section without a hit is not shown. When there is no hit, the picker shows "No emojis found". The clear button, a category tap and a reopen all clear the search.
 
-**PK-07** Recent contains the last 20 emoji that the reader used, newest first, without duplicates. A use is a pick in either picker, a quick reaction, or a tap on a reaction pill. An emoji typed with a keyboard is not a use. The list belongs to the account, and the reader sees the same list on other devices. When the list is empty, it shows "No recent emojis yet".
+**PK-07** Recent contains the last 20 emoji that the reader used, newest first, without duplicates. A use is a pick in either picker, a quick reaction, a tap on a reaction pill, or an emoji in a message that the reader sends ([PK-50](#PK-50)). The list belongs to the account, and the reader sees the same list on other devices. When the list is empty, it shows "No recent emojis yet".
 
 **PK-08** The Recent row does not change while the picker is open. It updates on the next open.
+
+**PK-50** A sent message adds its emoji to Recent, also when the reader typed them with a keyboard or pasted them. The emoji go in the order of the text, so the last emoji of the text becomes the first cell. An emoji counts when the picker has it, with or without one skin tone. A pack emoji counts by its shortcode. A symbol or an emoji that the picker does not have does not count, and an emoji inside a link does not count. A saved edit adds the emoji that the edit brought into the text. *Why:* Recent shows only emoji that the picker can also show in another section.
+
+**PK-51** A pick in the picker of the input box, a sent message and a saved edit change Recent on the device immediately ([GEN-01](general-rules.md#GEN-01)). This is also true without a connection, and after the app was closed and opened again. The reader's other devices show the change when the connection returns. An emoji that the reader picked stays in Recent when the reader removes it from the draft.
 
 **PK-09** Custom packs come from two sources: a folder on the server, shown as one section named "Custom", and the packs shipped with Yap. A pack emoji is written as ":shortcode:". The shortcode is the file name in lower case. All shortcodes share one namespace. When a server emoji and a shipped emoji have the same name, the server emoji hides the shipped one. An empty pack is not shown.
 
@@ -133,7 +137,7 @@ The emoji picker and the GIF picker open from the input box. The emoji picker pu
 
 ### Without a connection
 
-**PK-49** Without a connection, the emoji picker works fully for the draft. A cell whose image the device never saw shows the device's own emoji, as the [message row page](message-row.md#MR-15) says. A reaction pick needs a connection, as the [message row page](message-row.md#MR-75) says. In the GIF picker, Recent, Favorites, Server library and the Browse tiles show the data that was last loaded. Search, the trending grid, "Load more", the upload button and the star show "Needs a connection". A tap on a card queues the GIF as a message, the same as any other message.
+**PK-49** Without a connection, the emoji picker works fully for the draft, and Recent still gets each use ([PK-51](#PK-51)). A cell whose image the device never saw shows the device's own emoji, as the [message row page](message-row.md#MR-15) says. A reaction pick needs a connection, as the [message row page](message-row.md#MR-75) says. In the GIF picker, Recent, Favorites, Server library and the Browse tiles show the data that was last loaded. Search, the trending grid, "Load more", the upload button and the star show "Needs a connection". A tap on a card queues the GIF as a message, the same as any other message.
 
 ## States
 
@@ -148,6 +152,7 @@ The emoji picker and the GIF picker open from the input box. The emoji picker pu
 | Pointer over a cell | mouse | Cell background and a slight enlargement. |
 | Cell tap, composer picker | mouse, touch | Emoji added to the draft; picker stays open; Recent unchanged until reopen. |
 | Cell tap, reaction picker | mouse, touch | Picker closes; reaction toggled. |
+| Message with an emoji sent | all | The emoji is first in Recent on the next open. |
 | GIF picker opens, first time | mouse | Browse (or Recent) with its data; the trending grid loading if needed. Focus in the search field. |
 | GIF picker reopens | mouse, touch | Same tab and folder, search cleared, Recent refreshed. |
 | Tab tap | mouse, touch | Search cleared, tab data refreshed. |

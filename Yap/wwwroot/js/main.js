@@ -18,6 +18,7 @@ import './sender.js';   // the outbox listens to the hub
 import './notify.js';   // the sound, the title and the badge listen to the store
 import { syncScene } from './scene.js';
 import * as snapshot from './offline/snapshot.js';
+import { restorePendingEmojis } from './recent-emoji.js';
 
 performance.mark('scripts');   // the boot report's second phase (AD-41): every static module above has loaded and run when this line runs
 // The browser keeps the timing of 250 loaded files by default, and the shell alone is sixty: the Settings debug card
@@ -163,7 +164,7 @@ async function start() {
     // Written without a store function, the one such write in the client: no page is mounted yet, and changed('drafts')
     // would only make snapshot.js store the same drafts again. Only with an account: without one the device is being
     // emptied (clearAll below, which nothing awaits), and a read at that moment brought a leftover draft into the page.
-    state.drafts = await snapshot.loadDrafts();
+    [, state.drafts] = await Promise.all([restorePendingEmojis(), snapshot.loadDrafts()]);
   } else {
     if (doc) applyAnonymous(doc);                            // the login texts, without an account
     snapshot.clearAll();                                     // nothing of a previous account stays for the next one (GEN-05)

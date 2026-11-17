@@ -64,6 +64,10 @@ export function applyBootstrap(doc) {
   // The server leaves emojiImages out when the stamp the client sent names the rules it holds (hub.js); the copy stays.
   // A stored copy from a build before 2026-10-31 has none either, and the hub's bootstrap brings them.
   const emojiImages = doc.emojiImages ?? state.emojiImages;
+  // GET /api/bootstrap and emojisUsed run in parallel on two connections: the server can read the old list for the
+  // bootstrap before emojisUsed adds this device's picks, and applyBootstrap would then erase them. Putting ownEmojiUses
+  // back at the front is idempotent when the server's list already has them.
+  if (doc.emoji && ownEmojiUses.length) doc.emoji = { ...doc.emoji, recent: withRecentEmojis(doc.emoji.recent ?? [], ownEmojiUses) };
   Object.assign(state, {
     user: doc.user, config: doc.config, texts: doc.texts, rooms: doc.rooms,
     users: Object.fromEntries(doc.users.map(u => [u.username, u])),
@@ -403,6 +407,45 @@ export function mergeMe(partial) {
   if (Object.keys(account).length) { Object.assign(state.user, account); changed('user'); }
 }
 
+const MAX_RECENT_EMOJIS = 20;   // mirrors UserService.RecordEmojiUses on the server (PK-07)
+let ownEmojiUses = [];          // chronological uses on this device that an in-flight bootstrap may not carry yet
+
+// Keeps the last occurrence of up to 20 valid strings in chronological order, so applying them in order puts the newest at index 0.
+export function compactEmojis(list) {
+  const seen = new Set();
+  const out = [];
+  for (let i = list.length - 1; i >= 0 && out.length < MAX_RECENT_EMOJIS; i--) {
+    const e = list[i];
+    if (typeof e === 'string' && e.length > 0 && e.length <= 64 && !seen.has(e)) { seen.add(e); out.push(e); }
+  }
+  return out.reverse();
+}
+
+// Each emoji goes to the front in order: the last emoji of a text becomes the first cell, the same as tapping them in the picker.
+function withRecentEmojis(list, uses) {
+  let recent = list;
+  for (const emoji of uses) {
+    if (!emoji || emoji.length > 64 || recent[0] === emoji) continue;
+    recent = [emoji, ...recent.filter(e => e !== emoji)].slice(0, MAX_RECENT_EMOJIS);
+  }
+  return recent;
+}
+
+export function setOwnEmojiUses(uses) { ownEmojiUses = compactEmojis(uses); }
+
+// Local-first PK-07. Returns false before the first bootstrap or after a sign-out (state.emoji is null), or when the
+// list did not change. Spreads state.emoji so quickReactions stays intact: timeline.js redraws every row when it changes.
+export function recordRecentEmojis(emojis) {
+  if (!state.emoji || !emojis.length) return false;
+  ownEmojiUses = compactEmojis([...ownEmojiUses, ...emojis]);
+  const before = state.emoji.recent ?? [];
+  const recent = withRecentEmojis(before, emojis);
+  if (recent.length === before.length && recent.every((v, i) => v === before[i])) return false;
+  state.emoji = { ...state.emoji, recent };
+  changed('emoji');
+  return true;
+}
+
 export function setFavoriteGifs(ids) { state.favoriteGifIds = new Set(ids); changed('favoriteGifIds'); }
 
 // The star changes now; the gifFavorites message confirms or corrects it (GEN-01, MR-30). Returns the undo.
@@ -418,6 +461,7 @@ export function setPending(rows, detail) { state.pending = rows; changed('pendin
 // A sign-out, here or elsewhere, leaves nothing of the account on the page (GEN-05).
 export function reset() {
   clearTimeout(typingTimer);
+  ownEmojiUses = [];
   Object.assign(state, { user: null, rooms: [], users: {}, presence: {}, dms: [], unread: {}, mutes: null, emoji: null,
     favoriteGifIds: new Set(), open: null, pending: [], drafts: {}, registrations: [] });
   for (const part of ['user', 'rooms', 'users', 'presence', 'dms', 'unread', 'mutes', 'emoji', 'favoriteGifIds', 'pending']) changed(part);

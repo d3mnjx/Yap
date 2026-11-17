@@ -656,24 +656,57 @@ public class UserService
     }
 
     /// <summary>
-    /// One use of an emoji: a pick in a picker, a quick reaction or a tap on a pill. It moves to the front of
-    /// the 20 recent emoji (PK-07). The person's other devices get the new list. The count column is kept
-    /// current but nothing reads it: the quick reactions come from the reactions themselves (MR-41).
+    /// One use of an emoji from a reaction (MR-44) or a tab of an older build (SH-50).
     /// </summary>
-    public void RecordEmojiUse(Guid userId, string emoji)
+    public void RecordEmojiUse(Guid userId, string? emoji)
     {
-        if (emoji.Length is 0 or > 64) return;   // not an emoji
-        if (!_users.TryGetValue(userId, out var user)) return;
-        var recent = GetRecentEmojis(user.Username);
-        recent.Remove(emoji);
-        recent.Insert(0, emoji);
-        if (recent.Count > 20) recent.RemoveRange(20, recent.Count - 20);
-        var counts = GetEmojiCounts(user.Username);
-        counts[emoji] = counts.GetValueOrDefault(emoji) + 1;
-        user.RecentEmojis = System.Text.Json.JsonSerializer.Serialize(recent);
-        user.EmojiCounts = System.Text.Json.JsonSerializer.Serialize(counts);
-        _writer.Enqueue(Writes.User(user));
-        OnRecentEmojiChanged?.Invoke(userId, recent);
+        if (string.IsNullOrEmpty(emoji) || emoji.Length > 64) return;
+        RecordEmojiUses(userId, [emoji], alwaysNotify: true);
+    }
+
+    /// <summary>
+    /// Moves each emoji to the front of the 20 recent emoji in order: the last item becomes the first cell,
+    /// the same as tapping them one by one in the picker (PK-07).
+    /// </summary>
+    /// <param name="alwaysNotify">
+    /// Reactions pass true because <see cref="Endpoints.ChatHubBroadcaster"/> sends quickReactions on
+    /// <see cref="OnRecentEmojiChanged"/> (MR-41), so a reaction must still notify when RecentEmojis did not change.
+    /// Only that path updates EmojiCounts; typed messages do not grow the counts column between restarts.
+    /// </param>
+    public void RecordEmojiUses(Guid userId, IReadOnlyList<string>? emojis, bool alwaysNotify = false)
+    {
+        if (emojis is null || emojis.Count == 0 || !_users.TryGetValue(userId, out var user)) return;
+        List<string>? snapshot = null;
+        // Protects the read-modify-write of RecentEmojis and EmojiCounts across concurrent hub calls.
+        // It does not guard PersistenceWriter, which reads the User fields later on its own thread (Writes.cs:90).
+        lock (user)
+        {
+            var recent = GetRecentEmojis(user.Username);
+            var before = user.RecentEmojis;
+            var counts = alwaysNotify ? GetEmojiCounts(user.Username) : null;
+            var anyValid = false;
+            foreach (var emoji in emojis.Take(20))
+            {
+                if (string.IsNullOrEmpty(emoji) || emoji.Length > 64) continue;
+                recent.Remove(emoji);
+                recent.Insert(0, emoji);
+                if (counts is not null) counts[emoji] = counts.GetValueOrDefault(emoji) + 1;
+                anyValid = true;
+            }
+            if (!anyValid) return;
+            if (recent.Count > 20) recent.RemoveRange(20, recent.Count - 20);
+            var serialized = System.Text.Json.JsonSerializer.Serialize(recent);
+            var changed = serialized != before;
+            if (changed) user.RecentEmojis = serialized;
+            if (counts is not null) user.EmojiCounts = System.Text.Json.JsonSerializer.Serialize(counts);
+            if (changed || alwaysNotify) snapshot = recent;
+        }
+        // Raised outside the lock: the handler runs ChatService.QuickReactions, which locks each channel.
+        if (snapshot is not null)
+        {
+            _writer.Enqueue(Writes.User(user));
+            OnRecentEmojiChanged?.Invoke(userId, snapshot);
+        }
     }
 
     /// <summary>
