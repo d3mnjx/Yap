@@ -993,59 +993,35 @@ public class ChatService
     /// order and without duplicates (MR-41).</summary>
     public IReadOnlyList<string> QuickReactions(Guid userId) => _quickReactions.Get(userId);
 
-    // The two limits of ReactionsForSeed (MR-83). ChatSettings:Persistence:Load can be absent or 0, and the whole
-    // history is in memory then: a walk over all of it, with one list of every reaction and a sort, was work at each
-    // start that changed almost nothing.
-    private const int MaxSeedMessages = 10_000;
+    // The newest messages of each conversation that the replay at the start reads (MR-83). 5,000 is the default of
+    // ChatSettings:Persistence:Load:MaxMessagesPerChannel: a server with the default settings replays all that it
+    // loaded, and a server without a load limit does not walk its complete history at each start. The limit is per
+    // conversation on purpose. One limit for all conversations together (10,000, the first form of this method) was a
+    // cut in time that moved with the traffic of the whole server: on a busy server it cut the reactions of some days ago.
+    private const int MaxSeedMessagesPerChannel = 5_000;
     // One reaction older than a person's newest 149 weighs under 0.05 in QuickReactionsService (0.98^149) and is
     // dropped there anyway. Many old reactions with one emoji can still weigh up to 2.4 together (50 x 0.98^150); the
     // limit accepts that loss. A limit of 350 would bring the loss under 0.05.
     private const int MaxSeedReactionsPerUser = 150;
 
-    /// <summary>Each person's newest reactions on the newest messages in memory, oldest first, for
+    /// <summary>Each person's newest reactions on the newest messages of each conversation in memory, oldest first, for
     /// <see cref="QuickReactionsService.Seed"/>. The two limits are parameters for the tests; Program.cs uses the defaults.</summary>
-    public Dictionary<Guid, List<string>> ReactionsForSeed(int maxMessages = MaxSeedMessages, int maxReactionsPerUser = MaxSeedReactionsPerUser)
+    public Dictionary<Guid, List<string>> ReactionsForSeed(int maxMessagesPerChannel = MaxSeedMessagesPerChannel, int maxReactionsPerUser = MaxSeedReactionsPerUser)
     {
-        // A reaction in memory has no timestamp or id of its own, so the walk orders by the message's timestamp;
-        // a reaction placed today on an old message replays at the message's age. The walk goes from the newest
-        // message to the oldest across all conversations: each list of a conversation is in the order of time, so one
-        // cursor per conversation in a queue that gives the newest timestamp first is enough, with no sort of the
-        // history. A walk conversation by conversation would fill a person's limit from the conversation that the
-        // dictionary happens to give first, and not from the person's newest reactions.
-        var newestFirst = new PriorityQueue<(List<ChatMessage> Tail, int Index), (DateTime Timestamp, Guid Id)>(
-            Comparer<(DateTime Timestamp, Guid Id)>.Create((a, b) => b.CompareTo(a)));
+        // A reaction in memory has no timestamp or id of its own, so the order is the order of the messages:
+        // a reaction placed today on an old message replays at the message's age.
+        var reactions = new List<(DateTime Timestamp, Guid UserId, string Emoji)>();
         foreach (var (channelId, messages) in _channelMessages)
-        {
-            List<ChatMessage> tail;   // a copy: the walk below holds no channel lock
-            lock (LockOf(channelId))
-            {
-                if (messages.Count == 0) continue;
-                var start = Math.Max(0, messages.Count - maxMessages);
-                tail = messages.GetRange(start, messages.Count - start);
-            }
-            var last = tail.Count - 1;
-            newestFirst.Enqueue((tail, last), (tail[last].Timestamp, tail[last].Id));
-        }
+            lock (LockOf(channelId))   // runs one time at the start, before the server takes requests: no send waits for it
+                foreach (var message in messages.TakeLast(maxMessagesPerChannel))   // the list is oldest first, so its end holds the newest
+                    lock (message.Reactions)
+                        foreach (var reaction in message.Reactions)
+                            reactions.Add((message.Timestamp, reaction.UserId, reaction.Emoji));
 
-        var byUser = new Dictionary<Guid, List<string>>();
-        for (var walked = 0; walked < maxMessages && newestFirst.TryDequeue(out var cursor, out _); walked++)
-        {
-            var message = cursor.Tail[cursor.Index];
-            if (cursor.Index > 0)
-            {
-                var previous = cursor.Tail[cursor.Index - 1];
-                newestFirst.Enqueue((cursor.Tail, cursor.Index - 1), (previous.Timestamp, previous.Id));
-            }
-            lock (message.Reactions)
-                for (var i = message.Reactions.Count - 1; i >= 0; i--)
-                {
-                    var reaction = message.Reactions[i];
-                    if (!byUser.TryGetValue(reaction.UserId, out var list)) byUser[reaction.UserId] = list = [];
-                    if (list.Count < maxReactionsPerUser) list.Add(reaction.Emoji);
-                }
-        }
-        foreach (var list in byUser.Values) list.Reverse();   // collected newest first; the replay needs oldest first
-        return byUser;
+        return reactions
+            .OrderBy(r => r.Timestamp)   // a stable sort: the reactions of one message keep their order
+            .GroupBy(r => r.UserId)
+            .ToDictionary(g => g.Key, g => g.Select(r => r.Emoji).TakeLast(maxReactionsPerUser).ToList());
     }
 
     /// <summary>Every image, video and voice URL a message in memory carries, and the pictures the pins keep. The admin's

@@ -576,10 +576,10 @@ public class ChatTests : IClassFixture<YapFactory>
         Assert.Equal([Heart, "😂", "👍"], chat.QuickReactions(id));
     }
 
-    [Fact(DisplayName = "MR-83: the replay at the start takes each person's newest 150 reactions from the newest messages of all conversations, oldest first")]
+    [Fact(DisplayName = "MR-83: the replay at the start takes each person's newest 150 reactions from the newest messages of each conversation, in the order of time across the conversations")]
     public async Task The_replay_takes_the_newest_reactions_of_all_conversations()
     {
-        await using var app = new YapFactory();   // its own messages: the walk counts every message in memory
+        await using var app = new YapFactory();   // its own lobby: the limit counts every message of a conversation
         var sam = await app.SignInAsync("sam_seed");
         await app.SignInAsync("tia_seed");
         var chat = app.Service<ChatService>();
@@ -601,12 +601,12 @@ public class ChatTests : IClassFixture<YapFactory>
         Assert.Equal(["a", "b", "c", "d", "e"], chat.ReactionsForSeed()[id]);
         Assert.False(chat.ReactionsForSeed().ContainsKey(users.GetByUsername("tia_seed")!.Id));   // no reactions, no entry
 
-        // The limit of messages counts the newest messages of all conversations together. A walk that goes
-        // conversation by conversation gives the three or the one of the conversation it takes first.
-        Assert.Equal(["b", "c", "d", "e"], chat.ReactionsForSeed(maxMessages: 3)[id]);
-        Assert.Equal(["d", "e"], chat.ReactionsForSeed(maxMessages: 1)[id]);
-        // The limit per person keeps the newest reactions, not the first ones the walk finds in one conversation.
-        Assert.Equal(["c", "d", "e"], chat.ReactionsForSeed(maxReactionsPerUser: 3)[id]);
+        // The limit of messages is per conversation: the newest message of the lobby and the newest one of the
+        // direct message. One limit for all conversations together gives only "d" and "e" here.
+        Assert.Equal(["c", "d", "e"], chat.ReactionsForSeed(maxMessagesPerChannel: 1)[id]);
+        // The limit per person keeps the person's newest reactions of all conversations, not the newest of each.
+        Assert.Equal(["d", "e"], chat.ReactionsForSeed(maxReactionsPerUser: 2)[id]);
+        Assert.Equal(["b", "c", "d", "e"], chat.ReactionsForSeed(maxReactionsPerUser: 4)[id]);
 
         // The limits that the server uses at its start: 200 reactions on two newer messages, and the newest 150 stay.
         var many = await Send(lobby, "many reactions");
