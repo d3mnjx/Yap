@@ -358,7 +358,7 @@ html, body {
 
 /* Wrappers that the JavaScript needs and the Blazor markup did not have. display: contents keeps the children
    in the parent's layout, so the rules in css/ see the sibling structure they were written for. */
-.header-title, .status-menu, .composer, .more-menu-layer { display: contents; }
+.header-title, .status-menu, .composer, .more-menu-layer, .quick-reactions { display: contents; }
 
 /* Emoji images in text (MR-16, MR-38): the four sizes the old server renderer wrote as inline styles, on the slot that
    render/text.js puts around every emoji image (its only maker). The slot is an inline block with hidden overflow, so

@@ -334,12 +334,26 @@ on('upload', row => { const node = document.getElementById(`msg-${row.id}`); if 
 // invisible until a hover, a tap or keyboard focus, and fifty rows times three emoji images was the largest share
 // of a cold open's image requests on the iPhone, where every <img> is a request of its own (2026-10-31). The filler
 // waits per row; showTouched, the pointerover and focusin listeners below and rowReplaced run it.
-const quickFillers = new WeakMap();   // rowNode -> () => void, until the bar first shows
+const quickFillers = new WeakMap();   // rowNode -> fill; kept for the life of the row, so a changed list can build the bar again
+const quickFilled = new WeakSet();    // the rows whose bar the person has seen
+let drawnQuick = '';
+const quickKey = () => (state.emoji?.quickReactions ?? []).join('\n');
+
 function fillQuick(rowNode) {
-  const fill = quickFillers.get(rowNode);
-  if (!fill) return;
-  quickFillers.delete(rowNode);
-  fill();
+  if (quickFilled.has(rowNode)) return;
+  quickFilled.add(rowNode);
+  drawnQuick = quickKey();
+  quickFillers.get(rowNode)?.();
+}
+
+// The quick reactions changed (MR-41). Only the built bars change: a new draw of the rows stops a playing video
+// and starts each GIF again. A bar that is not built yet reads the new list when it is built.
+export function redrawQuickReactions() {
+  const next = quickKey();
+  if (next === drawnQuick) return;   // 'emoji' also fires when only the Recent list changed
+  drawnQuick = next;
+  for (const rowNode of document.querySelectorAll('.message-group'))
+    if (quickFilled.has(rowNode)) quickFillers.get(rowNode)?.();
 }
 
 function renderActions(rowNode, m) {
@@ -348,6 +362,7 @@ function renderActions(rowNode, m) {
   if (m.pending) { quick.remove(); bar.querySelector('.action-divider').remove(); bar.querySelector('.action-picker').remove(); bar.querySelector('.action-reply').remove(); }
   else {
     quickFillers.set(rowNode, () => {
+      quick.replaceChildren();
       for (const emoji of state.emoji?.quickReactions ?? []) {
         const b = clone('t-action-reaction');
         b.title = emoji;
@@ -556,7 +571,7 @@ export function touchScrolled(scrollTop) {
 // of the open layer still hold the old node; they look the live row up by id when they close.
 export function rowReplaced(oldNode, newNode) {
   for (const cls of ['touched', 'picker-open', 'menu-open']) if (oldNode.classList.contains(cls)) newNode.classList.add(cls);
-  if (!quickFillers.has(oldNode)) fillQuick(newNode);   // a bar the person has seen keeps its quick reactions
+  if (quickFilled.has(oldNode)) fillQuick(newNode);   // a bar the person has seen keeps its quick reactions
   newNode.append(...oldNode.querySelectorAll(':scope > .emoji-picker-backdrop, :scope > .emoji-picker-wrapper, :scope > .more-menu-layer'));
   if (touched === oldNode) touched = newNode;
 }

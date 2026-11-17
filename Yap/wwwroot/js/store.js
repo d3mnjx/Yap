@@ -434,7 +434,7 @@ function withRecentEmojis(list, uses) {
 export function setOwnEmojiUses(uses) { ownEmojiUses = compactEmojis(uses); }
 
 // Local-first PK-07. Returns false before the first bootstrap or after a sign-out (state.emoji is null), or when the
-// list did not change. Spreads state.emoji so quickReactions stays intact: timeline.js redraws every row when it changes.
+// list did not change. Spreads state.emoji so quickReactions stays intact: message.js builds the shown bars again when it changes (MR-82).
 export function recordRecentEmojis(emojis) {
   if (!state.emoji || !emojis.length) return false;
   ownEmojiUses = compactEmojis([...ownEmojiUses, ...emojis]);

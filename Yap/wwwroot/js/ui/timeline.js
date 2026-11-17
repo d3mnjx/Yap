@@ -10,7 +10,7 @@ import { inline, pick } from '../render/text.js';
 import { messageTime } from '../render/time.js';
 import * as hub from '../hub.js';
 import * as overlays from './overlays.js';
-import { renderRow, needsHeader, rowReplaced, touchScrolled, redrawStars } from './message.js';
+import { renderRow, needsHeader, rowReplaced, touchScrolled, redrawStars, redrawQuickReactions } from './message.js';
 
 let current = null;   // the mounted instance, for jumpTo
 
@@ -37,7 +37,7 @@ export function Timeline(root, { reopen }) {
   let unread = false;              // the server counted a message in the open conversation and markRead has not answered yet (NT-07)
   let shownChannel = null;         // the channel the rows belong to
   let shownWindow = false;         // the rows on screen are a window that ends before the newest message (TL-41)
-  let drawnFacts = '';             // what the rows were drawn with: the people and the quick reactions (redrawIfRowsChanged)
+  let drawnFacts = '';             // what the rows were drawn with: the people (redrawIfRowsChanged)
 
   // ---- drawing ----
 
@@ -132,11 +132,11 @@ export function Timeline(root, { reopen }) {
     keepPlace();
   }
 
-  // The rows redraw when a person's name, picture or flags changed, or the quick reactions did (ST-07, MR-41). The
-  // bootstrap fires both at every connect, nearly always with the same content, and each full redraw asked the
-  // worker for every emoji image once more (on the iPhone every <img> is a request of its own, 2026-10-31). So the
-  // rows remember what they were drawn with, and a bootstrap that brings the same facts leaves them alone.
-  const rowFacts = () => JSON.stringify([Object.keys(state.users).sort().map(k => state.users[k]), state.emoji?.quickReactions]);
+  // The rows redraw when a person's name, picture or flags changed (ST-07). The bootstrap fires 'users' at every
+  // connect, nearly always with the same content, and each full redraw asked the worker for every emoji image once
+  // more (on the iPhone every <img> is a request of its own, 2026-10-31). So the rows remember what they were drawn
+  // with, and a bootstrap that brings the same facts leaves them alone.
+  const rowFacts = () => JSON.stringify(Object.keys(state.users).sort().map(k => state.users[k]));
   function redrawIfRowsChanged() {
     const facts = rowFacts();
     if (facts === drawnFacts) return;
@@ -624,7 +624,7 @@ export function Timeline(root, { reopen }) {
     on('user', () => markReadIfSeen()), on('presence', () => markReadIfSeen()),   // Away ended, here or on the server: the three conditions may hold again (NT-07)
     on('users', redrawIfRowsChanged),  // a new display name or avatar shows on every row (ST-07)
     on('favoriteGifIds', redrawStars), // the stars follow the account (PK-36); a full redraw here cost ~800 ms per click
-    on('emoji', redrawIfRowsChanged),  // the quick reactions of the bar (MR-41)
+    on('emoji', redrawQuickReactions), // the quick reactions of the bar (MR-41); built bars change in place
   ];
   current = { jumpTo };
   reset();

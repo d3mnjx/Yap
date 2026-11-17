@@ -26,7 +26,7 @@ public class UserService
     /// <summary>Display name, avatar, bio or location changed; everyone redraws the person (ST-07).</summary>
     public event Action<User>? OnProfileChanged;
 
-    /// <summary>The recent emoji of a person changed; the broadcaster adds the quick reactions (MR-41, PK-07).</summary>
+    /// <summary>The recent emoji of a person changed (PK-07).</summary>
     public event Action<Guid, List<string>>? OnRecentEmojiChanged;
 
     /// <summary>A setting of the account changed; the person's other devices merge the fields (ST-10, PK-07).</summary>
@@ -55,7 +55,6 @@ public class UserService
             await using var db = await _dbFactory.CreateDbContextAsync();
             var users = await db.Users.AsNoTracking().ToListAsync();
 
-            var flattened = 0;
             foreach (var user in users)
             {
                 _users[user.Id] = user;
@@ -66,22 +65,9 @@ public class UserService
                 {
                     _adminUserId = user.Id;
                 }
-
-                // Collapse raw usage counts to dense ranks once on load. Keeps the column
-                // bounded and stops long-dead favorites from sitting at the top forever —
-                // only relative order matters for quick reactions, not the magnitudes.
-                // The write-back makes the stored column shrink too. Idempotent: once dense,
-                // re-flattening is a no-op and nothing is written.
-                if (FlattenEmojiCounts(user))
-                {
-                    _writer.Enqueue(Writes.User(user));
-                    flattened++;
-                }
             }
 
-            _logger.LogInformation(
-                "Loaded {Count} users; flattened emoji counts for {Flattened}",
-                users.Count, flattened);
+            _logger.LogInformation("Loaded {Count} users", users.Count);
         }
         catch (Exception ex)
         {
@@ -661,47 +647,40 @@ public class UserService
     public void RecordEmojiUse(Guid userId, string? emoji)
     {
         if (string.IsNullOrEmpty(emoji) || emoji.Length > 64) return;
-        RecordEmojiUses(userId, [emoji], alwaysNotify: true);
+        RecordEmojiUses(userId, [emoji]);
     }
 
     /// <summary>
     /// Moves each emoji to the front of the 20 recent emoji in order: the last item becomes the first cell,
     /// the same as tapping them one by one in the picker (PK-07).
     /// </summary>
-    /// <param name="alwaysNotify">
-    /// Reactions pass true because <see cref="Endpoints.ChatHubBroadcaster"/> sends quickReactions on
-    /// <see cref="OnRecentEmojiChanged"/> (MR-41), so a reaction must still notify when RecentEmojis did not change.
-    /// Only that path updates EmojiCounts; typed messages do not grow the counts column between restarts.
-    /// </param>
-    public void RecordEmojiUses(Guid userId, IReadOnlyList<string>? emojis, bool alwaysNotify = false)
+    public void RecordEmojiUses(Guid userId, IReadOnlyList<string>? emojis)
     {
         if (emojis is null || emojis.Count == 0 || !_users.TryGetValue(userId, out var user)) return;
         List<string>? snapshot = null;
-        // Protects the read-modify-write of RecentEmojis and EmojiCounts across concurrent hub calls.
+        // Protects the read-modify-write of RecentEmojis across concurrent hub calls.
         // It does not guard PersistenceWriter, which reads the User fields later on its own thread (Writes.cs:90).
         lock (user)
         {
             var recent = GetRecentEmojis(user.Username);
             var before = user.RecentEmojis;
-            var counts = alwaysNotify ? GetEmojiCounts(user.Username) : null;
             var anyValid = false;
             foreach (var emoji in emojis.Take(20))
             {
                 if (string.IsNullOrEmpty(emoji) || emoji.Length > 64) continue;
                 recent.Remove(emoji);
                 recent.Insert(0, emoji);
-                if (counts is not null) counts[emoji] = counts.GetValueOrDefault(emoji) + 1;
                 anyValid = true;
             }
             if (!anyValid) return;
             if (recent.Count > 20) recent.RemoveRange(20, recent.Count - 20);
             var serialized = System.Text.Json.JsonSerializer.Serialize(recent);
-            var changed = serialized != before;
-            if (changed) user.RecentEmojis = serialized;
-            if (counts is not null) user.EmojiCounts = System.Text.Json.JsonSerializer.Serialize(counts);
-            if (changed || alwaysNotify) snapshot = recent;
+            if (serialized != before)
+            {
+                user.RecentEmojis = serialized;
+                snapshot = recent;
+            }
         }
-        // Raised outside the lock: the handler runs ChatService.QuickReactions, which locks each channel.
         if (snapshot is not null)
         {
             _writer.Enqueue(Writes.User(user));
@@ -752,59 +731,6 @@ public class UserService
 
         user.RecentGifs = System.Text.Json.JsonSerializer.Serialize(gifIds);
         _writer.Enqueue(Writes.User(user));
-    }
-
-    /// <summary>
-    /// Gets the emoji usage counts for a user (deserialized from in-memory User).
-    /// </summary>
-    public Dictionary<string, int> GetEmojiCounts(string username)
-    {
-        var user = GetByUsername(username);
-        if (user?.EmojiCounts == null) return new();
-
-        try
-        {
-            return System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, int>>(user.EmojiCounts) ?? new();
-        }
-        catch
-        {
-            return new();
-        }
-    }
-
-    /// <summary>
-    /// Collapses a user's raw emoji usage counts to dense ranks (lowest count → 1, next
-    /// distinct → 2, …), keeping the 40 highest-ranked. Only relative order matters for
-    /// quick reactions, so this bounds the stored column and lets recent usage climb past
-    /// stale favorites. Mutates user.EmojiCounts; returns true if the value actually changed.
-    /// Idempotent — a dense 1..n sequence re-ranks to itself.
-    /// </summary>
-    private static bool FlattenEmojiCounts(User user)
-    {
-        if (string.IsNullOrEmpty(user.EmojiCounts)) return false;
-
-        Dictionary<string, int>? counts;
-        try { counts = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, int>>(user.EmojiCounts); }
-        catch { return false; }
-        if (counts is null || counts.Count == 0) return false;
-
-        // Dense-rank the distinct count values: smallest → 1, largest → N.
-        var ranks = counts.Values.Distinct().OrderBy(x => x)
-            .Select((val, index) => new { val, index })
-            .ToDictionary(x => x.val, x => x.index + 1);
-
-        // Replace each emoji's count with its rank; keep the top 40, drop the long tail.
-        var flattened = counts
-            .Select(kvp => new { kvp.Key, Rank = ranks[kvp.Value] })
-            .OrderByDescending(x => x.Rank)
-            .Take(40)
-            .ToDictionary(x => x.Key, x => x.Rank);
-
-        var serialized = System.Text.Json.JsonSerializer.Serialize(flattened);
-        if (serialized == user.EmojiCounts) return false; // already flat — skip the write
-
-        user.EmojiCounts = serialized;
-        return true;
     }
 
     /// <summary>

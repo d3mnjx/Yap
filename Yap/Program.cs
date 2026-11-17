@@ -162,6 +162,7 @@ builder.Services.AddSingleton<UserService>();     // User management with token 
 builder.Services.AddSingleton<LinkTokenService>(); // PWA start_url login link tokens
 builder.Services.AddSingleton<AccessLinkService>(); // invite / login links (/invite/{code})
 builder.Services.AddSingleton<NotificationSettingsService>();  // per-channel mute rules (read by ChatService)
+builder.Services.AddSingleton<QuickReactionsService>();        // each person's three quick reactions of the action bar (MR-41)
 builder.Services.AddSingleton<ChatService>();
 builder.Services.AddSingleton<MessageMapper>();   // the one mapping from a message to its wire shape
 builder.Services.AddSingleton<ChatHubBroadcaster>();
@@ -214,6 +215,8 @@ await app.Services.GetRequiredService<UserService>().LoadUsersAsync();
 await app.Services.GetRequiredService<AccessLinkService>().LoadAsync();
 await app.Services.GetRequiredService<NotificationSettingsService>().InitializeAsync();
 await app.Services.GetRequiredService<ChatService>().InitializeAsync();
+app.Services.GetRequiredService<QuickReactionsService>()
+    .Seed(app.Services.GetRequiredService<ChatService>().ReactionsForSeed());
 app.Services.GetRequiredService<VideoService>();   // the ffmpeg probe (a child process, up to 3 s) runs here, not inside the first upload
 app.Services.GetRequiredService<VoiceService>();   // its ffmpeg detection (the GIF helper's) must be done before the first voice upload is judged
 await app.Services.GetRequiredService<GifService>().InitializeAsync();

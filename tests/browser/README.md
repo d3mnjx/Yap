@@ -19,7 +19,8 @@ server, runs its steps, prints PASS or FAIL for each step, and stops the server 
   end row's button, the arrow, a send and a reconnect. It also checks the message search: above 768 px the field,
   the panel in the place of the sidebar, the highlight, a text in quotes, a long text, Escape and Ctrl+F; at
   768 px or less the sidebar row, the search screen, a result, the steps back, "Go to newest", a reconnect and the
-  two width tiers. The last step checks the Recent row of the emoji picker after a message with typed emoji.
+  two width tiers. Step 19 checks the Recent row of the emoji picker after a message with typed emoji. The last step checks
+  that a change of the quick reactions changes the shown action bars and does not draw the rows again.
 - `uploads.mjs` checks the uploads of a message: a text that goes out while a picture uploads, the state of each
   file in the pending row with three files at one time and the pictures in the order of the pick, an upload that
   goes on after a reload from the bytes the server has, a last chunk whose answer was lost (with a reload and

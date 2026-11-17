@@ -884,7 +884,8 @@
     align-self: center;
 }
 
-/* Grey icon buttons (picker, edit, more, reply) */
+/* Quick reaction and grey icon buttons (picker, edit, more, reply) */
+.quick-reaction,
 .action-picker,
 .action-edit,
 .action-more,

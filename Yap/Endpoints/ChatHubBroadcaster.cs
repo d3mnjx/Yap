@@ -17,7 +17,7 @@ namespace Yap.Endpoints;
 /// people on every device; presence, rooms and profiles go to everyone. The table is in
 /// docs/architecture/bootstrap-and-events.md.
 /// </summary>
-public sealed class ChatHubBroadcaster(IHubContext<ChatHub> hub, ChatService chat, PresenceService presence, UserService users,
+public sealed class ChatHubBroadcaster(IHubContext<ChatHub> hub, ChatService chat, QuickReactionsService quickReactions, PresenceService presence, UserService users,
     NotificationSettingsService mutes, GifService gifs, RegistrationGateService gate, SystemBotService bot, AccountDeletionService deletion,
     MessageMapper map, LoadCounters load, ILogger<ChatHubBroadcaster> log) : IHostedService
 {
@@ -69,7 +69,9 @@ public sealed class ChatHubBroadcaster(IHubContext<ChatHub> hub, ChatService cha
         On<Guid, object>(h => users.OnSettingsChanged += h, h => users.OnSettingsChanged -= h, (userId, partial) => ToUser(userId, "me", partial));
         On<string>(h => deletion.OnAccountDeleted += h, h => deletion.OnAccountDeleted -= h, username => ToAll("accountDeleted", username));   // AD-40
         On<Guid, List<string>>(h => users.OnRecentEmojiChanged += h, h => users.OnRecentEmojiChanged -= h,
-            (userId, recent) => ToUser(userId, "me", new { emoji = new { recent, quickReactions = chat.QuickReactions(userId) } }));   // MR-41
+            (userId, recent) => ToUser(userId, "me", new { emoji = new { recent } }));   // PK-07
+        On<Guid>(h => quickReactions.OnChanged += h, h => quickReactions.OnChanged -= h,
+            userId => ToUser(userId, "me", new { emoji = new { quickReactions = quickReactions.Get(userId) } }));   // MR-41
         On<Guid>(h => mutes.OnChanged += h, h => mutes.OnChanged -= h, userId => ToUser(userId, "me", new { mutes = mutes.For(userId) }));
         On<Guid>(h => gifs.OnFavoritesChanged += h, h => gifs.OnFavoritesChanged -= h, userId => ToUser(userId, "gifFavorites", gifs.GetFavorites(userId).Select(e => e.Id).ToList()));
         On(h => gate.OnPendingChanged += h, h => gate.OnPendingChanged -= h, () =>

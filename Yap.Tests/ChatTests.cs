@@ -466,35 +466,163 @@ public class ChatTests : IClassFixture<YapFactory>
         await hub.DisposeAsync();
     }
 
-    [Fact(DisplayName = "MR-41, MR-44: a reaction moves its emoji to the front and always sends the quick reactions; an emoji of a message does not change them")]
-    public async Task Only_reactions_change_the_quick_reactions()
+    [Fact(DisplayName = "MR-41, MR-44, MR-82: a reaction sends the recent emoji and the quick reactions, each list only when it changed; an emoji of a message does not change the quick reactions")]
+    public async Task A_reaction_sends_only_the_emoji_lists_that_changed()
     {
         var cleo = await _app.SignInAsync("cleo_recent");
-        var lobby = _app.Service<ChatService>().LobbyId;
-        var message = (await (await cleo.Http.PostAsJsonAsync($"/api/channels/{lobby}/messages", new { clientId = Guid.NewGuid(), text = "react to me" })).Content.ReadFromJsonAsync<MessageDto>())!;
+        var first = await SendToLobby(cleo, "react to me");
+        var second = await SendToLobby(cleo, "and to me");
         var hub = await cleo.ConnectAsync();
         var events = System.Threading.Channels.Channel.CreateUnbounded<JsonElement>();
         hub.On<JsonElement>("me", partial => { if (partial.TryGetProperty("emoji", out var emoji)) events.Writer.TryWrite(emoji); });
         async Task<JsonElement> Next() => await events.Reader.ReadAsync(new CancellationTokenSource(TimeSpan.FromSeconds(10)).Token);
 
-        Assert.Null(await hub.InvokeAsync<HubError?>("React", message.Id, "🔥"));
-        var added = await Next();
-        Assert.Equal("🔥", Strings(added.GetProperty("recent"))[0]);
-        Assert.Contains("🔥", Strings(added.GetProperty("quickReactions")));
+        // The first 🔥 changes both lists. Each list has its own message with nothing else in it, and the two can
+        // come in either order (bootstrap-and-events.md, rules).
+        Assert.Null(await hub.InvokeAsync<HubError?>("React", first.Id, "🔥"));
+        JsonElement[] both = [await Next(), await Next()];
+        var recent = Assert.Single(both, e => e.TryGetProperty("recent", out _));
+        var quick = Assert.Single(both, e => e.TryGetProperty("quickReactions", out _));
+        Assert.False(recent.TryGetProperty("quickReactions", out _));
+        Assert.False(quick.TryGetProperty("recent", out _));
+        Assert.Equal("🔥", Strings(recent.GetProperty("recent"))[0]);
+        // ❤️ and 😂 stay where they are; 🔥 takes the place of 👍. The first document of the page has the same three.
+        Assert.Equal([Heart, "😂", "🔥"], Strings(quick.GetProperty("quickReactions")));
+        Assert.Equal([Heart, "😂", "🔥"], Strings((await cleo.Http.GetFromJsonAsync<JsonElement>("/api/bootstrap")).GetProperty("emoji").GetProperty("quickReactions")));
 
-        // The reaction goes away. The recent list stays the same, and the event must come all the same: it is the
-        // only message that brings the new quick reactions to the person's devices.
-        Assert.Null(await hub.InvokeAsync<HubError?>("React", message.Id, "🔥"));
+        // The reaction goes away. The recent list is the same and sends nothing. The quick reactions are the fixed
+        // three again, and their message is the only one that tells the person's devices.
+        Assert.Null(await hub.InvokeAsync<HubError?>("React", first.Id, "🔥"));
         var removed = await Next();
-        Assert.Equal("🔥", Strings(removed.GetProperty("recent"))[0]);
-        Assert.DoesNotContain("🔥", Strings(removed.GetProperty("quickReactions")));
+        Assert.False(removed.TryGetProperty("recent", out _));
+        Assert.Equal([Heart, "😂", "👍"], Strings(removed.GetProperty("quickReactions")));
 
+        // An emoji of a message goes to the recent list only.
         await hub.InvokeAsync("EmojisUsed", new[] { "🎉" });
         var typed = await Next();
         Assert.Equal(["🎉", "🔥"], Strings(typed.GetProperty("recent")));
-        Assert.DoesNotContain("🎉", Strings(typed.GetProperty("quickReactions")));
+        Assert.False(typed.TryGetProperty("quickReactions", out _));
+
+        // 🔥 comes back: it is first in the recent list and one of the quick reactions. A second 🔥, on another
+        // message, then changes neither list and sends nothing. Events of one connection arrive in order: when the 🚀 event is here, an event of the
+        // second 🔥 would be here before it.
+        Assert.Null(await hub.InvokeAsync<HubError?>("React", first.Id, "🔥"));
+        await Next();
+        await Next();
+        Assert.Null(await hub.InvokeAsync<HubError?>("React", second.Id, "🔥"));
+        await hub.InvokeAsync("EmojisUsed", new[] { "🚀" });
+        var marker = await Next();
+        Assert.Equal(["🚀", "🔥", "🎉"], Strings(marker.GetProperty("recent")));
+        Assert.False(marker.TryGetProperty("quickReactions", out _));
         await hub.DisposeAsync();
     }
+
+    [Fact(DisplayName = "MR-41, MR-83: a button keeps its place while the server runs; after a restart the quick reactions come from the reactions on the loaded messages, in the order of the messages, the highest weight first")]
+    public async Task Quick_reactions_after_a_restart()
+    {
+        var db = Path.Combine(Path.GetTempPath(), $"yap-test-{Guid.NewGuid():N}.db");
+        try
+        {
+            await using (var app = new YapFactory { SqlitePath = db })
+            {
+                var rita = await app.SignInAsync("rita_quick");
+                var chat = app.Service<ChatService>();
+                var id = app.Service<UserService>().GetByUsername("rita_quick")!.Id;
+                var older = await SendToLobby(rita, "the older message", chat.LobbyId);
+                var newer = await SendToLobby(rita, "the newer message", chat.LobbyId);
+
+                // The reaction on the newer message comes first, so 👀 is the newest reaction while the server runs.
+                // Each new emoji takes the place of the one that leaves: 🚀 the place of 👍, then 👀 the place of 😂.
+                Assert.Null(chat.ToggleReaction(id, "rita_quick", newer.Id, "🚀"));
+                Assert.Null(chat.ToggleReaction(id, "rita_quick", older.Id, "👀"));
+                Assert.Equal([Heart, "👀", "🚀"], chat.QuickReactions(id));
+            }   // the stop drains the writer
+
+            await using (var app = new YapFactory { SqlitePath = db })
+            {
+                // No bar shows at a start, so the order is the order of the weights. A stored reaction has no time
+                // of its own: the start replays the reactions in the order of their messages, so 🚀 is the newest.
+                var id = app.Service<UserService>().GetByUsername("rita_quick")!.Id;
+                Assert.Equal(["🚀", "👀", Heart], app.Service<ChatService>().QuickReactions(id));
+            }
+
+            await using (var app = new YapFactory { SqlitePath = db, Settings = { ["ChatSettings:Persistence:Load:MaxMessagesPerChannel"] = "1" } })
+            {
+                // Only the newer message is loaded (AD-03). The reaction on the older one does not count.
+                var id = app.Service<UserService>().GetByUsername("rita_quick")!.Id;
+                Assert.Equal(["🚀", Heart, "😂"], app.Service<ChatService>().QuickReactions(id));
+            }
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            foreach (var f in Directory.GetFiles(Path.GetDirectoryName(db)!, Path.GetFileName(db) + "*")) File.Delete(f);
+        }
+    }
+
+    [Fact(DisplayName = "AD-40, MR-41: a deleted account leaves the quick reactions")]
+    public async Task A_deleted_account_leaves_the_quick_reactions()
+    {
+        var admin = await _app.AdminAsync();
+        var gus = await _app.SignInAsync("gus_quick");
+        var chat = _app.Service<ChatService>();
+        var id = _app.Service<UserService>().GetByUsername("gus_quick")!.Id;
+        var message = await SendToLobby(gus, "the last word of gus");
+        Assert.Null(chat.ToggleReaction(id, "gus_quick", message.Id, "🔥"));
+        Assert.Equal([Heart, "😂", "🔥"], chat.QuickReactions(id));
+
+        Assert.Equal(HttpStatusCode.OK, (await admin.Http.PostAsJsonAsync("/api/admin/users/delete", new { usernames = new[] { "gus_quick" } })).StatusCode);
+
+        Assert.Equal([Heart, "😂", "👍"], chat.QuickReactions(id));
+    }
+
+    [Fact(DisplayName = "MR-83: the replay at the start takes each person's newest 150 reactions from the newest messages of all conversations, oldest first")]
+    public async Task The_replay_takes_the_newest_reactions_of_all_conversations()
+    {
+        await using var app = new YapFactory();   // its own messages: the walk counts every message in memory
+        var sam = await app.SignInAsync("sam_seed");
+        await app.SignInAsync("tia_seed");
+        var chat = app.Service<ChatService>();
+        var users = app.Service<UserService>();
+        var id = users.GetByUsername("sam_seed")!.Id;
+        var lobby = $"/api/channels/{chat.LobbyId}/messages";
+        async Task<Guid> Send(string url, string text) =>
+            (await (await sam.Http.PostAsJsonAsync(url, new { clientId = Guid.NewGuid(), text })).Content.ReadFromJsonAsync<MessageDto>())!.Id;
+
+        // Four messages in the order of time, in two conversations in turn. The reactions come in another order: a
+        // reaction has no time of its own, so the replay follows the messages.
+        var l1 = await Send(lobby, "the lobby, first");
+        var d1 = await Send("/api/dm/tia_seed/messages", "the direct message, second");
+        var l2 = await Send(lobby, "the lobby, third");
+        var d2 = await Send("/api/dm/tia_seed/messages", "the direct message, fourth");
+        foreach (var (message, emoji) in new[] { (d2, "d"), (l1, "a"), (l2, "c"), (d1, "b"), (d2, "e") })
+            Assert.Null(chat.ToggleReaction(id, "sam_seed", message, emoji));
+
+        Assert.Equal(["a", "b", "c", "d", "e"], chat.ReactionsForSeed()[id]);
+        Assert.False(chat.ReactionsForSeed().ContainsKey(users.GetByUsername("tia_seed")!.Id));   // no reactions, no entry
+
+        // The limit of messages counts the newest messages of all conversations together. A walk that goes
+        // conversation by conversation gives the three or the one of the conversation it takes first.
+        Assert.Equal(["b", "c", "d", "e"], chat.ReactionsForSeed(maxMessages: 3)[id]);
+        Assert.Equal(["d", "e"], chat.ReactionsForSeed(maxMessages: 1)[id]);
+        // The limit per person keeps the newest reactions, not the first ones the walk finds in one conversation.
+        Assert.Equal(["c", "d", "e"], chat.ReactionsForSeed(maxReactionsPerUser: 3)[id]);
+
+        // The limits that the server uses at its start: 200 reactions on two newer messages, and the newest 150 stay.
+        var many = await Send(lobby, "many reactions");
+        var more = await Send(lobby, "more reactions");
+        for (var i = 0; i < 100; i++) Assert.Null(chat.ToggleReaction(id, "sam_seed", many, $"x{i}"));
+        for (var i = 0; i < 100; i++) Assert.Null(chat.ToggleReaction(id, "sam_seed", more, $"y{i}"));
+        Assert.Equal(
+            Enumerable.Range(50, 50).Select(i => $"x{i}").Concat(Enumerable.Range(0, 100).Select(i => $"y{i}")).ToList(),
+            chat.ReactionsForSeed()[id]);
+    }
+
+    // The heart as code points: it needs its variation selector to equal the server's default (MR-41).
+    private const string Heart = "\u2764\uFE0F";
+
+    private async Task<MessageDto> SendToLobby(SignedIn person, string text, Guid? lobby = null) =>
+        (await (await person.Http.PostAsJsonAsync($"/api/channels/{lobby ?? _app.Service<ChatService>().LobbyId}/messages", new { clientId = Guid.NewGuid(), text })).Content.ReadFromJsonAsync<MessageDto>())!;
 
     private static List<string> Strings(JsonElement array) => array.EnumerateArray().Select(e => e.GetString()!).ToList();
 

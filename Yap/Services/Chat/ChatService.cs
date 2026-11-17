@@ -36,6 +36,7 @@ public class ChatService
     private readonly MediaSizes _mediaSizes;
     private readonly NotificationAudit _audit;
     private readonly NotificationSettingsService _notifications;
+    private readonly QuickReactionsService _quickReactions;
     private readonly ILogger<ChatService> _logger;
 
     private readonly ConcurrentDictionary<Guid, Channel> _channels = new();
@@ -70,7 +71,7 @@ public class ChatService
     public ChatService(IServiceProvider services, PersistenceWriter writer, PushNotificationService pushService, UserService userService,
         PresenceService presence, LinkPreviewService linkPreviewService, LinkPreviewSettingsService linkPreviewSettings,
         MediaCacheService mediaCacheService, GifService gifService, MediaSizes mediaSizes, NotificationAudit audit,
-        NotificationSettingsService notifications, IOptions<PersistenceSettings> persistence, ILogger<ChatService> logger)
+        NotificationSettingsService notifications, QuickReactionsService quickReactions, IOptions<PersistenceSettings> persistence, ILogger<ChatService> logger)
     {
         _db = services.GetService<IDbContextFactory<ChatDbContext>>();
         _load = persistence.Value.Load;
@@ -85,6 +86,7 @@ public class ChatService
         _mediaSizes = mediaSizes;
         _audit = audit;
         _notifications = notifications;
+        _quickReactions = quickReactions;
         _logger = logger;
 
         _linkPreviewService.OnPreviewFetched = (messageId, _, _) => RaisePreviewsReady(messageId);
@@ -331,6 +333,7 @@ public class ChatService
 
         foreach (var key in _readStates.Keys.Where(k => k.UserId == user.Id).ToList()) _readStates.TryRemove(key, out _);
         foreach (var key in _byClientId.Keys.Where(k => k.UserId == user.Id).ToList()) _byClientId.TryRemove(key, out _);
+        _quickReactions.ForgetUser(user.Id);
 
         _writer.Enqueue(Writes.RelabelAuthor(user.Id, ghostName));
         return dms;
@@ -826,6 +829,7 @@ public class ChatService
 
         OnReactionChanged?.Invoke(message);
         _userService.RecordEmojiUse(userId, emoji);   // a reaction, added or removed, moves the emoji to the front of the recent list (MR-44, PK-07)
+        _quickReactions.RecordToggle(userId, emoji, added);
         _writer.Enqueue(added ? Writes.Reaction(messageId, userId, username, emoji) : Writes.DeleteReaction(messageId, userId, emoji));
         return null;
     }
@@ -985,31 +989,63 @@ public class ChatService
         PinsChanged(channel);
     }
 
-    private static readonly string[] DefaultQuickReactions = ["❤️", "😂", "👍"];
-
     /// <summary>The three quick reactions of the action bar: the person's most used, padded with the fixed three in
     /// order and without duplicates (MR-41).</summary>
-    public List<string> QuickReactions(Guid userId)
-    {
-        var top = TopReactionEmojis(userId, 3);
-        foreach (var e in DefaultQuickReactions)
-        {
-            if (top.Count >= 3) break;
-            if (!top.Contains(e)) top.Add(e);
-        }
-        return top;
-    }
+    public IReadOnlyList<string> QuickReactions(Guid userId) => _quickReactions.Get(userId);
 
-    /// <summary>The emoji the person reacts with most (MR-41). Reactions only: typed emoji are a different habit.</summary>
-    public List<string> TopReactionEmojis(Guid userId, int count)
+    // The two limits of ReactionsForSeed (MR-83). ChatSettings:Persistence:Load can be absent or 0, and the whole
+    // history is in memory then: a walk over all of it, with one list of every reaction and a sort, was work at each
+    // start that changed almost nothing.
+    private const int MaxSeedMessages = 10_000;
+    // One reaction older than a person's newest 149 weighs under 0.05 in QuickReactionsService (0.98^149) and is
+    // dropped there anyway. Many old reactions with one emoji can still weigh up to 2.4 together (50 x 0.98^150); the
+    // limit accepts that loss. A limit of 350 would bring the loss under 0.05.
+    private const int MaxSeedReactionsPerUser = 150;
+
+    /// <summary>Each person's newest reactions on the newest messages in memory, oldest first, for
+    /// <see cref="QuickReactionsService.Seed"/>. The two limits are parameters for the tests; Program.cs uses the defaults.</summary>
+    public Dictionary<Guid, List<string>> ReactionsForSeed(int maxMessages = MaxSeedMessages, int maxReactionsPerUser = MaxSeedReactionsPerUser)
     {
-        var mine = new List<string>();
+        // A reaction in memory has no timestamp or id of its own, so the walk orders by the message's timestamp;
+        // a reaction placed today on an old message replays at the message's age. The walk goes from the newest
+        // message to the oldest across all conversations: each list of a conversation is in the order of time, so one
+        // cursor per conversation in a queue that gives the newest timestamp first is enough, with no sort of the
+        // history. A walk conversation by conversation would fill a person's limit from the conversation that the
+        // dictionary happens to give first, and not from the person's newest reactions.
+        var newestFirst = new PriorityQueue<(List<ChatMessage> Tail, int Index), (DateTime Timestamp, Guid Id)>(
+            Comparer<(DateTime Timestamp, Guid Id)>.Create((a, b) => b.CompareTo(a)));
         foreach (var (channelId, messages) in _channelMessages)
+        {
+            List<ChatMessage> tail;   // a copy: the walk below holds no channel lock
             lock (LockOf(channelId))
-                foreach (var message in messages)
-                    lock (message.Reactions)
-                        mine.AddRange(message.Reactions.Where(r => r.UserId == userId).Select(r => r.Emoji));
-        return mine.GroupBy(e => e).OrderByDescending(g => g.Count()).Take(count).Select(g => g.Key).ToList();
+            {
+                if (messages.Count == 0) continue;
+                var start = Math.Max(0, messages.Count - maxMessages);
+                tail = messages.GetRange(start, messages.Count - start);
+            }
+            var last = tail.Count - 1;
+            newestFirst.Enqueue((tail, last), (tail[last].Timestamp, tail[last].Id));
+        }
+
+        var byUser = new Dictionary<Guid, List<string>>();
+        for (var walked = 0; walked < maxMessages && newestFirst.TryDequeue(out var cursor, out _); walked++)
+        {
+            var message = cursor.Tail[cursor.Index];
+            if (cursor.Index > 0)
+            {
+                var previous = cursor.Tail[cursor.Index - 1];
+                newestFirst.Enqueue((cursor.Tail, cursor.Index - 1), (previous.Timestamp, previous.Id));
+            }
+            lock (message.Reactions)
+                for (var i = message.Reactions.Count - 1; i >= 0; i--)
+                {
+                    var reaction = message.Reactions[i];
+                    if (!byUser.TryGetValue(reaction.UserId, out var list)) byUser[reaction.UserId] = list = [];
+                    if (list.Count < maxReactionsPerUser) list.Add(reaction.Emoji);
+                }
+        }
+        foreach (var list in byUser.Values) list.Reverse();   // collected newest first; the replay needs oldest first
+        return byUser;
     }
 
     /// <summary>Every image, video and voice URL a message in memory carries, and the pictures the pins keep. The admin's

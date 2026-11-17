@@ -79,4 +79,4 @@ public sealed record ClientConfigDto(
 
 public sealed record GifProviderDto(string Name, bool Configured, string AttributionImageUrl);
 
-public sealed record EmojiStateDto(List<string> Recent, List<string> QuickReactions);
+public sealed record EmojiStateDto(List<string> Recent, IReadOnlyList<string> QuickReactions);

@@ -2,7 +2,8 @@
 // older pages and the top note, the New messages pill, typing in a DM, Shift+Enter, the keys on a GIF star, the
 // emoji pick at the limit with Edit on a failed row, a rename of the open room, the media of a pin (the viewer over
 // the pins panel, a video that plays in the entry), the jump to a row that is not loaded (the window, TL-41), and the
-// message search above and under 768 px (search.md).
+// message search above and under 768 px (search.md), the Recent row after a sent message, and the quick reactions
+// that change in the shown bars.
 // Run: npm run features (see README.md). Screenshots go to shots/.
 
 import { chromium } from 'playwright';
@@ -846,6 +847,42 @@ await step(19, 'The emoji of a sent message go to Recent, also from the keyboard
   const all = await recentOf();
   check(local && server && shown === '😀,🎉' && !all.includes('→'),
     `the page's list ${local}; the server's list ${server}; the first cells "${shown}"; the arrow is not an emoji of the picker ${!all.includes('→')} ${JSON.stringify(all.slice(0, 4))}`);
+});
+
+await step(20, 'A change of the quick reactions builds the shown bars again, keeps the places of the emoji that stay, and leaves the rows alone (MR-41, MR-82)', async (check) => {
+  const FOX = '\u{1F98A}';
+  await A.goto(BASE + '/lobby');
+  await A.waitForSelector('.message-input', { timeout: 10000 });
+  for (const text of ['quick one', 'quick two', 'quick three']) {
+    await send(A, text);
+    await waitTrue(async () => (await row(A, text).count()) === 1 && !(await row(A, text).getAttribute('class')).includes('pending'), 5000);
+  }
+  const titles = text => row(A, text).locator('.quick-reaction').evaluateAll(list => list.map(b => b.title));
+  // The pointer enters two rows, and their bars get their buttons. The third row has no buttons yet: a bar is built
+  // when it first shows (message.js fillQuick).
+  await row(A, 'quick one').hover();
+  await row(A, 'quick two').hover();
+  const before = { one: await titles('quick one'), two: await titles('quick two'), three: await titles('quick three') };
+  // A mark on the two row nodes. A new draw of the rows makes new nodes, and the mark is gone: that is what happened
+  // before 2026-11-17, and it stopped a playing video.
+  for (const text of ['quick one', 'quick two']) await row(A, text).evaluate(node => { node.dataset.kept = 'yes'; });
+  // The reaction goes through the hub, as from the person's other device, on the row that has no bar yet.
+  const id = (await row(A, 'quick three').evaluate(node => node.id)).replace('msg-', '');
+  await A.evaluate(async ([id, emoji]) => (await import('/js/hub.js')).invoke('react', id, emoji), [id, FOX]);
+  const changed = await waitTrue(async () => (await titles('quick one')).includes(FOX), 5000, 50);
+  const after = { one: await titles('quick one'), two: await titles('quick two') };
+  const kept = { one: await row(A, 'quick one').getAttribute('data-kept'), two: await row(A, 'quick two').getAttribute('data-kept') };
+  await row(A, 'quick three').hover();
+  const late = await titles('quick three');
+  check(before.one.length === 3 && before.two.length === 3 && before.three.length === 0,
+    `before: the two shown bars have 3 buttons (${before.one.length}, ${before.two.length}); the bar that never showed has none (${before.three.length})`);
+  check(changed && after.one.length === 3 && after.two.join() === after.one.join(),
+    `after the reaction: the fox is in the first shown bar ${changed}; both bars show the same three, one time each ${JSON.stringify(after)}`);
+  // This person has no other reaction in this run, so the two emoji that stay are the first two of the fixed three.
+  check(after.one.join() === [before.one[0], before.one[1], FOX].join(),
+    `the two emoji that stay keep their places and the fox has the third place: ${JSON.stringify(before.one)} -> ${JSON.stringify(after.one)}`);
+  check(kept.one === 'yes' && kept.two === 'yes', `the two rows are the same nodes as before: ${JSON.stringify(kept)}`);
+  check(late.join() === after.one.join(), `the bar that shows for the first time has the new three: ${JSON.stringify(late)}`);
 });
 
 await finish(browser, server);

@@ -124,7 +124,11 @@ A message row is one message as it appears in the conversation. The row shows wh
 
 **MR-40** A tap or click on a pill adds the reader's reaction with that emoji, or removes it when the reader already has it. The change shows immediately, before the server answers. See [General rules](general-rules.md).
 
-**MR-41** The action bar starts with three quick reactions. These are the three emoji that the reader uses most in reactions. When there are fewer than three, ❤️, 😂 and 👍 fill the set until there are three. Only reactions count. Emoji typed into messages do not change the quick set.
+**MR-41** The action bar starts with three quick reactions. These are the three emoji with the highest weight in the reader's reactions. A reaction adds 1 to the weight of its emoji. Before that, it lowers every weight of the reader by 2%, so a newer reaction counts more than an older one. *Why:* a new habit takes the place of an old habit quickly. An emoji that the reader now uses for every reaction has the highest weight after 35 reactions at most, however long the old habit lasted. A removed reaction takes 1 from the weight of its emoji. An emoji with a weight below 0.05 leaves the count: one single use is gone after 149 later reactions. When there are fewer than three, ❤️, 😂 and 👍 fill the set in this order until there are three. An emoji that stays in the set keeps its place in the bar. A new emoji takes the place of the emoji that leaves. *Why:* the reader finds each emoji where it was, and a second click on the same button removes the reaction that the first click gave. Only reactions count. Emoji typed into messages do not change the quick set.
+
+**MR-82** When the quick set changes, the action bars show the new three at once, on every device of the reader. The rest of the list stays as it is: a playing video continues, and a GIF does not start again.
+
+**MR-83** After a restart of the server, the weights come from the reader's newest 150 reactions on the newest 10,000 messages that the server loaded at its start ([AD-03](admin.md#AD-03)), in the order of the times of the messages. The 10,000 messages are the newest ones of all rooms and direct messages together. *Why:* the start stays fast on a server that loads its complete history, and one older reaction has a weight below 0.05. The three are then in the order of their weights, the highest first. The quick set and the places of its emoji can be different after a restart.
 
 **MR-42** Add Reaction opens the emoji picker for this message, with search, recent emoji, the custom packs and the categories, as on the [pickers page](pickers.md#PK-43). A pick closes the picker and adds or removes that reaction. On desktop, the picker opens below the button. When there is no space below, it opens above the button. It always stays inside the window. On a phone, the picker is a bottom sheet.
 
@@ -232,6 +236,7 @@ A message row is one message as it appears in the conversation. The row shows wh
 | Tap on a pill | mouse, touch | The reader's reaction toggles immediately. The pill highlight and count change. |
 | Pointer over a pill | mouse | Tooltip with the display names, in reaction order. |
 | Quick reaction tap | mouse, touch | Reaction toggled immediately. |
+| The quick set changes | mouse, touch | The new emoji shows in the place of the emoji that left, in every action bar. The other two buttons and the rest of the list do not change (MR-41, MR-82). |
 | Add Reaction | mouse, touch | Picker below the button (desktop) or bottom sheet (phone). Row keeps bar and tint. |
 | Pick in the picker | mouse, touch | Picker closes; reaction toggled; emoji moved to the front of recents. |
 | Tap outside the picker, Escape | mouse, touch, keyboard | Picker closes. Nothing else happens. |

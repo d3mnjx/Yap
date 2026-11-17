@@ -89,10 +89,6 @@ namespace Yap.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("EmojiCounts")
-                        .HasMaxLength(2048)
-                        .HasColumnType("TEXT");
-
                     b.Property<int?>("FontSize")
                         .HasColumnType("INTEGER");
 

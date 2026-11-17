@@ -167,11 +167,6 @@ public class User
     public string? RecentEmojis { get; set; }
 
     /// <summary>
-    /// JSON-serialized Dictionary&lt;string, int&gt; of emoji usage counts (for quick reaction buttons).
-    /// </summary>
-    public string? EmojiCounts { get; set; }
-
-    /// <summary>
     /// JSON-serialized List&lt;Guid&gt; of recently used GIF entry IDs (most recent first, max 30).
     /// </summary>
     public string? RecentGifs { get; set; }

@@ -72,7 +72,7 @@ The client calls the methods with these camelCase names; SignalR matches the ser
 | `beaconNonce` | | nonce or null | The single-use nonce for the IPv4 beacon of this connection, asked for when the bootstrap names a beacon URL. The hub mints it because a client that skips the negotiate step does not know its connection id. |
 | `reportLoad` | { html, scripts, bootstrap, paint, socket, rows, protocol, requests, cached, bytes, hidden } | | Once per page load, from the first conversation of the load when the server's rows are on screen. The six phases are ms from the navigation start; a phase the load did not reach is null. The counts are same-origin files, the page included. Feeds the load-time table (AD-41). |
 | `setStatus` | "online" \| "away" \| "invisible" | | Account-wide (PR-01). |
-| `react` | messageId, emoji | error | Toggle (MR-40). Also updates recent emoji (MR-44). |
+| `react` | messageId, emoji | error | Toggle (MR-40). Also updates recent emoji (MR-44) and the quick reactions (MR-41). |
 | `edit` | messageId, text | error | Own text rows only (MR-57). |
 | `delete` | messageId | error | Own rows only (MR-64). |
 | `pin` | channelId, messageId | error | Up to three per conversation, the newest first (MR-77, MR-78). Both people of a DM; in a room the admin, or whoever the room's pin setting allows (AD-37). Also stores a system line in the conversation, sent as a `message` with `kind: "pin"`: it counts for nobody and sends no push (MR-80). |
@@ -103,7 +103,7 @@ The client calls the methods with these camelCase names; SignalR matches the ser
 | `rooms` | rooms[] | all | Created, updated, reordered or deleted (SH-25). The client leaves a deleted open room (TL-21) and derives read-only from `adminOnly` and `user.isAdmin` (IB-62). |
 | `unread` | channelId, count | user | After a send or a read on any device (NT-01). Batched: the broadcaster keeps the latest count per person and conversation and sends it at most every 250 ms, so a busy room moves the badge in steps and a tab gets at most four counts a second per conversation. |
 | `dm` | `{ channelId, partner, lastMessageAt }` | both users | A direct message got its first message. Opening an empty DM sends nothing (SH-29). |
-| `me` | partial `user` + partial `mutes` + `emoji` | user | Theme, text size, date format, status, mutes or recent emoji changed on any device (ST-10, NT-22). |
+| `me` | partial `user` + partial `mutes` + partial `emoji` | user | Theme, text size, date format, status, mutes, recent emoji or quick reactions changed on any device (ST-10, NT-22, PK-07, MR-41). `emoji` carries `recent` or `quickReactions`, the one that changed; the client keeps the other. |
 | `gifFavorites` | favoriteGifIds[] | user | A star changed anywhere (PK-36). |
 | `signedOut` | | user's other devices; every connection of a deleted account | Token rotated by "Sign out all other devices" (AU-20), or the admin deleted the account: each of its connections gets the event before the delete (AD-40). The connection is closed after the event. |
 | `pending` | pending[] | admins | A registration request arrived or was decided (AD-11). |

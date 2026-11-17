@@ -45,7 +45,7 @@ api.MapGet("/bootstrap", (HttpContext http, ClaimsPrincipal principal, UserServi
         Dms = chat.DmConversations(me.Id),
         Unread = chat.UnreadCounts(me.Id),                           // channelId -> count; only counts above zero
         Mutes = mutes.For(me.Id),
-        Emoji = new(users.RecentEmojis(me.Id), chat.TopReactionEmojis(me.Id, 3)),
+        Emoji = new(users.RecentEmojis(me.Id), chat.QuickReactions(me.Id)),
         FavoriteGifIds = gifs.FavoriteIds(me.Id),
         EmojiImages = images.Rules.Stamp == emojiStamp ? null : images.Rules,   // where emoji pictures come from; null: the client named the stamp of the rules it holds
     });
@@ -65,7 +65,7 @@ api.MapGet("/bootstrap", (HttpContext http, ClaimsPrincipal principal, UserServi
 | `dms` | ChatService | the signed-in person's direct messages that have at least one message (SH-29) |
 | `unread` | ChatService | the signed-in person's unread counts that are above zero (NT-01) |
 | `mutes` | NotificationSettingsService | the server mute and its end time, the DM mode, the room mode, the new-DMs bell, the per-conversation choices (NT-16) |
-| `emoji` | UserService, ChatService | the 20 most recent emoji (PK-07) and the three quick reactions (MR-41) |
+| `emoji` | UserService, QuickReactionsService | the 20 most recent emoji (PK-07) and the three quick reactions (MR-41). ChatService passes the call for the quick reactions on |
 | `favoriteGifIds` | GifService | the ids of the person's favourite GIFs. The star on a GIF in a message uses this (MR-30) |
 | `emojiImages` | EmojiImages, CustomEmojiService | where emoji pictures come from (GEN-20): the Twemoji base URL, the names of the self-hosted overrides, the custom packs with their shortcodes, and a stamp of that content. It is in the bootstrap, and not in a document of its own, because the stored copy paints before any answer: with these rules in it, no row is ever drawn with the device's own emoji font and redrawn later. The client sends the stamp it holds as `?emojiStamp=`, and the part is `null` while the rules match, so the packs do not travel on every connect. The picker's list (categories, keywords) is fixed for a build and ships with the shell as `js/data/emoji-list.js` |
 
@@ -112,6 +112,8 @@ public sealed class ChatHubBroadcaster(IHubContext<ChatHub> hub, ChatService cha
         presence.OnChosenStatusChanged += (userId, status) => ToUser(userId, "me", new { status });
         users.OnProfileChanged  += u => ToAll("profile", UserDto.Public(u));
         users.OnSettingsChanged += (userId, partial) => ToUser(userId, "me", partial);
+        users.OnRecentEmojiChanged += (userId, recent) => ToUser(userId, "me", new { emoji = new { recent } });
+        quickReactions.OnChanged   += userId => ToUser(userId, "me", new { emoji = new { quickReactions = quickReactions.Get(userId) } });
         mutes.OnChanged         += userId => ToUser(userId, "me", new { mutes = mutes.For(userId) });
         gifs.OnFavoritesChanged += userId => ToUser(userId, "gifFavorites", gifs.FavoriteIds(userId));
         gate.OnPendingChanged   += () => ToUser(users.AdminId, "pending", gate.Pending());
@@ -155,6 +157,8 @@ public sealed class ChatHubBroadcaster(IHubContext<ChatHub> hub, ChatService cha
 | PresenceService `OnChosenStatusChanged` | `me` | the one person, all devices | `{ status }` |
 | UserService `OnProfileChanged` | `profile` | everyone | the public profile |
 | UserService `OnSettingsChanged` | `me` | the one person, all devices | the fields that changed |
+| UserService `OnRecentEmojiChanged` | `me` | the one person, all devices | `{ emoji: { recent } }`, only when the list changed (PK-07) |
+| QuickReactionsService `OnChanged` | `me` | the one person, all devices | `{ emoji: { quickReactions } }`, only when one of the three emoji changed (MR-41) |
 | NotificationSettingsService `OnChanged` | `me` | the one person, all devices | `{ mutes }` |
 | GifService `OnFavoritesChanged` | `gifFavorites` | the one person, all devices | the favourite ids |
 | RegistrationGateService `OnPendingChanged` | `pending` | the admin | the waiting list |
@@ -165,7 +169,7 @@ public sealed class ChatHubBroadcaster(IHubContext<ChatHub> hub, ChatService cha
 
 - One service event produces one hub message. A handler never sends two messages.
 - A handler reads no other service, with one exception: `ToChannel` asks ChatService whether a channel is a direct message or a room.
-- `me` carries only the fields that changed. The client copies these fields into `user`, `mutes` or `emoji` in its store. Theme, text size, date format, chosen status, mutes and recent emoji all travel in `me` (ST-10, NT-22, PK-07, PR-01).
+- `me` carries only the fields that changed. The client copies these fields into `user`, `mutes` or `emoji` in its store. Theme, text size, date format, chosen status, mutes, recent emoji and quick reactions all travel in `me` (ST-10, NT-22, PK-07, PR-01, MR-41). A reaction can thus produce two `me` messages, one with `emoji.recent` and one with `emoji.quickReactions`. The client merges each into `emoji`, so the order of the two does not matter.
 - A room message reaches only the connections that have the room open. A direct message reaches both persons on every device, whether the conversation is open or not. The sound rule (NT-13) and the tab title rule (NT-12) need this.
 - The broadcaster does not await a send. The client must accept two messages in either order. Example: for one new message, `message` and `unread` can arrive in either order. `message` appends a row. `unread` sets a count. Neither depends on the other.
 - The system bot does not use the broadcaster. The bot sends messages through ChatService, so they arrive as `message` events like all other messages.
