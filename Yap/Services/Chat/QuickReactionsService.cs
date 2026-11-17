@@ -4,8 +4,7 @@ namespace Yap.Services.Chat;
 
 /// <summary>
 /// Each person's three quick reactions of the action bar (MR-41), kept in memory: a decayed reaction score per
-/// emoji so recent habits overtake old ones, a sequence number so the newest reaction wins a tie, and the three
-/// emoji on the wire. While the server runs, an emoji that stays in the three keeps its button; the order by
+/// emoji so recent habits overtake old ones, and the three emoji on the wire. While the server runs, an emoji that stays in the three keeps its button; the order by
 /// score shows only after a start.
 /// </summary>
 public sealed class QuickReactionsService
@@ -57,7 +56,6 @@ public sealed class QuickReactionsService
         public IReadOnlyList<string> Top3 = DefaultQuickReactions;
 
         private readonly Dictionary<string, Entry> _entries = new();
-        private long _seq;
 
         public void ApplyAdded(string emoji)
         {
@@ -70,8 +68,8 @@ public sealed class QuickReactionsService
             if (drop is not null)
                 foreach (var key in drop) _entries.Remove(key);
 
-            if (_entries.TryGetValue(emoji, out var current)) { current.Score += 1.0; current.LastSeq = ++_seq; }
-            else _entries[emoji] = new Entry { Score = 1.0, LastSeq = ++_seq };
+            if (_entries.TryGetValue(emoji, out var current)) current.Score += 1.0;
+            else _entries[emoji] = new Entry { Score = 1.0 };
         }
 
         // An older reaction has decayed below 1.0 by now, so subtracting a full 1.0 takes slightly too much and a
@@ -86,9 +84,12 @@ public sealed class QuickReactionsService
         /// <summary>The three emoji with the highest score, highest first, padded with the fixed three.</summary>
         public List<string> Ranked()
         {
+            // No second sort key for equal scores. Each reaction lowers every other score by 2%, so two scores are
+            // equal only by accident. Of two emoji with the same count of uses, the one used last already has the
+            // higher score. A sequence number per emoji was here for a tie (until 2026-11-17) and almost never
+            // decided an order.
             var top = _entries
                 .OrderByDescending(kv => kv.Value.Score)
-                .ThenByDescending(kv => kv.Value.LastSeq)
                 .Take(3)
                 .Select(kv => kv.Key)
                 .ToList();
@@ -115,9 +116,9 @@ public sealed class QuickReactionsService
         }
     }
 
+    // A class and not a double in the dictionary: ApplyAdded lowers each score while it walks the dictionary.
     private sealed class Entry
     {
         public double Score;
-        public long LastSeq;
     }
 }
