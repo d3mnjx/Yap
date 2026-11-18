@@ -460,6 +460,32 @@
     text-decoration: underline;
 }
 
+/* MR-86: a link to a message of this server, after the server said where the message is (js/message-links.js).
+   The room, the author and the time stand in the place of the address. These rules come after the link rules
+   above and have the same weight, so they win.
+   Inline, not inline-flex: a long room name and a long display name must wrap inside a narrow row, and a box
+   that cannot break would push the row wider than a phone. */
+.message-content a.message-link-label {
+    padding: 0 0.375em;
+    border-radius: 4px;
+    background: var(--accent-tint);
+    color: var(--text-white);
+    font-weight: 500;
+    /* each line of a wrapped label keeps its own padding and corners */
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+}
+
+.message-content a.message-link-label:hover {
+    text-decoration: none;
+    background: color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+
+.message-content a.message-link-label svg {
+    margin-right: 0.3em;
+    vertical-align: -0.125em;   /* the middle of the icon on the middle of the small letters */
+}
+
 /* System messages */
 .system-message {
     display: block;

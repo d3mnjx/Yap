@@ -19,7 +19,7 @@ import { openInstallDialog } from '../pwa.js';
 import { voicePlayer } from './voice.js';
 import { video, gifLoop } from './video.js';
 import { recordEditedEmojis } from '../recent-emoji.js';
-import { linkOf } from '../message-links.js';
+import { linkOf, decorate } from '../message-links.js';
 
 const MAX_TEXT = 4000;   // MR-11
 
@@ -81,6 +81,7 @@ export function renderRow(m, { header }) {
   }
 
   renderContent(row, m);
+  decorate(row.querySelector('.message-content'));   // MR-86: only here, so a pin and a search result keep the address
   renderCards(row, m);
   renderReactions(row, m);
   renderPending(row, m);

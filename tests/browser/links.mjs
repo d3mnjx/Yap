@@ -1,9 +1,10 @@
-// Message links (TL-43, TL-44, MR-84, MR-85): the code of a message id, Copy Message Link in the More menu, a click
-// on a link in a message, an opened address, the refusals, and the sign-in on the way to a link.
+// Message links (TL-43, TL-44, MR-84 to MR-86): the code of a message id, Copy Message Link in the More menu, a click
+// on a link in a message, an opened address, the refusals, the sign-in on the way to a link, and the label that a
+// row shows in the place of the address.
 // Run: npm run links (see README.md).
 
 import { chromium } from 'playwright';
-import { BASE, waitTrue, row, step, finish, startServer, signIn, watchContext, watchPage, fixture, makePng, sendFiles, api } from './lib.mjs';
+import { BASE, SHOTS, sleep, waitTrue, row, step, finish, startServer, signIn, watchContext, watchPage, fixture, makePng, sendFiles, api } from './lib.mjs';
 
 const RED = makePng(fixture('red.png'), [220, 30, 30]);
 const KNOWN_ID = '3f2b8c1e-9a47-4d0b-b1c6-52e7a90d4f18', KNOWN_CODE = 'PyuMHppHTQuxxlLnqQ1PGA';
@@ -40,7 +41,7 @@ await signIn(A, 'boss'); await signIn(B, 'guest'); await signIn(C, 'third');
 for (const name of ['homelab', 'archive']) await api(A, 'POST', '/api/rooms', { name, description: null, adminOnly: false, historyLimit: 'unlimited', sinceJoined: false });
 const roomIds = Object.fromEntries((await api(A, 'GET', '/api/bootstrap')).rooms.map(r => [r.isLobby ? 'lobby' : r.name, r.id]));
 console.log(`setup: rooms ${JSON.stringify(Object.keys(roomIds))}`);
-let backupId, backupLink;
+let backupId, backupLink, dmLink;
 
 await step(1, 'The code of a message id, and which address is a message link', async (check) => {
   const r = await A.evaluate(async ([id, code]) => {
@@ -122,7 +123,7 @@ await step(6, 'A link to a direct message: a third person gets "Message not foun
   await A.goto(`${BASE}/dm/guest`);
   await A.waitForSelector('.message-input', { timeout: 10000 });
   await send(A, 'the price is 40');
-  const dmLink = `${BASE}/m/${await codeOf(A, await sentId(A, 'the price is 40'))}`;
+  dmLink = `${BASE}/m/${await codeOf(A, await sentId(A, 'the price is 40'))}`;
   await C.goto(`${BASE}/lobby`); await B.goto(`${BASE}/lobby`);
   await C.waitForSelector('.message-input', { timeout: 10000 });
   await B.waitForSelector('.message-input', { timeout: 10000 });
@@ -192,6 +193,56 @@ await step(9, 'A person who is not signed in signs in and gets the message (SH-4
   const jumped = await litRow(D, 'the backup runs at 03:00');
   check(moved && jumped, `path ${pathOf(D)}; the linked row has the highlight ${jumped}`);
   await ctxD.close();
+});
+
+// ---- the label (MR-86) ----
+
+const label = (page, text) => row(page, text).locator('a.message-link-label');
+// The questions about messages that the reader's page sends to the server, as the frames of its connection.
+const asked = [];
+const askedAbout = id => asked.filter(frame => frame.includes(id)).length;
+
+await step(10, 'A link shows as a label for a reader who may read the message, and as the address for the others (MR-86)', async (check) => {
+  await post(A, roomIds.lobby, `once more: ${backupLink}`);   // a second row with the same link
+  B.on('websocket', ws => ws.on('framesent', f => { const text = String(f.payload); if (text.includes('"target":"messageLinks"')) asked.push(text); }));
+  await B.goto(`${BASE}/lobby`);
+  const shown = await waitTrue(async () => (await label(B, 'it is here').count()) === 1 && (await label(B, 'once more').count()) === 1, 10000, 50);
+  const text = shown ? (await label(B, 'it is here').innerText()).trim() : '';
+  const href = shown ? await label(B, 'it is here').getAttribute('href') : '';
+  check(shown && text.startsWith('# homelab · boss · ') && href === backupLink, `the label of a room message: "${text}"; it keeps the address ${href === backupLink}`);
+  check(askedAbout(backupId) === 1, `two rows with the same link make one question about it: ${askedAbout(backupId)}`);
+  await B.screenshot({ path: SHOTS + 'links-label.png' });
+
+  const dmShown = await waitTrue(async () => (await label(B, 'between two people').count()) === 1, 5000, 50);
+  const dmText = dmShown ? (await label(B, 'between two people').innerText()).trim() : '';
+  check(dmShown && dmText.startsWith('boss · ') && !dmText.includes('#'), `the label of a direct message for its partner: "${dmText}"`);
+
+  // The third person may read the room and may not read the direct message.
+  const roomLabel = await waitTrue(async () => (await label(C, 'it is here').count()) === 1, 10000, 50);
+  const plain = row(C, 'between two people').locator('a.message-link');
+  const plainText = (await plain.innerText()).trim(), plainClass = (await plain.getAttribute('class')) ?? '';
+  check(roomLabel && plainText === dmLink && !plainClass.includes('message-link-label'),
+    `the third person: the room link is a label ${roomLabel}; the direct message link stays the address ${plainText === dmLink}, class "${plainClass}"`);
+});
+
+await step(11, 'A reaction draws the row again, and the label stays with no second question (MR-86)', async (check) => {
+  const target = row(B, 'it is here');
+  await target.hover();
+  await target.locator('.quick-reaction').first().click();
+  const reacted = await waitTrue(async () => (await target.locator('.reaction-pill').count()) === 1, 5000, 50);
+  await sleep(300);   // an answer of the server would have changed the label by now
+  const kept = (await label(B, 'it is here').count()) === 1;
+  check(reacted && kept && askedAbout(backupId) === 1, `the reaction shows ${reacted}; the label stays ${kept}; questions about the message: ${askedAbout(backupId)}`);
+});
+
+await step(12, 'An address with this host before an @ is a normal link with no label (MR-86)', async (check) => {
+  const lookalike = `${new URL(BASE).protocol}//${new URL(BASE).host}@other.example/m/${KNOWN_CODE}`;
+  await post(A, roomIds.lobby, `a trap: ${lookalike}`);
+  const link = row(B, 'a trap').locator('a.message-link');
+  await link.waitFor({ timeout: 5000 });
+  await sleep(1000);   // the time in which a label would come
+  const cls = (await link.getAttribute('class')) ?? '', text = (await link.innerText()).trim();
+  check(!cls.includes('message-link-label') && text === lookalike && (await link.getAttribute('target')) === '_blank', `class "${cls}"; text is the address ${text === lookalike}; it opens a new tab as every other link`);
 });
 
 await finish(browser, server);

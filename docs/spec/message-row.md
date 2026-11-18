@@ -58,6 +58,8 @@ This page specifies how one message appears in the conversation. A message shows
 
 **MR-85** A link to a message of this server ([TL-43](timeline.md#TL-43)) is the exception to MR-13: a click or a tap opens the message in the same tab. This is so in a message, in a caption, in the pins panel and in the search results. A click with Ctrl, Shift, Alt or the Command key, and a click with the middle button, do what the browser does with a link.
 
+**MR-86** In a message and in a caption, a link to a message of this server shows as a label in the place of its address, when the reader may read the linked message. The label is a link icon, the room as "# {room}", the display name of the author, and the time of the linked message in the style of MR-05, with " · " between them. The label of a message in a direct message names no room: it shows the author and the time. The label is a link, and MR-85 applies to it. The address shows until the server says where the linked message is. It stays when the reader may not read the linked message, when the linked message does not exist, and without a connection. So a link that only some readers may open shows them the label, and it shows every other reader the address. The label never shows text of the linked message. It does not change while the page stays open: after a new name of the room, after a delete of the linked message and after a change of what the reader may read, it changes at the next load. The pins panel and the search results show the address.
+
 **MR-14** An edited text message ends with "(edited)" in small placeholder-coloured text.
 
 ### Emoji
@@ -251,6 +253,7 @@ This page specifies how one message appears in the conversation. A message shows
 | Copy Text | mouse, touch | Text copied as typed; menu closes. |
 | Copy Message Link | mouse, touch | The address of the message copied; menu closes (MR-84). |
 | Click or tap on a link to a message of this server | mouse, touch | The message opens in the same tab (MR-85, TL-43). |
+| Link to a message of this server in a message | all | A label with the room, the author and the time when the reader may read the linked message; the address in every other case (MR-86). |
 | Edit | mouse, touch | Editor in the message, caret at the end, bar hidden. Phone: the keyboard opens. |
 | Enter in the editor | keyboard, device without touch | Saves. |
 | Enter in the editor | keyboard, device with touch | Newline. |
@@ -303,6 +306,7 @@ This page specifies how one message appears in the conversation. A message shows
 | Bar tooltips | the emoji itself; "Add Reaction"; "Reply"; "Edit"; "More" |
 | Video play control | "Play video" |
 | More menu | "Copy Text"; "Copy Message Link"; "Pin Message"; "Unpin Message"; "Delete Message" |
+| Label of a message link | "# {room} · {display name} · {time}"; for a direct message "{display name} · {time}" |
 | Pin refusals | "Up to 6 pinned messages. Unpin one first."; "You cannot pin messages here."; "You cannot unpin messages here."; "A system line cannot be pinned." |
 | System line refusals | "A system line cannot be edited."; "A system line cannot be quoted."; "System lines do not accept reactions." |
 | Editor | "✓ Save" (tooltip "Save"); "✕ Cancel" (tooltip "Cancel"); "Enter to save · Shift+Enter for newline · Esc to cancel" |

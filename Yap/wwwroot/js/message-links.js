@@ -1,4 +1,5 @@
-// Message links (TL-43, TL-44, MR-84): the address of one message, and the way from an address to the message.
+// Message links (TL-43, TL-44, MR-84 to MR-86): the address of one message, the way from an address to the message,
+// and the label that a row shows in the place of the address.
 //
 // An address is {origin}/m/{code}. The code is the message id, a Guid, in 22 characters: the 16 bytes in the order
 // of the hex digits of the usual writing, as base64url without padding. Only this file changes between the two
@@ -6,9 +7,11 @@
 // different one, never meets this code. The server knows the form of the path for one purpose only: it makes no
 // link card for it (LinkPreviewService.IsMessageLink).
 
-import { state, lobby } from './store.js';
+import { state, lobby, roomById, displayName } from './store.js';
 import * as hub from './hub.js';
 import * as router from './router.js';
+import { icon } from './render/dom.js';
+import { messageTime } from './render/time.js';
 import * as overlays from './ui/overlays.js';
 import { jumpTo } from './ui/timeline.js';
 import { notice } from './ui/confirm.js';
@@ -117,6 +120,36 @@ function refuse(reason, link) {
 // A jump that the chat page could not make after it opened the conversation of a link. The reader is in the right
 // conversation and stays there.
 export function failed(reason) { notice({ title: 'Message link', text: reason }); }
+
+// ---- the label of a link in a row (MR-86) ----
+
+// Turns the message links of one drawn row into labels: the room, the author and the time of the linked message in
+// the place of the address. The address stays until the server's answer is there, and for good when the server gave
+// no entry or the call failed. One call asks about all links of the row that have no promise yet. No queue collects
+// the rows of a page: message links are rare, and a queue would need a moment that empties it.
+// The timeline draws a row again after each reaction, edit and card (ui/timeline.js), with new nodes. Every drawing
+// calls this, and the promise of an id is the same one each time, so the new nodes get their label from it, with no
+// second call, also when the answer comes after the redraw.
+export function decorate(node) {
+  const found = [];
+  for (const link of node.querySelectorAll('a.message-link')) {
+    const id = messageIdOf(link.href);
+    if (id) found.push({ link, id });
+  }
+  if (!found.length) return;
+  ask(found.map(f => f.id));
+  for (const { link, id } of found) state.messageLinks.get(id)?.then(answer => { if (answer?.id) label(link, answer); });
+}
+
+// The names go in as text, never as markup: a person chooses the name of a room and a display name.
+function label(link, { channelId, dmUser, username, timestamp }) {
+  const room = dmUser ? null : roomById(channelId);
+  if (!dmUser && !room) return;   // a room that this page does not know: the address stays
+  // A direct message has no room to name. Its label is the author and the time.
+  const parts = [...(room ? [`# ${room.name}`] : []), displayName(username), messageTime(timestamp)];
+  link.classList.add('message-link-label');
+  link.replaceChildren(icon('link', { width: 14, height: 14 }), parts.join(' · '));
+}
 
 // ---- the click on a link in a message ----
 // One listener for the document. messageText (render/text.js) draws every link, and it only draws: it serves the

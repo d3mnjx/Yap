@@ -16,7 +16,7 @@ that the files share. The last section is the record of how these files came out
 | `css/pickers.css` | The picker with tabs, the emoji picker, the GIF picker | `js/ui/emoji-picker.js`, `js/ui/gif-picker.js`, `js/ui/composer.js` |
 | `css/timeline.css` | The gallery viewer, the message list with its loading row and top note, the pills over the list, the Show more button | `js/ui/timeline.js`, `js/ui/gallery.js` |
 | `css/composer.css` | The input box: the typing strip, the reply bar, the pill, the host of the pickers, the tray, the voice recorder | `js/ui/composer.js` |
-| `css/message.css` | One message row: the pending and failed states, the header, the text, the media, the link card, the players, the reactions, the action bar, the editor, the menus and dialogs of a row | `js/ui/message.js`, `js/ui/video.js`, `js/ui/voice.js`, `js/ui/confirm.js` |
+| `css/message.css` | One message row: the pending and failed states, the header, the text, the media, the link card, the label of a message link, the players, the reactions, the action bar, the editor, the menus and dialogs of a row | `js/ui/message.js`, `js/message-links.js`, `js/ui/video.js`, `js/ui/voice.js`, `js/ui/confirm.js` |
 | `css/signin.css` | The login, invite and verify pages | `js/pages/login.js`, `invite.js`, `verify.js` |
 | `css/pages.css` | The rules that two or more pages share (the page shell, the form block, the toggle switch, the danger items, the upload button), the GIF library, the not-found page | `js/ui/gif-library.js`, the page modules |
 | `css/admin.css` | The Admin page | `js/pages/admin.js` |

@@ -24,7 +24,8 @@ server, runs its steps, prints PASS or FAIL for each step, and stops the server 
 - `links.mjs` checks the message links: the code of a message id, Copy Message Link in the More menu (also on a
   picture of someone else), a click on a link to another room and to the open room, a link to a direct message for
   the partner and for a third person, an opened address of a message that is not loaded with the Back button after
-  it, a wrong code, and the sign-in on the way to a link.
+  it, a wrong code, the sign-in on the way to a link, and the label of a link in a row: for a reader who may read
+  the message and for one who may not, after a reaction on the row, and for a look-alike address.
 - `uploads.mjs` checks the uploads of a message: a text that goes out while a picture uploads, the state of each
   file in the pending row with three files at one time and the pictures in the order of the pick, an upload that
   goes on after a reload from the bytes the server has, a last chunk whose answer was lost (with a reload and
