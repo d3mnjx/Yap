@@ -7,7 +7,7 @@
 // different one, never meets this code. The server knows the form of the path for one purpose only: it makes no
 // link card for it (LinkPreviewService.IsMessageLink).
 
-import { state, lobby, roomById, displayName } from './store.js';
+import { state, changed, lobby, roomById, displayName } from './store.js';
 import * as hub from './hub.js';
 import * as router from './router.js';
 import { icon } from './render/dom.js';
@@ -97,6 +97,9 @@ export async function open(id, link) {
   if (router.current.page === 'chat' && state.open?.channelId === answer.channelId) {
     const reason = await jumpTo(id);
     if (reason) refuse(reason, link);
+    // MR-85: the link can be in a pin or in a search result, and on a phone both cover the conversation. They show
+    // the conversation now, as they do after a tap on the pin or on the result. Without this the jump is not seen.
+    else changed('linkJump');
     return;
   }
   state.waitingJump = { channelId: answer.channelId, id };

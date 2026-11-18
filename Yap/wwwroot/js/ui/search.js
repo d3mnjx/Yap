@@ -353,6 +353,7 @@ export function Search(frame, { closeSidebar }) {
   const offs = [
     on('open', renderEntry), on('rooms', renderEntry), on('users', renderEntry), on('texts', renderEntry),
     on('tail', () => { if (s?.at === 'message') end(); }),   // SR-28: only at a result; under the list a reconnect must not lose the query
+    on('linkJump', () => { if (narrow.matches && s?.at === 'results') showMessage(); }),   // MR-85: a message link in a result went to its message; as after a tap on the result (SR-26)
     // SR-18: "Needs a connection" is true only while there is none. When the connection is back, the query on screen
     // is searched again; without this the refusal stays until the person changes the query.
     on('connection', () => { if (s?.error === 'Needs a connection' && s.phase === 'error' && state.connection === 'connected') schedule(); }),

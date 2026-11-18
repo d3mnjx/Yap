@@ -1,6 +1,6 @@
 // Message links (TL-43, TL-44, MR-84 to MR-86): the code of a message id, Copy Message Link in the More menu, a click
-// on a link in a message, an opened address, the refusals, the sign-in on the way to a link, and the label that a
-// row shows in the place of the address.
+// on a link in a message, an opened address, the refusals, the sign-in on the way to a link, the label that a
+// row shows in the place of the address, and a link in a pin and in a search result of a phone.
 // Run: npm run links (see README.md).
 
 import { chromium } from 'playwright';
@@ -60,7 +60,7 @@ await step(1, 'The code of a message id, and which address is a message link', a
     `no message link: another server ${r.other}, this host before an @ ${r.lookalike}, a longer path ${r.longer}, a room address ${r.room}`);
 });
 
-await step(2, 'Copy Message Link in the More menu (MR-54, MR-84)', async (check) => {
+await step(2, 'Copy Message Link in the More menu, and "Copied" after the two copy items (MR-54, MR-56, MR-84)', async (check) => {
   await A.goto(`${BASE}/room/${roomIds.homelab}`);
   await A.waitForSelector('.message-input', { timeout: 10000 });
   await send(A, 'the backup runs at 03:00');
@@ -73,8 +73,19 @@ await step(2, 'Copy Message Link in the More menu (MR-54, MR-84)', async (check)
   check(items.join(' | ') === 'Copy Text | Copy Message Link | Pin Message | Delete Message', `items: ${items.join(' | ')}`);
   await menu.locator('.more-menu-item', { hasText: 'Copy Message Link' }).click();
   const closed = await waitTrue(async () => (await A.locator('.more-menu').count()) === 0, 2000, 50);
+  const said = () => waitTrue(async () => (await row(A, 'the backup runs at 03:00').locator('.row-reason').innerText().catch(() => '')) === 'Copied', 2000, 50);
+  const saidLink = await said();
   const clip = await A.evaluate(() => navigator.clipboard.readText()).catch(e => `(read failed: ${e.message})`);
-  check(closed && clip === backupLink, `menu closed ${closed}; clipboard "${clip}" is the address of the message: ${clip === backupLink}`);
+  check(closed && clip === backupLink && saidLink, `menu closed ${closed}; clipboard "${clip}" is the address of the message: ${clip === backupLink}; "Copied" at the row ${saidLink}`);
+
+  // Copy Text says it too (MR-56). The first "Copied" goes away before the second click, so the check sees a new one.
+  await waitTrue(async () => (await A.locator('.row-reason').count()) === 0, 4000, 100);
+  await row(A, 'the backup runs at 03:00').hover();
+  await row(A, 'the backup runs at 03:00').locator('.action-more').click();
+  await A.locator('.more-menu .more-menu-item', { hasText: 'Copy Text' }).click();
+  const saidText = await said();
+  const clipText = await A.evaluate(() => navigator.clipboard.readText()).catch(e => `(read failed: ${e.message})`);
+  check(saidText && clipText === 'the backup runs at 03:00', `Copy Text: clipboard "${clipText}"; "Copied" at the row ${saidText}`);
 });
 
 await step(3, 'A picture of someone else has More and the item for a reader who may not pin (MR-47)', async (check) => {
@@ -242,6 +253,44 @@ await step(12, 'An address with this host before an @ is a normal link with no l
   await sleep(1000);   // the time in which a label would come
   const cls = (await link.getAttribute('class')) ?? '', text = (await link.innerText()).trim();
   check(!cls.includes('message-link-label') && text === lookalike && (await link.getAttribute('target')) === '_blank', `class "${cls}"; text is the address ${text === lookalike}; it opens a new tab as every other link`);
+});
+
+// ---- a link in a pin and in a search result (MR-85) ----
+// Both cover the conversation on a phone. After a tap on a link to a message of the open conversation they give
+// way, as after a tap on the pin or on the result.
+
+await step(13, 'A link in a pin closes the pins panel and jumps (MR-85)', async (check) => {
+  const note = await post(A, roomIds.homelab, `pinned note: ${backupLink}`);
+  const pinned = await A.evaluate(async ([channelId, id]) => (await import('/js/hub.js')).invoke('pin', channelId, id), [roomIds.homelab, note.id]);
+  await B.goto(`${BASE}/room/${roomIds.homelab}`);
+  await B.locator('.pins-button').click();
+  const panel = B.locator('.pins-panel');
+  await panel.waitFor({ state: 'visible', timeout: 3000 });
+  await B.locator('.pin-entry a.message-link').click();
+  const closed = await waitTrue(async () => (await panel.count()) === 0, 3000, 50);
+  const jumped = await lit(row(B, 'the backup runs at 03:00'));
+  check(pinned == null && closed && jumped && ctxB.pages().length === 1, `pinned ${pinned == null}; the panel closed ${closed}; the linked row has the highlight ${jumped}; tabs: ${ctxB.pages().length}`);
+});
+
+await step(14, 'On a phone, a link in a search result shows the conversation at the message (MR-85)', async (check) => {
+  const ctxN = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  watchContext(ctxN, 'narrow');
+  const N = await ctxN.newPage(); watchPage(N, 'narrow');
+  await signIn(N, 'thumb');
+  await N.goto(`${BASE}/room/${roomIds.homelab}`);
+  await N.waitForSelector('.message-input', { timeout: 10000 });
+  await N.click('.users-toggle');
+  await N.locator('.search-row').click();
+  const screen = N.locator('.search-screen');
+  await N.locator('.search-screen .search-input').fill('pinned note');
+  const link = N.locator('.search-results .search-result').filter({ hasText: 'pinned note' }).locator('a.message-link');
+  await link.waitFor({ timeout: 5000 });
+  await link.tap();
+  const away = await waitTrue(async () => ((await screen.getAttribute('class')) ?? '').includes('away'), 3000, 50);
+  const jumped = await lit(row(N, 'the backup runs at 03:00'));
+  const header = await N.locator('.search-at-result').isVisible();
+  check(away && jumped && header && ctxN.pages().length === 1, `the results gave way ${away}; the linked row has the highlight ${jumped}; the search header shows ${header}; tabs: ${ctxN.pages().length}`);
+  await ctxN.close();
 });
 
 await finish(browser, server);

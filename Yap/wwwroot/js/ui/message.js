@@ -414,8 +414,8 @@ function openMore(rowNode, m, anchor, event) {
   if (m.pending) link.remove();   // MR-84: a row that is not sent has an id of this device only, and no address leads to it
   if (!isOwn(m) || m.pending) del.remove();
   if (!m.pending) remove.remove();
-  copy.addEventListener('click', () => { navigator.clipboard?.writeText(m.text).catch(() => {}); close(); });   // MR-56
-  link.addEventListener('click', () => { navigator.clipboard?.writeText(linkOf(m.id)).catch(() => {}); close(); });   // MR-84: no feedback, as Copy Text
+  copy.addEventListener('click', () => { copyAndSay(rowNode, m.text); close(); });           // MR-56
+  link.addEventListener('click', () => { copyAndSay(rowNode, linkOf(m.id)); close(); });   // MR-84
   del.addEventListener('click', e => { close(); if (e.shiftKey) deleteNow(rowNode, m); else confirmDelete(rowNode, m); });   // MR-67
   remove.addEventListener('click', () => { close(); sender.remove(m); });
   layer.querySelector('.more-menu-backdrop').addEventListener('click', () => close());
@@ -423,6 +423,13 @@ function openMore(rowNode, m, anchor, event) {
   rowNode.classList.add('menu-open');
   overlays.place(menu, anchor);
   const close = overlays.open({ element: menu, keep: [anchor], onClose: () => { layer.remove(); live(rowNode).classList.remove('menu-open'); } });
+}
+
+// MR-56, MR-84: the text goes to the clipboard, and "Copied" shows at the row for two seconds. A copied address
+// cannot be seen, so the row says that the copy worked. Nothing shows when the browser refuses the write (a page
+// without https, or no permission): the text is not in the clipboard then, and "Copied" would be false.
+function copyAndSay(rowNode, text) {
+  navigator.clipboard?.writeText(text).then(() => overlays.reason(live(rowNode), 'Copied'), () => {});
 }
 
 function confirmDelete(rowNode, m) {
