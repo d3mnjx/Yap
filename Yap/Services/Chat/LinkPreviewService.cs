@@ -85,7 +85,7 @@ public partial class LinkPreviewService
     }
 
     /// <summary>A message link of a Yap server (TL-43), which gets no card: for this server's own address the fetch
-    /// would read its own sign-in page. The path alone decides, on every host, because the server does not know its
+    /// would read its own sign-in page. Only the path is tested, on every host, because the server does not know its
     /// public address reliably (ChatSettings:PublicOrigin is empty by default). The cost is that a page of another
     /// site with exactly this path form gets no card. The form is the one of wwwroot/js/message-links.js.</summary>
     public static bool IsMessageLink(string url) =>

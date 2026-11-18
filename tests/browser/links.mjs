@@ -1,6 +1,7 @@
 // Message links (TL-43, TL-44, MR-84 to MR-86): the code of a message id, Copy Message Link in the More menu, a click
 // on a link in a message, an opened address, the refusals, the sign-in on the way to a link, the label that a
-// row shows in the place of the address, and a link in a pin and in a search result of a phone.
+// row shows in the place of the address, a link in a pin and in a search result of a phone, the label of a row
+// that was drawn without a connection, and a reader who leaves before the server answers.
 // Run: npm run links (see README.md).
 
 import { chromium } from 'playwright';
@@ -256,8 +257,8 @@ await step(12, 'An address with this host before an @ is a normal link with no l
 });
 
 // ---- a link in a pin and in a search result (MR-85) ----
-// Both cover the conversation on a phone. After a tap on a link to a message of the open conversation they give
-// way, as after a tap on the pin or on the result.
+// Both cover the conversation on a phone. After a tap on a link to a message of the open conversation, the panel
+// closes and the search shows the conversation, as after a tap on the pin or on the result.
 
 await step(13, 'A link in a pin closes the pins panel and jumps (MR-85)', async (check) => {
   const note = await post(A, roomIds.homelab, `pinned note: ${backupLink}`);
@@ -272,25 +273,97 @@ await step(13, 'A link in a pin closes the pins panel and jumps (MR-85)', async 
   check(pinned == null && closed && jumped && ctxB.pages().length === 1, `pinned ${pinned == null}; the panel closed ${closed}; the linked row has the highlight ${jumped}; tabs: ${ctxB.pages().length}`);
 });
 
+// The phone of steps 14 and 15.
+const ctxN = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+watchContext(ctxN, 'narrow');
+const N = await ctxN.newPage(); watchPage(N, 'narrow');
+const searchFor = async text => {   // opens the search of the phone and types
+  await N.click('.users-toggle');
+  await N.locator('.search-row').click();
+  await N.locator('.search-screen .search-input').fill(text);
+};
+
 await step(14, 'On a phone, a link in a search result shows the conversation at the message (MR-85)', async (check) => {
-  const ctxN = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
-  watchContext(ctxN, 'narrow');
-  const N = await ctxN.newPage(); watchPage(N, 'narrow');
   await signIn(N, 'thumb');
   await N.goto(`${BASE}/room/${roomIds.homelab}`);
   await N.waitForSelector('.message-input', { timeout: 10000 });
-  await N.click('.users-toggle');
-  await N.locator('.search-row').click();
+  await searchFor('pinned note');
   const screen = N.locator('.search-screen');
-  await N.locator('.search-screen .search-input').fill('pinned note');
   const link = N.locator('.search-results .search-result').filter({ hasText: 'pinned note' }).locator('a.message-link');
   await link.waitFor({ timeout: 5000 });
   await link.tap();
   const away = await waitTrue(async () => ((await screen.getAttribute('class')) ?? '').includes('away'), 3000, 50);
   const jumped = await lit(row(N, 'the backup runs at 03:00'));
   const header = await N.locator('.search-at-result').isVisible();
-  check(away && jumped && header && ctxN.pages().length === 1, `the results gave way ${away}; the linked row has the highlight ${jumped}; the search header shows ${header}; tabs: ${ctxN.pages().length}`);
+  check(away && jumped && header && ctxN.pages().length === 1, `the results hid ${away}; the linked row has the highlight ${jumped}; the search header shows ${header}; tabs: ${ctxN.pages().length}`);
+});
+
+await step(15, 'On a phone, a link in a search result to another room leaves no dead Back press (MR-85)', async (check) => {
+  const far = await post(A, roomIds.archive, 'the far message');
+  await post(A, roomIds.homelab, `see the archive: ${BASE}/m/${await codeOf(A, far.id)}`);
+  // Two loads, so the history has the lobby below the room: the second Back of this step must arrive there.
+  await N.goto(`${BASE}/lobby`);
+  await N.waitForSelector('.message-input', { timeout: 10000 });
+  await N.goto(`${BASE}/room/${roomIds.homelab}`);
+  await N.waitForSelector('.message-input', { timeout: 10000 });
+  await searchFor('see the archive');
+  const link = N.locator('.search-results .search-result').filter({ hasText: 'see the archive' }).locator('a.message-link');
+  await link.waitFor({ timeout: 5000 });
+  await link.tap();
+  const opened = await atPath(N, `/room/${roomIds.archive}`) && await lit(row(N, 'the far message'));
+  await N.evaluate(() => history.back());
+  const first = await atPath(N, `/room/${roomIds.homelab}`);
+  await N.waitForSelector('.message-input', { timeout: 10000 });
+  const noSearch = !(await N.locator('.search-screen').isVisible());
+  await N.evaluate(() => history.back());
+  const second = await atPath(N, '/lobby');
+  check(opened && first && noSearch && second,
+    `the other room opened at the message ${opened}; the first Back shows the first room ${first}, without the search ${noSearch}; the second Back leaves it ${second} (path ${pathOf(N)})`);
   await ctxN.close();
+});
+
+await step(16, 'A row drawn without a connection gets its label when the connection is back (MR-86)', async (check) => {
+  // The lobby holds the row "between two people" with a link to a direct message of B. The device stores the
+  // lobby, and a load of another room starts a document that never asked about that link.
+  await B.goto(`${BASE}/lobby`);
+  const stored = await waitTrue(async () => (await label(B, 'between two people').count()) === 1, 10000, 50);
+  await sleep(3000);   // the device writes its copy of the lobby about 2 s after the last change
+  await B.goto(`${BASE}/room/${roomIds.archive}`);
+  await B.waitForSelector('.message-input', { timeout: 10000 });
+  const connection = () => B.evaluate(async () => (await import('/js/store.js')).state.connection);
+  await ctxB.setOffline(true);
+  const offline = await waitTrue(async () => (await connection()) !== 'connected', 10000, 50);
+  await B.evaluate(async () => (await import('/js/router.js')).navigate('/lobby'));
+  const link = row(B, 'between two people').locator('a.message-link');
+  const drawn = await waitTrue(async () => (await link.count()) === 1, 5000, 50);
+  await sleep(300);   // the call fails at once without a connection; a label would be there by now
+  const plain = drawn && !((await link.getAttribute('class')) ?? '').includes('message-link-label');
+  await ctxB.setOffline(false);
+  const labelled = await waitTrue(async () => (await label(B, 'between two people').count()) === 1, 20000, 100);
+  check(stored && offline && plain && labelled,
+    `label before ${stored}; offline ${offline}; the stored row shows the address without a connection ${plain}; the label comes with the connection ${labelled}`);
+});
+
+await step(17, 'The reader leaves an opened address before the server answers, and stays where they went (TL-43)', async (check) => {
+  // The test holds the answer about one id back: the map of answers gets a promise that the test resolves later.
+  const heldId = crypto.randomUUID(), heldCode = await codeOf(A, heldId);
+  await A.goto(`${BASE}/lobby`);
+  await A.waitForSelector('.message-input', { timeout: 10000 });
+  await A.evaluate(async ([id, code, channelId]) => {
+    const { state } = await import('/js/store.js');
+    state.messageLinks.set(id, new Promise(resolve => {
+      window.answerHeldLink = () => resolve({ id, channelId, dmUser: null, username: 'boss', timestamp: new Date().toISOString() });
+    }));
+    (await import('/js/router.js')).navigate(`/m/${code}`);
+  }, [heldId, heldCode, roomIds.archive]);
+  const waits = await atPath(A, `/m/${heldCode}`);
+  await A.evaluate(async path => (await import('/js/router.js')).navigate(path), `/room/${roomIds.homelab}`);
+  await A.waitForSelector('.message-input', { timeout: 10000 });
+  await A.evaluate(() => window.answerHeldLink());
+  await sleep(500);   // the open of the old code navigated in this time
+  const dialogs = await A.locator('.delete-confirm-overlay').count();
+  check(waits && pathOf(A) === `/room/${roomIds.homelab}` && dialogs === 0,
+    `the address waited ${waits}; after the answer the reader is at ${pathOf(A)} (the room they chose is /room/${roomIds.homelab}); dialogs: ${dialogs}`);
 });
 
 await finish(browser, server);

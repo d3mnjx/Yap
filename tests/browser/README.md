@@ -26,7 +26,9 @@ server, runs its steps, prints PASS or FAIL for each step, and stops the server 
   the partner and for a third person, an opened address of a message that is not loaded with the Back button after
   it, a wrong code, the sign-in on the way to a link, and the label of a link in a row: for a reader who may read
   the message and for one who may not, after a reaction on the row, and for a look-alike address. It also checks
-  "Copied" after the two copy items, a link in a pin (the pins panel closes) and a link in a search result on a phone.
+  "Copied" after the two copy items, a link in a pin (the pins panel closes) and a link in a search result on a phone,
+  to the open room and to another room with the Back button after it. The last two steps check the label of a row
+  that was drawn without a connection, and a reader who leaves an opened address before the server answers.
 - `uploads.mjs` checks the uploads of a message: a text that goes out while a picture uploads, the state of each
   file in the pending row with three files at one time and the pictures in the order of the pick, an upload that
   goes on after a reload from the bytes the server has, a last chunk whose answer was lost (with a reload and

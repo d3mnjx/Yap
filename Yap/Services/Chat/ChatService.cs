@@ -562,7 +562,9 @@ public class ChatService
     public ChatMessage? GetMessage(Guid messageId)
     {
         if (!_channelOfMessage.TryGetValue(messageId, out var channelId) || !_channelMessages.TryGetValue(channelId, out var messages)) return null;
-        lock (LockOf(channelId)) return messages.FirstOrDefault(m => m.Id == messageId);
+        // From the newest end: a message that someone replies to, pins or links to is usually a recent one, and the
+        // list has the oldest message first.
+        lock (LockOf(channelId)) return messages.FindLast(m => m.Id == messageId);
     }
 
     public const int MaxMessageLinks = 50;   // one page of the timeline; a call cannot make the server look up more

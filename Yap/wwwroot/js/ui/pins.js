@@ -83,7 +83,7 @@ export function openPins(anchor, onClose) {
   const offs = [
     on('pins', draw), on('rooms', draw), on('users', draw),
     on('open', () => { if (state.open?.channelId !== channelId) close(); else draw(); }),   // a switch closes it; a reconnect redraws it
-    on('linkJump', () => close()),   // MR-85: a message link in a pin went to its message; the panel gives way, as after a tap on the entry (SH-49)
+    on('linkJump', () => close()),   // MR-85: a message link in a pin went to its message; the panel closes, as after a tap on the entry (SH-49)
   ];
   const close = overlays.open({ element: panel, keep: [anchor], onClose: () => { offs.forEach(off => off()); layer.remove(); onClose?.(); } });
   draw();

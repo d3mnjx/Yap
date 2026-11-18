@@ -54,6 +54,8 @@ export function messageIdOf(href) {
 // ({ id, channelId, dmUser, username, timestamp }), to null when the server gave no entry (the reader may not read the
 // message, or it does not exist), or to { error } when the call failed. A failed call leaves the map, so the next
 // question asks the server again; an entry and a null stay until the page loads again or the session ends.
+// A call without a connection fails at once with 'Needs a connection' (hub.invoke). A click shows that reason, and a
+// label asks again at the next connect (decorate).
 
 // Asks the server about the ids that have no promise yet, in one call. Ids after the first 50 wait for the next call.
 function ask(ids) {
@@ -91,17 +93,30 @@ export function takeJump(channelId) {
 // Opens the message of a link. `link` is the clicked element; without one, the address itself was opened
 // (pages/message-link.js), and `id` is null when the text after /m/ was no code.
 export async function open(id, link) {
+  // The reader can go to another page while this function waits: a tap on a room in the sidebar, Back, a sign-out.
+  // The open then ends with no navigation, no jump and no dialog. Without this, the answer of a slow server would
+  // put the linked conversation in the place of the room that the reader chose. Each navigation makes a new
+  // router.current, so the same object means that the reader did not move.
+  const at = router.current;
+  const left = () => router.current !== at;
   if (id) ask([id]);
   const answer = id && await state.messageLinks.get(id);
+  if (left()) return;
   if (!answer || answer.error) { refuse(answer?.error ?? NOT_FOUND, link); return; }
   if (router.current.page === 'chat' && state.open?.channelId === answer.channelId) {
     const reason = await jumpTo(id);
+    if (left()) return;
     if (reason) refuse(reason, link);
     // MR-85: the link can be in a pin or in a search result, and on a phone both cover the conversation. They show
     // the conversation now, as they do after a tap on the pin or on the result. Without this the jump is not seen.
     else changed('linkJump');
     return;
   }
+  // On a phone, the search has history entries of its own (router.js steps), and the link can be in a result or in
+  // the conversation at a result. Those entries leave the history before the new one comes. If they stayed, one
+  // Back press on the way back would land on an entry of the search that is over, and the screen would not change.
+  await router.dropSteps();
+  if (left()) return;
   state.waitingJump = { channelId: answer.channelId, id };
   // An opened address leaves no entry of its own in the history: Back must not come back to /m/{code} and open the
   // link a second time.
@@ -132,6 +147,17 @@ export function failed(reason) { notice({ title: 'Message link', text: reason })
 // The timeline draws a row again after each reaction, edit and card (ui/timeline.js), with new nodes. Every drawing
 // calls this, and the promise of an id is the same one each time, so the new nodes get their label from it, with no
 // second call, also when the answer comes after the redraw.
+// A call that failed gives no label, and the usual cause is a drawing before the connection: after a load, the
+// chat page draws the messages that the device stored, and the hub connects later. The timeline keeps the node of
+// a message that did not change when the server's messages arrive, so no new drawing would ask again. The node
+// waits here, and the next connect asks for it again.
+const unanswered = new Set();   // the drawn nodes with a link whose call failed
+hub.onConnected(() => {
+  const nodes = [...unanswered];
+  unanswered.clear();
+  for (const node of nodes) if (node.isConnected) decorate(node);   // a node that left the page was drawn again or is gone
+});
+
 export function decorate(node) {
   const found = [];
   for (const link of node.querySelectorAll('a.message-link')) {
@@ -140,7 +166,10 @@ export function decorate(node) {
   }
   if (!found.length) return;
   ask(found.map(f => f.id));
-  for (const { link, id } of found) state.messageLinks.get(id)?.then(answer => { if (answer?.id) label(link, answer); });
+  for (const { link, id } of found) state.messageLinks.get(id)?.then(answer => {
+    if (answer?.id) label(link, answer);
+    else if (answer?.error) unanswered.add(node);
+  });
 }
 
 // The names go in as text, never as markup: a person chooses the name of a room and a display name.

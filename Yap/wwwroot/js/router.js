@@ -77,10 +77,17 @@ export function pushStep(onBack) {
 // The owner of the steps ended by another way than Back: its entries leave the history. Nothing moves when no step
 // is open, which is also the case after a navigation: navigate() and a move to another page forget the steps first,
 // and a history.go from here would then walk off the new page.
+// The browser makes the move later, not inside history.go. The promise resolves when the entries are gone. A
+// caller that navigates next waits for it (message-links.js open): a pushState before the move would put the new
+// entry after the entries of the steps, and the move would then start from the new entry.
 export function dropSteps() {
   const count = steps.length;
   steps = [];
-  if (count) history.go(-count);
+  if (!count) return Promise.resolve();
+  return new Promise(resolve => {
+    addEventListener('popstate', () => resolve(), { once: true });
+    history.go(-count);
+  });
 }
 
 // A history move that stays on the page. Back closes the steps above the new depth, the newest first. Forward can

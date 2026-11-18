@@ -24,8 +24,9 @@
 //                   ends on it (SR-28); the timeline does not know the search.
 //   gifImport       an event with no state: the progress of a GIF import (ui/gif-library.js)
 //   linkJump        an event with no state: a click on a message link went to a message of the open conversation
-//                   (message-links.js). What covers the conversation gives way (MR-85): the pins panel closes, and
-//                   the narrow search shows the conversation. message-links.js knows neither of them.
+//                   (message-links.js). The two parts that can cover the conversation listen to it (MR-85): the
+//                   pins panel closes, and the narrow search shows the conversation. message-links.js imports
+//                   neither of them.
 
 export const state = {
   connection: 'connecting',     // 'connecting' | 'connected' | 'reconnecting' | 'offline' | 'signedOut'
