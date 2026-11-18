@@ -322,9 +322,16 @@ public class PushNotificationService
         return SendToUserAsync(username, payload);
     }
 
-    // At most max characters; a longer text ends in "...".
-    private static string Truncate(string text, int max) =>
-        text.Length > max ? text[..(max - 3)] + "..." : text;
+    // At most max characters; a longer text ends in "...". The cut never divides a surrogate pair: an emoji is two
+    // UTF-16 units, and half of a pair shows as a replacement character on the phone.
+    // Internal, not private: PushTextTests calls it.
+    internal static string Truncate(string text, int max)
+    {
+        if (text.Length <= max) return text;
+        var cut = max - 3;
+        if (char.IsHighSurrogate(text[cut - 1])) cut--;
+        return text[..cut] + "...";
+    }
 }
 
 /// <summary>
