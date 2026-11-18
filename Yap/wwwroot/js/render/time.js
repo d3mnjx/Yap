@@ -83,17 +83,26 @@ function partsOf(date, twoDigit = true) {
   return out;
 }
 
-// "today" and "yesterday" in the account's zone: compare calendar days, not 24 h spans (MR-05).
-const sameDay = (a, b) => a.year === b.year && a.month === b.month && a.day === b.day;   // a, b: partsOf(date)
+// "today" and "yesterday" in the account's zone: compare calendar days, not 24 h spans (MR-05). The result is the
+// count of calendar days from 1970 to the date's day in that zone, so today minus yesterday is always 1. "now minus
+// 24 hours" was here before, and it gave the wrong day for one hour after a clock change, when a day has 23 or 25 hours.
+// The Gregorian calendar and Latin digits are fixed, whatever the locale: these parts go into arithmetic, not onto
+// the screen.
+function dayNumber(date) {
+  const f = formatter('day-number', { day: 'numeric', month: 'numeric', year: 'numeric', calendar: 'gregory', numberingSystem: 'latn' });
+  const p = {};
+  for (const part of f.formatToParts(date)) p[part.type] = +part.value;
+  return Date.UTC(p.year, p.month - 1, p.day) / 86_400_000;
+}
 
 // MR-05: today → time; yesterday → "Yesterday {time}"; this year → date and time; older → full date and time.
 export function messageTime(iso, now = new Date()) {
   const date = new Date(iso);
   const time = timeOf(date);
-  const day = partsOf(date), today = partsOf(now);
-  if (sameDay(day, today)) return time;
-  if (sameDay(day, partsOf(new Date(now.getTime() - 86_400_000)))) return `Yesterday ${time}`;
-  return `${dateOf(date, day.year !== today.year)} ${time}`;
+  const daysBack = dayNumber(now) - dayNumber(date);
+  if (daysBack === 0) return time;
+  if (daysBack === 1) return `Yesterday ${time}`;
+  return `${dateOf(date, partsOf(date).year !== partsOf(now).year)} ${time}`;
 }
 
 // Elapsed time in words for the admin tables and the device list ("3 min ago").
