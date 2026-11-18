@@ -201,10 +201,7 @@ public class ChatService
         var (names, badName) = Pinners(pinners);
         if (badName is not null) return (null, badName);
         name = name.Trim().ToLowerInvariant();
-        if (string.IsNullOrWhiteSpace(name)) return (null, "Channel name is required.");
-        if (name.Contains(' ')) return (null, "Lowercase, no spaces.");
-        if (_channels.Values.Any(c => c.Type == ChannelType.Room && c.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
-            return (null, "A channel with that name already exists.");
+        if (RoomNameError(name) is { } nameError) return (null, nameError);
 
         var bottom = _channels.Values.Where(c => c.Type == ChannelType.Room).Select(c => c.SortOrder).DefaultIfEmpty(-1).Max() + 1;
         var admin = _userService.GetById(adminUserId);
@@ -228,10 +225,7 @@ public class ChatService
         var (names, badName) = Pinners(pinners);
         if (badName is not null) return badName;
         name = name.Trim().ToLowerInvariant();
-        if (string.IsNullOrWhiteSpace(name)) return "Channel name is required.";
-        if (name.Contains(' ')) return "Lowercase, no spaces.";
-        if (_channels.Values.Any(c => c.Type == ChannelType.Room && c.Id != channelId && c.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
-            return "A channel with that name already exists.";
+        if (RoomNameError(name, exceptId: channelId) is { } nameError) return nameError;
 
         room.Name = name;
         room.Description = Clean(description);
@@ -280,8 +274,9 @@ public class ChatService
         if (_channelMessages.TryRemove(channelId, out var messages))
             foreach (var m in messages) _channelOfMessage.TryRemove(m.Id, out _);
         _channelLocks.TryRemove(channelId, out _);
-        foreach (var key in _readStates.Keys.Where(k => k.ChannelId == channelId).ToList())
-            _readStates.TryRemove(key, out _);
+        // A ConcurrentDictionary permits TryRemove while a loop reads it, so no copy of the keys is necessary.
+        foreach (var (key, _) in _readStates)
+            if (key.ChannelId == channelId) _readStates.TryRemove(key, out _);
         _presence.ForgetChannel(channelId);
         _notifications.ClearOverridesForChannel(channelId);
         _writer.Enqueue(Writes.DeleteChannel(channelId));
@@ -331,12 +326,25 @@ public class ChatService
         }
         if (roomsChanged) OnRoomsChanged?.Invoke();   // the room settings page sends back the pinners it was given
 
-        foreach (var key in _readStates.Keys.Where(k => k.UserId == user.Id).ToList()) _readStates.TryRemove(key, out _);
-        foreach (var key in _byClientId.Keys.Where(k => k.UserId == user.Id).ToList()) _byClientId.TryRemove(key, out _);
+        foreach (var (key, _) in _readStates)
+            if (key.UserId == user.Id) _readStates.TryRemove(key, out _);
+        foreach (var (key, _) in _byClientId)
+            if (key.UserId == user.Id) _byClientId.TryRemove(key, out _);
         _quickReactions.ForgetUser(user.Id);
 
         _writer.Enqueue(Writes.RelabelAuthor(user.Id, ghostName));
         return dms;
+    }
+
+    /// <summary>Why a room cannot have this name, or null. The name comes trimmed and in lower case.
+    /// <paramref name="exceptId"/> is the room that is edited: it may keep its own name.</summary>
+    private string? RoomNameError(string name, Guid? exceptId = null)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "Channel name is required.";
+        if (name.Contains(' ')) return "Lowercase, no spaces.";
+        if (_channels.Values.Any(c => c.Type == ChannelType.Room && c.Id != exceptId && c.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
+            return "A channel with that name already exists.";
+        return null;
     }
 
     private static string? Clean(string? description) =>
@@ -646,8 +654,8 @@ public class ChatService
     private void ForgetOldClientIds()
     {
         var limit = DateTime.UtcNow - ClientIdMemory;
-        foreach (var key in _byClientId.Where(e => e.Value.At < limit).Select(e => e.Key).ToList())
-            _byClientId.TryRemove(key, out _);
+        foreach (var (key, entry) in _byClientId)
+            if (entry.At < limit) _byClientId.TryRemove(key, out _);
     }
 
     /// <summary>Link cards for a text message, in text order (MR-19). Media messages get none.</summary>

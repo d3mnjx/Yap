@@ -32,8 +32,8 @@ public static class AccountEndpoints
             // A field that is absent from the body keeps its value; a blank string clears it. The limits are the services' (ST-05 to ST-10).
             string? error = null;
             if (body.DisplayName is not null || body.Bio is not null || body.Location is not null)
-                error ??= users.UpdateProfile(user.Id, body.DisplayName is null ? user.DisplayName : Blank(body.DisplayName), user.ProfilePictureUrl,
-                    body.Bio is null ? user.Bio : Blank(body.Bio), body.Location is null ? user.Country : Blank(body.Location));
+                error ??= users.UpdateProfile(user.Id, Patched(body.DisplayName, user.DisplayName), user.ProfilePictureUrl,
+                    Patched(body.Bio, user.Bio), Patched(body.Location, user.Country));
             if (body.Theme is not null) error ??= users.UpdateTheme(user.Id, body.Theme);
             if (body.FontSize is not null) error ??= users.UpdateFontSize(user.Id, body.FontSize);
             if (body.TimeZone is not null || body.Locale is not null || body.DateFormat is not null)
@@ -195,7 +195,9 @@ public static class AccountEndpoints
         });
     }
 
-    private static string? Blank(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
+    // One profile field after a PATCH: absent from the body (null) keeps the current value, blank clears it.
+    private static string? Patched(string? sent, string? current) =>
+        sent is null ? current : string.IsNullOrWhiteSpace(sent) ? null : sent.Trim();
 }
 
 /// <summary>Only the fields present are changed. A present empty string clears a profile field.</summary>

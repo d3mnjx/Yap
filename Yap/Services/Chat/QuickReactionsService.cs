@@ -59,14 +59,13 @@ public sealed class QuickReactionsService
 
         public void ApplyAdded(string emoji)
         {
-            List<string>? drop = null;
+            // Remove inside the loop is deliberate: Dictionary.Remove does not invalidate a running enumerator
+            // (.NET Core 3.0 and later). Add does, so the new emoji goes in after the loop.
             foreach (var (key, entry) in _entries)
             {
                 entry.Score *= Decay;
-                if (entry.Score < ScoreEpsilon) (drop ??= []).Add(key);
+                if (entry.Score < ScoreEpsilon) _entries.Remove(key);
             }
-            if (drop is not null)
-                foreach (var key in drop) _entries.Remove(key);
 
             if (_entries.TryGetValue(emoji, out var current)) current.Score += 1.0;
             else _entries[emoji] = new Entry { Score = 1.0 };
@@ -82,24 +81,18 @@ public sealed class QuickReactionsService
         }
 
         /// <summary>The three emoji with the highest score, highest first, padded with the fixed three.</summary>
-        public List<string> Ranked()
-        {
-            // No second sort key for equal scores. Each reaction lowers every other score by 2%, so two scores are
-            // equal only by accident. Of two emoji with the same count of uses, the one used last already has the
-            // higher score. A sequence number per emoji was here for a tie (until 2026-11-17) and almost never
-            // decided an order.
-            var top = _entries
+        // No second sort key for equal scores. Each reaction lowers every other score by 2%, so two scores are
+        // equal only by accident. Of two emoji with the same count of uses, the one used last already has the
+        // higher score. A sequence number per emoji was here for a tie (until 2026-11-17) and almost never
+        // decided an order.
+        public List<string> Ranked() =>
+            _entries
                 .OrderByDescending(kv => kv.Value.Score)
-                .Take(3)
                 .Select(kv => kv.Key)
+                .Concat(DefaultQuickReactions)   // the padding: a default that is already ranked drops out in Distinct
+                .Distinct()
+                .Take(3)
                 .ToList();
-            foreach (var e in DefaultQuickReactions)
-            {
-                if (top.Count >= 3) break;
-                if (!top.Contains(e)) top.Add(e);
-            }
-            return top;
-        }
 
         // An emoji that stays in the three keeps its button, and a new emoji takes the button of the one that left
         // (MR-41). Do not publish Ranked() directly: the newest reaction always has the highest gain, so a person

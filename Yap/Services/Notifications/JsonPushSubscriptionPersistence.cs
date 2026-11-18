@@ -23,27 +23,19 @@ public class JsonPushSubscriptionPersistence : IPushSubscriptionPersistence
 
     public async Task<List<PushSubscription>> LoadAllAsync()
     {
-        if (!File.Exists(_filePath))
-            return new List<PushSubscription>();
-
+        await _lock.WaitAsync();
         try
         {
-            await _lock.WaitAsync();
-            try
-            {
-                var json = await File.ReadAllTextAsync(_filePath);
-                return JsonSerializer.Deserialize<List<PushSubscription>>(json, JsonOptions)
-                       ?? new List<PushSubscription>();
-            }
-            finally
-            {
-                _lock.Release();
-            }
+            return await ReadFileAsync();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to load push subscriptions from {Path}", _filePath);
             return new List<PushSubscription>();
+        }
+        finally
+        {
+            _lock.Release();
         }
     }
 

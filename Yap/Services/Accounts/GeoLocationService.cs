@@ -12,16 +12,12 @@ namespace Yap.Services.Accounts;
 /// </summary>
 public class GeoLocationService
 {
+    // One address family's table in the BIN file. The two tables have the same layout; only the row key differs:
+    // 4 bytes for IPv4, 16 for IPv6. The columns after the key are 4-byte pointers in both.
+    private readonly record struct Table(uint Count, uint BaseAddr, uint IndexBaseAddr, int KeySize, int RowSize);
+
     private readonly byte[]? _data;
-    private readonly uint _ipv4Count;
-    private readonly uint _ipv4BaseAddr;
-    private readonly uint _ipv4IndexBaseAddr;
-    private readonly uint _ipv6Count;
-    private readonly uint _ipv6BaseAddr;
-    private readonly uint _ipv6IndexBaseAddr;
-    private readonly int _columnCount;
-    private readonly int _rowSize;
-    private readonly int _rowSizeV6;
+    private readonly Table _ipv4, _ipv6;
     private readonly ILogger<GeoLocationService> _logger;
 
     public bool IsAvailable => _data != null;
@@ -55,19 +51,12 @@ public class GeoLocationService
 
             // Header: byte[0]=dbType, byte[1]=columns, bytes[5..8]=ipv4Count, bytes[9..12]=ipv4Base,
             // bytes[13..16]=ipv6Count, bytes[17..20]=ipv6Base, bytes[21..24]=ipv4IndexBase, bytes[25..28]=ipv6IndexBase
-            _columnCount = _data[1];
-            _rowSize = _columnCount * 4;
-            _ipv4Count = ReadUInt32(5);
-            _ipv4BaseAddr = ReadUInt32(9);
-            _ipv6Count = ReadUInt32(13);
-            _ipv6BaseAddr = ReadUInt32(17);
-            _ipv4IndexBaseAddr = ReadUInt32(21);
-            _ipv6IndexBaseAddr = ReadUInt32(25);
-            // IPv6 rows carry a 16-byte key instead of 4; the remaining columns stay 4-byte pointers
-            _rowSizeV6 = 16 + (_columnCount - 1) * 4;
+            var pointerBytes = (_data[1] - 1) * 4;   // every column after the row key
+            _ipv4 = new Table(Count: ReadUInt32(5), BaseAddr: ReadUInt32(9), IndexBaseAddr: ReadUInt32(21), KeySize: 4, RowSize: 4 + pointerBytes);
+            _ipv6 = new Table(Count: ReadUInt32(13), BaseAddr: ReadUInt32(17), IndexBaseAddr: ReadUInt32(25), KeySize: 16, RowSize: 16 + pointerBytes);
 
             _logger.LogInformation("IP2Location DB{Type} loaded: {V4Count} IPv4 + {V6Count} IPv6 records from {File} ({Size}MB, {Time}ms)",
-                _data[0], _ipv4Count, _ipv6Count, Path.GetFileName(binFile),
+                _data[0], _ipv4.Count, _ipv6.Count, Path.GetFileName(binFile),
                 _data.Length / (1024 * 1024), sw.ElapsedMilliseconds);
         }
         catch (Exception ex)
@@ -95,14 +84,10 @@ public class GeoLocationService
             if (addr.IsIPv4MappedToIPv6)
                 addr = addr.MapToIPv4();
 
-            if (addr.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-            {
-                var bytes = addr.GetAddressBytes();
-                uint ipNum = (uint)bytes[0] << 24 | (uint)bytes[1] << 16 | (uint)bytes[2] << 8 | bytes[3];
-                return LookupIPv4(ipNum);
-            }
-
-            return LookupIPv6(addr);
+            var bytes = addr.GetAddressBytes();   // 4 or 16 bytes, big-endian
+            return addr.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork
+                ? Search(_ipv4, BinaryPrimitives.ReadUInt32BigEndian(bytes))
+                : Search(_ipv6, BinaryPrimitives.ReadUInt128BigEndian(bytes));
         }
         catch (Exception ex)
         {
@@ -111,26 +96,31 @@ public class GeoLocationService
         }
     }
 
-    private GeoInfo? LookupIPv4(uint ipNum)
+    /// <summary>The record whose address range holds <paramref name="ipNum"/>. One search serves both tables: an
+    /// IPv4 address is a small number in the same 128-bit type.</summary>
+    private GeoInfo? Search(Table table, UInt128 ipNum)
     {
-        uint low = 0;
-        uint high = _ipv4Count - 1;
+        if (table.Count == 0) return null; // IPv4-only BIN file loaded: it has no IPv6 table
 
-        // Use index for faster narrowing (index by first two octets)
-        if (_ipv4IndexBaseAddr > 0)
+        uint low = 0;
+        uint high = table.Count - 1;
+
+        // Use index for faster narrowing (index by first two address bytes, the same layout in both tables)
+        if (table.IndexBaseAddr > 0)
         {
-            var indexPos = _ipv4IndexBaseAddr - 1 + ((ipNum >> 16) * 8);
-            low = ReadUInt32((int)indexPos);
-            high = ReadUInt32((int)indexPos + 4);
+            var firstTwoBytes = (uint)(ipNum >> (table.KeySize * 8 - 16));
+            var indexPos = (int)(table.IndexBaseAddr - 1 + firstTwoBytes * 8);
+            low = ReadUInt32(indexPos);
+            high = ReadUInt32(indexPos + 4);
         }
 
         // Binary search
         while (low <= high)
         {
             var mid = (low + high) / 2;
-            var rowOffset = (int)(_ipv4BaseAddr - 1 + mid * (uint)_rowSize);
-            var ipFrom = ReadUInt32(rowOffset);
-            var ipTo = ReadUInt32(rowOffset + _rowSize); // ip_from of next row
+            var rowOffset = (int)(table.BaseAddr - 1 + mid * (uint)table.RowSize);
+            var ipFrom = ReadKey(rowOffset, table.KeySize);
+            var ipTo = ReadKey(rowOffset + table.RowSize, table.KeySize); // ip_from of next row
 
             if (ipNum < ipFrom)
             {
@@ -143,51 +133,7 @@ public class GeoLocationService
             }
             else
             {
-                return ReadRecord(rowOffset + 4); // pointers follow the 4-byte key
-            }
-        }
-
-        return null;
-    }
-
-    private GeoInfo? LookupIPv6(IPAddress addr)
-    {
-        if (_ipv6Count == 0) return null; // IPv4-only BIN file loaded
-
-        var bytes = addr.GetAddressBytes();
-        var ipNum = BinaryPrimitives.ReadUInt128BigEndian(bytes);
-
-        uint low = 0;
-        uint high = _ipv6Count - 1;
-
-        // Use index for faster narrowing (index by first two address bytes, same layout as IPv4's)
-        if (_ipv6IndexBaseAddr > 0)
-        {
-            var indexPos = _ipv6IndexBaseAddr - 1 + (uint)(((bytes[0] << 8) | bytes[1]) * 8);
-            low = ReadUInt32((int)indexPos);
-            high = ReadUInt32((int)indexPos + 4);
-        }
-
-        // Binary search — same shape as LookupIPv4, with a 128-bit key
-        while (low <= high)
-        {
-            var mid = (low + high) / 2;
-            var rowOffset = (int)(_ipv6BaseAddr - 1 + mid * (uint)_rowSizeV6);
-            var ipFrom = ReadUInt128(rowOffset);
-            var ipTo = ReadUInt128(rowOffset + _rowSizeV6); // ip_from of next row
-
-            if (ipNum < ipFrom)
-            {
-                if (mid == 0) break;
-                high = mid - 1;
-            }
-            else if (ipNum >= ipTo)
-            {
-                low = mid + 1;
-            }
-            else
-            {
-                return ReadRecord(rowOffset + 16); // pointers follow the 16-byte key
+                return ReadRecord(rowOffset + table.KeySize); // pointers follow the key
             }
         }
 
@@ -230,10 +176,8 @@ public class GeoLocationService
 
     // The BIN file stores every integer little-endian, including the 16-byte IPv6 key —
     // only the wire address bytes (GetAddressBytes) are big-endian. Don't "fix" one to match the other.
-    private UInt128 ReadUInt128(int offset)
-    {
-        return BinaryPrimitives.ReadUInt128LittleEndian(_data.AsSpan(offset));
-    }
+    private UInt128 ReadKey(int offset, int keySize) =>
+        keySize == 4 ? ReadUInt32(offset) : BinaryPrimitives.ReadUInt128LittleEndian(_data.AsSpan(offset));
 }
 
 public class GeoInfo

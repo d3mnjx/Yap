@@ -2,7 +2,7 @@
 // add-to-home-screen guide for browsers without a prompt (iOS Safari). The guide library is loaded from the
 // CDN only when the guide is needed.
 
-import { el } from './render/dom.js';
+import { clone, el } from './render/dom.js';
 import * as overlays from './ui/overlays.js';
 import { installed } from './push.js';
 import { projectName } from './store.js';
@@ -20,17 +20,18 @@ const GUIDE_STYLE_HASH = 'sha384-PIkABVwl02o9piowBl3l7xC3cKa3Yz8VZ4KN3sM6f157TIO
 
 // The dialog: first how to replace an older install, then the browser's install or the guide (SH-40).
 export function openInstallDialog() {
-  const already = installed();
-  const card = el('div', { class: 'push-prompt-card install-dialog', role: 'dialog', 'aria-modal': 'true' },
-    el('h2', { class: 'push-prompt-heading' }, already ? `${projectName()} is already installed` : `Add ${projectName()} to your home screen`),
-    el('p', { class: 'push-prompt-body' }, already
-      ? 'Keep using this app. You do not need to install it again.'
-      : `Already have a ${projectName()} icon? Open it to keep using your app. To replace an older install, save your login link in Settings, remove the old icon, then install here.`),
-    ...(already
-      ? [el('button', { class: 'push-prompt-enable', type: 'button', onclick: () => close() }, 'Close')]
-      : [el('button', { class: 'push-prompt-later', type: 'button', onclick: () => close() }, 'Use existing app'),
-         el('button', { class: 'push-prompt-enable', type: 'button', onclick: () => { close(); install(); } }, 'Install app')]));
-  const overlay = el('div', { class: 'push-prompt-overlay' }, card);
+  const already = installed(), name = projectName();
+  const overlay = clone('t-pwa-install');
+  const card = overlay.querySelector('.install-dialog');
+  card.querySelector('.push-prompt-heading').textContent = already ? `${name} is already installed` : `Add ${name} to your home screen`;
+  card.querySelector('.push-prompt-body').textContent = already
+    ? 'Keep using this app. You do not need to install it again.'
+    : `Already have a ${name} icon? Open it to keep using your app. To replace an older install, save your login link in Settings, remove the old icon, then install here.`;
+  const later = card.querySelector('.push-prompt-later'), main = card.querySelector('.push-prompt-enable');
+  if (already) later.remove();   // an installed app has one button: Close
+  else later.addEventListener('click', () => close());
+  main.textContent = already ? 'Close' : 'Install app';
+  main.addEventListener('click', () => { close(); if (!already) install(); });
   overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
   document.body.append(overlay);
   const close = overlays.open({ element: card, outsideCloses: false, onClose: () => overlay.remove() });

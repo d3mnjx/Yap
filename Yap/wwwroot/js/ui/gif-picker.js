@@ -295,6 +295,15 @@ export function GifPicker({ onSend, onUpload, onWarn }) {
 
   // ---- upload (PK-38 to PK-42) ----
 
+  // The upload button while a file is on its way: the spinner in place of the icon, and the picker covered.
+  const setUploading = busy => {
+    uploadLabel.classList.toggle('is-busy', busy);
+    uploadLabel.title = busy ? 'Adding GIF…' : 'Upload a GIF';
+    uploadLabel.querySelector('.gif-spinner').hidden = !busy;
+    uploadLabel.querySelector('.gif-upload-icon').toggleAttribute('hidden', busy);
+    overlay.hidden = !busy;
+  };
+
   uploadInput.addEventListener('change', async () => {
     const file = uploadInput.files?.[0];
     uploadInput.value = '';
@@ -302,9 +311,7 @@ export function GifPicker({ onSend, onUpload, onWarn }) {
     if (state.connection !== 'connected') { overlays.reason(picker, 'Needs a connection'); return; }
     if (file.size > 50 * 1024 * 1024) { onWarn("Couldn't send GIF", 'File is too large (max 50MB)'); return; }   // PK-38
     const send = onUpload();   // before the wait: the person may open another conversation during the upload
-    uploadLabel.classList.add('is-busy'); uploadLabel.title = 'Adding GIF…';
-    uploadLabel.querySelector('.gif-spinner').hidden = false; uploadLabel.querySelector('.gif-upload-icon').setAttribute('hidden', '');
-    overlay.hidden = false;
+    setUploading(true);
     try {
       const info = await uploadOne(file, state.config?.uploadUrl || '/api/tus', { kind: 'gif', target: 'user', folder: '' });   // favourited as unsorted, within the quota (PK-41, PK-42)
       if (info.type === 'error') { onWarn("Couldn't send GIF", info.error ?? 'Upload failed'); return; }
@@ -314,9 +321,7 @@ export function GifPicker({ onSend, onUpload, onWarn }) {
     } catch {
       onWarn("Couldn't send GIF", 'Upload failed');
     } finally {
-      uploadLabel.classList.remove('is-busy'); uploadLabel.title = 'Upload a GIF';
-      uploadLabel.querySelector('.gif-spinner').hidden = true; uploadLabel.querySelector('.gif-upload-icon').removeAttribute('hidden');
-      overlay.hidden = true;
+      setUploading(false);
     }
   });
 

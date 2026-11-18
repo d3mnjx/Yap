@@ -103,20 +103,26 @@ export function Sidebar(frame, profile) {
     replace(frame.querySelector('.people-header'), inline(peoplePick.text));
   }
 
+  // The marks a room row and a person row share: the mute bell, and the count badge or, when muted, the dot.
+  // A person without a direct message has no channel id and gets no mark. Returns whether the badge shows.
+  function renderUnreadMarks(row, channelId, isOpen) {
+    const count = channelId && !isOpen ? (state.unread[channelId] ?? 0) : 0;   // the open conversation shows no mark (SH-22)
+    const muted = channelId ? isMuted(channelId) : false;
+    row.querySelector('.mute-bell').hidden = !(channelId && showsBell(channelId));
+    row.querySelector('.unread-dot').hidden = !(count > 0 && muted);
+    const badge = row.querySelector('.unread-badge');
+    badge.hidden = !(count > 0 && !muted);
+    badge.textContent = String(count);
+    return count > 0 && !muted;
+  }
+
   function renderRooms() {
     if (!live || !state.user) return;
     const rows = state.rooms.map(room => {
       const row = clone('t-room-row');
       replace(row.querySelector('.room-name'), inline(room.name));
       const isOpen = state.open?.channelId === room.id;
-      const count = isOpen ? 0 : (state.unread[room.id] ?? 0);   // the open room shows no mark (SH-22)
-      const muted = isMuted(room.id);
-      classes(row, { active: isOpen, 'has-unread': count > 0 && !muted });
-      row.querySelector('.mute-bell').hidden = !showsBell(room.id);
-      row.querySelector('.unread-dot').hidden = !(count > 0 && muted);
-      const badge = row.querySelector('.unread-badge');
-      badge.hidden = !(count > 0 && !muted);
-      badge.textContent = String(count);
+      classes(row, { active: isOpen, 'has-unread': renderUnreadMarks(row, room.id, isOpen) });
       const gear = row.querySelector('.room-settings');
       gear.hidden = !state.user.isAdmin;
       gear.addEventListener('click', e => { e.stopPropagation(); toggle(false); router.navigate(`/channel/${room.id}/settings`); });
@@ -208,13 +214,7 @@ export function Sidebar(frame, profile) {
     row.querySelector('.admin-badge').hidden = !u?.isAdmin;   // the template carries both icons
     row.querySelector('.bot-badge').hidden = !u?.isBot;
     const dm = dmOf[username];
-    const count = dm && openDm?.channelId !== dm.channelId ? (state.unread[dm.channelId] ?? 0) : 0;
-    const muted = dm ? isMuted(dm.channelId) : false;
-    row.querySelector('.mute-bell').hidden = !(dm && showsBell(dm.channelId));
-    row.querySelector('.unread-dot').hidden = !(count > 0 && muted);
-    const badge = row.querySelector('.unread-badge');
-    badge.hidden = !(count > 0 && !muted);
-    badge.textContent = String(count);
+    renderUnreadMarks(row, dm?.channelId, !!dm && openDm?.channelId === dm.channelId);
     classes(row, { 'current-user': username === me, 'active-dm': openDm?.partner === username || state.open?.partner === username });   // a new DM has no row in dms yet (SH-32)
 
     const info = row.querySelector('.profile-info-btn');

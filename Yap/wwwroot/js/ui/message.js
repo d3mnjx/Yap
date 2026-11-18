@@ -227,9 +227,6 @@ function linkCard(p) {
 function mediaPlayer(p) {
   const node = clone('t-media-player');
   const info = node.querySelector('.video-info');
-  const site = info.querySelector('.video-site'), title = info.querySelector('.video-title');
-  if (p.siteName) site.textContent = p.siteName; else site.remove();
-  if (p.title) { title.textContent = p.title; title.href = safeHref(p.url); } else title.remove();
   const videoNode = node.querySelector('.cached-video-player');
   const audio = node.querySelector('.cached-audio-player');
   if (p.media.type === 'audio') {
@@ -241,6 +238,9 @@ function mediaPlayer(p) {
     audio.querySelector('.audio-element').src = p.media.src;
   } else {
     audio.remove();
+    const site = info.querySelector('.video-site'), title = info.querySelector('.video-title');
+    if (p.siteName) site.textContent = p.siteName; else site.remove();
+    if (p.title) { title.textContent = p.title; title.href = safeHref(p.url); } else title.remove();
     if (!p.siteName && !p.title) info.remove();
     videoNode.poster = p.media.poster ?? p.imageUrl ?? '';
     videoNode.src = p.media.src;

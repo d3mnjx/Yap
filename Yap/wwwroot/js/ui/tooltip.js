@@ -33,19 +33,16 @@ export function tooltips(root) {
   const focus = e => { const t = tipOf(e); if (t) show(t); };
   const blur = e => { if (tipOf(e) === current) hide(); };
 
-  root.addEventListener('pointerover', over);
-  root.addEventListener('pointerout', out);
-  root.addEventListener('click', tap);
-  root.addEventListener('focusin', focus);
-  root.addEventListener('focusout', blur);
-  document.addEventListener('scroll', hide, true);   // the element moved under the bubble
+  const listeners = new AbortController();   // one abort at unmount removes all six
+  const { signal } = listeners;
+  root.addEventListener('pointerover', over, { signal });
+  root.addEventListener('pointerout', out, { signal });
+  root.addEventListener('click', tap, { signal });
+  root.addEventListener('focusin', focus, { signal });
+  root.addEventListener('focusout', blur, { signal });
+  document.addEventListener('scroll', hide, { capture: true, signal });   // the element moved under the bubble
   return () => {
-    root.removeEventListener('pointerover', over);
-    root.removeEventListener('pointerout', out);
-    root.removeEventListener('click', tap);
-    root.removeEventListener('focusin', focus);
-    root.removeEventListener('focusout', blur);
-    document.removeEventListener('scroll', hide, true);
+    listeners.abort();
     bubble?.remove();
     bubble = null; current = null;
   };

@@ -20,19 +20,18 @@ let current = null;   // { modal, close, messageId }
 // the message.
 export function openGallery(images, startIndex = 0, { ownerId = null, onClose = null } = {}) {
   current?.close();
+  if (!images.length) return;
   const modal = clone('t-gallery');
   const strip = modal.querySelector('.gallery-strip');
-  const items = images.map(i => ({ image: i }));
-  if (!items.length) return;
-  strip.append(...items.map((item, i) => {
+  strip.append(...images.map((image, i) => {
     const stage = el('div', { class: 'modal-stage' });
-    const img = el('img', { src: item.image.large, alt: 'Full size image', draggable: 'false', loading: i === startIndex ? 'eager' : 'lazy' });
-    img.addEventListener('error', () => { img.src = item.image.medium; }, { once: true });   // the large file may still be in the making
+    const img = el('img', { src: image.large, alt: 'Full size image', draggable: 'false', loading: i === startIndex ? 'eager' : 'lazy' });
+    img.addEventListener('error', () => { img.src = image.medium; }, { once: true });   // the large file may still be in the making
     stage.append(img);
     return stage;
   }));
-  if (items.length === 1) { modal.querySelector('.modal-nav.prev').remove(); modal.querySelector('.modal-nav.next').remove(); modal.querySelector('.modal-counter').remove(); }   // TL-24
-  else modal.querySelector('.modal-counter-total').textContent = String(items.length);
+  if (images.length === 1) { modal.querySelector('.modal-nav.prev').remove(); modal.querySelector('.modal-nav.next').remove(); modal.querySelector('.modal-counter').remove(); }   // TL-24
+  else modal.querySelector('.modal-counter-total').textContent = String(images.length);
 
   const stages = [...strip.children];
   const counter = modal.querySelector('.modal-counter-index');
@@ -139,7 +138,7 @@ export function openGallery(images, startIndex = 0, { ownerId = null, onClose = 
       if (entry.isIntersecting) {
         const index = stages.indexOf(entry.target);
         if (counter) counter.textContent = String(index + 1);
-        download.href = items[index].image.original;   // the file as uploaded, under its own name (TL-24)
+        download.href = images[index].original;   // the file as uploaded, under its own name (TL-24)
         if (prev) prev.hidden = index === 0;
         if (next) next.hidden = index === stages.length - 1;
       }

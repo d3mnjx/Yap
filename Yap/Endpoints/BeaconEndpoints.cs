@@ -29,12 +29,14 @@ public static class BeaconEndpoints
             // Accept only a genuine IPv4 arrival. If the beacon hostname is misconfigured
             // with an AAAA record the request may come in over IPv6 — silently drop it
             // rather than record a second v6 address as "the v4".
-            var ip = IpHelper.GetClientIp(context);
-            if (!string.IsNullOrEmpty(n) && ip != null
+            // GetClientIp gives an IPv4 address in its plain form, also when Kestrel reported ::ffff:a.b.c.d,
+            // so the address family is the whole test.
+            if (!string.IsNullOrEmpty(n)
+                && IpHelper.GetClientIp(context) is { } ip
                 && IPAddress.TryParse(ip, out var addr)
-                && (addr.AddressFamily == AddressFamily.InterNetwork || addr.IsIPv4MappedToIPv6))
+                && addr.AddressFamily == AddressFamily.InterNetwork)
             {
-                presence.RecordBeaconIpv4(n, addr.MapToIPv4().ToString());
+                presence.RecordBeaconIpv4(n, ip);
             }
 
             // Always 204, valid nonce or not — the response is opaque to the caller

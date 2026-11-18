@@ -83,23 +83,25 @@ function setTitles(target) {
   setTitle(target.kind === 'dm' ? `${projectName()} | @${target.partner}` : `${projectName()} | #${target.room.name}`);
 }
 
+// Both kinds carry partner and channelId, null where the kind has none: a direct message has no channel id before
+// the server opens it, and a room has no partner. The callers below pass the two on without a test for the kind.
 function resolve({ lobby: wantsLobby, roomId, dmUser }) {
   if (dmUser) {
     if (dmUser === state.user.username || !state.users[dmUser]) return null;   // SH-43
-    return { kind: 'dm', partner: dmUser };
+    return { kind: 'dm', partner: dmUser, channelId: null, room: null };
   }
   const room = wantsLobby ? lobby() : roomById(roomId);
-  return room ? { kind: 'room', channelId: room.id, room } : null;
+  return room ? { kind: 'room', partner: null, channelId: room.id, room } : null;
 }
 
 // The last known messages at once; the server's answer replaces them (TL-02). A conversation never shown
 // on this device opens empty and marked loading: the composer is there before the server answers. In the
 // 2026-10-16 load test the answer took seconds, and the page was blank with no input box until then.
 async function paintStored(target, me) {
-  const stored = await snapshot.loadTail(snapshot.keyOf({ partner: target.partner ?? null, channelId: target.channelId }));
+  const stored = await snapshot.loadTail(snapshot.keyOf(target));
   if (me !== generation || state.open) return;
-  setOpen(stored ?? { channelId: target.channelId ?? null, messages: [], hasMore: true, restricted: false, typists: [], loading: true },
-          target.kind === 'dm' ? target.partner : null, { fromDevice: !!stored });
+  setOpen(stored ?? { channelId: target.channelId, messages: [], hasMore: true, restricted: false, typists: [], loading: true },
+          target.partner, { fromDevice: !!stored });
   if (stored) markOnce('paint');   // rows from the device (AD-41); the placeholder is not rows
 }
 
@@ -116,10 +118,10 @@ async function openConversation(target, me, painted, timing) {
     if (me !== generation) return;
     // A placeholder marked loading stays: the hub is connecting (a cold start) or reconnecting, and the
     // connected handler opens again. Offline, the timeline shows "Needs a connection" instead of the line.
-    if (!state.open) setOpen({ channelId: target.channelId ?? null, messages: [], hasMore: true, restricted: false, typists: [] }, target.partner ?? null);
+    if (!state.open) setOpen({ channelId: target.channelId, messages: [], hasMore: true, restricted: false, typists: [] }, target.partner);
     return;
   }
-  setOpen(result, target.kind === 'dm' ? target.partner : null);   // the snapshot module stores the tail from the store
+  setOpen(result, target.partner);   // the snapshot module stores the tail from the store
   if (!timing.reported) { timing.reported = true; reportOpened(timing.mountedAt); }   // the re-open after a reconnect is not a tap
 }
 

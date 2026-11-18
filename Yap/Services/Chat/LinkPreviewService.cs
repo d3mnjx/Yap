@@ -306,22 +306,22 @@ public partial class LinkPreviewService
 
     private static string? ExtractMetaContent(string html, string property, bool isOg = true)
     {
-        // Match both property="og:X" and name="description" variants
-        var attr = isOg ? "property" : "name";
         var q = "[\"']";    // character class matching " or '
         var nq = "[^\"']*"; // character class matching anything except " or '
 
-        // Pattern: <meta ... property="og:X" ... content="value" ...>
-        var pattern = $@"<meta[^>]+{attr}\s*=\s*{q}{Regex.Escape(property)}{q}[^>]+content\s*=\s*{q}({nq}){q}";
-        var match = Regex.Match(html, pattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
-        if (match.Success)
-            return WebUtility.HtmlDecode(match.Groups[1].Value.Trim());
+        // Match both property="og:X" and name="description" variants
+        var key = $@"{(isOg ? "property" : "name")}\s*=\s*{q}{Regex.Escape(property)}{q}";
+        var content = $@"content\s*=\s*{q}({nq}){q}";
 
-        // Try reversed attribute order: <meta ... content="value" ... property="og:X" ...>
-        var reversePattern = $@"<meta[^>]+content\s*=\s*{q}({nq}){q}[^>]+{attr}\s*=\s*{q}{Regex.Escape(property)}{q}";
-        match = Regex.Match(html, reversePattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
-        if (match.Success)
-            return WebUtility.HtmlDecode(match.Groups[1].Value.Trim());
+        // The two attributes come in either order. <meta ... property="og:X" ... content="value" ...> is the
+        // usual order and goes first, then <meta ... content="value" ... property="og:X" ...>.
+        string[] patterns = [$"<meta[^>]+{key}[^>]+{content}", $"<meta[^>]+{content}[^>]+{key}"];
+        foreach (var pattern in patterns)
+        {
+            var match = Regex.Match(html, pattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            if (match.Success)
+                return WebUtility.HtmlDecode(match.Groups[1].Value.Trim());
+        }
 
         return null;
     }

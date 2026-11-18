@@ -39,6 +39,7 @@
             // one the day runs 06:00 to 20:00, the fixed clock of the Gmail original. Themes without [data-scene]
             // rules ignore the attribute.
             var DAY = ["6am", "8am", "10am", "noon", "2pm", "4pm", "6pm"], NIGHT = ["8pm", "10pm", "midnight", "2am", "4am"];
+            function mod(x, m) { return (x % m + m) % m; }   // never negative, unlike %: an angle, or a time of day
             function sunTimes(now, lat, lon) {
                 // Sunrise and sunset in minutes after local midnight (Almanac for Computers, 1990; within a few minutes).
                 var R = Math.PI / 180, out = [];
@@ -46,15 +47,15 @@
                 for (var i = 0; i < 2; i++) {
                     var t = N + ((i ? 18 : 6) - lon / 15) / 24;
                     var M = 0.9856 * t - 3.289;
-                    var L = ((M + 1.916 * Math.sin(M * R) + 0.02 * Math.sin(2 * M * R) + 282.634) % 360 + 360) % 360;
-                    var RA = ((Math.atan(0.91764 * Math.tan(L * R)) / R) % 360 + 360) % 360;
+                    var L = mod(M + 1.916 * Math.sin(M * R) + 0.02 * Math.sin(2 * M * R) + 282.634, 360);
+                    var RA = mod(Math.atan(0.91764 * Math.tan(L * R)) / R, 360);
                     RA = (RA + Math.floor(L / 90) * 90 - Math.floor(RA / 90) * 90) / 15;
                     var sinDec = 0.39782 * Math.sin(L * R), cosDec = Math.cos(Math.asin(sinDec));
                     var cosH = (Math.cos(90.833 * R) - sinDec * Math.sin(lat * R)) / (cosDec * Math.cos(lat * R));
                     cosH = Math.max(-0.85, Math.min(0.85, cosH));   // polar night and midnight sun: a 4-hour day or a 4-hour night, so the scenes still turn
                     var H = (i ? Math.acos(cosH) : 2 * Math.PI - Math.acos(cosH)) / R / 15;
-                    var UT = ((H + RA - 0.06571 * t - 6.622 - lon / 15) % 24 + 24) % 24;
-                    out.push(((UT * 60 - now.getTimezoneOffset()) % 1440 + 1440) % 1440);
+                    var UT = mod(H + RA - 0.06571 * t - 6.622 - lon / 15, 24);
+                    out.push(mod(UT * 60 - now.getTimezoneOffset(), 1440));
                 }
                 return out;
             }
@@ -77,7 +78,7 @@
                         if (p.length === 3 && p[0] === Intl.DateTimeFormat().resolvedOptions().timeZone && isFinite(+p[1]) && isFinite(+p[2])) sun = sunTimes(now, +p[1], +p[2]);
                     } catch (e) { /* private mode */ }
                     // Minutes since sunrise, modulo a day, so a sunset past midnight (a far-west zone) still works.
-                    var day = ((sun[1] - sun[0]) % 1440 + 1440) % 1440, since = ((now.getHours() * 60 + now.getMinutes() - sun[0]) % 1440 + 1440) % 1440;
+                    var day = mod(sun[1] - sun[0], 1440), since = mod(now.getHours() * 60 + now.getMinutes() - sun[0], 1440);
                     s = since < day ? DAY[Math.floor(since / day * 7)] : NIGHT[Math.floor((since - day) / (1440 - day) * 5)];
                 }
                 if (root.dataset.scene !== s) { root.dataset.scene = s; syncThemeColorMeta(); }
@@ -905,6 +906,19 @@
                 <p class="push-prompt-body">Turn on notifications, and this device shows new messages when Yap is closed. You can change this any time in Settings.</p>
                 <button class="push-prompt-enable" type="button">Enable Notifications</button>
                 <button class="push-prompt-later" type="button">Maybe Later</button>
+            </div>
+        </div>
+    </template>
+
+    <!-- The install dialog (SH-40). js/pwa.js fills the heading, the text and the main button, and removes
+         "Use existing app" when the app is installed already. -->
+    <template id="t-pwa-install">
+        <div class="push-prompt-overlay">
+            <div class="push-prompt-card install-dialog" role="dialog" aria-modal="true">
+                <h2 class="push-prompt-heading"></h2>
+                <p class="push-prompt-body"></p>
+                <button class="push-prompt-later" type="button">Use existing app</button>
+                <button class="push-prompt-enable" type="button"></button>
             </div>
         </div>
     </template>

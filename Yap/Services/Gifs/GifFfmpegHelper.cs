@@ -197,7 +197,7 @@ public class GifFfmpegHelper
         finally { _transcodeSemaphore.Release(); }
     }
 
-    // Internal, not private: VoiceService runs its one ffmpeg pass through here instead of a fourth process runner.
+    // Internal, not private: VoiceService and VideoService run ffmpeg through here instead of a process runner of their own.
     internal async Task<(int ExitCode, string Stdout, string Stderr)> RunProcessAsync(
         string fileName, string args, int timeoutMs, CancellationToken ct)
     {
@@ -231,7 +231,7 @@ public class GifFfmpegHelper
         }
     }
 
-    // Internal, not private: VoiceService shares the two helpers below instead of carrying copies.
+    // Internal, not private: VoiceService and VideoService share the helpers below instead of carrying copies.
     internal static void TryDelete(string path)
     {
         try { if (File.Exists(path)) File.Delete(path); } catch { }

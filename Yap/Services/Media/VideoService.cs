@@ -1,17 +1,17 @@
-using System.Diagnostics;
+using Yap.Services.Gifs;
 
 namespace Yap.Services.Media;
 
 /// <summary>
 /// FFmpeg wrapper for video processing: poster extraction and compression.
 /// Mirrors ImageService pattern — singleton, fire-and-forget background work.
+/// The ffmpeg probe and the process runner are the ones of <see cref="GifFfmpegHelper"/>, as in VoiceService.
 /// </summary>
-public class VideoService
+public class VideoService(ILogger<VideoService> logger, GifFfmpegHelper ffmpeg)
 {
-    private readonly ILogger<VideoService> _logger;
-
-    /// <summary>Whether FFmpeg is available on this system.</summary>
-    public static bool IsAvailable { get; private set; }
+    /// <summary>Whether FFmpeg is available on this system. The helper's constructor runs the probe, and the
+    /// helper is a constructor parameter here, so the value is set before a VideoService exists.</summary>
+    public static bool IsAvailable => GifFfmpegHelper.IsAvailable;
 
     private static readonly HashSet<string> VideoExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -20,52 +20,6 @@ public class VideoService
 
     // Small videos don't need compression
     private const long CompressionThreshold = 8 * 1024 * 1024; // 8 MB
-
-    public VideoService(ILogger<VideoService> logger)
-    {
-        _logger = logger;
-        DetectFfmpeg();
-    }
-
-    private void DetectFfmpeg()
-    {
-        try
-        {
-            var psi = new ProcessStartInfo("ffmpeg", "-version")
-            {
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            using var process = Process.Start(psi);
-            if (process == null)
-            {
-                IsAvailable = false;
-                _logger.LogWarning("FFmpeg not found — video processing will be unavailable");
-                return;
-            }
-            // Drain both pipes so a large `-version` banner can't fill the OS pipe buffer and
-            // deadlock WaitForExit (the redirect-without-read hang).
-            process.OutputDataReceived += static (_, _) => { };
-            process.ErrorDataReceived += static (_, _) => { };
-            process.BeginOutputReadLine();
-            process.BeginErrorReadLine();
-            var exited = process.WaitForExit(3000);
-            if (!exited) { try { process.Kill(entireProcessTree: true); } catch { } }
-            IsAvailable = exited && process.ExitCode == 0;
-
-            if (IsAvailable)
-                _logger.LogInformation("FFmpeg detected and available");
-            else
-                _logger.LogWarning("FFmpeg not found — video processing will be unavailable");
-        }
-        catch
-        {
-            IsAvailable = false;
-            _logger.LogWarning("FFmpeg not found — video processing will be unavailable");
-        }
-    }
 
     /// <summary>
     /// Checks if a file extension is a supported video type.
@@ -119,16 +73,16 @@ public class VideoService
 
             if (exitCode == 0 && File.Exists(posterPath))
             {
-                _logger.LogDebug("Poster generated: {PosterPath}", posterPath);
+                logger.LogDebug("Poster generated: {PosterPath}", posterPath);
                 return posterPath;
             }
 
-            _logger.LogWarning("Failed to generate poster for {VideoPath}", videoPath);
+            logger.LogWarning("Failed to generate poster for {VideoPath}", videoPath);
             return null;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error generating poster for {VideoPath}", videoPath);
+            logger.LogError(ex, "Error generating poster for {VideoPath}", videoPath);
             return null;
         }
     }
@@ -155,7 +109,7 @@ public class VideoService
             var fileSize = new FileInfo(videoPath).Length;
             if (extension == ".mp4" && fileSize <= CompressionThreshold)
             {
-                _logger.LogDebug("Video {VideoPath} is small MP4 ({Size}KB), skipping compression", videoPath, fileSize / 1024);
+                logger.LogDebug("Video {VideoPath} is small MP4 ({Size}KB), skipping compression", videoPath, fileSize / 1024);
                 return (videoPath, 0);
             }
 
@@ -177,11 +131,11 @@ public class VideoService
                 if (!isInPlace)
                 {
                     // Delete original (different extension, e.g., .mov)
-                    try { File.Delete(videoPath); } catch { }
+                    GifFfmpegHelper.TryDelete(videoPath);
                 }
 
                 sw.Stop();
-                _logger.LogInformation("Video compressed: {CompressedPath} ({OriginalSize}KB → {NewSize}KB) in {Duration}ms",
+                logger.LogInformation("Video compressed: {CompressedPath} ({OriginalSize}KB → {NewSize}KB) in {Duration}ms",
                     compressedPath,
                     fileSize / 1024,
                     new FileInfo(compressedPath).Length / 1024,
@@ -190,45 +144,20 @@ public class VideoService
             }
 
             // Cleanup temp file on failure
-            try { File.Delete(outputPath); } catch { }
+            GifFfmpegHelper.TryDelete(outputPath);
 
-            _logger.LogWarning("Failed to compress video {VideoPath} (exit code: {ExitCode})", videoPath, exitCode);
+            logger.LogWarning("Failed to compress video {VideoPath} (exit code: {ExitCode})", videoPath, exitCode);
             return (null, 0);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error compressing video {VideoPath}", videoPath);
+            logger.LogError(ex, "Error compressing video {VideoPath}", videoPath);
             return (null, 0);
         }
     }
 
-    private static async Task<int> RunFfmpegAsync(string args, int timeoutMs = 30_000)
-    {
-        var psi = new ProcessStartInfo("ffmpeg", args)
-        {
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        using var process = Process.Start(psi)!;
-
-        // Drain stdout/stderr to prevent pipe buffer deadlocks
-        var stdoutTask = process.StandardOutput.ReadToEndAsync();
-        var stderrTask = process.StandardError.ReadToEndAsync();
-
-        using var cts = new CancellationTokenSource(timeoutMs);
-        try
-        {
-            await process.WaitForExitAsync(cts.Token);
-            await Task.WhenAll(stdoutTask, stderrTask);
-            return process.ExitCode;
-        }
-        catch (OperationCanceledException)
-        {
-            try { process.Kill(entireProcessTree: true); } catch { }
-            return -1;
-        }
-    }
+    // The exit code, or -1 when the time limit stopped ffmpeg. Not through the helper's LimitedAsync: that limit of
+    // two at a time is for the GIF previews and the voice messages, and a video compression holds a place for minutes.
+    private async Task<int> RunFfmpegAsync(string args, int timeoutMs = 30_000) =>
+        (await ffmpeg.RunProcessAsync("ffmpeg", args, timeoutMs, CancellationToken.None)).ExitCode;
 }

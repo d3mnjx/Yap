@@ -713,18 +713,15 @@
     background: var(--accent-hover);
 }
 
+/* One of the two icons shows: play, and pause while the message plays. */
 .voice-play .play-icon,
-.voice-play .pause-icon {
+.voice-message.playing .voice-play .pause-icon {
     display: flex;
 }
 
 .voice-play .pause-icon,
 .voice-message.playing .voice-play .play-icon {
     display: none;
-}
-
-.voice-message.playing .voice-play .pause-icon {
-    display: flex;
 }
 
 .voice-bars {

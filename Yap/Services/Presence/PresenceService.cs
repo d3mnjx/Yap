@@ -61,17 +61,19 @@ public sealed class PresenceService(UserService users, LoadCounters load, ILogge
     /// </summary>
     public bool Connect(Session session)
     {
-        EffectiveStatus before, after;
+        var changes = new Changes();
         bool first;
         lock (_gate)
         {
             first = !_sessions.Values.Any(s => s.UserId == session.UserId);
-            before = EffectiveLocked(session.UserId);
+            // "first" is the answer of the scan in EffectiveLocked, and after the add the person has a session:
+            // one scan of the sessions under the lock, not three.
+            var before = first ? EffectiveStatus.Offline : StatusLocked(session.UserId);
             _sessions[session.ConnectionId] = session;
             _totalConnections++;
-            after = EffectiveLocked(session.UserId);
+            changes.AddPresence(session.Username, before, StatusLocked(session.UserId));
         }
-        Announce(session.Username, before, after);
+        changes.Raise(this);
         // By sessions, not by the effective status: an invisible person raises no presence event (PR-05),
         // and the admin still hears of the return (PR-18). Raised inside Connect, so the hub's LastSeenAt
         // stamp comes after the listener.
@@ -557,13 +559,6 @@ public sealed class PresenceService(UserService users, LoadCounters load, ILogge
 
     private static bool IsTypingLocked(Dictionary<string, (string Username, DateTime At)> typists, string username, DateTime now) =>
         typists.Values.Any(t => t.Username.Equals(username, StringComparison.OrdinalIgnoreCase) && now - t.At <= TypingTtl);
-
-    private void Announce(string username, EffectiveStatus before, EffectiveStatus after)
-    {
-        var changes = new Changes();
-        changes.AddPresence(username, before, after);
-        changes.Raise(this);
-    }
 
     /// <summary>What a transition caused, collected under the lock and raised after it.</summary>
     private sealed class Changes

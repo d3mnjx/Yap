@@ -171,17 +171,7 @@ public partial class GifService
 
         // De-index from search and dedup lookups.
         var tags = DeserializeTags(entry.Tags);
-        lock (_tagIndexLock)
-        {
-            foreach (var tag in tags)
-            {
-                if (_tagIndex.TryGetValue(tag, out var set))
-                {
-                    set.Remove(entryId);
-                    if (set.Count == 0) _tagIndex.Remove(tag);
-                }
-            }
-        }
+        lock (_tagIndexLock) UnindexTagsLocked(entryId, tags);
         if (entry.ContentHash != null)
             _byContentHash.TryRemove(new KeyValuePair<string, Guid>(entry.ContentHash, entryId));
         if (!string.IsNullOrEmpty(entry.SourceProviderId) && !string.IsNullOrEmpty(entry.SourceId))
@@ -419,18 +409,8 @@ public partial class GifService
 
     private static async Task<bool> CopyZipEntryCappedAsync(ZipArchiveEntry zipEntry, string destPath, long maxBytes)
     {
-        await using var dest = File.Create(destPath);
         await using var src = zipEntry.Open();
-        var buffer = new byte[81920];
-        long totalBytes = 0;
-        int read;
-        while ((read = await src.ReadAsync(buffer)) > 0)
-        {
-            totalBytes += read;
-            if (totalBytes > maxBytes) return false; // caller deletes the partial file
-            await dest.WriteAsync(buffer.AsMemory(0, read));
-        }
-        return true;
+        return await CopyToFileCappedAsync(src, destPath, maxBytes);   // false: the caller deletes the partial file
     }
 
     private static string MimeFromPackExtension(string ext) => ext switch

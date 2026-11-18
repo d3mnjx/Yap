@@ -9,21 +9,7 @@ namespace Yap.Models.Chat;
 /// lets background normalization (provider CDN URL → local file, MP4 → WebM transcode) update what
 /// gets served without rewriting historical messages.
 ///
-/// A record with init-only properties: ChatDbContext compares GifAttachments element-wise to
-/// detect changes, so an attachment must be equal by value and must not change in place.
+/// A positional record, so its properties are init-only: ChatDbContext compares GifAttachments element-wise
+/// to detect changes, so an attachment must be equal by value and must not change in place.
 /// </summary>
-public sealed record GifAttachment
-{
-    public Guid GifEntryId { get; init; }
-    public int Width { get; init; }
-    public int Height { get; init; }
-
-    public GifAttachment() { }
-
-    public GifAttachment(Guid gifEntryId, int width, int height)
-    {
-        GifEntryId = gifEntryId;
-        Width = width;
-        Height = height;
-    }
-}
+public sealed record GifAttachment(Guid GifEntryId, int Width, int Height);

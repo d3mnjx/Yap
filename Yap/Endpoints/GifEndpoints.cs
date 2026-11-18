@@ -79,10 +79,9 @@ public static class GifEndpoints
     /// <summary>One card: the preview for the grid, the file for a send, the star for this person, the folder and tags.</summary>
     public static GifCardDto Card(GifEntry e, Guid viewerId, GifService lib, UserService users)
     {
-        var src = e.GifUrl ?? e.RemoteGifUrl ?? e.Mp4Url ?? e.WebmUrl ?? e.RemoteMp4Url ?? e.RemoteWebmUrl;
-        var isImage = src is not null && (src == e.GifUrl || src == e.RemoteGifUrl);
-        return new GifCardDto(e.Id, e.PreviewUrl ?? src, src, isImage, e.Width, e.Height, lib.IsFavorite(viewerId, e.Id),
-            lib.GetFavoriteFolderMap(viewerId).GetValueOrDefault(e.Id), lib.GetTags(e), e.IsServerGif, e.ServerFolder,
+        var favorite = lib.TryGetFavorite(viewerId, e.Id, out var folder);
+        return new GifCardDto(e.Id, e.PreviewUrl ?? e.Src, e.Src, e.SrcIsImage, e.Width, e.Height, favorite,
+            folder, lib.GetTags(e), e.IsServerGif, e.ServerFolder,
             e.UploadedByUserId is { } uid ? users.GetById(uid)?.Username : null, e.UploadedByUserId == viewerId, e.FileSizeBytes);
     }
 

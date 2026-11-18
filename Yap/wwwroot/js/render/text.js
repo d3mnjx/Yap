@@ -201,15 +201,23 @@ export function messageText(text) {
   const links = findLinks(text);
   const emojiOnly = links.length === 0 && isEmojiOnly(text);
   const size = emojiOnly ? 'big' : 'text';
-  const nodes = [];
+  const nodes = splitAtLinks(text, links).flatMap(part => part.link
+    ? [el('a', { class: 'message-link', href: part.link.href, target: '_blank', rel: 'noopener noreferrer' }, part.link.text)]
+    : inline(part.text, size));
+  return { nodes, emojiOnly };
+}
+
+// The text cut at its links, in text order: { link } for a link, { text } for the text before, between and after.
+function splitAtLinks(text, links) {
+  const parts = [];
   let last = 0;
   for (const link of links) {
-    if (link.start > last) nodes.push(...inline(text.slice(last, link.start), size));
-    nodes.push(el('a', { class: 'message-link', href: link.href, target: '_blank', rel: 'noopener noreferrer' }, link.text));
+    if (link.start > last) parts.push({ text: text.slice(last, link.start) });
+    parts.push({ link });
     last = link.end;
   }
-  if (last < text.length) nodes.push(...inline(text.slice(last), size));
-  return { nodes, emojiOnly };
+  if (last < text.length) parts.push({ text: text.slice(last) });
+  return parts;
 }
 
 function isEmojiOnly(text) {
@@ -257,14 +265,7 @@ export async function extractPickerEmojis(text) {
   const hasUnicode = EMOJI.test(text);
   if (!hasUnicode && !hasPackShortcode(text)) return [];
   const byKey = hasUnicode ? await ensurePickerMap() : null;
-  const links = findLinks(text);
-  const slices = [];
-  let last = 0;
-  for (const link of links) {
-    if (link.start > last) slices.push(text.slice(last, link.start));
-    last = link.end;
-  }
-  if (last < text.length) slices.push(text.slice(last));
+  const slices = splitAtLinks(text, findLinks(text)).filter(part => !part.link).map(part => part.text);
 
   const out = [];
   for (const slice of slices) {

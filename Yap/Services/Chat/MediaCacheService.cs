@@ -376,22 +376,13 @@ public partial class MediaCacheService
             return null;
         }
 
-        // Get OG metadata for song title + artist
-        var preview = _linkPreviewService?.GetCachedPreview(url);
-        string? searchQuery = null;
-
-        if (preview != null && !string.IsNullOrEmpty(preview.Title))
-        {
-            // OG title is usually "Song Name - Artist" or "Song Name · Artist"
-            searchQuery = preview.Title;
-        }
-
+        // The OG title gives the song and the artist, usually "Song Name - Artist" or "Song Name · Artist"
+        var searchQuery = _linkPreviewService?.GetCachedPreview(url)?.Title;
         if (string.IsNullOrEmpty(searchQuery))
         {
             // OG scrape hasn't completed yet or failed — wait briefly and retry
             await Task.Delay(3000);
-            preview = _linkPreviewService?.GetCachedPreview(url);
-            searchQuery = preview?.Title;
+            searchQuery = _linkPreviewService?.GetCachedPreview(url)?.Title;
         }
 
         if (string.IsNullOrEmpty(searchQuery))

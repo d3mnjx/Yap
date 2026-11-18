@@ -58,6 +58,13 @@ def tapered_tilde(maxw=2.8, n=16):
         bot.append((x - nx*w, y - ny*w))
     return "M" + " L".join(f"{x:.1f} {y:.1f}" for x, y in top + bot[::-1]) + " Z"
 
+# The dots of "specks" as (cx, cy, r), and the ones "specks-dense" adds between them.
+SPECKS = [(8,10,1.4),(28,6,1.0),(50,14,1.8),(14,34,1.0),(40,38,1.5),(60,52,1.1),(22,56,1.6)]
+SPECKS_EXTRA = [(46,60,1.2),(58,28,1.0),(6,48,1.2),(34,22,1.1),(52,44,1.4)]
+
+def specks(dots):
+    return "".join(f"<circle cx='{x}' cy='{y}' r='{r}' fill='black'/>" for x, y, r in dots)
+
 PATTERNS = {
   # little waves - five tapered swooshes rising bottom-left -> top-right.
   # A stroke cannot vary its width along a path, so the tilde is a FILLED
@@ -117,14 +124,9 @@ PATTERNS = {
       "<circle cx='240' cy='140' r='1.5' fill='black'/>"),
 
   # phosphor specks - scattered soft dots, varied radii
-  "specks": uri(64,64, "".join(
-    f"<circle cx='{x}' cy='{y}' r='{r}' fill='black'/>" for x,y,r in
-    [(8,10,1.4),(28,6,1.0),(50,14,1.8),(14,34,1.0),(40,38,1.5),(60,52,1.1),(22,56,1.6)])),
-  # denser variant for Terminal DMs ("encrypted = denser")
-  "specks-dense": uri(64,64, "".join(
-    f"<circle cx='{x}' cy='{y}' r='{r}' fill='black'/>" for x,y,r in
-    [(8,10,1.4),(28,6,1.0),(50,14,1.8),(14,34,1.0),(40,38,1.5),(60,52,1.1),(22,56,1.6),
-     (46,60,1.2),(58,28,1.0),(6,48,1.2),(34,22,1.1),(52,44,1.4)])),
+  "specks": uri(64,64, specks(SPECKS)),
+  # denser variant for Terminal DMs ("encrypted = denser"): the same dots, and five more
+  "specks-dense": uri(64,64, specks(SPECKS + SPECKS_EXTRA)),
   # seigaiha fragments - PARKED, no longer shipped (Tea House DMs use ripples
   # now); kept for a future theme
   "seigaiha": uri(96,96,

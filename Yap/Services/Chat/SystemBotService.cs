@@ -40,11 +40,9 @@ public class SystemBotService
     // Track users who have already received a welcome DM (prevents duplicates)
     private readonly HashSet<string> _welcomedUsers = new(StringComparer.OrdinalIgnoreCase);
 
-    // The three parts of the welcome DM, from Data/bot-settings.json once the admin saved them (AD-09)
-    private string? _welcomeMessageFromFile, _phoneMessageFromFile, _linkMessageFromFile;
-
-    // The return notice (PR-18): hours away before the admin hears that a person is back. From the same file.
-    private int? _returnAfterHoursFromFile;
+    // What the admin saved to Data/bot-settings.json: the three parts of the welcome DM (AD-09) and the hours of
+    // the return notice (PR-18). A null value means the admin did not save that one, and the default applies.
+    private BotSettings _settings = new();
     private const int DefaultReturnAfterHours = 2;
     public const int MaxReturnAfterHours = 720;   // 30 days; the admin page offers the same range
 
@@ -90,24 +88,24 @@ public class SystemBotService
     /// The first part of the welcome DM. The admin's saved text wins over appsettings, which wins over the default.
     /// {server} (or the older {0}) is the server name.
     /// </summary>
-    public string WelcomeMessage => _welcomeMessageFromFile ?? _config.BotWelcomeMessage ?? DefaultWelcomeMessage;
+    public string WelcomeMessage => _settings.WelcomeMessage ?? _config.BotWelcomeMessage ?? DefaultWelcomeMessage;
 
     /// <summary>The part added for a person on a phone. The client turns [pwa-install] into the install link (MR-74). Empty: no phone part.</summary>
-    public string PhoneMessage => _phoneMessageFromFile ?? DefaultPhoneMessage;
+    public string PhoneMessage => _settings.PhoneMessage ?? DefaultPhoneMessage;
 
     /// <summary>The part added when the person has a login link: {link} is the URL, {code} its code. Empty: no link part.</summary>
-    public string LinkMessage => _linkMessageFromFile ?? DefaultLinkMessage;
+    public string LinkMessage => _settings.LinkMessage ?? DefaultLinkMessage;
 
     /// <summary>Hours a person must be away before the admin hears that the person is back (PR-18). 0 turns the notice off.</summary>
-    public int ReturnAfterHours => _returnAfterHoursFromFile ?? DefaultReturnAfterHours;
+    public int ReturnAfterHours => _settings.ReturnAfterHours ?? DefaultReturnAfterHours;
 
     /// <summary>Saves what the admin edited to Data/bot-settings.json. A null value keeps the current one.</summary>
     public async Task UpdateSettingsAsync(string? welcome, string? phone, string? link, int? returnAfterHours)
     {
-        if (welcome is not null) _welcomeMessageFromFile = welcome;
-        if (phone is not null) _phoneMessageFromFile = phone;
-        if (link is not null) _linkMessageFromFile = link;
-        if (returnAfterHours is not null) _returnAfterHoursFromFile = Math.Clamp(returnAfterHours.Value, 0, MaxReturnAfterHours);
+        if (welcome is not null) _settings.WelcomeMessage = welcome;
+        if (phone is not null) _settings.PhoneMessage = phone;
+        if (link is not null) _settings.LinkMessage = link;
+        if (returnAfterHours is not null) _settings.ReturnAfterHours = Math.Clamp(returnAfterHours.Value, 0, MaxReturnAfterHours);
         await SaveSettingsAsync();
     }
 
@@ -285,12 +283,7 @@ public class SystemBotService
             if (File.Exists(SettingsFilePath))
             {
                 var json = File.ReadAllText(SettingsFilePath);
-                var settings = JsonSerializer.Deserialize<BotSettings>(json);
-                _welcomeMessageFromFile = settings?.WelcomeMessage;
-                _phoneMessageFromFile = settings?.PhoneMessage;
-                _linkMessageFromFile = settings?.LinkMessage;
-                _returnAfterHoursFromFile = settings?.ReturnAfterHours;
-
+                _settings = JsonSerializer.Deserialize<BotSettings>(json) ?? new();   // a file that holds only "null" saves nothing
                 _logger.LogInformation("Loaded bot settings from {Path}", SettingsFilePath);
             }
         }
@@ -304,12 +297,7 @@ public class SystemBotService
     {
         try
         {
-            var settings = new BotSettings
-            {
-                WelcomeMessage = _welcomeMessageFromFile, PhoneMessage = _phoneMessageFromFile, LinkMessage = _linkMessageFromFile,
-                ReturnAfterHours = _returnAfterHoursFromFile,
-            };
-            var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
+            var json = JsonSerializer.Serialize(_settings, new JsonSerializerOptions { WriteIndented = true });
             await File.WriteAllTextAsync(SettingsFilePath, json);
             _logger.LogInformation("Saved bot settings to {Path}", SettingsFilePath);
         }

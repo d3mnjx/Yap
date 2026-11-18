@@ -298,15 +298,15 @@ export function Search(frame, { closeSidebar }) {
     if (hadPanel) sidebar.scrollTop = sidebarTop;   // the sidebar had no box under the panel, and a box that comes back starts at the top
     // The rows leave with the search: a video or a voice message that plays in a result must not play on in a list
     // that nobody sees.
-    const empty = () => { if (!s) replace(list, []); };
     const sliding = !screen.hidden && !screen.classList.contains('away');   // the result list is on screen and leaves with the move (SR-30)
     if (!screen.hidden) {
       screen.inert = true;
       screen.classList.remove('in', 'away');
-      if (sliding) setTimeout(() => { if (!s) screen.hidden = true; empty(); }, SLIDE_MS);
-      else screen.hidden = true;   // faded: the conversation is on screen already, there is no move to show
     }
-    if (!sliding) empty();
+    // A search that started during the move keeps the screen and its rows.
+    const leave = () => { if (!s) { screen.hidden = true; replace(list, []); } };
+    if (sliding) setTimeout(leave, SLIDE_MS);
+    else leave();   // hidden or faded: the conversation is on screen already, there is no move to show
     router.dropSteps();
   }
 

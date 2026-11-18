@@ -23,16 +23,19 @@ public static class IpHelper
     {
         if (context.Connection.RemoteIpAddress is not { } ip) return null;
         if (ViaCloudflare(context) is { } visitor) return Format(visitor);
-        if (UntrustedForwardedFor(context) is not null) return null;
+        // ForwardedFor, not UntrustedForwardedFor: that one tests for Cloudflare first, and the line above did it.
+        if (ForwardedFor(context) is not null) return null;
         return Format(ip);
     }
 
     /// <summary>The X-Forwarded-For still on the request, or null. A value means no trusted proxy consumed it, and
     /// the request did not come through Cloudflare either (Cloudflare sets X-Forwarded-For too, and it is trusted
     /// by its address). CF-Connecting-IP from anyone else, and X-Real-IP, are never read.</summary>
-    public static string? UntrustedForwardedFor(HttpContext context)
+    public static string? UntrustedForwardedFor(HttpContext context) =>
+        ViaCloudflare(context) is not null ? null : ForwardedFor(context);
+
+    private static string? ForwardedFor(HttpContext context)
     {
-        if (ViaCloudflare(context) is not null) return null;
         var value = context.Request.Headers["X-Forwarded-For"].ToString();
         return value.Length == 0 ? null : value;
     }

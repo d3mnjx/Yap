@@ -266,14 +266,12 @@ public class PushNotificationService
     public Task<PushSendResult> SendDmNotificationAsync(string toUsername, string fromUsername, string messagePreview, int unreadCount, string? fromDisplayName = null)
     {
         _logger.LogDebug("SendDmNotification: to={To} from={From} unreadCount={UnreadCount} preview={Preview}",
-            toUsername, fromUsername, unreadCount, messagePreview.Length > 30 ? messagePreview[..27] + "..." : messagePreview);
+            toUsername, fromUsername, unreadCount, Truncate(messagePreview, 30));
 
         var payload = new PushPayload
         {
             Title = $"DM from {fromDisplayName ?? fromUsername}",   // NT-27
-            Body = messagePreview.Length > 100 ? messagePreview[..97] + "..." : messagePreview,
-            Icon = "/icon-192.png",
-            Badge = "/icon-192.png",
+            Body = Truncate(messagePreview, 100),
             Tag = $"dm-{fromUsername}",
             Url = $"/dm/{Uri.EscapeDataString(fromUsername)}",
             UnreadCount = unreadCount
@@ -298,9 +296,7 @@ public class PushNotificationService
         var payload = new PushPayload
         {
             Title = $"#{roomName}",
-            Body = body.Length > 100 ? body[..97] + "..." : body,
-            Icon = "/icon-192.png",
-            Badge = "/icon-192.png",
+            Body = Truncate(body, 100),
             Tag = $"room-{roomId}",
             Url = $"/room/{roomId}",
             UnreadCount = unreadCount
@@ -320,15 +316,15 @@ public class PushNotificationService
         {
             Title = $"{_config.ProjectName} test notification",   // the name under the installed app's icon
             Body = "If you can see this, notifications work on this device.",
-            Icon = "/icon-192.png",
-            Badge = "/icon-192.png",
-            Tag = "yap-test",
-            Url = "/",
-            UnreadCount = 0
+            Tag = "yap-test"
         };
 
         return SendToUserAsync(username, payload);
     }
+
+    // At most max characters; a longer text ends in "...".
+    private static string Truncate(string text, int max) =>
+        text.Length > max ? text[..(max - 3)] + "..." : text;
 }
 
 /// <summary>
@@ -354,6 +350,7 @@ public record PushSendResult(int Sent, int Failed, int Total);
 /// </summary>
 public record PushPayload
 {
+    // A sender sets only what differs from these defaults: every notification shows the app icon.
     public string Title { get; init; } = "";
     public string Body { get; init; } = "";
     public string Icon { get; init; } = "/icon-192.png";

@@ -56,14 +56,12 @@ export async function clearAll() {
 
 // ---- following the store ----
 
-let tailTimer = 0, bootTimer = 0, draftTimer = 0;
+// A burst of store events ends in one write: each call starts the wait again, and fn runs when the calls stop for ms.
+const debounce = (ms, fn) => { let timer = 0; return () => { clearTimeout(timer); timer = setTimeout(fn, ms); }; };
 
-function queueTail() {
-  clearTimeout(tailTimer);
-  // the empty placeholder shown while the first answer loads (TL-02) must not replace a stored tail, and neither must a
-  // window after a jump (OF-14, TL-41): the stored copy is always the newest messages
-  tailTimer = setTimeout(() => { if (state.open?.messages && !state.open.loading && atTail()) saveTail(keyOf(state.open), state.open); }, 800);
-}
+// the empty placeholder shown while the first answer loads (TL-02) must not replace a stored tail, and neither must a
+// window after a jump (OF-14, TL-41): the stored copy is always the newest messages
+const queueTail = debounce(800, () => { if (state.open?.messages && !state.open.loading && atTail()) saveTail(keyOf(state.open), state.open); });
 
 // The bootstrap document, rebuilt from the store: the same shape the server sends.
 function docFromState() {
@@ -72,11 +70,9 @@ function docFromState() {
   return { user, config, texts, rooms, users: Object.values(users), presence, dms, unread, mutes, emoji, favoriteGifIds: [...favoriteGifIds], emojiImages };
 }
 
-function queueBootstrap() {
-  clearTimeout(bootTimer);
-  bootTimer = setTimeout(() => { const doc = docFromState(); if (doc) saveBootstrap(doc); }, 2000);
-}
+const queueBootstrap = debounce(2000, () => { const doc = docFromState(); if (doc) saveBootstrap(doc); });
+const queueDrafts = debounce(500, () => db.put(db.STORES.kv, { ...state.drafts }, 'drafts'));
 
 on('messages', queueTail);
-on('drafts', () => { clearTimeout(draftTimer); draftTimer = setTimeout(() => db.put(db.STORES.kv, { ...state.drafts }, 'drafts'), 500); });
+on('drafts', queueDrafts);
 for (const part of ['users', 'presence', 'rooms', 'dms', 'unread', 'mutes', 'emoji', 'favoriteGifIds', 'emojiImages']) on(part, queueBootstrap);

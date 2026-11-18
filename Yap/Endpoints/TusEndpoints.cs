@@ -25,6 +25,10 @@ public static class TusEndpoints
     // How Upload-Metadata is read. One value for tus and for GetMaxUploadBytes, so both see the same kind.
     private const MetadataParsingStrategy MetadataStrategy = MetadataParsingStrategy.AllowEmptyValues;
 
+    // One Upload-Metadata value as text, or null when the client sent no such key.
+    private static string? Meta(Dictionary<string, Metadata> metadata, string key) =>
+        metadata.TryGetValue(key, out var value) ? value.GetString(System.Text.Encoding.UTF8) : null;
+
     public static void MapTusEndpoints(this WebApplication app)
     {
         var uploads = app.Services.GetRequiredService<UploadPaths>();
@@ -78,12 +82,9 @@ public static class TusEndpoints
                 // re-checks authoritatively.
                 OnBeforeCreateAsync = eventContext =>
                 {
-                    string? Meta(string key) => eventContext.Metadata.TryGetValue(key, out var m)
-                        ? m.GetString(System.Text.Encoding.UTF8) : null;
-
-                    var kind = Meta("kind");
-                    var target = Meta("target");
-                    var extension = Path.GetExtension(Meta("filename") ?? "").ToLowerInvariant();
+                    var kind = Meta(eventContext.Metadata, "kind");
+                    var target = Meta(eventContext.Metadata, "target");
+                    var extension = Path.GetExtension(Meta(eventContext.Metadata, "filename") ?? "").ToLowerInvariant();
                     if (!NameIsAccepted(kind, extension))
                     {
                         eventContext.FailRequest("Unsupported file type");
@@ -177,17 +178,13 @@ public static class TusEndpoints
 
                         // Null when tus metadata carried no filename; originalFileName keeps the
                         // "unknown" placeholder for logging, but tag-seeding must not see it.
-                        var uploadedFileName = metadata.TryGetValue("filename", out var fName)
-                            ? fName.GetString(System.Text.Encoding.UTF8) : null;
+                        var uploadedFileName = Meta(metadata, "filename");
                         var originalFileName = uploadedFileName ?? "unknown";
                         var extension = Path.GetExtension(originalFileName).ToLowerInvariant();
-                        var kind = metadata.TryGetValue("kind", out var kindMeta)
-                            ? kindMeta.GetString(System.Text.Encoding.UTF8) : null;
+                        var kind = Meta(metadata, "kind");
                         // Library uploads (GifLibraryManager) carry a destination; chat uploads don't.
-                        var target = metadata.TryGetValue("target", out var targetMeta)
-                            ? targetMeta.GetString(System.Text.Encoding.UTF8) : null;
-                        var folder = metadata.TryGetValue("folder", out var folderMeta)
-                            ? folderMeta.GetString(System.Text.Encoding.UTF8) : null;
+                        var target = Meta(metadata, "target");
+                        var folder = Meta(metadata, "folder");
 
                         var user = CurrentUser(eventContext.HttpContext, userService);
 
@@ -474,8 +471,7 @@ public static class TusEndpoints
         // the file was a plain chat upload for the rest of this class, and here it got the cap of a pack.
         var isGifPack = httpContext.Request.Headers.TryGetValue("Upload-Metadata", out var header)
                         && MetadataParser.ParseAndValidate(MetadataStrategy, header.ToString()) is { Success: true } parsed
-                        && parsed.Metadata.TryGetValue("kind", out var kind)
-                        && kind.GetString(System.Text.Encoding.UTF8) == "gif-pack";
+                        && Meta(parsed.Metadata, "kind") == "gif-pack";
         var mb = isGifPack
             ? config.GetValue("ChatSettings:GifSettings:MaxPackSizeMB", 1024)
             : config.GetValue("ChatSettings:MaxUploadSizeMB", 100);

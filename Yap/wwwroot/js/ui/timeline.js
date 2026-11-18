@@ -157,12 +157,9 @@ export function Timeline(root, { reopen }) {
       case 'missed': arrived(detail.message); break;  // a window ends before it: the follow is off, so the pill shows for someone else's message (TL-16)
       case 'add': {
         const m = detail.message;
-        const index = state.open.messages.indexOf(m);
-        const { prev, next } = neighbours(index);
-        const node = renderRow(m, { header: needsHeader(prev, m) });
-        rows.set(m.id, { node, message: m });
+        const { prev, next } = neighbours(state.open.messages.indexOf(m));
         const nextNode = next ? rows.get(next.id)?.node : pendingNodes[0];
-        if (nextNode) flow.insertBefore(node, nextNode); else flow.append(node);
+        flow.insertBefore(makeRow(m, prev), nextNode ?? null);   // null: at the end
         if (next) redraw(next, m);
         arrived(m);
         break;

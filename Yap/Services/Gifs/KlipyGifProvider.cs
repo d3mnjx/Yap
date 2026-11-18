@@ -289,36 +289,10 @@ public class KlipyGifProvider : IGifSourceProvider
         // Previews come from "sm" tier (smallest), falling back to "md".
         if (r.TryGetProperty("file", out var file) && file.ValueKind == JsonValueKind.Object)
         {
-            JsonElement fullTier = default;
-            if (file.TryGetProperty("md", out var md) && md.ValueKind == JsonValueKind.Object) fullTier = md;
-            else if (file.TryGetProperty("hd", out var hd) && hd.ValueKind == JsonValueKind.Object) fullTier = hd;
-
-            if (fullTier.ValueKind == JsonValueKind.Object)
-            {
-                foreach (var fmt in fullTier.EnumerateObject())
-                {
-                    if (!IsPlayableFormatKey(fmt.Name)) continue;
-                    var mf = ParseMediaFormat(fmt.Value, fmt.Name);
-                    if (mf == null) continue;
-                    full.Add(mf);
-                    if (width == 0 || height == 0) { width = mf.Width; height = mf.Height; }
-                }
-            }
-
-            JsonElement previewTier = default;
-            if (file.TryGetProperty("sm", out var sm) && sm.ValueKind == JsonValueKind.Object) previewTier = sm;
-            else if (file.TryGetProperty("md", out var md2) && md2.ValueKind == JsonValueKind.Object) previewTier = md2;
-
-            if (previewTier.ValueKind == JsonValueKind.Object)
-            {
-                foreach (var fmt in previewTier.EnumerateObject())
-                {
-                    if (!IsPlayableFormatKey(fmt.Name)) continue;
-                    var mf = ParseMediaFormat(fmt.Value, fmt.Name);
-                    if (mf == null) continue;
-                    preview.Add(mf);
-                }
-            }
+            full.AddRange(PlayableFormats(file, "md", "hd"));
+            preview.AddRange(PlayableFormats(file, "sm", "md"));
+            foreach (var mf in full)
+                if (width == 0 || height == 0) { width = mf.Width; height = mf.Height; }
         }
         // Legacy Tenor-style fallback: media.{mp4|webm|gif|tinymp4|tinygif|...}.
         else if (r.TryGetProperty("media", out var media) && media.ValueKind == JsonValueKind.Object)
@@ -386,6 +360,21 @@ public class KlipyGifProvider : IGifSourceProvider
     /// an &lt;img&gt; tag (instant animation, no browser autoplay policy) and is ~2× smaller than
     /// the equivalent GIF. Klipy's jpg is rejected (static-only).
     /// </summary>
+    /// <summary>The playable formats of one size tier of an item's "file" object, in the order of the JSON: the
+    /// preferred tier, or the fallback tier when the item has no preferred one.</summary>
+    private static List<MediaFormat> PlayableFormats(JsonElement file, string preferredTier, string fallbackTier)
+    {
+        var formats = new List<MediaFormat>();
+        if (!(file.TryGetProperty(preferredTier, out var tier) && tier.ValueKind == JsonValueKind.Object)
+            && !(file.TryGetProperty(fallbackTier, out tier) && tier.ValueKind == JsonValueKind.Object))
+            return formats;
+
+        foreach (var fmt in tier.EnumerateObject())
+            if (IsPlayableFormatKey(fmt.Name) && ParseMediaFormat(fmt.Value, fmt.Name) is { } mf)
+                formats.Add(mf);
+        return formats;
+    }
+
     private static bool IsPlayableFormatKey(string formatKey) =>
         formatKey.Equals("mp4", StringComparison.OrdinalIgnoreCase)
         || formatKey.Equals("webm", StringComparison.OrdinalIgnoreCase)

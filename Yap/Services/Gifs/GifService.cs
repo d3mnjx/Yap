@@ -324,6 +324,15 @@ public partial class GifService
         lock (map) return map.ContainsKey(gifEntryId);
     }
 
+    /// <summary>The star and its folder in one lookup. A grid makes one card per GIF, and a copy of the person's
+    /// whole map per card (GetFavoriteFolderMap) grew with the square of the library.</summary>
+    public bool TryGetFavorite(Guid userId, Guid gifEntryId, out string? folder)
+    {
+        folder = null;
+        if (!_favoritesByUser.TryGetValue(userId, out var map)) return false;
+        lock (map) return map.TryGetValue(gifEntryId, out folder);
+    }
+
     public List<GifEntry> GetRecents(string username)
     {
         var ids = _userService.GetRecentGifs(username);
@@ -771,22 +780,10 @@ public partial class GifService
         var oldTags = DeserializeTags(entry.Tags);
         entry.Tags = newTags.Count > 0 ? JsonSerializer.Serialize(newTags) : null;
 
-        lock (_tagIndexLock)
+        lock (_tagIndexLock)   // one lock for both steps: a search never sees the entry without its tags
         {
-            foreach (var tag in oldTags.Except(newTags))
-            {
-                if (_tagIndex.TryGetValue(tag, out var set))
-                {
-                    set.Remove(entry.Id);
-                    if (set.Count == 0) _tagIndex.Remove(tag);
-                }
-            }
-            foreach (var tag in newTags)
-            {
-                if (!_tagIndex.TryGetValue(tag, out var set))
-                    _tagIndex[tag] = set = new HashSet<Guid>();
-                set.Add(entry.Id);
-            }
+            UnindexTagsLocked(entry.Id, oldTags.Except(newTags));
+            IndexTagsLocked(entry.Id, newTags);
         }
 
         _writer.Enqueue(Writes.GifEntry(entry));
@@ -930,14 +927,27 @@ public partial class GifService
     {
         var tags = DeserializeTags(entry.Tags);
         if (tags.Count == 0) return;
-        lock (_tagIndexLock)
+        lock (_tagIndexLock) IndexTagsLocked(entry.Id, tags);
+    }
+
+    // The two writers of _tagIndex. The caller holds _tagIndexLock.
+    private void IndexTagsLocked(Guid entryId, IEnumerable<string> tags)
+    {
+        foreach (var tag in tags)
         {
-            foreach (var tag in tags)
-            {
-                if (!_tagIndex.TryGetValue(tag, out var set))
-                    _tagIndex[tag] = set = new HashSet<Guid>();
-                set.Add(entry.Id);
-            }
+            if (!_tagIndex.TryGetValue(tag, out var set))
+                _tagIndex[tag] = set = new HashSet<Guid>();
+            set.Add(entryId);
+        }
+    }
+
+    private void UnindexTagsLocked(Guid entryId, IEnumerable<string> tags)
+    {
+        foreach (var tag in tags)
+        {
+            if (!_tagIndex.TryGetValue(tag, out var set)) continue;
+            set.Remove(entryId);
+            if (set.Count == 0) _tagIndex.Remove(tag);   // no empty set stays: a search walks every tag in the index
         }
     }
 
@@ -1096,22 +1106,11 @@ public partial class GifService
             // Stream to disk with a hard cap so a chunked/headerless response (Content-Length
             // absent) can't blow past MaxDownloadBytes — the header check above only helps when
             // the length is advertised.
-            bool overCap = false;
-            await using (var fs = File.Create(destPath))
+            bool withinCap;
             await using (var src = await response.Content.ReadAsStreamAsync(cts.Token))
-            {
-                var buffer = new byte[81920];
-                long total = 0;
-                int read;
-                while ((read = await src.ReadAsync(buffer, cts.Token)) > 0)
-                {
-                    total += read;
-                    if (total > MaxDownloadBytes) { overCap = true; break; }
-                    await fs.WriteAsync(buffer.AsMemory(0, read), cts.Token);
-                }
-            }
+                withinCap = await CopyToFileCappedAsync(src, destPath, MaxDownloadBytes, cts.Token);
 
-            if (overCap)
+            if (!withinCap)
             {
                 TryDelete(destPath);
                 _logger.LogWarning("GIF exceeded size cap mid-download: {Url}", url);
@@ -1125,6 +1124,23 @@ public partial class GifService
             TryDelete(destPath);
             return false;
         }
+    }
+
+    /// <summary>Copies the stream to a new file and stops at the first byte above <paramref name="maxBytes"/>. False
+    /// means the stream was longer: the file is closed by then, and the caller deletes the partial file.</summary>
+    private static async Task<bool> CopyToFileCappedAsync(Stream src, string destPath, long maxBytes, CancellationToken ct = default)
+    {
+        await using var dest = File.Create(destPath);
+        var buffer = new byte[81920];
+        long total = 0;
+        int read;
+        while ((read = await src.ReadAsync(buffer, ct)) > 0)
+        {
+            total += read;
+            if (total > maxBytes) return false;
+            await dest.WriteAsync(buffer.AsMemory(0, read), ct);
+        }
+        return true;
     }
 
     private void MarkFailed(GifEntry entry)
@@ -1156,12 +1172,7 @@ public partial class GifService
         tags.Add(tag);
         entry.Tags = JsonSerializer.Serialize(tags);
 
-        lock (_tagIndexLock)
-        {
-            if (!_tagIndex.TryGetValue(tag, out var set))
-                _tagIndex[tag] = set = new HashSet<Guid>();
-            set.Add(entry.Id);
-        }
+        lock (_tagIndexLock) IndexTagsLocked(entry.Id, [tag]);
     }
 
     private static List<string> DeserializeTags(string? json)

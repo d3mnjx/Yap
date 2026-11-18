@@ -346,22 +346,7 @@
     flex-shrink: 0;
 }
 
-/* See the note on .user-status-dot below for why `color` is set. */
-.chat-header .status-dot.online {
-    background: var(--status-online);
-    color: var(--status-online);
-    box-shadow: var(--glow-status);
-}
-
-.chat-header .status-dot.away {
-    background: var(--status-away);
-    color: var(--status-away);
-    box-shadow: var(--glow-status);
-}
-
-.chat-header .status-dot.invisible {
-    background: var(--status-invisible);
-}
+/* The colours of the states are with .user-status-dot below: one rule for the three dots. */
 
 @media (max-width: 600px) {
     .chat-header {
@@ -597,22 +582,30 @@
     flex-shrink: 0;
 }
 
-/* `color` is set alongside `background` purely so --glow-status can be written once
+/* The state colours of the three status dots: the status menu of the header, the people row, the profile card.
+   A selector list, not :is(): each selector keeps its own weight.
+   `color` is set alongside `background` purely so --glow-status can be written once
    as `0 0 6px currentColor` and pick up whichever state colour the dot is showing.
    The dots hold no text, so the colour has no other effect. */
-.user-status-dot.online {
+.chat-header .status-dot.online,
+.user-status-dot.online,
+.profile-card-status-dot.online {
     background: var(--status-online);
     color: var(--status-online);
     box-shadow: var(--glow-status);
 }
 
-.user-status-dot.away {
+.chat-header .status-dot.away,
+.user-status-dot.away,
+.profile-card-status-dot.away {
     background: var(--status-away);
     color: var(--status-away);
     box-shadow: var(--glow-status);
 }
 
-.user-status-dot.invisible {
+.chat-header .status-dot.invisible,
+.user-status-dot.invisible,
+.profile-card-status-dot.offline {
     background: var(--status-invisible);
 }
 
@@ -936,7 +929,7 @@
 }
 
 /* ==== Push prompt of the installed app, and the install dialog in its classes ==== */
-/* js/pages/chat.js, js/pwa.js; t-push-prompt */
+/* js/pages/chat.js, js/pwa.js; t-push-prompt, t-pwa-install */
 
 .push-prompt-overlay {
     position: fixed;
@@ -1112,9 +1105,7 @@
     flex-shrink: 0;
 }
 
-.profile-card-status-dot.online { background: var(--status-online); color: var(--status-online); box-shadow: var(--glow-status); }
-.profile-card-status-dot.away { background: var(--status-away); color: var(--status-away); box-shadow: var(--glow-status); }
-.profile-card-status-dot.offline { background: var(--status-invisible); }
+/* The colours of the states are with .user-status-dot above: one rule for the three dots. */
 
 .profile-card-divider {
     height: 1px;

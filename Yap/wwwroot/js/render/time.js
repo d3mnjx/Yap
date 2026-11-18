@@ -84,21 +84,16 @@ function partsOf(date, twoDigit = true) {
 }
 
 // "today" and "yesterday" in the account's zone: compare calendar days, not 24 h spans (MR-05).
-function dayKey(date) {
-  const p = partsOf(date);
-  return `${p.year}-${p.month}-${p.day}`;
-}
+const sameDay = (a, b) => a.year === b.year && a.month === b.month && a.day === b.day;   // a, b: partsOf(date)
 
 // MR-05: today → time; yesterday → "Yesterday {time}"; this year → date and time; older → full date and time.
 export function messageTime(iso, now = new Date()) {
   const date = new Date(iso);
   const time = timeOf(date);
-  const today = dayKey(now);
-  const key = dayKey(date);
-  if (key === today) return time;
-  if (key === dayKey(new Date(now.getTime() - 86_400_000))) return `Yesterday ${time}`;
-  const sameYear = partsOf(date).year === partsOf(now).year;
-  return `${dateOf(date, !sameYear)} ${time}`;
+  const day = partsOf(date), today = partsOf(now);
+  if (sameDay(day, today)) return time;
+  if (sameDay(day, partsOf(new Date(now.getTime() - 86_400_000)))) return `Yesterday ${time}`;
+  return `${dateOf(date, day.year !== today.year)} ${time}`;
 }
 
 // Elapsed time in words for the admin tables and the device list ("3 min ago").

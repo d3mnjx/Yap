@@ -124,6 +124,14 @@ def panel(h, s, l, light):
     return "linear-gradient(to bottom, " + ", ".join(parts) + ")"
 
 
+def sidebar_bg(h, s, cb, light, mobile=False):
+    """--bg-sidebar. Only the alpha differs on a phone: the sidebar lies over the chat
+    there, so it is less transparent (see the mobile block in main)."""
+    if light:
+        return hsl(h, s * 0.35, min(cb + 6, 92), "0.92" if mobile else "0.72")
+    return hsl(h, s * 0.80, max(cb - 4, 6), "0.93" if mobile else "0.74")
+
+
 def build_vars(h, s, l, light):
     """The two templates. Every value is an offset from the scene's canvas H/S/L.
 
@@ -141,7 +149,7 @@ def build_vars(h, s, l, light):
         return {
             "--bg-primary": hsl(h, s, l),                      # the canvas colour itself
             "--bg-canvas-panel": panel(h, s, l, True),
-            "--bg-sidebar": hsl(h, s * 0.35, min(cb + 6, 92), "0.72"),
+            "--bg-sidebar": sidebar_bg(h, s, cb, True),
             "--bg-header": hsl(h, s * 0.30, min(cb + 10, 95), "0.85"),
             # A surface that carries text: the search field, the search row of the phone, the
             # profile card, the pins panel, the status menu. It stays 6 points under the
@@ -172,7 +180,7 @@ def build_vars(h, s, l, light):
     return {
         "--bg-primary": hsl(h, s, l),
         "--bg-canvas-panel": panel(h, s, l, False),
-        "--bg-sidebar": hsl(h, s * 0.80, max(cb - 4, 6), "0.74"),
+        "--bg-sidebar": sidebar_bg(h, s, cb, False),
         "--bg-header": hsl(h, s * 0.80, max(cb - 7, 4), "0.88"),
         "--bg-darkest": hsl(h, s, max(cb - 12, 3)),
         "--bg-hover": hsl(h, s * 0.70, cb + 12, "0.55"),
@@ -273,11 +281,7 @@ def main():
     for scene, canvas, mode, _ in summary:
         h2, s2, l2 = hex_to_hsl(canvas)
         light2 = mode == "LIGHT"
-        cb2 = chrome_base(l2, light2)
-        if light2:
-            v = hsl(h2, s2 * 0.35, min(cb2 + 6, 92), "0.92")
-        else:
-            v = hsl(h2, s2 * 0.80, max(cb2 - 4, 6), "0.93")
+        v = sidebar_bg(h2, s2, chrome_base(l2, light2), light2, mobile=True)
         lines.append(f'    [data-theme="teahouse"][data-scene="{scene}"] {{ --bg-sidebar: {v}; }}')
     lines.append("}")
     lines.append("")

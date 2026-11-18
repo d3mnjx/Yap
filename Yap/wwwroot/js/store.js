@@ -215,15 +215,14 @@ function pinMediaOf(m) {
 
 export function unpinLocally(id) {
   const open = state.open;
-  const pin = open?.pins.find(p => p.messageId === id);
-  if (!pin) return null;
-  const index = open.pins.indexOf(pin);
-  open.pins = open.pins.filter(p => p !== pin);
+  const index = open?.pins.findIndex(p => p.messageId === id) ?? -1;
+  if (index < 0) return null;
+  const pin = open.pins[index];
+  open.pins = open.pins.toSpliced(index, 1);
   changed('pins');
   return () => {   // only this pin returns, at its place: a pins event may have landed meanwhile
     if (state.open !== open || isPinned(id)) return;
-    const at = Math.min(index, open.pins.length);
-    open.pins = [...open.pins.slice(0, at), pin, ...open.pins.slice(at)];
+    open.pins = open.pins.toSpliced(index, 0, pin);   // a list that is shorter by now takes the pin at its end
     changed('pins');
   };
 }

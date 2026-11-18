@@ -507,7 +507,9 @@ export function Composer(root) {
   const randomCell = () => {
     const index = Math.floor(Math.random() * SPRITE_COUNT);
     const col = index % SPRITE_COLS, row = Math.floor(index / SPRITE_COLS);
-    for (const [k, v] of [['--color-col', col], ['--color-row', row], ['--grey-col', col], ['--grey-row', row]]) icon.style.setProperty(k, String(v));
+    // The grey sprite and the colour sprite have the same cells, so one pair serves both (composer.css).
+    icon.style.setProperty('--sprite-col', String(col));
+    icon.style.setProperty('--sprite-row', String(row));
   };
   randomCell();
   emojiToggle.addEventListener('mouseenter', randomCell);

@@ -389,16 +389,14 @@ public static class AdminEndpoints
     private static object MediaRow(Yap.Models.Media.MediaUploadLog r, GifService gifs)
     {
         var stem = Path.GetFileNameWithoutExtension(r.StoredFileName);
-        string? thumb = null, link = null;
-        switch (r.FileType)
+        (string? thumb, string? link) = r.FileType switch
         {
-            case "image": thumb = $"/uploads/{stem}_800px.webp"; link = $"/uploads/{r.StoredFileName}"; break;
-            case "video": thumb = $"/uploads/{stem}_poster.webp"; link = r.CompressDurationMs.HasValue ? $"/uploads/{stem}.mp4" : $"/uploads/{r.StoredFileName}"; break;
-            case "voice": link = $"/uploads/{r.StoredFileName}"; break;   // no picture: the page shows a small player on the link
-            case "gif":
-                if (Guid.TryParse(stem, out var id) && gifs.GetEntry(id) is { } e) { thumb = e.PreviewUrl ?? e.GifUrl ?? e.RemoteGifUrl; link = e.GifUrl ?? e.RemoteGifUrl; }
-                break;
-        }
+            "image" => ($"/uploads/{stem}_800px.webp", $"/uploads/{r.StoredFileName}"),
+            "video" => ($"/uploads/{stem}_poster.webp", r.CompressDurationMs.HasValue ? $"/uploads/{stem}.mp4" : $"/uploads/{r.StoredFileName}"),
+            "voice" => (null, $"/uploads/{r.StoredFileName}"),   // no picture: the page shows a small player on the link
+            "gif" when Guid.TryParse(stem, out var id) && gifs.GetEntry(id) is { } e => (e.PreviewUrl ?? e.GifUrl ?? e.RemoteGifUrl, e.GifUrl ?? e.RemoteGifUrl),
+            _ => (null, null),   // also a GIF whose entry is gone
+        };
         return new { r.Id, r.Date, r.Username, r.OriginalFileName, r.FileType, r.FileSize, r.CompressDurationMs, thumb, link };
     }
 

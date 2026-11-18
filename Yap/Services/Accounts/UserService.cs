@@ -83,14 +83,6 @@ public class UserService
         // Generate a secure random token
         var token = GenerateToken();
 
-        // Determine if this user should be admin (first user)
-        // Single lock block to prevent two users both seeing null and both becoming admin
-        bool isAdmin;
-        lock (_adminLock)
-        {
-            isAdmin = _adminUserId == null;
-        }
-
         // No passphrase at birth. New accounts get a login link instead, minted by the caller
         // (AuthEndpoints) because AccessLinkService sits above this service; the link's code
         // is what the verification page takes typed (AU-12). The secret code is retired
@@ -98,7 +90,7 @@ public class UserService
         // disable it. The reason a credential must exist from day one stands: a context that
         // starts signed out (installed PWA, second browser) otherwise has no way back in, and
         // one real user forked into seven accounts that way.
-        var user = new User(username, token) { IsAdmin = isAdmin };
+        var user = new User(username, token);
 
         // Atomic uniqueness check — TryAdd returns false if username already exists
         if (!_usernameToId.TryAdd(user.Username, user.Id))
@@ -107,29 +99,23 @@ public class UserService
             return null;
         }
 
-        _users[user.Id] = user;
-        _tokenToId[user.Token] = user.Id;
-
-        if (isAdmin)
+        // The first account becomes the admin. The test and the claim are in one lock, so two accounts that are
+        // made at the same time cannot both see "no admin". It runs after the username check, so a refused name
+        // claims nothing, and before the account is in _users, so no reader sees the flag change.
+        lock (_adminLock)
         {
-            lock (_adminLock)
+            if (_adminUserId == null)
             {
-                // Double-check: another thread may have set admin between our check and here
-                if (_adminUserId == null)
-                {
-                    _adminUserId = user.Id;
-                }
-                else
-                {
-                    // Someone else became admin first — demote this user
-                    isAdmin = false;
-                    user.IsAdmin = false;
-                }
+                _adminUserId = user.Id;
+                user.IsAdmin = true;
             }
         }
 
+        _users[user.Id] = user;
+        _tokenToId[user.Token] = user.Id;
+
         _writer.Enqueue(Writes.NewUser(user));
-        _logger.LogInformation("Created new user: {Username} (Admin: {IsAdmin})", username, isAdmin);
+        _logger.LogInformation("Created new user: {Username} (Admin: {IsAdmin})", username, user.IsAdmin);
         OnProfileChanged?.Invoke(user);   // the people lists of the open clients learn the name (SH-33)
 
         return user;
@@ -481,7 +467,7 @@ public class UserService
         if (string.IsNullOrEmpty(ip) || !_users.TryGetValue(userId, out var user))
             return;
 
-        var entries = ParseKnownIps(user.KnownIps);
+        var entries = ParseJsonList<KnownIpEntry>(user.KnownIps);
 
         var existing = entries.FirstOrDefault(e => string.Equals(e.Ip, ip, StringComparison.Ordinal));
         if (existing != null && DateTime.UtcNow - existing.LastSeenUtc < KnownIpRefreshThrottle)
@@ -521,7 +507,7 @@ public class UserService
     public void RecordDevice(Guid userId, string? deviceId, DateTime? firstSeenUtc = null)
     {
         if (string.IsNullOrEmpty(deviceId) || deviceId == "unknown" || !_users.TryGetValue(userId, out var user)) return;
-        var entries = ParseKnownDevices(user.KnownDevices);
+        var entries = ParseJsonList<KnownDeviceEntry>(user.KnownDevices);
         if (firstSeenUtc is null && entries.Any(e => e.Id == deviceId)) return;
         entries.RemoveAll(e => e.Id == deviceId);
         entries.Add(new KnownDeviceEntry(deviceId, firstSeenUtc ?? DateTime.UtcNow));
@@ -536,7 +522,7 @@ public class UserService
     {
         var now = DateTime.UtcNow;
         if (string.IsNullOrEmpty(deviceId) || !_users.TryGetValue(userId, out var user)) return now + NewDevicePeriod;
-        var entry = ParseKnownDevices(user.KnownDevices).FirstOrDefault(e => e.Id == deviceId);
+        var entry = ParseJsonList<KnownDeviceEntry>(user.KnownDevices).FirstOrDefault(e => e.Id == deviceId);
         if (entry is null) return now + NewDevicePeriod;
         var allowedAt = entry.FirstSeenUtc + NewDevicePeriod;
         return allowedAt <= now ? now : allowedAt;
@@ -547,16 +533,9 @@ public class UserService
     public void ForgetOtherDevices(Guid userId, string deviceId)
     {
         if (!_users.TryGetValue(userId, out var user)) return;
-        var entries = ParseKnownDevices(user.KnownDevices).Where(e => e.Id == deviceId).ToList();
+        var entries = ParseJsonList<KnownDeviceEntry>(user.KnownDevices).Where(e => e.Id == deviceId).ToList();
         user.KnownDevices = entries.Count == 0 ? null : System.Text.Json.JsonSerializer.Serialize(entries);
         _writer.Enqueue(Writes.User(user));
-    }
-
-    private static List<KnownDeviceEntry> ParseKnownDevices(string? json)
-    {
-        if (string.IsNullOrEmpty(json)) return [];
-        try { return System.Text.Json.JsonSerializer.Deserialize<List<KnownDeviceEntry>>(json) ?? []; }
-        catch { return []; }
     }
 
     public bool HasRecentKnownIp(string username, string? ip)
@@ -568,24 +547,18 @@ public class UserService
         if (user == null)
             return false;
 
-        return ParseKnownIps(user.KnownIps).Any(e =>
+        return ParseJsonList<KnownIpEntry>(user.KnownIps).Any(e =>
             string.Equals(e.Ip, ip, StringComparison.Ordinal) &&
             DateTime.UtcNow - e.LastSeenUtc <= KnownIpTtl);
     }
 
-    private static List<KnownIpEntry> ParseKnownIps(string? json)
+    /// <summary>A list that a User column holds as JSON text: the known addresses and devices, the recent emoji and
+    /// GIFs. Always a new list that the caller can change; empty when the column is empty or not readable.</summary>
+    private static List<T> ParseJsonList<T>(string? json)
     {
-        if (string.IsNullOrEmpty(json))
-            return [];
-
-        try
-        {
-            return System.Text.Json.JsonSerializer.Deserialize<List<KnownIpEntry>>(json) ?? [];
-        }
-        catch
-        {
-            return []; // corrupt blob — start fresh rather than break logins
-        }
+        if (string.IsNullOrEmpty(json)) return [];
+        try { return System.Text.Json.JsonSerializer.Deserialize<List<T>>(json) ?? []; }
+        catch { return []; }   // corrupt blob — start fresh rather than break logins
     }
 
     #endregion
@@ -691,38 +664,14 @@ public class UserService
     /// <summary>
     /// Gets the recent emojis list for a user (deserialized from in-memory User).
     /// </summary>
-    public List<string> GetRecentEmojis(string username)
-    {
-        var user = GetByUsername(username);
-        if (user?.RecentEmojis == null) return new();
-
-        try
-        {
-            return System.Text.Json.JsonSerializer.Deserialize<List<string>>(user.RecentEmojis) ?? new();
-        }
-        catch
-        {
-            return new();
-        }
-    }
+    public List<string> GetRecentEmojis(string username) =>
+        ParseJsonList<string>(GetByUsername(username)?.RecentEmojis);
 
     /// <summary>
     /// Gets the recent GIF entry IDs for a user (deserialized from in-memory User).
     /// </summary>
-    public List<Guid> GetRecentGifs(string username)
-    {
-        var user = GetByUsername(username);
-        if (user?.RecentGifs == null) return new();
-
-        try
-        {
-            return System.Text.Json.JsonSerializer.Deserialize<List<Guid>>(user.RecentGifs) ?? new();
-        }
-        catch
-        {
-            return new();
-        }
-    }
+    public List<Guid> GetRecentGifs(string username) =>
+        ParseJsonList<Guid>(GetByUsername(username)?.RecentGifs);
 
     public void UpdateRecentGifs(Guid userId, List<Guid> gifIds)
     {
