@@ -20,9 +20,9 @@ A direct message is a private conversation between two people. It starts when on
 
 ## Messages
 
-A message is text or media. Text keeps its line breaks, shows links with a link card, and shows emoji as images from one set. Yap has no formatting syntax and no mentions. Media is up to ten images or videos in one message, or one GIF from the user's library, from the server library or from the GIF provider, or one voice message recorded in the input box. A message can be a reply to another message. A message can carry reactions. The author can edit a text message and can delete any own message. Any reader can copy the text. See [Message row and actions](message-row.md) and [Input box](input-box.md).
+A message is text or media. Text keeps its line breaks, shows links with a link card, and shows emoji as images from one set. Yap has no formatting syntax and no mentions. Media is up to ten images or videos in one message, or one GIF from the user's library, from the server library or from the GIF provider, or one voice message recorded in the input box. A message can be a reply to another message. A message can carry reactions. The author can edit a text message and can delete any own message. Any reader can copy the text. See [Message and actions](message-row.md) and [Input box](input-box.md).
 
-Every action in the input box, the pickers and the message rows takes effect at once, except an action that needs data from the network. The server confirms the action afterwards. See [General rules](general-rules.md).
+Every action in the input box, the pickers and the messages takes effect at once, except an action that needs data from the network. The server confirms the action afterwards. See [General rules](general-rules.md).
 
 ## Emoji and GIFs
 

@@ -1,24 +1,24 @@
-# Message row and actions
+# Message and actions
 
-A message row is one message as it appears in the conversation. The row shows who wrote the message and when, the text or media, the message it replies to, its reactions, and the actions that the reader can do on it. Rows from the same author within 30 minutes make a group under one header. The reader does all actions on a message in its row. These actions are react, reply, edit, delete, copy and open media. "Phone" on this page means a window 600 px wide or less, as in the [general rules](general-rules.md#GEN-14).
+This page specifies how one message appears in the conversation. A message shows who wrote it and when, the text or media, the message it replies to, its reactions, and the actions that the reader can do on it. Messages from the same author within 30 minutes make a group under one header. The reader does all actions on a message at the message itself. These actions are react, reply, edit, delete, copy and open media. "Phone" on this page means a window 600 px wide or less, as in the [general rules](general-rules.md#GEN-14).
 
 ## Anatomy
 
-![Message rows, desktop. A header row with avatar, name and time, two continuation rows without header, then a header row from another author.](img/message-row-desktop-group.png)
+![Messages, desktop. A message with a header that has the avatar, the name and the time, two messages without a header, then a message with a header from another author.](img/message-row-desktop-group.png)
 
-![Message row, desktop, pointer over an own text row. The action bar at the top right: three quick reactions, a divider, Add Reaction, Reply, Edit, More.](img/message-row-desktop-hover-bar.png)
+![Message, desktop, pointer over an own text message. The action bar at the top right: three quick reactions, a divider, Add Reaction, Reply, Edit, More.](img/message-row-desktop-hover-bar.png)
 
-![Message row, desktop, a reply with reactions. The quote line with the small avatar and the connector, the text, then two reaction pills, one highlighted as the reader's own.](img/message-row-desktop-reply-reactions.png)
+![Message, desktop, a reply with reactions. The quote line with the small avatar and the connector, the text, then two reaction pills, one highlighted as the reader's own.](img/message-row-desktop-reply-reactions.png)
 
-![Message row, phone, More sheet open over a tapped row. The sheet at the bottom with Copy Text, Pin Message and Delete Message, the page dimmed.](img/message-row-phone-more-sheet.png)
+![Message, phone, More sheet open over a tapped message. The sheet at the bottom with Copy Text, Pin Message and Delete Message, the page dimmed.](img/message-row-phone-more-sheet.png)
 
-1. **Avatar.** A 40 px circle on the left with the profile picture, or a coloured disc with the first letter of the username. It shows only on header rows. Other rows leave the avatar column empty.
-2. **Header.** The name, a bot badge if the author is a bot, and the time. It shows only on the first row of a group.
+1. **Avatar.** A 40 px circle on the left with the profile picture, or a coloured disc with the first letter of the username. It shows only on messages with a header. Other messages leave the avatar column empty.
+2. **Header.** The name, a bot badge if the author is a bot, and the time. It shows only on the first message of a group.
 3. **Reply quote.** A line above the header, on replies only. It shows a 16 px avatar, the original author's name and the original text on one line, two lines on a phone. A curved connector joins it to the avatar below.
-4. **Content.** The text with links and emoji, the media (images in a gallery, videos, GIFs, a voice message), or both, with the text above the media as a caption. A row with text can end with "(edited)".
+4. **Content.** The text with links and emoji, the media (images in a gallery, videos, GIFs, a voice message), or both, with the text above the media as a caption. A message with text can end with "(edited)".
 5. **Link cards.** Cards under the text, one for each link with a preview, at most five.
 6. **Reaction pills.** Pills under the content with the emoji and the count. The reader's own reactions are highlighted.
-7. **Action bar.** A bar at the top right of the row. It shows on hover or after a tap. It contains the quick reactions, Add Reaction, Reply, the GIF star on phones, Edit on own text rows, and More.
+7. **Action bar.** A bar at the top right of the message. It shows on hover or after a tap. It contains the quick reactions, Add Reaction, Reply, the GIF star on phones, Edit on own text messages, and More.
 8. **Popups.** The reaction picker and the More menu open from the bar; the delete dialog opens from the More menu. On a phone, the picker and the menu are bottom sheets.
 9. **System line.** A centred italic line: in the lobby when someone joins or leaves, and in a conversation when someone pins a message. It has no header, no actions and no hover effect.
 
@@ -26,23 +26,23 @@ A message row is one message as it appears in the conversation. The row shows wh
 
 ### Header and grouping
 
-**MR-01** A row shows a header (avatar, name, time) when it is the first message shown, when its author is different from the author of the previous message, when it is a reply, or when 30 minutes or more passed since the previous message. Other rows show only their content, aligned to the same text column.
+**MR-01** A message shows a header (avatar, name, time) when it is the first message shown, when its author is different from the author of the previous message, when it is a reply, or when 30 minutes or more passed since the previous message. Other messages show only their content, aligned to the same text column.
 
-**MR-02** A header row has 17 px of space above it. Rows inside a group have no space above them.
+**MR-02** A message with a header has 17 px of space above it. The other messages of a group have no space above them.
 
 **MR-03** The name is the author's display name, or the username when no display name is set. Emoji in a name show as images at text size.
 
 **MR-04** A bot author has a small robot badge after its name.
 
-**MR-05** The time is small and muted, on the same line as the name. For a message from today, the row shows only the time. For a message from yesterday, the row shows "Yesterday" and the time. For an earlier message from the same year, the row shows the date and the time. For an older message, the row shows the full date and the time. Rows without a header show no time. A name that is too long for the line is cut at the edge, without an ellipsis, and the time stays complete. A long name never makes the timeline scroll sideways.
+**MR-05** The time is small and muted, on the same line as the name. A message from today shows only the time. A message from yesterday shows "Yesterday" and the time. An earlier message from the same year shows the date and the time. An older message shows the full date and the time. A message without a header shows no time. A name that is too long for the line is cut at the edge, without an ellipsis, and the time stays complete. A long name never makes the timeline scroll sideways.
 
-**MR-81** A row with no header shows its time in the avatar column while the mouse pointer is over the row. The label is only the time, with no date, in the clock style of MR-06. It is muted like the header time and a little smaller, and it ends just before the text column. A touch screen shows no such time.
+**MR-81** A message with no header shows its time in the avatar column while the mouse pointer is over the message. The label is only the time, with no date, in the clock style of MR-06. It is muted like the header time and a little smaller, and it ends just before the text column. A touch screen shows no such time.
 
 **MR-06** Times use the user's time zone, and the date order and clock style from Settings. Until the user changes the date order and the clock style, they follow the language of the browser used at sign-up. The labels update with the clock. When midnight passes, a message from today shows "Yesterday".
 
 **MR-07** The reader's own messages and other people's messages look the same. Only the available actions are different. A tap on the avatar or the name opens nothing. The profile card opens from the sidebar.
 
-**MR-08** When the pointer is over a row, the row has a tint. The tint stays while the picker, menu or dialog of the row is open.
+**MR-08** When the pointer is over a message, the message has a tint. The tint stays while the picker, menu or dialog of the message is open.
 
 **MR-09** A deleted message disappears for every reader. There is no placeholder and no undo. The groups around it are formed again.
 
@@ -56,7 +56,7 @@ A message row is one message as it appears in the conversation. The row shows wh
 
 **MR-13** A link shows as the author typed it, in the accent colour. It is underlined only on hover. It opens in a new tab. An e-mail address does not become a link, and its domain does not become a link.
 
-**MR-14** An edited text row ends with "(edited)" in small placeholder-coloured text.
+**MR-14** An edited text message ends with "(edited)" in small placeholder-coloured text.
 
 ### Emoji
 
@@ -90,7 +90,7 @@ A message row is one message as it appears in the conversation. The row shows wh
 
 **MR-27** Videos show one above the other, with 4 px gaps. On desktop, each video is at most 400 px wide and 350 px high. On a phone, each video is full width. A video has its poster's shape before the poster loads, so nothing moves when it arrives. A video shows its poster frame under a dark tint, with a round play icon. A tap shows the controls and starts the video. When the video ends, or is paused at the start, the tint and the icon show again over the current frame. On an iPhone, a video plays in the full-screen player of the phone.
 
-**MR-28** A GIF keeps its own aspect ratio and is at most 360 px wide. A GIF is never cropped. While its size is unknown, it keeps a 240 px square space. It plays automatically, muted and in a loop. While it loads, a small spinner shows after a quarter second. A tap on a GIF opens nothing. When the GIF no longer exists, the row shows "GIF unavailable".
+**MR-28** A GIF keeps its own aspect ratio and is at most 360 px wide. A GIF is never cropped. While its size is unknown, it keeps a 240 px square space. It plays automatically, muted and in a loop. While it loads, a small spinner shows after a quarter second. A tap on a GIF opens nothing. When the GIF no longer exists, the message shows "GIF unavailable".
 
 **MR-29** When the browser blocks autoplay, the next tap or key press anywhere starts every paused GIF.
 
@@ -132,7 +132,7 @@ A message row is one message as it appears in the conversation. The row shows wh
 
 **MR-42** Add Reaction opens the emoji picker for this message, with search, recent emoji, the custom packs and the categories, as on the [pickers page](pickers.md#PK-43). A pick closes the picker and adds or removes that reaction. On desktop, the picker opens below the button. When there is no space below, it opens above the button. It always stays inside the window. On a phone, the picker is a bottom sheet.
 
-**MR-43** While the picker is open, the row keeps its action bar and its tint. A tap outside the picker, or Escape, closes the picker and does nothing else.
+**MR-43** While the picker is open, the message keeps its action bar and its tint. A tap outside the picker, or Escape, closes the picker and does nothing else.
 
 **MR-44** A reaction also moves the emoji to the front of the reader's recent emoji.
 
@@ -140,25 +140,25 @@ A message row is one message as it appears in the conversation. The row shows wh
 
 ### Action bar
 
-**MR-46** On desktop, the bar shows at the top right of the row while the pointer is over the row. It also shows while one of its buttons has keyboard focus. It stays while the picker, menu or dialog of the row is open. It does not show on system lines or while the user edits the row.
+**MR-46** On desktop, the bar shows at the top right of the message while the pointer is over the message. It also shows while one of its buttons has keyboard focus. It stays while the picker, menu or dialog of the message is open. It does not show on system lines or while the user edits the message.
 
-**MR-47** The buttons are in this order: the three quick reactions, a divider, Add Reaction, Reply, the GIF star on phones, Edit on the reader's own text rows, More. More is present when the row has text to copy, when the row is the reader's own, or when the reader may pin messages in the conversation (MR-77).
+**MR-47** The buttons are in this order: the three quick reactions, a divider, Add Reaction, Reply, the GIF star on phones, Edit on the reader's own text messages, More. More is present when the message has text to copy, when the message is the reader's own, or when the reader may pin messages in the conversation (MR-77).
 
 **MR-48** The icons are 18 px. The Add Reaction icon is 20 px. The buttons get a tint on hover and become slightly smaller while pressed.
 
 **MR-49** Reply opens the reply bar in the input box and moves focus into the draft in the same tap. See [Input box](input-box.md#IB-50).
 
-**MR-50** On a touch screen, a tap on a row shows its bar. Only one row shows a bar at a time. The tap that shows the bar also acts on the tapped item: a link opens, a pill toggles, an image opens the viewer. The bar appears after the tap, never under the finger. A scroll gesture does not show a bar.
+**MR-50** On a touch screen, a tap on a message shows its bar. Only one message shows a bar at a time. The tap that shows the bar also acts on the tapped item: a link opens, a pill toggles, an image opens the viewer. The bar appears after the tap, never under the finger. A scroll gesture does not show a bar.
 
-**MR-51** On a touch screen, the bar is hidden 5 s after the last touch in the row, or after the list scrolls more than 50 px. Touches in the picker, menu or dialog of the row count as touches in the row. The tap that closes the picker, the menu or the dialog is also a touch in the row. The bar is never hidden while one of them is open. When the row changes while its bar shows, for example when a reaction arrives, the bar stays. An open picker or menu also stays. A mouse on a device with touch input uses the hover rule.
+**MR-51** On a touch screen, the bar is hidden 5 s after the last touch on the message, or after the list scrolls more than 50 px. Touches in the picker, menu or dialog of the message count as touches on the message. The tap that closes the picker, the menu or the dialog is also a touch on the message. The bar is never hidden while one of them is open. When the message changes while its bar shows, for example when a reaction arrives, the bar stays. An open picker or menu also stays. A mouse on a device with touch input uses the hover rule.
 
-**MR-52** On a phone, the buttons of the bar are larger. The bar also contains the GIF star for the first GIF of the row. On a voice row, the bar sits above the row, so it never covers the player.
+**MR-52** On a phone, the buttons of the bar are larger. The bar also contains the GIF star for the first GIF of the message. On a voice message, the bar sits above the message, so it never covers the player.
 
-**MR-53** A long press on a row does nothing. A long press or a right click on an image opens no menu of the device. *Why:* users who meant to show the bar long-pressed the image and got the save menu of the device instead. The viewer has a download control (TL-24).
+**MR-53** A long press on a message does nothing. A long press or a right click on an image opens no menu of the device. *Why:* users who meant to show the bar long-pressed the image and got the save menu of the device instead. The viewer has a download control (TL-24).
 
 ### More menu
 
-**MR-54** More opens a menu. The menu contains "Copy Text" when the row has text, "Pin Message" or "Unpin Message" when the reader may pin (MR-77), and "Delete Message" in red on the reader's own rows. On desktop, the menu is a dropdown below the button. When there is no space below, it opens above the button. On a phone, the menu is a bottom sheet over a dimmed page.
+**MR-54** More opens a menu. The menu contains "Copy Text" when the message has text, "Pin Message" or "Unpin Message" when the reader may pin (MR-77), and "Delete Message" in red on the reader's own messages. On desktop, the menu is a dropdown below the button. When there is no space below, it opens above the button. On a phone, the menu is a bottom sheet over a dimmed page.
 
 **MR-55** A tap outside the menu closes the menu and does not press anything under it. Escape closes the menu. A scroll does not close the menu. This includes the scroll that occurs when a phone keyboard closes.
 
@@ -166,9 +166,9 @@ A message row is one message as it appears in the conversation. The row shows wh
 
 ### Editing
 
-**MR-57** The author can edit their own text rows, and the caption of their own media rows, at any time. A media row without a caption cannot be edited. Admins cannot edit other people's messages.
+**MR-57** The author can edit their own text messages, and the caption of their own messages with media, at any time. A message with media and no caption cannot be edited. Admins cannot edit other people's messages.
 
-**MR-58** Edit replaces the text with an editor in the same row. The header stays, and the media of a captioned row stays. The editor starts with the current text and looks like the input box. It grows to 200 px, then scrolls. Below the editor are "✓ Save", "✕ Cancel" and, on desktop, the hint "Enter to save · Shift+Enter for newline · Esc to cancel".
+**MR-58** Edit replaces the text with an editor in the same message. The header stays, and the media of a message with a caption stays. The editor starts with the current text and looks like the input box. It grows to 200 px, then scrolls. Below the editor are "✓ Save", "✕ Cancel" and, on desktop, the hint "Enter to save · Shift+Enter for newline · Esc to cancel".
 
 **MR-59** The editor gets focus, with the caret at the end. On a phone, the keyboard opens, because Edit is an action whose purpose is typing ([GEN-03](general-rules.md#GEN-03)).
 
@@ -176,13 +176,13 @@ A message row is one message as it appears in the conversation. The row shows wh
 
 **MR-61** When the text is unchanged, empty or only whitespace, Save closes the editor and changes nothing. When the text is changed, Save updates the message for every reader and adds "(edited)". An emoji that the edit brought into the text goes to the reader's recent emoji ([PK-50](pickers.md#PK-50)). The edited text contains at most 4000 characters.
 
-**MR-62** Only one editor is open at a time. Edit on another row discards the draft of the first editor. While the user edits a row, its action bar is hidden. Changes from elsewhere, such as a reaction, show on the row when the editor closes, also after a reconnect. Its link cards stay visible. When the message is deleted elsewhere, the editor disappears.
+**MR-62** Only one editor is open at a time. Edit on another message discards the draft of the first editor. While the user edits a message, its action bar is hidden. Changes from elsewhere, such as a reaction, show on the message when the editor closes, also after a reconnect. Its link cards stay visible. When the message is deleted elsewhere, the editor disappears.
 
 **MR-63** Nothing typed in the editor is sent to the server before Save.
 
 ### Delete
 
-**MR-64** The author can delete their own messages at any time. This includes media rows. Admins cannot delete other people's messages.
+**MR-64** The author can delete their own messages at any time. This includes messages with media. Admins cannot delete other people's messages.
 
 **MR-65** Delete Message opens a dialog over the whole page. The dialog contains "Delete Message", "Are you sure you want to delete this message?", a preview of the message, and the buttons "Cancel" and "Delete". The preview shows the avatar, the name, the time, and up to three lines of text or the first image, video poster, "GIF attachment" or "Voice message". On desktop, a tip tells the user to hold Shift to skip the dialog.
 
@@ -190,19 +190,19 @@ A message row is one message as it appears in the conversation. The row shows wh
 
 **MR-67** Shift+click on "Delete Message" deletes the message immediately, without the dialog.
 
-**MR-68** After a delete, the row disappears immediately for every reader. Replies to the message keep their header and show "Original message unavailable".
+**MR-68** After a delete, the message disappears immediately for every reader. Replies to the message keep their header and show "Original message unavailable".
 
 ### Pending and failed messages
 
-**MR-69** When the reader sends a message, it appears immediately as a full row, faded, at the end of the list. The header rules of a normal row apply to it. It becomes a normal row when the server accepts it. Messages sent quickly keep their order. A message with files becomes a normal row when its last file is uploaded, and it takes its place in the list then ([IB-28](input-box.md#IB-28)).
+**MR-69** When the reader sends a message, it appears immediately as a full message, faded, at the end of the list. The header rules of a normal message apply to it. It becomes a normal message when the server accepts it. Messages sent quickly keep their order. A message with files becomes a normal message when its last file is uploaded, and it takes its place in the list then ([IB-28](input-box.md#IB-28)).
 
-**MR-70** While files upload, the pending row shows one thumbnail for each file with the state of that file, and "Cancel upload" ([IB-34](input-box.md#IB-34)). A pending voice message shows one progress bar. Cancel removes the pending message.
+**MR-70** While files upload, the pending message shows one thumbnail for each file with the state of that file, and "Cancel upload" ([IB-34](input-box.md#IB-34)). A pending voice message shows one progress bar. Cancel removes the pending message.
 
-**MR-71** When a message cannot be sent, its row shows "Failed", the reason, "Retry" and "Remove". Remove deletes the message from this device only. A message that waited more than one day shows as failed.
+**MR-71** When a message cannot be sent, it shows "Failed", the reason, "Retry" and "Remove". Remove deletes the message from this device only. A message that waited more than one day shows as failed.
 
-**MR-72** A pending message offers Edit on text rows. Under More, it offers Copy Text and Remove. All three act on the device. A pending message offers no reactions and no Reply.
+**MR-72** A pending text message offers Edit. Under More, it offers Copy Text and Remove. All three act on the device. A pending message offers no reactions and no Reply.
 
-### System lines and bot rows
+### System lines and bot messages
 
 **MR-73** In the lobby, a centred italic line appears when a person joins or leaves. The [presence page](presence.md#PR-17) specifies when it appears. The line shows a random text from the configured lists, with the username of the person. Invisible people get no line. The line is not stored, so a reload removes it. A window after a jump ([TL-41](timeline.md#TL-41)) gets no lines: they belong after the newest message.
 
@@ -212,40 +212,40 @@ A message row is one message as it appears in the conversation. The row shows wh
 
 ### Without a connection
 
-**MR-75** Reactions, edits, deletes, pins and the GIF star need a connection. Without a connection, these actions change nothing: a tap on a pill, a quick reaction, a pick in the reaction picker, the star, Save, Delete, Pin Message and Unpin Message. They show "Needs a connection" at the row for two seconds. Pending messages are an exception. Their Edit and Remove act on the device. Reply and Copy Text work as usual. Media that the reader saw before also opens as usual.
+**MR-75** Reactions, edits, deletes, pins and the GIF star need a connection. Without a connection, these actions change nothing: a tap on a pill, a quick reaction, a pick in the reaction picker, the star, Save, Delete, Pin Message and Unpin Message. They show "Needs a connection" at the message for two seconds. Pending messages are an exception. Their Edit and Remove act on the device. Reply and Copy Text work as usual. Media that the reader saw before also opens as usual.
 
 ### Pinning
 
 **MR-77** A conversation has up to six pinned messages. In a direct message, both people can pin and unpin. In a room, the admin can always pin and unpin. Other people follow the room's pin setting: nobody, everyone, or a list of selected people. See [Administration](admin.md#AD-37). A pending message cannot be pinned. The [header page](frame.md#SH-47) specifies the pin button and the panel that show the pins.
 
-**MR-78** "Pin Message" pins the row for every reader, and the header's pin count changes at once. When the conversation has six pins, the server refuses with "Up to 6 pinned messages. Unpin one first.", and the text shows at the row for two seconds. "Unpin Message" removes the pin. A pin or an unpin that the server refuses is undone, and the reason shows at the row. A pin that the server accepts shows a system line (MR-80).
+**MR-78** "Pin Message" pins the message for every reader, and the header's pin count changes at once. When the conversation has six pins, the server refuses with "Up to 6 pinned messages. Unpin one first.", and the text shows at the message for two seconds. "Unpin Message" removes the pin. A pin or an unpin that the server refuses is undone, and the reason shows at the message. A pin that the server accepts shows a system line (MR-80).
 
 ## States
 
 | State or trigger | Input | What the user sees |
 | --- | --- | --- |
-| Same author within 30 minutes | all | One header, then rows without avatar, name or time. |
+| Same author within 30 minutes | all | One header, then messages without avatar, name or time. |
 | Author change, reply, or 30 minutes passed | all | A new header with 17 px above it. |
-| Pointer over a row | mouse | Row tinted, action bar at the top right. |
+| Pointer over a message | mouse | Message tinted, action bar at the top right. |
 | Keyboard focus on a bar button | keyboard | The bar is visible. |
 | Pointer over the reply quote | mouse | The bar is hidden. |
-| Tap on a row | touch | The bar shows after the tap. The tapped item does its action. The bars of other rows are hidden. |
-| Scroll gesture that starts on a row | touch | The list scrolls. The bar does not show. |
+| Tap on a message | touch | The bar shows after the tap. The tapped item does its action. The bars of other messages are hidden. |
+| Scroll gesture that starts on a message | touch | The list scrolls. The bar does not show. |
 | 5 s without a touch, or a 50 px scroll | touch | The bar fades out. Not while a picker, menu or dialog is open. |
 | Long press | touch | Nothing. |
 | Tap on a pill | mouse, touch | The reader's reaction toggles immediately. The pill highlight and count change. |
 | Pointer over a pill | mouse | Tooltip with the display names, in reaction order. |
 | Quick reaction tap | mouse, touch | Reaction toggled immediately. |
 | The quick set changes | mouse, touch | The new emoji shows in the place of the emoji that left, in every action bar. The other two buttons and the rest of the list do not change (MR-41, MR-82). |
-| Add Reaction | mouse, touch | Picker below the button (desktop) or bottom sheet (phone). Row keeps bar and tint. |
+| Add Reaction | mouse, touch | Picker below the button (desktop) or bottom sheet (phone). The message keeps its bar and tint. |
 | Pick in the picker | mouse, touch | Picker closes; reaction toggled; emoji moved to the front of recents. |
 | Tap outside the picker, Escape | mouse, touch, keyboard | Picker closes. Nothing else happens. |
-| Reply | mouse, touch | Reply bar in the input box, draft focused, row tinted. |
-| More | mouse, touch | Dropdown (desktop) or bottom sheet (phone). Copy Text shows when the row has text. Pin Message, or Unpin Message on a pinned row, shows when the reader may pin (MR-77) and the row is not pending. Delete Message shows on own rows. |
+| Reply | mouse, touch | Reply bar in the input box, draft focused, message tinted. |
+| More | mouse, touch | Dropdown (desktop) or bottom sheet (phone). Copy Text shows when the message has text. Pin Message, or Unpin Message on a pinned message, shows when the reader may pin (MR-77) and the message is not pending. Delete Message shows on own messages. |
 | Tap outside the menu | mouse, touch | Menu closes. Nothing under it is pressed. |
 | Scroll with the menu open | touch | Menu stays open. |
 | Copy Text | mouse, touch | Text copied as typed; menu closes. |
-| Edit | mouse, touch | Editor in the row, caret at the end, bar hidden. Phone: the keyboard opens. |
+| Edit | mouse, touch | Editor in the message, caret at the end, bar hidden. Phone: the keyboard opens. |
 | Enter in the editor | keyboard, device without touch | Saves. |
 | Enter in the editor | keyboard, device with touch | Newline. |
 | Escape in the editor | keyboard | Cancels. |
@@ -254,7 +254,7 @@ A message row is one message as it appears in the conversation. The row shows wh
 | Delete Message | mouse, touch | Dialog over the page with the preview; Delete focused. |
 | Shift+click Delete Message | mouse | Deleted immediately. |
 | Enter, Escape, tap on the dimmed area | keyboard, mouse, touch | Confirms, cancels, cancels. |
-| Message deleted | all | Row disappears for everyone. Replies show "Original message unavailable". |
+| Message deleted | all | The message disappears for everyone. Replies show "Original message unavailable". |
 | Tap on the quote | mouse, touch | List scrolls to the original, centred, tinted for 2 s. Older messages load if necessary. |
 | Tap on an image | mouse, touch | Gallery viewer with the images of this message. |
 | Tap on a video | mouse, touch | Controls visible, video plays. On an iPhone, the full-screen player opens. |
@@ -269,11 +269,11 @@ A message row is one message as it appears in the conversation. The row shows wh
 | Speed button | mouse, touch | The next speed: 1×, 1.5×, 2×. Every voice message shows it. |
 | Link in text | mouse, touch | Opens in a new tab. |
 | Card appears | all | Card under the text. A reader at the bottom stays at the bottom. |
-| Own message sent | all | Faded full row at the end, immediately. |
-| Message accepted | all | Row becomes normal. |
+| Own message sent | all | Faded full message at the end, immediately. |
+| Message accepted | all | The message becomes normal. |
 | Send failed | all | "Failed", reason, Retry, Remove. |
 | Files uploading | all | One thumbnail for each file with its state, "Cancel upload". |
-| No connection, reaction, star, Save or Delete | all | Nothing changes. "Needs a connection" at the row for 2 s. |
+| No connection, reaction, star, Save or Delete | all | Nothing changes. "Needs a connection" at the message for 2 s. |
 | Someone joins or leaves the lobby | all | Centred italic system line. |
 | Someone pins a message | all | Centred italic system line "{name} pinned a message", kept in the history. No count, no notification, no pill. An unpin shows nothing. |
 
@@ -301,7 +301,7 @@ A message row is one message as it appears in the conversation. The row shows wh
 | System line refusals | "A system line cannot be edited."; "A system line cannot be quoted."; "System lines do not accept reactions." |
 | Editor | "✓ Save" (tooltip "Save"); "✕ Cancel" (tooltip "Cancel"); "Enter to save · Shift+Enter for newline · Esc to cancel" |
 | Delete dialog | "Delete Message"; "Are you sure you want to delete this message?"; "GIF attachment"; "Voice message"; preview alt texts "Attachment", "Video attachment"; "Pro tip: hold Shift when deleting to skip this confirmation." with Shift as a keycap; "Cancel"; "Delete" |
-| Pending row | "Cancel upload"; "Failed"; "Retry"; "Remove"; the reason is the server's refusal text, "Waited more than a day" after one day, or "Could not send" when there is none |
+| Pending message | "Cancel upload"; "Failed"; "Retry"; "Remove"; the reason is the server's refusal text, "Waited more than a day" after one day, or "Could not send" when there is none |
 | Reaction tooltip | the display names joined with ", " |
 | Without a connection | "Needs a connection" |
 | Lobby join lines (configured; defaults) | "{0} just dropped", "{0} is here", "{0} arrives", "W {0} joined", "{0} spawned in", "{0} returns" |
@@ -311,7 +311,7 @@ A message row is one message as it appears in the conversation. The row shows wh
 
 ## Related
 
-- [Input box](input-box.md) for sending, the reply bar and the pending row's origin.
+- [Input box](input-box.md) for sending, the reply bar and the origin of the pending message.
 - [Emoji and GIF pickers](pickers.md) for the reaction picker's content.
 - [Timeline and media](timeline.md) for the list, scrolling, the gallery viewer and loading older messages.
 - [Settings](settings.md) for the time zone, date order and clock style.

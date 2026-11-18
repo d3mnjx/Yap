@@ -139,6 +139,6 @@ Settings is the one page where the user changes their profile, appearance, sign-
 - [Sign-in and sessions](sessions.md) for the link, the code and the devices.
 - [Notifications and unread](notifications.md) for the two notification sections.
 - [Emoji and GIF pickers](pickers.md) for where the GIF pool is used.
-- [Message row and actions](message-row.md) for how times are shown.
+- [Message and actions](message-row.md) for how times are shown.
 - [Offline and installation](offline.md) for the install section.
 - [Header, sidebar and overlays](frame.md) for the frame around the page.

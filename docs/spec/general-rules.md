@@ -6,7 +6,7 @@ This page holds the rules that every component follows. A component page can mak
 
 **GEN-01** An input that can act locally acts within the user's own tap or keystroke: typing, opening a picker, picking an emoji, sending, reacting and scrolling. The screen changes before the server answers. The answer from the server then confirms or corrects the change. Anything that must come from the server, such as search results, older messages and uploads, shows a loading state. A loading state never blocks the rest of the app.
 
-**GEN-02** When the server refuses an action, the user sees the reason at the place of the action. A refused change puts the screen back to its previous state. A refused message stays as a failed row with Retry and Remove.
+**GEN-02** When the server refuses an action, the user sees the reason at the place of the action. A refused change puts the screen back to its previous state. A refused message stays as a failed message with Retry and Remove.
 
 **GEN-03** On a phone, the keyboard opens only when the user taps a text field or starts an action whose purpose is typing. Reply and Edit are such actions. The keyboard closes only when the user leaves the field or taps something that takes its place.
 

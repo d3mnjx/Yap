@@ -1,6 +1,6 @@
 # Timeline and media
 
-The timeline is the scrolling list of messages in a conversation. The oldest loaded message is at the top and the newest message is at the bottom. The timeline controls which messages load and the position of the view. It controls when the view follows new messages, when it stays in position, and how the user gets to older messages. The timeline also includes the gallery viewer, which opens from an image. The [message row page](message-row.md) specifies the rows.
+The timeline is the scrolling list of messages in a conversation. The oldest loaded message is at the top and the newest message is at the bottom. The timeline controls which messages load and the position of the view. It controls when the view follows new messages, when it stays in position, and how the user gets to older messages. The timeline also includes the gallery viewer, which opens from an image. The [message page](message-row.md) specifies how a message appears.
 
 ## Anatomy
 
@@ -13,10 +13,10 @@ The timeline is the scrolling list of messages in a conversation. The oldest loa
 ![Gallery viewer, phone. The first of two photos on a black background, the next control, the counter at the bottom, the close, download and fill controls.](img/timeline-phone-gallery.png)
 
 1. **The list.** The list fills the conversation column above the input box and scrolls vertically. A short conversation shows at the bottom, with empty space above it.
-2. **The top note.** A note that shows only when all history is loaded. It is the room description, the "beginning" note, or the restricted-history note. While older messages exist, nothing shows above the first row. The exceptions are the "Load earlier messages" link in a conversation too short to scroll, and "Needs a connection" without a connection. There are no date separators and no unread divider.
-3. **The loading pill.** A small "Loading older messages..." pill with a spinner. It floats over the top of the list while a page loads or waits for a still view. It takes no space of its own, so no row moves when it comes or goes, and a fast answer never shows it (the 400 ms rule of TL-02).
+2. **The top note.** A note that shows only when all history is loaded. It is the room description, the "beginning" note, or the restricted-history note. While older messages exist, nothing shows above the first message. The exceptions are the "Load earlier messages" link in a conversation too short to scroll, and "Needs a connection" without a connection. There are no date separators and no unread divider.
+3. **The loading pill.** A small "Loading older messages..." pill with a spinner. It floats over the top of the list while a page loads or waits for a still view. It takes no space of its own, so no message moves when it comes or goes, and a fast answer never shows it (the 400 ms rule of TL-02).
 4. **New messages pill.** A rounded pill in the accent colour, with a down chevron. It shows centred above the typing strip when messages arrive while the user reads older messages.
-5. **Pending rows.** Rows for the user's own messages that the server did not accept yet. They are at the end of the list.
+5. **Pending messages.** These are the user's own messages that the server did not accept yet. They are at the end of the list.
 6. **Gallery viewer.** A full-screen layer over the whole app, which opens from an image. It shows the picture, the previous and next controls, the download, fill and close controls, and a counter.
 7. **Down arrow.** A small round button with a down arrow, in the bottom right corner above the typing strip. It shows when the view is more than one screen above the bottom and the pill is not shown.
 
@@ -36,13 +36,13 @@ The timeline is the scrolling list of messages in a conversation. The oldest loa
 
 ### Older messages
 
-**TL-06** When the user scrolls up to within two screen heights of the top and older messages exist, the next 50 load. The loading pill shows while they load. The older messages go in above the view once the view is still: no finger on the list and no scroll for 200 ms. The row that was at the top stays in its position. The view does not move.
+**TL-06** When the user scrolls up to within two screen heights of the top and older messages exist, the next 50 load. The loading pill shows while they load. The older messages go in above the view once the view is still: no finger on the list and no scroll for 200 ms. The message that was at the top stays in its position. The view does not move.
 
-**TL-07** When the conversation is too short to scroll and older messages exist, a "Load earlier messages" link shows above the first row instead.
+**TL-07** When the conversation is too short to scroll and older messages exist, a "Load earlier messages" link shows above the first message instead.
 
 **TL-08** Older messages loaded during a visit stay loaded until the user leaves the conversation. When the user returns to a conversation, it opens as TL-01 describes.
 
-**TL-09** When all history is loaded, the top note shows above the first row. The history starts at the oldest message that the server loaded at its start ([AD-03](admin.md#AD-03)). Older messages in the saved history do not show. In a room, the note is the restricted note "Older messages are not available in this channel" when TL-05 hides messages. Otherwise, the note is the room's description, with one line for each line break. When there is no description, the note is "This is the beginning of #{room}". In a direct message, the note is the italic line "This is the beginning of your direct message history with {username}.", with the name in bold.
+**TL-09** When all history is loaded, the top note shows above the first message. The history starts at the oldest message that the server loaded at its start ([AD-03](admin.md#AD-03)). Older messages in the saved history do not show. In a room, the note is the restricted note "Older messages are not available in this channel" when TL-05 hides messages. Otherwise, the note is the room's description, with one line for each line break. When there is no description, the note is "This is the beginning of #{room}". In a direct message, the note is the italic line "This is the beginning of your direct message history with {username}.", with the name in bold.
 
 ### Following the bottom
 
@@ -50,17 +50,17 @@ The timeline is the scrolling list of messages in a conversation. The oldest loa
 
 **TL-11** Only an upward scroll by the user stops the follow. A tap, a click, a key or a wheel movement that does not move the list never stops it.
 
-**TL-12** While the view does not follow, the list keeps its position for all content that arrives. This includes new messages, reactions, edits, deletions, and images that load above or below. The row that the user reads stays in the same position.
+**TL-12** While the view does not follow, the list keeps its position for all content that arrives. This includes new messages, reactions, edits, deletions, and images that load above or below. The message that the user reads stays in the same position.
 
 **TL-13** The follow resumes when the user scrolls back to within 80 px of the bottom, or taps the New messages pill or the down arrow. In a window after a jump ([TL-41](#TL-41)) the bottom of the list is not the newest message, and a scroll there does not turn the follow on.
 
-**TL-14** When the user sends a message, the view always goes to the bottom, with the pending row in view. The send also turns the follow on. In a window after a jump ([TL-41](#TL-41)) the conversation opens again first, at the newest messages.
+**TL-14** When the user sends a message, the view always goes to the bottom, with the pending message in view. The send also turns the follow on. In a window after a jump ([TL-41](#TL-41)) the conversation opens again first, at the newest messages.
 
 **TL-15** When the user returns to the tab or the app, the view goes back to the bottom only if it was following. Otherwise the view stays in its position, and the pill shows if messages arrived.
 
 ### New messages pill
 
-**TL-16** When a message from someone else arrives while the view does not follow, the pill shows centred above the typing strip. It never covers the draft. Reactions, edits, link cards, lobby join and leave lines, system lines (MR-80) and the user's own messages do not make the pill show. In a window after a jump ([TL-41](#TL-41)) a new message from someone else shows the pill and no row; a tap on the pill opens the conversation again at the newest messages.
+**TL-16** When a message from someone else arrives while the view does not follow, the pill shows centred above the typing strip. It never covers the draft. Reactions, edits, link cards, lobby join and leave lines, system lines (MR-80) and the user's own messages do not make the pill show. In a window after a jump ([TL-41](#TL-41)) a new message from someone else shows the pill and does not show in the window; a tap on the pill opens the conversation again at the newest messages.
 
 **TL-17** The pill shows a random phrase from the configured list and a down chevron. When no list is configured, the phrase is "New messages". The phrase does not change while the pill is shown.
 
@@ -70,7 +70,7 @@ The timeline is the scrolling list of messages in a conversation. The oldest loa
 
 ### Switching conversations
 
-**TL-20** A switch shows the header and the last known messages of the new conversation together. A conversation that was never shown before shows its header over an empty list until its messages arrive. On a switch, the pill is hidden. The pending rows of the old conversation leave the screen, but their messages stay in the queue. An open picker and an open viewer close.
+**TL-20** A switch shows the header and the last known messages of the new conversation together. A conversation that was never shown before shows its header over an empty list until its messages arrive. On a switch, the pill is hidden. The pending messages of the old conversation leave the screen, but they stay in the queue. An open picker and an open viewer close.
 
 **TL-21** When the open room is deleted, the lobby opens.
 
@@ -90,11 +90,11 @@ The timeline is the scrolling list of messages in a conversation. The oldest loa
 
 **TL-28** The viewer does not move the focus when it opens or closes. The phone keyboard and the list position do not change.
 
-**TL-29** The viewer has no caption and no video. A conversation switch closes it, and so does a jump that replaces the rows ([TL-41](#TL-41)). A refresh of the list closes it too: when the connection returns, when the user returns to the app after more than 30 seconds, and when the server's messages replace the device's copy at an open. If the message is deleted while the viewer is open, the viewer closes. A viewer opened from a pin also closes when the pin goes.
+**TL-29** The viewer has no caption and no video. A conversation switch closes it, and so does a jump that replaces the messages ([TL-41](#TL-41)). A refresh of the list closes it too: when the connection returns, when the user returns to the app after more than 30 seconds, and when the server's messages replace the device's copy at an open. If the message is deleted while the viewer is open, the viewer closes. A viewer opened from a pin also closes when the pin goes.
 
 ### Media in the list
 
-**TL-30** Images, GIF previews and card thumbnails load when they come near the view. Thumbnails, GIFs with a known size and cards have their final size before they load. A single image has a box of its final size before it loads. A video has the shape of its poster before the poster loads. An image without a known size has no box until it loads. The list never moves the row that the user reads.
+**TL-30** Images, GIF previews and card thumbnails load when they come near the view. Thumbnails, GIFs with a known size and cards have their final size before they load. A single image has a box of its final size before it loads. A video has the shape of its poster before the poster loads. An image without a known size has no box until it loads. The list never moves the message that the user reads.
 
 **TL-31** GIFs play automatically and muted. When the browser blocks autoplay, the next tap or key press anywhere starts all paused GIFs.
 
@@ -106,9 +106,9 @@ The timeline is the scrolling list of messages in a conversation. The oldest loa
 
 **TL-34** Without a connection, the list shows the last messages that it had for the conversation. The user can read and scroll them. The user cannot get older messages that were not loaded. The top of the list shows "Needs a connection", and the pill of TL-39 floats over it. While a connection is on its way, the top of the list shows nothing, and the pill alone says "Catching up…".
 
-**TL-35** When the connection returns, the newest messages load again and the loaded rows are updated. When more messages arrived than one page holds, the missing messages load as the user scrolls up. If the view did not follow, it stays where it is. If the view followed, it stays at the bottom. In a window after a jump ([TL-41](#TL-41)) the view goes to the newest messages at the bottom.
+**TL-35** When the connection returns, the newest messages load again and the loaded messages are updated. When more messages arrived than one page holds, the missing messages load as the user scrolls up. If the view did not follow, it stays where it is. If the view followed, it stays at the bottom. In a window after a jump ([TL-41](#TL-41)) the view goes to the newest messages at the bottom.
 
-**TL-39** While the messages on screen are the device's copy and the server has not answered yet (an open from the stored copy, or a connection that returns), a small "Catching up…" pill with a spinner floats over the top of the list. It takes no space of its own, so no row moves when it comes or goes, and a fast answer never shows it (the same 400 ms rule as the loading line). It ends when the server's messages are on screen, not when the connection is back. Without a connection, or after a failed try, it reads "No connection. Showing older messages." with no spinner. With reduced motion the spinner is still. When the connection goes away, the messages on screen count as the device's copy, and the pill shows at once.
+**TL-39** While the messages on screen are the device's copy and the server has not answered yet (an open from the stored copy, or a connection that returns), a small "Catching up…" pill with a spinner floats over the top of the list. It takes no space of its own, so no message moves when it comes or goes, and a fast answer never shows it (the same 400 ms rule as the loading line). It ends when the server's messages are on screen, not when the connection is back. Without a connection, or after a failed try, it reads "No connection. Showing older messages." with no spinner. With reduced motion the spinner is still. When the connection goes away, the messages on screen count as the device's copy, and the pill shows at once.
 
 ### Pinned messages
 
@@ -124,9 +124,9 @@ The timeline is the scrolling list of messages in a conversation. The oldest loa
 
 ### Jump to a message
 
-**TL-41** A tap on a pinned message ([SH-49](frame.md#SH-49)) or a reply quote ([MR-34](message-row.md#MR-34)) goes to the message. A loaded row scrolls into view, centred. Any other row comes in a window of 50 messages around it, after one answer from the server at any distance. The window replaces the loaded rows, and the message shows centred and highlighted. The message stays centred while the pictures and videos around it load, until the person scrolls, clicks or presses a key in the list. In a window the view does not follow, a scroll up loads older pages as usual, a message from someone else shows the pill and no row, and an end row follows the last row ([TL-42](#TL-42)). A tap on the pill, the arrow or the end row's button, a send, and a reconnect open the conversation again at the newest messages, with the view at the bottom. Without a connection such a tap shows "Needs a connection", and a send shows its pending row under the window; the reconnect then opens the newest messages. A window that reaches the newest message is the normal list.
+**TL-41** A tap on a pinned message ([SH-49](frame.md#SH-49)) or a reply quote ([MR-34](message-row.md#MR-34)) goes to the message. A loaded message scrolls into view, centred. Any other message comes in a window of 50 messages around it, after one answer from the server at any distance. The window replaces the loaded messages, and the message shows centred and highlighted. The message stays centred while the pictures and videos around it load, until the person scrolls, clicks or presses a key in the list. In a window the view does not follow, a scroll up loads older pages as usual, a message from someone else shows the pill and does not show in the window, and an end row follows the last message ([TL-42](#TL-42)). A tap on the pill, the arrow or the end row's button, a send, and a reconnect open the conversation again at the newest messages, with the view at the bottom. Without a connection such a tap shows "Needs a connection", and a send shows its pending message under the window; the reconnect then opens the newest messages. A window that reaches the newest message is the normal list.
 
-**TL-42** The last row of a window is an end row. It shows the text "There are newer messages" between two lines, and a "Go to newest" button with a down arrow under the text. The end row scrolls with the messages, so a scroll to the bottom of the window ends on it. A tap on the button does the same as a tap on the down arrow. A pending row of a send without a connection shows under the end row. A window that reaches the newest message has no end row.
+**TL-42** A window ends with an end row. It shows the text "There are newer messages" between two lines, and a "Go to newest" button with a down arrow under the text. The end row scrolls with the messages, so a scroll to the bottom of the window ends on it. A tap on the button does the same as a tap on the down arrow. A pending message of a send without a connection shows under the end row. A window that reaches the newest message has no end row.
 
 ## States
 
@@ -134,9 +134,9 @@ The timeline is the scrolling list of messages in a conversation. The oldest loa
 | --- | --- | --- |
 | Conversation opened | all | Newest 50 messages, view at the bottom. |
 | Opened again on this device | all | Last known messages immediately, then the new list. |
-| Rows from the device, server not answered after 400 ms | all | "Catching up…" pill over the top of the list; it goes when the server's messages are on screen. |
+| Messages from the device, server not answered after 400 ms | all | "Catching up…" pill over the top of the list; it goes when the server's messages are on screen. |
 | Scroll up to within two screens of the top | mouse, touch, keyboard | The loading pill, then 50 more above once the view is still; the view does not move. |
-| Too short to scroll, more history | all | "Load earlier messages" above the first row. |
+| Too short to scroll, more history | all | "Load earlier messages" above the first message. |
 | All history loaded, room | all | Restricted note, room description, or "This is the beginning of #{room}". |
 | All history loaded, direct message | all | Italic "This is the beginning of your direct message history with {username}." |
 | New message, following | all | List moves to show it. |
@@ -146,17 +146,17 @@ The timeline is the scrolling list of messages in a conversation. The oldest loa
 | New message from someone else, not following | all | View keeps its position; pill above the typing strip. |
 | Bottom more than one screen away, not following, no pill | all | Down arrow at the bottom right. |
 | Reaction, edit or card from anyone, not following | all | View keeps its position; no pill. |
-| Own send, not following | all | List goes to the bottom with the pending row. |
+| Own send, not following | all | List goes to the bottom with the pending message. |
 | Scroll back within 80 px of the bottom | mouse, touch, keyboard | Follow on; pill and arrow hidden. |
 | Pill tap | mouse, touch | Bottom; follow on; pill hidden. |
 | Down arrow tap | mouse, touch | Bottom; follow on; arrow hidden. |
-| Jump to a row that is not loaded | all | A window of 50 messages, the target centred and highlighted; the down arrow shows while the end of the window is more than one screen away. |
+| Jump to a message that is not loaded | all | A window of 50 messages, the target centred and highlighted; the down arrow shows while the end of the window is more than one screen away. |
 | Scroll to the bottom of a window | mouse, touch, keyboard | The end row: "There are newer messages" and the "Go to newest" button. |
-| New message from someone else, in a window | all | The pill; no row. |
+| New message from someone else, in a window | all | The pill. The message does not show in the window. |
 | Pill, arrow, Go to newest, send or reconnect, in a window | all | The newest messages after one answer from the server, view at the bottom, follow on. |
 | Return to the tab, following | all | View goes back to the bottom. |
 | Return to the tab, not following | all | View unchanged; pill if messages arrived. |
-| Conversation switched | all | New header and messages together; pill hidden; the old pending rows leave the screen but stay in the queue; picker and viewer closed. |
+| Conversation switched | all | New header and messages together; pill hidden; the old pending messages leave the screen but stay in the queue; picker and viewer closed. |
 | Image tap | mouse, touch | Viewer at that image. |
 | Swipe, arrow key, previous or next | touch, keyboard, mouse | One image; counter updates at 60 % in view. |
 | First or last image in view | all | The previous or the next control is hidden. |
@@ -189,7 +189,7 @@ The timeline is the scrolling list of messages in a conversation. The oldest loa
 
 ## Related
 
-- [Message row and actions](message-row.md) for the rows, the reply quote jump and the pending rows.
+- [Message and actions](message-row.md) for the messages, the reply quote jump and the pending messages.
 - [Input box](input-box.md) for sending, and for the typing strip below the pill.
 - [Notifications and unread](notifications.md) for when a conversation counts as read.
 - [Header, sidebar and overlays](frame.md) for the connection state and the error screen.

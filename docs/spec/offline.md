@@ -58,11 +58,11 @@ Yap runs in the browser and can also be installed as an app on a phone or a desk
 | Connection lost | all | Grey ring; everything readable. |
 | Open a conversation seen before | all | Its last messages at once. |
 | Open a conversation never seen | all | Header and empty list with "Needs a connection". |
-| Send a text | keyboard, touch | Pending row at the end at once. |
-| Files picked without a connection, under 25 MB | touch, mouse | Pending row with the files. |
+| Send a text | keyboard, touch | Pending message at the end at once. |
+| Files picked without a connection, under 25 MB | touch, mouse | Pending message with the files. |
 | Files picked without a connection, over 25 MB | touch, mouse | The pick is refused; "Needs a connection" in the input box. |
-| Reaction, edit or delete on a sent message | touch, mouse | "Needs a connection" at the row. |
-| Connection returns | all | Pending rows become normal rows in order; counts corrected; view unchanged. |
+| Reaction, edit or delete on a sent message | touch, mouse | "Needs a connection" at the message. |
+| Connection returns | all | Pending messages become normal messages in order; counts corrected; view unchanged. |
 | Server refuses a pending message | all | "Failed", reason, "Retry", "Remove". |
 | Pending for more than a day | all | Shown as failed. |
 | App closed with pending messages, reopened online | touch | They are sent. |
@@ -78,15 +78,15 @@ Yap runs in the browser and can also be installed as an app on a phone or a desk
 | New version | "You are awesome and so is the new version of this app. Please refresh."; "Reload" |
 | Connection bubble | "Offline. Messages are sent when the connection returns."; "Reconnecting…" |
 | Top of the list without older messages | "Needs a connection" |
-| Row actions and media not seen before, without a connection | "Needs a connection" |
+| Message actions and media not seen before, without a connection | "Needs a connection" |
 | Input box, too much to queue | "Needs a connection" |
 | Failed message | "Failed"; the reason, or "Waited more than a day" after one day; "Retry"; "Remove" |
 | Pill over the top of the list | "No connection. Showing older messages."; "Catching up…" |
 
 ## Related
 
-- [Input box](input-box.md) for sending and the pending row.
-- [Message row and actions](message-row.md) for the pending and failed rows.
+- [Input box](input-box.md) for sending and the pending message.
+- [Message and actions](message-row.md) for the pending and failed messages.
 - [Timeline and media](timeline.md) for what the list shows without a connection.
 - [Header, sidebar and overlays](frame.md) for the connection state and the install dialog.
 - [Notifications and unread](notifications.md) for notifications on the installed app.

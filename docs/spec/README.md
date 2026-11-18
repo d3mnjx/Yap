@@ -20,7 +20,7 @@ Component pages and feature pages link to each other. A component page tells wha
 | [Yap](yap.md) | YAP | current |
 | [General rules](general-rules.md) | GEN | current |
 | [Input box](input-box.md) | IB | current |
-| [Message row and actions](message-row.md) | MR | current |
+| [Message and actions](message-row.md) | MR | current |
 | [Emoji and GIF pickers](pickers.md) | PK | current |
 | [Timeline and media](timeline.md) | TL | current |
 | [Header, sidebar and overlays](frame.md) | SH | current |

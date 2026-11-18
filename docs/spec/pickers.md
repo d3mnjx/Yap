@@ -67,7 +67,7 @@ The emoji picker and the GIF picker open from the input box. The emoji picker pu
 
 **PK-19** Cards are in two masonry columns with 6 px gaps. Each card has the aspect ratio of its GIF. It shows a small, muted preview that loops. When a preview cannot start, it starts on the next tap or key press anywhere.
 
-**PK-20** A tap on a card sends the GIF immediately and closes the picker, as the [input box](input-box.md#IB-47) describes. The search text at that time is added to the GIF as a tag. A later search for that text finds the GIF. On a keyboard, Enter or Space on a focused card sends the GIF. When the GIF is no longer available at the time of the send, the pending row shows as failed with the reason "That GIF isn't available anymore — try another one." ([OF-11](offline.md#OF-11)).
+**PK-20** A tap on a card sends the GIF immediately and closes the picker, as the [input box](input-box.md#IB-47) describes. The search text at that time is added to the GIF as a tag. A later search for that text finds the GIF. On a keyboard, Enter or Space on a focused card sends the GIF. When the GIF is no longer available at the time of the send, the pending message shows as failed with the reason "That GIF isn't available anymore — try another one." ([OF-11](offline.md#OF-11)).
 
 **PK-21** Library cards have a favourite star at the top right. Library cards are the cards in Recent, Favorites, Server library, and the library hits of a search. On desktop, the star appears on hover. On a touch screen, it is always visible. A favourited star is gold everywhere. A tap on the star changes only the favourite. Provider cards have no star. To keep a provider GIF, the reader sends it and then stars it in Recent or in the message.
 
@@ -123,7 +123,7 @@ The emoji picker and the GIF picker open from the input box. The emoji picker pu
 
 **PK-43** Add Reaction in the action bar of a message opens the emoji picker for that message. It has the same sections, search and size. It has no quick reactions. The quick reactions are in the action bar.
 
-**PK-44** A pick closes the picker and adds or removes that reaction on the message. It also moves the emoji to the front of Recent. The [message row page](message-row.md#MR-42) gives the position, the closing, and the state of the row while the picker is open.
+**PK-44** A pick closes the picker and adds or removes that reaction on the message. It also moves the emoji to the front of Recent. The [message page](message-row.md#MR-42) gives the position, the closing, and the state of the message while the picker is open.
 
 ### The phone sheet
 
@@ -137,7 +137,7 @@ The emoji picker and the GIF picker open from the input box. The emoji picker pu
 
 ### Without a connection
 
-**PK-49** Without a connection, the emoji picker works fully for the draft, and Recent still gets each use ([PK-51](#PK-51)). A cell whose image the device never saw shows the device's own emoji, as the [message row page](message-row.md#MR-15) says. A reaction pick needs a connection, as the [message row page](message-row.md#MR-75) says. In the GIF picker, Recent, Favorites, Server library and the Browse tiles show the data that was last loaded. Search, the trending grid, "Load more", the upload button and the star show "Needs a connection". A tap on a card queues the GIF as a message, the same as any other message.
+**PK-49** Without a connection, the emoji picker works fully for the draft, and Recent still gets each use ([PK-51](#PK-51)). A cell whose image the device never saw shows the device's own emoji, as the [message page](message-row.md#MR-15) says. A reaction pick needs a connection, as the [message page](message-row.md#MR-75) says. In the GIF picker, Recent, Favorites, Server library and the Browse tiles show the data that was last loaded. Search, the trending grid, "Load more", the upload button and the star show "Needs a connection". A tap on a card queues the GIF as a message, the same as any other message.
 
 ## States
 
@@ -194,7 +194,7 @@ The emoji picker and the GIF picker open from the input box. The emoji picker pu
 | Upload overlay | "Adding GIF…" |
 | Attribution | "Powered by Klipy" (alt "Klipy") |
 | GIF dialog | "Couldn't send GIF"; "File is too large (max 50MB)"; "Could not process this file as a GIF"; "GIF storage quota exceeded"; "Upload failed"; "Got It" |
-| Failed GIF send, pending row | "That GIF isn't available anymore — try another one." |
+| Failed GIF send, pending message | "That GIF isn't available anymore — try another one." |
 | Phone sheet tabs | "GIFs", "Emoji" |
 | Reaction picker opener | "Add Reaction" |
 | Without a connection | "Needs a connection" |
@@ -203,7 +203,7 @@ The emoji picker and the GIF picker open from the input box. The emoji picker pu
 ## Related
 
 - [Input box](input-box.md) for the toggles, opening and closing, the backdrop, emoji insertion and the GIF send.
-- [Message row and actions](message-row.md) for the reaction picker's position and the quick reactions.
+- [Message and actions](message-row.md) for the reaction picker's position and the quick reactions.
 - [Settings](settings.md) for managing favourites and folders.
 - [Administration](admin.md) for the server library and the content rating.
 - [Offline and installation](offline.md) for queued GIF sends.

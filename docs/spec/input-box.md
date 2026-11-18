@@ -79,9 +79,9 @@ The input box is the part of a conversation where the user writes and sends a me
 
 **IB-24** A send takes effect immediately, before the server answers. The draft is cleared. The text area shrinks to one line. An open picker closes. A pending copy of the message appears at the end of the list, and the list scrolls to it. Text that the user types immediately after a send goes into the empty box.
 
-**IB-25** The pending message is a full message row, faded, at the end of the list. It becomes a normal row when the server accepts it. The [message row page](message-row.md) specifies how it looks.
+**IB-25** The pending message is a full message, faded, at the end of the list. It becomes a normal message when the server accepts it. The [message page](message-row.md) specifies how it looks.
 
-**IB-26** When a message cannot be sent, its row shows as failed, with the reason, Retry and Remove. Remove deletes the message from this device only.
+**IB-26** When a message cannot be sent, it shows as failed, with the reason, Retry and Remove. Remove deletes the message from this device only.
 
 **IB-27** A send while the reply bar is open sends a reply. The bar closes immediately.
 
@@ -95,13 +95,13 @@ The input box is the part of a conversation where the user writes and sends a me
 
 **IB-31** The accepted types are images (.jpg, .jpeg, .png, .gif, .webp) and videos (.mp4, .webm, .mov, .avi, .mkv). The box ignores dropped or pasted files of other kinds. When the user chooses a file of another kind with +, the dialog of IB-35 lists it as unsupported, and the file does not go to the tray.
 
-**IB-32** The maximum size of one file is the configured size limit. The default limit is 100 MB. A picture has at most 50 megapixels. The server refuses a picture with more, and the failed row gives the reason (IB-35). A GIF file has the same limit, in a message and in a GIF library. One message contains at most 10 files. A pick that takes the tray over 10 files is refused, and no file of that pick goes to the tray. The refusal text is "Choose at most 10 files."
+**IB-32** The maximum size of one file is the configured size limit. The default limit is 100 MB. A picture has at most 50 megapixels. The server refuses a picture with more, and the failed message gives the reason (IB-35). A GIF file has the same limit, in a message and in a GIF library. One message contains at most 10 files. A pick that takes the tray over 10 files is refused, and no file of that pick goes to the tray. The refusal text is "Choose at most 10 files."
 
 **IB-33** Chosen, dropped and pasted files wait in a tray inside the input box, above the draft. Each file shows as a square thumbnail, 72 px on desktop and 64 px on a phone, with ✕ in its top right corner. A video shows its first frame and a play mark. ✕ removes the file from the tray. On a phone, the tray scrolls sideways. Send sends the files of the tray and the draft text together, as one message. The text is the caption of the message (MR-24). Send is visible while the tray has a file, and on desktop Enter sends with an empty draft. Nothing is uploaded before Send. Each conversation has its own tray. The tray does not survive a reload. A GIF file becomes a GIF attachment, the same as a GIF sent from the picker.
 
-**IB-34** While files upload, the pending row shows the caption when there is one, one square thumbnail for each file as in the tray (IB-33), and "Cancel upload". Each thumbnail shows the state of its file. A file that waits is dimmed. A file that uploads has a bar along its bottom edge. A file that is uploaded has a check mark. A video keeps its full bar while the server prepares it for playback, and gets its check mark after that. For a long video this takes some minutes. The message is sent after the check mark, so each person who gets the message can play the video. A file that the server refused has a warning mark. The thumbnail's tooltip gives the file name and the state, or the reason of the refusal. At most three files upload at the same time, counted over all pending messages. The other files wait, in the order they were sent. A pending voice message shows one progress bar and no thumbnail. Cancel removes the pending message and discards the data already uploaded for it. Nothing is sent.
+**IB-34** While files upload, the pending message shows the caption when there is one, one square thumbnail for each file as in the tray (IB-33), and "Cancel upload". Each thumbnail shows the state of its file. A file that waits is dimmed. A file that uploads has a bar along its bottom edge. A file that is uploaded has a check mark. A video keeps its full bar while the server prepares it for playback, and gets its check mark after that. For a long video this takes some minutes. The message is sent after the check mark, so each person who gets the message can play the video. A file that the server refused has a warning mark. The thumbnail's tooltip gives the file name and the state, or the reason of the refusal. At most three files upload at the same time, counted over all pending messages. The other files wait, in the order they were sent. A pending voice message shows one progress bar and no thumbnail. Cancel removes the pending message and discards the data already uploaded for it. Nothing is sent.
 
-**IB-35** One dialog reports all files of a pick that are refused (wrong kind, too large, too many). The dialog title is "No file added" when no file remains, and "{s} of {t} files added" when some files remain. The dialog has one line for each refused file. The remaining files go to the tray. A failure during the upload itself shows in the timeline instead. When the server refuses every file of a message, the pending row shows as failed, with Retry and Remove. When the server refuses some of the files, the message is sent with the other files. The refused files stay as a failed row of their own, with one reason line for each file, Retry and Remove. Retry sends them as a new message. The user closes the dialog with "Got It", with ✕ or with a tap outside it. The dialog does not move focus and never closes the keyboard.
+**IB-35** One dialog reports all files of a pick that are refused (wrong kind, too large, too many). The dialog title is "No file added" when no file remains, and "{s} of {t} files added" when some files remain. The dialog has one line for each refused file. The remaining files go to the tray. A failure during the upload itself shows in the timeline instead. When the server refuses every file of a message, the pending message shows as failed, with Retry and Remove. When the server refuses some of the files, the message is sent with the other files. The refused files stay as a failed message of their own, with one reason line for each file, Retry and Remove. Retry sends them as a new message. The user closes the dialog with "Got It", with ✕ or with a tap outside it. The dialog does not move focus and never closes the keyboard.
 
 **IB-36** A send with files during a reply is a reply, as in IB-27. The reply bar closes.
 
@@ -121,15 +121,15 @@ The input box is the part of a conversation where the user writes and sends a me
 
 ### Voice messages
 
-**IB-67** + opens a menu above + with two items: "Photo or video" and "Voice message". On a phone, the menu is a bottom sheet over a dimmed page, as the More menu of a row is. Photo or video closes the menu and opens the file chooser (IB-29). Voice message closes the menu and starts the recorder (IB-68). A tap outside the menu, or Escape, closes the menu and does nothing else. The menu does not move focus, so an open keyboard stays open. A browser that cannot record shows Photo or video alone.
+**IB-67** + opens a menu above + with two items: "Photo or video" and "Voice message". On a phone, the menu is a bottom sheet over a dimmed page, as the More menu of a message is. Photo or video closes the menu and opens the file chooser (IB-29). Voice message closes the menu and starts the recorder (IB-68). A tap outside the menu, or Escape, closes the menu and does nothing else. The menu does not move focus, so an open keyboard stays open. A browser that cannot record shows Photo or video alone.
 
 **IB-68** The recorder asks for the microphone the first time. When the browser refuses it, a dialog shows "Microphone unavailable" and "Yap cannot use the microphone. Allow it in the browser settings and try again.", and nothing records. While a voice message records, the recorder takes the place of +, the text area and the toggles in the pill: a trash button on the left, a red dot that pulses, the elapsed time as m:ss, and bars that show the sound level of the last seconds. Send stays visible and bright. The draft text and the tray are kept, and show again when the recording ends. On a phone, the keyboard closes when the recording starts.
 
 **IB-69** Send ends the recording and sends it. The trash ends the recording and discards it. A recording ends by itself after 5 minutes and is sent. A recording shorter than one second is discarded, and the box shows "Too short" for two seconds. When the user leaves the conversation while recording, the recording is discarded. When the system takes the microphone away, for example for a call, the recording ends and what was recorded is sent.
 
-**IB-70** A voice message is a message of its own, without text and without other files. When the reply bar is open, it is sent as a reply and the bar closes. It appears at once as a pending row with a player that plays the recording (MR-76), and becomes a normal row when the server accepts it. Without a connection, it is accepted and sent later, as a file is (IB-63). The author cannot edit a voice message. The author can delete it.
+**IB-70** A voice message is a message of its own, without text and without other files. When the reply bar is open, it is sent as a reply and the bar closes. It appears at once as a pending message with a player that plays the recording (MR-76), and becomes a normal message when the server accepts it. Without a connection, it is accepted and sent later, as a file is (IB-63). The author cannot edit a voice message. The author can delete it.
 
-**IB-71** A server without the audio converter cannot take voice messages. The + menu still shows "Voice message", and the recorder works as usual. After Send, the pending row shows "Failed" and a reason ([MR-71](message-row.md#MR-71)). The reason names the file and the server's text "Voice messages are unavailable on this server (ffmpeg missing)". When the converter fails on one recording, the reason is "Could not process this voice message" after the file name. "Retry" sends the recording again, for a server that got its converter meanwhile.
+**IB-71** A server without the audio converter cannot take voice messages. The + menu still shows "Voice message", and the recorder works as usual. After Send, the pending message shows "Failed" and a reason ([MR-71](message-row.md#MR-71)). The reason names the file and the server's text "Voice messages are unavailable on this server (ffmpeg missing)". When the converter fails on one recording, the reason is "Could not process this voice message" after the file name. "Retry" sends the recording again, for a server that got its converter meanwhile.
 
 **IB-42** While a picker is open: a tap on + only closes the picker, and the file chooser does not open. A tap on the other toggle only closes the picker. A tap on the toggle of the open picker closes the picker. A tap on the draft puts focus on the draft and closes the picker with the same tap. A tap anywhere else closes the picker.
 
@@ -141,13 +141,13 @@ The input box is the part of a conversation where the user writes and sends a me
 
 **IB-46** The GIF toggle is a 22 px badge with the text "GIF". It becomes brighter on hover and while its picker is open.
 
-**IB-47** A pick of a GIF card immediately sends the GIF as a separate message. The picker closes. A faded pending row with the GIF appears at the end of the list, and the list scrolls to it. The draft text does not change. When the reply bar is open, the GIF is sent as a reply, and the bar closes. A tap on the star of a card changes only the favourite state.
+**IB-47** A pick of a GIF card immediately sends the GIF as a separate message. The picker closes. A faded pending message with the GIF appears at the end of the list, and the list scrolls to it. The draft text does not change. When the reply bar is open, the GIF is sent as a reply, and the bar closes. A tap on the star of a card changes only the favourite state.
 
 **IB-48** When the emoji picker opens again, its search is empty and its recent emoji are up to date. The GIF picker keeps its tab and folder.
 
 ### Reply bar
 
-**IB-49** Reply on a message shows the reply bar. The bar shows "Replying to" and the author's display name, or the username when there is no display name. ✕ is on the right. A long name is cut with an ellipsis. The row that the user replies to has an accent tint while the bar is open.
+**IB-49** Reply on a message shows the reply bar. The bar shows "Replying to" and the author's display name, or the username when there is no display name. ✕ is on the right. A long name is cut with an ellipsis. The message that the user replies to has an accent tint while the bar is open.
 
 **IB-50** Reply moves focus into the draft in the same tap, so a phone keyboard opens. Reply and a tap on the draft are the only actions that do this.
 
@@ -206,9 +206,9 @@ The input box is the part of a conversation where the user writes and sends a me
 | Enter | touch device | Newline. |
 | Enter while composing (IME) | keyboard | Goes to the input method editor. |
 | Escape | keyboard | Closes the topmost layer: a dialog, otherwise a picker. Draft and reply unchanged. |
-| Send tap or click | mouse, touch | Draft cleared, box one line, picker closed, pending row at the end of the list, list scrolled. Focus unchanged. |
-| Send accepted | all | The pending row becomes a normal row. |
-| Send failed | all | The row shows the reason, Retry and Remove. |
+| Send tap or click | mouse, touch | Draft cleared, box one line, picker closed, pending message at the end of the list, list scrolled. Focus unchanged. |
+| Send accepted | all | The pending message becomes a normal message. |
+| Send failed | all | The message shows the reason, Retry and Remove. |
 | Hover emoji toggle | mouse | The silhouette changes to a random emoji in colour. |
 | Emoji toggle tap, empty draft | mouse, touch | Picker opens immediately. Send visible and dimmed. Phone: sheet, dimmed page, box directly above the sheet. |
 | Emoji toggle tap, keyboard open | touch | The keyboard closes. The sheet opens in its place, with the height of the keyboard. The box stays where it was. |
@@ -218,33 +218,33 @@ The input box is the part of a conversation where the user writes and sends a me
 | Emoji picked | mouse, touch | Emoji at the caret. Send bright. Picker stays open. The draft's focus unchanged; a keyboard open for the picker's search closes. |
 | Send tap with the sheet open | touch | Sends on the first tap. Sheet closes. Keyboard unchanged. |
 | GIF toggle tap, empty draft | mouse | GIF picker opens, badge bright. Focus in the search field of the picker. |
-| GIF card tap | mouse, touch | Picker closes, faded GIF row at the end of the list. Without touch input, the focus is where it was before the picker. |
+| GIF card tap | mouse, touch | Picker closes, faded GIF message at the end of the list. Without touch input, the focus is where it was before the picker. |
 | Tap on + with a picker open | mouse, touch | Picker closes. The menu does not open. |
 | Tap on + | mouse, touch | The menu with Photo or video and Voice message. Phone: a bottom sheet over a dimmed page. |
 | Photo or video | mouse, touch | The menu closes. The file chooser opens. |
 | Voice message, first time | mouse, touch | The browser asks for the microphone. |
 | Voice message, microphone refused | all | Dialog "Microphone unavailable". The pill is unchanged. |
 | Recording | all | Trash, red dot, time and bars in the pill. Send bright. Phone: keyboard closed. |
-| Send while recording | mouse, touch | The recording ends. A pending row with the player at the end of the list. The draft shows again. |
+| Send while recording | mouse, touch | The recording ends. A pending message with the player at the end of the list. The draft shows again. |
 | Trash while recording | mouse, touch | The recording is discarded. The draft shows again. |
 | 5 minutes recorded | all | The recording ends and is sent. |
 | Recording shorter than 1 s | all | Discarded. "Too short" at the box for 2 s. |
-| Voice message sent, server without the audio converter | all | The pending row shows "Failed", the reason, "Retry" and "Remove". |
+| Voice message sent, server without the audio converter | all | The pending message shows "Failed", the reason, "Retry" and "Remove". |
 | Tap on the other toggle with a picker open | mouse | Picker closes. The other picker does not open. |
 | Tap on the draft with a picker open | mouse, touch | Draft focused and picker closed with one tap. |
 | Conversation changed | all | Picker closed. The draft and reply bar of the new conversation appear. |
-| Reply on a message | mouse, touch | Bar "Replying to {name}" above the pill, row tinted, draft focused. |
+| Reply on a message | mouse, touch | Bar "Replying to {name}" above the pill, message tinted, draft focused. |
 | ✕ on the reply bar | mouse, touch | Bar and tint disappear. Focus unchanged. |
 | File dragged over the box | mouse | "Drop images here" and the accent ring. |
 | File dropped outside the box | mouse | Nothing. |
 | Files chosen, dropped or pasted | all | The files appear in the tray. Nothing is sent. Draft text unchanged. |
-| Send with files in the tray | all | One pending row with the caption, the file names, a progress bar and "Cancel upload". The tray and the box empty. |
+| Send with files in the tray | all | One pending message with the caption, the file names, a progress bar and "Cancel upload". The tray and the box empty. |
 | Some files of a pick refused | all | Dialog "{s} of {t} files added" with one line for each refused file. The other files go to the tray. |
 | All files of a pick refused | all | Dialog "No file added" with one line for each file. |
-| Upload fails midway | all | The pending row shows Failed, the reason, Retry and Remove. |
+| Upload fails midway | all | The pending message shows Failed, the reason, Retry and Remove. |
 | Room becomes read-only | all | Lock icon and the read-only text replace the box. Draft kept. |
 | Someone types in the conversation | all | Typing strip text with three dots. It disappears 3 s after their last keystroke. |
-| No connection | all | Box unchanged. Send shows a pending row, and the message is sent later. The header shows the connection state. |
+| No connection | all | Box unchanged. Send shows a pending message, and the message is sent later. The header shows the connection state. |
 | No connection, a pick over 25 MB | all | The pick is refused. The box shows "Needs a connection". |
 
 ## Wording
@@ -257,9 +257,9 @@ The input box is the part of a conversation where the user writes and sends a me
 | Recorder time | m:ss, from "0:00" |
 | Microphone dialog | "Microphone unavailable"; "Yap cannot use the microphone. Allow it in the browser settings and try again." |
 | Recording too short | "Too short" |
-| Voice message refused, the reason in the failed row ({ext} is webm, ogg or mp4, by the browser) | `"voice.{ext}" — Voice messages are unavailable on this server (ffmpeg missing)`; `"voice.{ext}" — Could not process this voice message` |
-| Picture refused for its pixels, the reason in the failed row | `"{name}" — Picture has too many pixels ({width} x {height}, max 50 megapixels)` |
-| Pending voice row, in place of a file name | "Voice message" |
+| Voice message refused, the reason in the failed message ({ext} is webm, ogg or mp4, by the browser) | `"voice.{ext}" — Voice messages are unavailable on this server (ffmpeg missing)`; `"voice.{ext}" — Could not process this voice message` |
+| Picture refused for its pixels, the reason in the failed message | `"{name}" — Picture has too many pixels ({width} x {height}, max 50 megapixels)` |
+| Pending voice message, in place of a file name | "Voice message" |
 | Tray ✕ accessible name | "Remove {file name}" |
 | GIF badge | "GIF" |
 | GIF toggle tooltip and accessible name | "GIF picker" |
@@ -273,8 +273,8 @@ The input box is the part of a conversation where the user writes and sends a me
 | Reply bar | "Replying to " followed by the name in bold; "✕" |
 | Read-only bar | "You do not have permission to send messages in this channel" |
 | Drop hint | "Drop images here" |
-| Pending row with files | "Cancel upload" |
-| Failed row | "Failed", the reason, "Retry", "Remove" |
+| Pending message with files | "Cancel upload" |
+| Failed message | "Failed", the reason, "Retry", "Remove" |
 | Upload dialog titles | "No file added"; "{s} of {t} files added" |
 | Upload dialog lines, one per file | `"{name}" — unsupported file type`; `"{name}" — too large ({size} MB, max {max} MB)` |
 | Upload dialog, too many files | "Choose at most 10 files." |
@@ -294,7 +294,7 @@ The input box is the part of a conversation where the user writes and sends a me
 
 - [General rules](general-rules.md) for acting locally first.
 - [Emoji and GIF pickers](pickers.md) for the content and behaviour of the pickers.
-- [Message row and actions](message-row.md) for the pending and failed rows, Reply, and editing.
+- [Message and actions](message-row.md) for the pending and failed messages, Reply, and editing.
 - [Timeline and media](timeline.md) for scrolling after a send and the behaviour when the keyboard opens.
 - [Presence](presence.md) for how typing is shown to others.
 - [Offline and installation](offline.md) for sending without a connection.

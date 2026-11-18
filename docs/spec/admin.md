@@ -113,7 +113,7 @@ Administration is the admin's page for the server. It covers the people, the inv
 
 **AD-35** Danger Zone shows when the admin edits a room other than the lobby. The first tap on "Delete Channel" arms it and shows "Click again to confirm". The second tap deletes the room and goes to the lobby. The mute choices of every person for the room are cleared. Open chats leave the room at once.
 
-**AD-37** Pinned Messages offers "Admin Only", "Everyone" and "Selected People". With "Selected People", a checklist of every person except the admin and the bots shows below the cards. The checked people can pin and unpin in the room. The admin always can. A new room starts with "Admin Only". The setting saves with "Save Changes". A name in the list that is not a user is refused with "Unknown user: {name}.". See [Message row](message-row.md#MR-77) and [Header](frame.md#SH-47).
+**AD-37** Pinned Messages offers "Admin Only", "Everyone" and "Selected People". With "Selected People", a checklist of every person except the admin and the bots shows below the cards. The checked people can pin and unpin in the room. The admin always can. A new room starts with "Admin Only". The setting saves with "Save Changes". A name in the list that is not a user is refused with "Unknown user: {name}.". See [Message and actions](message-row.md#MR-77) and [Header](frame.md#SH-47).
 
 ### Server configuration
 

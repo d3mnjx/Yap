@@ -46,7 +46,7 @@ Presence is the information that Yap shows about the current state of each perso
 
 **PR-16** When all connections of a person are gone for 5 minutes, the person shows as offline. The person leaves the list, or turns grey as a direct message partner. A connection that returns within the 5 minutes keeps the chosen status. Yap announces nothing.
 
-**PR-17** A join is the first connection of a person. A leave is the moment when the person shows as offline. This is 30 seconds after the person closes the last tab or signs out, or 5 minutes after the last connection drops. A return before that moment cancels the leave. Thus a reload shows nothing. The lobby shows a join or leave line to the people who have the lobby open at that moment. The [message row page](message-row.md#MR-73) gives the line texts.
+**PR-17** A join is the first connection of a person. A leave is the moment when the person shows as offline. This is 30 seconds after the person closes the last tab or signs out, or 5 minutes after the last connection drops. A return before that moment cancels the leave. Thus a reload shows nothing. The lobby shows a join or leave line to the people who have the lobby open at that moment. The [message page](message-row.md#MR-73) gives the line texts.
 
 **PR-18** When a new account joins for the first time, the bot sends a direct message to the admin: "👋 {display name} just joined the chat!". When an older account joins after at least the return notice hours away, the bot sends: "👋 {display name} is back after {time}." The time is whole hours, or whole days from two days on. The admin sets the hours in Bot Settings (AD-09); the default is 2, and 0 turns the notice off. The absence counts from the end of the previous visit. The join of an invisible person counts too: only the admin reads the message, and the admin sees invisible people as such (PR-05). The admin's own joins send nothing. In the first two minutes after a start, nothing is sent: a restart reconnects everyone at once.
 
@@ -103,7 +103,7 @@ Presence is the information that Yap shows about the current state of each perso
 
 - [Header, sidebar and overlays](frame.md) for the chip, the menu, the count and the people list.
 - [Input box](input-box.md) for the typing strip and what starts typing.
-- [Message row and actions](message-row.md) for the lobby join and leave lines.
+- [Message and actions](message-row.md) for the lobby join and leave lines.
 - [Notifications and unread](notifications.md) for what a visible session suppresses.
 - [Settings](settings.md) for the list of the user's own sessions.
 - [Administration](admin.md) for the sessions table admins see.

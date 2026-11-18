@@ -4,9 +4,9 @@ The search finds messages in the open conversation by their text. The user types
 
 ## Anatomy
 
-![Search, desktop, results. The search field at the right end of the header with a query, and the results panel in the place of the sidebar: the count, message rows with the matched word highlighted, and the reach line at the end.](img/search-desktop-results.png)
+![Search, desktop, results. The search field at the right end of the header with a query, and the results panel in the place of the sidebar: the count, messages with the matched word highlighted, and the reach line at the end.](img/search-desktop-results.png)
 
-![Search, phone, results. The search screen: a back arrow and the field in the header, the count with the name of the room, and the result rows.](img/search-phone-results.png)
+![Search, phone, results. The search screen: a back arrow and the field in the header, the count with the name of the room, and the results.](img/search-phone-results.png)
 
 ![Search, phone, a message from a result. The conversation at the message, under a header with a back arrow, the query, and the count with the name of the room.](img/search-phone-at-result.png)
 
@@ -41,11 +41,11 @@ The search finds messages in the open conversation by their text. The user types
 
 **SR-07** The search runs while the user types, 250 ms after the last key. No key starts it.
 
-**SR-08** The results are message rows, the newest first. A row shows the avatar, the name, the time, the text and the media of the message: pictures, videos and GIFs. It shows no link card, no reply quote and no reactions. A video plays in the row, and it stops when the results give way to a message.
+**SR-08** The results are messages, the newest first. A result shows the avatar, the name, the time, the text and the media of the message: pictures, videos and GIFs. It shows no link card, no reply quote and no reactions. A video plays in the result, and it stops when the results give way to a message.
 
-**SR-09** A row shows at most 6 lines of the text. When the first matched word is below the sixth line, the row shows the lines around that word, with the word on the second line. An edge where text is cut fades out.
+**SR-09** A result shows at most 6 lines of the text. When the first matched word is below the sixth line, the result shows the lines around that word, with the word on the second line. An edge where text is cut fades out.
 
-**SR-10** Each matched word is highlighted in the rows of the results. A text in quotes is highlighted only where it stands as whole words ([SR-33](#SR-33)). A match that is inside an emoji, or that runs over the edge of a link, shows no highlight. The conversation shows no highlight of words.
+**SR-10** Each matched word is highlighted in the results. A text in quotes is highlighted only where it stands as whole words ([SR-33](#SR-33)). A match that is inside an emoji, or that runs over the edge of a link, shows no highlight. The conversation shows no highlight of words.
 
 **SR-11** The count line shows the number of all results: "{n} results" or "1 result". The list loads 25 results, and 25 more when the user scrolls near its end. The count does not change while more results load.
 
@@ -57,9 +57,9 @@ The search finds messages in the open conversation by their text. The user types
 
 **SR-15** While the query has less than 2 characters, the list shows "Type 2 or more characters" and no results. A second line under it says how to find a whole word ([SR-33](#SR-33)).
 
-**SR-16** A list of results does not change by itself. A new message, an edit or a deletion shows at the next search. A tap on a result whose message is gone shows "Message not found." at the row.
+**SR-16** A list of results does not change by itself. A new message, an edit or a deletion shows at the next search. A tap on a result whose message is gone shows "Message not found." at the result.
 
-**SR-17** A tap on a result goes to the message, as a tap on a pinned message does ([TL-41](timeline.md#TL-41)). A picture in a result is part of the row, so a tap on it also goes to the message. A refusal shows its reason at the row.
+**SR-17** A tap on a result goes to the message, as a tap on a pinned message does ([TL-41](timeline.md#TL-41)). A picture in a result is part of the result, so a tap on it also goes to the message. A refusal shows its reason at the result.
 
 **SR-18** Without a connection, the list shows "Needs a connection" in the place of the results. When the connection returns, the search of the query in the field runs again by itself. A refusal from the server shows its reason in the same place.
 
