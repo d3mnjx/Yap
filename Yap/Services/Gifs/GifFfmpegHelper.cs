@@ -7,6 +7,8 @@ namespace Yap.Services.Gifs;
 /// ffprobe + ffmpeg subprocess wrappers tailored for the GIF pipeline.
 /// Mirrors the patterns in MediaCacheService: timeouts, async process management,
 /// SemaphoreSlim(2) concurrency, metadata stripping (-map_metadata -1), audio stripping (-an).
+/// VoiceService and VideoService use the probe and the process runner of this class too. The name is from the time
+/// when only the GIF pipeline did.
 /// </summary>
 public class GifFfmpegHelper
 {
@@ -18,6 +20,11 @@ public class GifFfmpegHelper
 
     /// <summary>Whether ffmpeg+ffprobe are available on this system.</summary>
     public static bool IsAvailable { get; private set; }
+
+    // This probe is the only one on the server: VideoService and VoiceService read IsAvailable and write no warning
+    // of their own. So the text names each feature that needs ffmpeg, not only the GIFs.
+    private const string NotFoundWarning =
+        "ffmpeg not found: GIF transcoding, video posters, video compression and voice messages will be unavailable";
 
     public GifFfmpegHelper(ILogger<GifFfmpegHelper> logger)
     {
@@ -40,7 +47,7 @@ public class GifFfmpegHelper
             if (process == null)
             {
                 IsAvailable = false;
-                _logger.LogWarning("ffmpeg not found — GIF transcoding will be unavailable");
+                _logger.LogWarning(NotFoundWarning);
                 return;
             }
             // Drain both pipes asynchronously so a large `-version` banner can't fill the OS pipe
@@ -52,13 +59,13 @@ public class GifFfmpegHelper
             var exited = process.WaitForExit(3000);
             if (!exited) { try { process.Kill(entireProcessTree: true); } catch { } }
             IsAvailable = exited && process.ExitCode == 0;
-            if (IsAvailable) _logger.LogInformation("ffmpeg detected for GIF pipeline");
-            else _logger.LogWarning("ffmpeg not found — GIF transcoding will be unavailable");
+            if (IsAvailable) _logger.LogInformation("ffmpeg detected and available");
+            else _logger.LogWarning(NotFoundWarning);
         }
         catch
         {
             IsAvailable = false;
-            _logger.LogWarning("ffmpeg not found — GIF transcoding will be unavailable");
+            _logger.LogWarning(NotFoundWarning);
         }
     }
 

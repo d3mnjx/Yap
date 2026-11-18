@@ -355,11 +355,6 @@ public class KlipyGifProvider : IGifSourceProvider
         return result;
     }
 
-    /// <summary>
-    /// Formats our renderer can use. WebP is the new preferred format — animated WebP plays in
-    /// an &lt;img&gt; tag (instant animation, no browser autoplay policy) and is ~2× smaller than
-    /// the equivalent GIF. Klipy's jpg is rejected (static-only).
-    /// </summary>
     /// <summary>The playable formats of one size tier of an item's "file" object, in the order of the JSON: the
     /// preferred tier, or the fallback tier when the item has no preferred one.</summary>
     private static List<MediaFormat> PlayableFormats(JsonElement file, string preferredTier, string fallbackTier)
@@ -375,6 +370,11 @@ public class KlipyGifProvider : IGifSourceProvider
         return formats;
     }
 
+    /// <summary>
+    /// Formats our renderer can use. WebP is the new preferred format — animated WebP plays in
+    /// an &lt;img&gt; tag (instant animation, no browser autoplay policy) and is ~2× smaller than
+    /// the equivalent GIF. Klipy's jpg is rejected (static-only).
+    /// </summary>
     private static bool IsPlayableFormatKey(string formatKey) =>
         formatKey.Equals("mp4", StringComparison.OrdinalIgnoreCase)
         || formatKey.Equals("webm", StringComparison.OrdinalIgnoreCase)
