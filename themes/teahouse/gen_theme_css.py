@@ -143,7 +143,13 @@ def build_vars(h, s, l, light):
             "--bg-canvas-panel": panel(h, s, l, True),
             "--bg-sidebar": hsl(h, s * 0.35, min(cb + 6, 92), "0.72"),
             "--bg-header": hsl(h, s * 0.30, min(cb + 10, 95), "0.85"),
-            "--bg-darkest": hsl(h, s * 0.40, cb - 24),
+            # A surface that carries text: the search field, the search row of the phone, the
+            # profile card, the pins panel, the status menu. It stays 6 points under the
+            # sidebar, the step that Daylight has. Do not make it much darker: at cb - 24 it
+            # was a mid-tone (46 to 51 %), and no text colour was readable on it. The contrast
+            # was 1.1:1 for the placeholder, 1.7:1 for --text-muted and 3.5:1 for
+            # --text-primary. At cb, --text-muted has 3.3:1 or more in each day scene.
+            "--bg-darkest": hsl(h, s * 0.40, cb),
             "--bg-hover": hsl(h, s * 0.40, cb - 6, "0.45"),
             "--bg-secondary": hsl(h, s * 0.40, min(cb + 3, 92), "0.70"),
             "--bg-tertiary": hsl(h, s * 0.35, cb - 4, "0.65"),

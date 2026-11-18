@@ -16,7 +16,8 @@
     padding: 0 0.5rem;
     border-radius: 4px;
     background: var(--bg-darkest);
-    color: var(--text-placeholder);
+    /* The colour of the magnifier. --text-muted and not --text-placeholder, for the reason at ::placeholder below. */
+    color: var(--text-muted);
     cursor: text;
 }
 
@@ -40,8 +41,14 @@
     font-size: 0.875rem;
 }
 
+/* --text-muted and not --text-placeholder. The placeholder is the only label of this field, a small text (SR-32)
+   that a person must read. --text-placeholder is tuned for the large text of the composer on --bg-input. On
+   --bg-darkest its contrast was 1.6:1 in Daylight and 1.8:1 in Solarized Light. --text-muted has 3.3:1 or more
+   in each theme and each Tea House scene, and 2.6:1 in Solarized Light, whose palette is faint on purpose.
+   Firefox draws a placeholder at 54 % opacity by default, so the rule sets the opacity too. */
 .search-input::placeholder {
-    color: var(--text-placeholder);
+    color: var(--text-muted);
+    opacity: 1;
 }
 
 .search-clear {

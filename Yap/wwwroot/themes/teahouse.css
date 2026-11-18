@@ -165,7 +165,7 @@
     --bg-canvas-panel: linear-gradient(to bottom, hsl(30 15% 80% / 0.06) 0%, hsl(30 15% 80% / 0.22) 45%, hsl(30 15% 80% / 0.58) 100%);
     --bg-sidebar: hsl(30 12% 76% / 0.72);
     --bg-header: hsl(30 10% 80% / 0.85);
-    --bg-darkest: hsl(30 13% 46%);
+    --bg-darkest: hsl(30 13% 70%);
     --bg-hover: hsl(30 13% 64% / 0.45);
     --bg-secondary: hsl(30 13% 73% / 0.70);
     --bg-tertiary: hsl(30 12% 66% / 0.65);
@@ -200,7 +200,7 @@
     --bg-canvas-panel: linear-gradient(to bottom, hsl(60 15% 80% / 0.06) 0%, hsl(60 15% 80% / 0.22) 45%, hsl(60 15% 80% / 0.58) 100%);
     --bg-sidebar: hsl(60 12% 76% / 0.72);
     --bg-header: hsl(60 10% 80% / 0.85);
-    --bg-darkest: hsl(60 13% 46%);
+    --bg-darkest: hsl(60 13% 70%);
     --bg-hover: hsl(60 13% 64% / 0.45);
     --bg-secondary: hsl(60 13% 73% / 0.70);
     --bg-tertiary: hsl(60 12% 66% / 0.65);
@@ -235,7 +235,7 @@
     --bg-canvas-panel: linear-gradient(to bottom, hsl(60 15% 80% / 0.06) 0%, hsl(60 15% 80% / 0.22) 45%, hsl(60 15% 80% / 0.58) 100%);
     --bg-sidebar: hsl(60 12% 76% / 0.72);
     --bg-header: hsl(60 10% 80% / 0.85);
-    --bg-darkest: hsl(60 13% 46%);
+    --bg-darkest: hsl(60 13% 70%);
     --bg-hover: hsl(60 13% 64% / 0.45);
     --bg-secondary: hsl(60 13% 73% / 0.70);
     --bg-tertiary: hsl(60 12% 66% / 0.65);
@@ -270,7 +270,7 @@
     --bg-canvas-panel: linear-gradient(to bottom, hsl(60 23% 85% / 0.06) 0%, hsl(60 23% 85% / 0.22) 45%, hsl(60 23% 85% / 0.58) 100%);
     --bg-sidebar: hsl(60 18% 81% / 0.72);
     --bg-header: hsl(60 15% 85% / 0.85);
-    --bg-darkest: hsl(60 20% 51%);
+    --bg-darkest: hsl(60 20% 75%);
     --bg-hover: hsl(60 20% 69% / 0.45);
     --bg-secondary: hsl(60 20% 78% / 0.70);
     --bg-tertiary: hsl(60 18% 71% / 0.65);
@@ -305,7 +305,7 @@
     --bg-canvas-panel: linear-gradient(to bottom, hsl(60 23% 85% / 0.06) 0%, hsl(60 23% 85% / 0.22) 45%, hsl(60 23% 85% / 0.58) 100%);
     --bg-sidebar: hsl(60 18% 81% / 0.72);
     --bg-header: hsl(60 15% 85% / 0.85);
-    --bg-darkest: hsl(60 20% 51%);
+    --bg-darkest: hsl(60 20% 75%);
     --bg-hover: hsl(60 20% 69% / 0.45);
     --bg-secondary: hsl(60 20% 78% / 0.70);
     --bg-tertiary: hsl(60 18% 71% / 0.65);
@@ -340,7 +340,7 @@
     --bg-canvas-panel: linear-gradient(to bottom, hsl(180 9% 80% / 0.06) 0%, hsl(180 9% 80% / 0.22) 45%, hsl(180 9% 80% / 0.58) 100%);
     --bg-sidebar: hsl(180 7% 76% / 0.72);
     --bg-header: hsl(180 6% 80% / 0.85);
-    --bg-darkest: hsl(180 8% 46%);
+    --bg-darkest: hsl(180 8% 70%);
     --bg-hover: hsl(180 8% 64% / 0.45);
     --bg-secondary: hsl(180 8% 73% / 0.70);
     --bg-tertiary: hsl(180 7% 66% / 0.65);
@@ -375,7 +375,7 @@
     --bg-canvas-panel: linear-gradient(to bottom, hsl(45 30% 80% / 0.06) 0%, hsl(45 30% 80% / 0.22) 45%, hsl(45 30% 80% / 0.58) 100%);
     --bg-sidebar: hsl(45 24% 76% / 0.72);
     --bg-header: hsl(45 20% 80% / 0.85);
-    --bg-darkest: hsl(45 27% 46%);
+    --bg-darkest: hsl(45 27% 70%);
     --bg-hover: hsl(45 27% 64% / 0.45);
     --bg-secondary: hsl(45 27% 73% / 0.70);
     --bg-tertiary: hsl(45 24% 66% / 0.65);
