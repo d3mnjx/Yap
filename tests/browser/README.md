@@ -21,6 +21,10 @@ server, runs its steps, prints PASS or FAIL for each step, and stops the server 
   768 px or less the sidebar row, the search screen, a result, the steps back, "Go to newest", a reconnect and the
   two width tiers. Step 19 checks the Recent row of the emoji picker after a message with typed emoji. The last step checks
   that a change of the quick reactions changes the shown action bars and does not draw the rows again.
+- `links.mjs` checks the message links: the code of a message id, Copy Message Link in the More menu (also on a
+  picture of someone else), a click on a link to another room and to the open room, a link to a direct message for
+  the partner and for a third person, an opened address of a message that is not loaded with the Back button after
+  it, a wrong code, and the sign-in on the way to a link.
 - `uploads.mjs` checks the uploads of a message: a text that goes out while a picture uploads, the state of each
   file in the pending row with three files at one time and the pictures in the order of the pick, an upload that
   goes on after a reload from the bytes the server has, a last chunk whose answer was lost (with a reload and

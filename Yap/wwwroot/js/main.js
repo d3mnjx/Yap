@@ -32,7 +32,7 @@ const launchToken = location.pathname === '/pwa-launch' ? new URLSearchParams(lo
 if (location.pathname === '/pwa-launch') history.replaceState(null, '', '/' + location.hash);
 
 const app = document.getElementById('app');
-const framed = new Set(['chat', 'settings', 'channel-settings']);
+const framed = new Set(['chat', 'settings', 'channel-settings', 'message-link']);
 const anonymous = new Set(['login', 'verify', 'invite']);
 const anonymousOnly = new Set(['login', 'verify']);   // the link page answers a signed-in viewer too (AU-10, AU-17)
 const pages = {
@@ -43,6 +43,7 @@ const pages = {
   'channel-settings': () => import('./pages/channel-settings.js'),
   settings: () => import('./pages/settings.js'),
   admin: () => import('./pages/admin.js'),
+  'message-link': () => import('./pages/message-link.js'),
 };
 
 let unmountPage = () => {};

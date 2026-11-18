@@ -565,6 +565,31 @@ public class ChatService
         lock (LockOf(channelId)) return messages.FirstOrDefault(m => m.Id == messageId);
     }
 
+    public const int MaxMessageLinks = 50;   // one page of the timeline; a call cannot make the server look up more
+
+    /// <summary>TL-43: where each of these messages is, for the reader's message links. Only a message that is in
+    /// memory and that the reader may read (MayRead) has an entry. An unknown id, a deleted message, a direct message
+    /// of two other people and a message behind the history cutoff all give no entry: the same silence, so the answer
+    /// tells nothing about a hidden message, as Around's one refusal does. Ids after the first 50 are ignored.</summary>
+    public List<MessageLinkDto> MessageLinks(Guid viewerId, IEnumerable<Guid>? ids)
+    {
+        var result = new List<MessageLinkDto>();
+        string? myName = null;
+        foreach (var id in (ids ?? []).Take(MaxMessageLinks))
+        {
+            if (GetMessage(id) is not { } m || !_channels.TryGetValue(m.ChannelId, out var channel) || !MayRead(viewerId, channel, m.Timestamp)) continue;
+            string? dmUser = null;
+            if (channel.IsDirectMessage)
+            {
+                myName ??= _userService.GetById(viewerId)?.Username;
+                dmUser = myName is null ? null : channel.GetOtherParticipant(myName);
+                if (string.IsNullOrEmpty(dmUser)) continue;   // without the partner's name the client has no route to open, as in DmConversations
+            }
+            result.Add(new MessageLinkDto(m.Id, m.ChannelId, dmUser, m.Username, m.Timestamp));
+        }
+        return result;
+    }
+
     #endregion
 
     #region Sending

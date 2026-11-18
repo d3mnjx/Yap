@@ -11,6 +11,11 @@ public sealed record Page(IReadOnlyList<MessageDto> Messages, bool HasMore);
 /// The error travels in the body because hub.invoke turns every exception into "Something went wrong".</summary>
 public sealed record Window(IReadOnlyList<MessageDto> Messages, bool HasMore, bool HasNewer, string? Error = null);
 
+/// <summary>One entry of <c>messageLinks</c> (TL-43): where a message is, who wrote it and when. DmUser is the other
+/// person of a direct message, because the reader's route to it is /dm/{user}; it is null for a room. A message the
+/// reader may not read has no entry, so an entry never tells more than the reader could read in the conversation.</summary>
+public sealed record MessageLinkDto(Guid Id, Guid ChannelId, string? DmUser, string Username, DateTime Timestamp);
+
 /// <summary>One result of <c>search</c> (SR-08). It has the fields that the client's pin entry drawing reads
 /// (<see cref="Pin"/>: message id, author, text, time, the media under the text), so one drawing serves both. The
 /// media are the message's own files; a result shows no link card.</summary>

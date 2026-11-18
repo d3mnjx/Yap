@@ -5,7 +5,8 @@ import { state, on, setOpen, closeOpen, roomById, lobby, projectName } from '../
 import * as hub from '../hub.js';
 import * as router from '../router.js';
 import * as frame from '../ui/frame.js';
-import { Timeline } from '../ui/timeline.js';
+import { Timeline, jumpTo } from '../ui/timeline.js';
+import { takeJump, failed as jumpFailed } from '../message-links.js';
 import { Composer } from '../ui/composer.js';
 import { clone, el } from '../render/dom.js';
 import * as snapshot from '../offline/snapshot.js';
@@ -123,6 +124,11 @@ async function openConversation(target, me, painted, timing) {
   }
   setOpen(result, target.partner);   // the snapshot module stores the tail from the store
   if (!timing.reported) { timing.reported = true; reportOpened(timing.mountedAt); }   // the re-open after a reconnect is not a tap
+  // TL-43: a message link led to this conversation. Only now: the server's rows are in the timeline, and a jump
+  // over the device's stored rows would be refused when these rows replace them. A refused jump leaves the reader
+  // here, in the right conversation, with the reason in a dialog (TL-44).
+  const linked = takeJump(result.channelId);
+  if (linked) jumpTo(linked).then(reason => { if (reason && me === generation) jumpFailed(reason); });
 }
 
 // The wait until the server's rows are on screen (AD-26), reported with the next heartbeat. The first conversation

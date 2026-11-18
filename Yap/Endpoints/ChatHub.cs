@@ -117,6 +117,11 @@ public sealed class ChatHub(ChatService chat, PresenceService presence, UserServ
         return new Window(messages.Select(m => map.From(m, Me)).ToList(), hasMore, hasNewer);
     }
 
+    /// <summary>TL-43: the conversation, the author and the time of each of these messages that the reader may read.
+    /// The client asks before it opens a message link, because the link holds only the message id. A message without
+    /// an entry is "Message not found." for the reader, whatever the reason (ChatService.MessageLinks).</summary>
+    public IReadOnlyList<MessageLinkDto> MessageLinks(Guid[]? ids) => chat.MessageLinks(Me, ids);
+
     /// <summary>SR-01: the messages of the open conversation that hold every word of the query, newest first. The
     /// cursor is the last hit the client has; without one the answer starts at the newest match and carries the total.
     /// A hit is not a message row: no reply quote, no reactions and no link card are computed for it (SR-08).</summary>

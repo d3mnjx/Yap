@@ -39,6 +39,16 @@ public class LinkCardTests : IClassFixture<YapFactory>
         throw new TimeoutException("the background fetch did not finish in 10 s");
     }
 
+    [Fact(DisplayName = "MR-19, TL-43: a message link gets no card; other addresses in the same text keep theirs")]
+    public void A_message_link_gets_no_card()
+    {
+        var urls = LinkPreviewService.ExtractUrls(
+            "see https://yap.example.com/m/PyuMHppHTQuxxlLnqQ1PGA and https://example.com/page, or yap.example.com/m/PyuMHppHTQuxxlLnqQ1PGA");
+        Assert.Equal(["https://example.com/page"], urls);
+        // 22 characters of the code alphabet make the form; a shorter last segment is a normal page.
+        Assert.Equal(["https://example.com/m/too-short"], LinkPreviewService.ExtractUrls("https://example.com/m/too-short"));
+    }
+
     [Fact(DisplayName = "A card survives a restart")]
     public void Card_survives_restart()
     {

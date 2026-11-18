@@ -69,7 +69,7 @@ export function signedOut({ elsewhere = false } = {}) {
   sender.clearAll();
   clearMedia();
   if (router.current.page !== 'login') {
-    if (['chat', 'settings', 'channel-settings', 'admin'].includes(router.current.page)) rememberReturnTo(router.current.path);
+    if (['chat', 'settings', 'channel-settings', 'admin', 'message-link'].includes(router.current.page)) rememberReturnTo(router.current.path);
     router.navigate('/login', { replace: true });
   } else router.navigate(router.current.path, { replace: true });   // redraw the login page in the signed-out state
 }

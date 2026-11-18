@@ -40,6 +40,9 @@ export const state = {
   drafts: {},                   // conversation key (offline/snapshot.js keyOf) -> { text, replyToId, replyToName }
   registrations: [],            // admins: the waiting list (AD-11)
   updateAvailable: false,       // the server runs a newer build (SH-20)
+  messageLinks: new Map(),      // message id -> a promise of the server's answer about that message (message-links.js, TL-43).
+                                // Here, and not in that module, so that reset() takes it away with the account: an answer
+                                // says what this account may read. No listener: nothing is drawn from a change of the map.
 };
 
 const listeners = new Map();    // part -> Set of functions
@@ -462,7 +465,7 @@ export function reset() {
   clearTimeout(typingTimer);
   ownEmojiUses = [];
   Object.assign(state, { user: null, rooms: [], users: {}, presence: {}, dms: [], unread: {}, mutes: null, emoji: null,
-    favoriteGifIds: new Set(), open: null, pending: [], drafts: {}, registrations: [] });
+    favoriteGifIds: new Set(), open: null, pending: [], drafts: {}, registrations: [], messageLinks: new Map() });
   for (const part of ['user', 'rooms', 'users', 'presence', 'dms', 'unread', 'mutes', 'emoji', 'favoriteGifIds', 'pending']) changed(part);
   changed('messages', { type: 'reset' });
 }

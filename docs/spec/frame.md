@@ -130,7 +130,7 @@ The frame contains all parts around a conversation. The header shows the title, 
 
 ### Routes and the tab
 
-**SH-42** The routes are /lobby for the default room, /room/{id}, /dm/{username}, /settings, /admin, /channel/new, /channel/{id}/settings, /login, /verify/{username}, /invite/{code}, and / for the start. When the user is signed in, a room or direct message link opens directly. When the user is signed out, the login page opens, and the link opens after the sign-in. An unknown address shows "Not Found".
+**SH-42** The routes are /lobby for the default room, /room/{id}, /dm/{username}, /settings, /admin, /channel/new, /channel/{id}/settings, /login, /verify/{username}, /invite/{code}, /m/{code} for a message link ([TL-43](timeline.md#TL-43)), and / for the start. When the user is signed in, a room or direct message link opens directly. When the user is signed out, the login page opens, and the link opens after the sign-in. An unknown address shows "Not Found".
 
 **SH-43** / opens the user's last conversation on this device. If there is none, / opens the lobby. /dm/{unknown user}, /dm/{the user themself} and /room/{unknown id} go to the lobby.
 

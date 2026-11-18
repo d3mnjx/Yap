@@ -25,6 +25,7 @@ public static class ShellEndpoints
     [
         "/", "/lobby", "/room/{id:guid}", "/dm/{user}", "/settings", "/admin",
         "/channel/new", "/channel/{id:guid}/settings", "/login", "/verify/{user}", "/invite/{code}",
+        "/m/{code}",   // a message link (TL-43); the client reads the code and asks the hub where the message is
     ];
 
     public static void MapShell(this WebApplication app)

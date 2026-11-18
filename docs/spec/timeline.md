@@ -128,6 +128,12 @@ The timeline is the scrolling list of messages in a conversation. The oldest loa
 
 **TL-42** A window ends with an end row. It shows the text "There are newer messages" between two lines, and a "Go to newest" button with a down arrow under the text. The end row scrolls with the messages, so a scroll to the bottom of the window ends on it. A tap on the button does the same as a tap on the down arrow. A pending message of a send without a connection shows under the end row. A window that reaches the newest message has no end row.
 
+### Message links
+
+**TL-43** A message link is an address of this server that ends in /m/ and a code of 22 characters. It points to one message ([MR-84](message-row.md#MR-84)). When a person opens a message link, Yap opens the conversation of the message and goes to the message, as a jump does ([TL-41](#TL-41)): the message shows centred and highlighted. A link to a message of the open conversation jumps and does not open the conversation again. A link works from a message ([MR-85](message-row.md#MR-85)) and from outside Yap, for example from the address field of the browser or from a note. A person who is not signed in signs in first, and the message opens after the sign-in ([SH-42](frame.md#SH-42)). After an open from outside Yap, Back does not return to the address of the link. A link to an edited message stays correct.
+
+**TL-44** A message link opens only for a person who may read the message. A link to a direct message opens for its two people. A link to a room message opens inside the history that the reader may see ([TL-05](#TL-05)). In every other case the reader sees "Message not found.": the message is deleted, the reader may not read it, the code is wrong, or the server did not load the message at its start ([AD-03](admin.md#AD-03)). *Why one sentence:* a sentence of its own for a deleted message would tell a reader that a hidden message exists. A link stops when the server no longer loads its message. With the normal load settings that is at the first restart of the server after the message is 90 days old, or after 5,000 newer messages in its conversation. After a click on a link in a message, the reader stays where they are and the sentence shows at the link for two seconds ([GEN-02](general-rules.md#GEN-02)). After an open from outside Yap, the lobby opens and a dialog shows the sentence. When the conversation opened and the jump then failed, the reader stays in the conversation and the dialog shows the reason. Without a connection, a click on a link shows "Needs a connection". An address that was opened from outside Yap waits for the connection, with an empty page under the header "Message link".
+
 ## States
 
 | State or trigger | Input | What the user sees |
@@ -166,6 +172,8 @@ The timeline is the scrolling list of messages in a conversation. The oldest loa
 | Close control, Escape, tap outside | mouse, touch, keyboard | Viewer closes with a fade; focus unchanged. |
 | Message deleted while viewing | all | Viewer closes. |
 | GIF autoplay blocked | all | Next tap or key starts all GIFs. |
+| Message link opened, the reader may read the message | all | The conversation of the message, with the message centred and highlighted (TL-43). |
+| Message link opened, any other case | all | "Message not found.": at the link for two seconds after a click, in a dialog over the lobby after an open from outside Yap (TL-44). |
 | No connection, older messages exist | all | Last messages readable; "Needs a connection" at the top. |
 | Connection returns | all | Newest messages updated; view stays when not following, at the bottom when following. |
 
@@ -185,6 +193,7 @@ The timeline is the scrolling list of messages in a conversation. The oldest loa
 | Viewer controls | "‹" (title "Previous"); "›" (title "Next"); "×" (title "Close"); the download icon (title "Download"); the fill icon (title "Fill screen"); counter "{n} / {total}"; image alt "Full size image"; hint "Ready. Tap again to save." |
 | Without a connection | "Needs a connection" |
 | Catching-up pill | "Catching up…"; "No connection. Showing older messages." |
+| Message link | "Message not found."; "Needs a connection"; the dialog has the title "Message link" and the button "OK"; the header of an opened address that waits is "Message link" |
 | Admin history setting, for reference | "History Visibility"; "Unlimited", "1 Day", "3 Days", "1 Week", "2 Weeks", "1 Month", "3 Months"; "Only show messages since user joined" |
 
 ## Related

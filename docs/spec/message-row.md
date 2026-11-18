@@ -56,6 +56,8 @@ This page specifies how one message appears in the conversation. A message shows
 
 **MR-13** A link shows as the author typed it, in the accent colour. It is underlined only on hover. It opens in a new tab. An e-mail address does not become a link, and its domain does not become a link.
 
+**MR-85** A link to a message of this server ([TL-43](timeline.md#TL-43)) is the exception to MR-13: a click or a tap opens the message in the same tab. This is so in a message, in a caption, in the pins panel and in the search results. A click with Ctrl, Shift, Alt or the Command key, and a click with the middle button, do what the browser does with a link.
+
 **MR-14** An edited text message ends with "(edited)" in small placeholder-coloured text.
 
 ### Emoji
@@ -142,7 +144,7 @@ This page specifies how one message appears in the conversation. A message shows
 
 **MR-46** On desktop, the bar shows at the top right of the message while the pointer is over the message. It also shows while one of its buttons has keyboard focus. It stays while the picker, menu or dialog of the message is open. It does not show on system lines or while the user edits the message.
 
-**MR-47** The buttons are in this order: the three quick reactions, a divider, Add Reaction, Reply, the GIF star on phones, Edit on the reader's own text messages, More. More is present when the message has text to copy, when the message is the reader's own, or when the reader may pin messages in the conversation (MR-77).
+**MR-47** The buttons are in this order: the three quick reactions, a divider, Add Reaction, Reply, the GIF star on phones, Edit on the reader's own text messages, More. More is present on every message: its menu always has one item or more (MR-54).
 
 **MR-48** The icons are 18 px. The Add Reaction icon is 20 px. The buttons get a tint on hover and become slightly smaller while pressed.
 
@@ -158,11 +160,13 @@ This page specifies how one message appears in the conversation. A message shows
 
 ### More menu
 
-**MR-54** More opens a menu. The menu contains "Copy Text" when the message has text, "Pin Message" or "Unpin Message" when the reader may pin (MR-77), and "Delete Message" in red on the reader's own messages. On desktop, the menu is a dropdown below the button. When there is no space below, it opens above the button. On a phone, the menu is a bottom sheet over a dimmed page.
+**MR-54** More opens a menu. The menu contains, in this order, "Copy Text" when the message has text, "Copy Message Link" on every sent message (MR-84), "Pin Message" or "Unpin Message" when the reader may pin (MR-77), and "Delete Message" in red on the reader's own messages. On desktop, the menu is a dropdown below the button. When there is no space below, it opens above the button. On a phone, the menu is a bottom sheet over a dimmed page.
 
 **MR-55** A tap outside the menu closes the menu and does not press anything under it. Escape closes the menu. A scroll does not close the menu. This includes the scroll that occurs when a phone keyboard closes.
 
 **MR-56** Copy Text copies the message text as the author typed it, with shortcodes and links as text. The menu closes. There is no other feedback.
+
+**MR-84** Copy Message Link copies the address of the message ([TL-43](timeline.md#TL-43)). The address is the address of the server as this browser shows it, then /m/ and a code of 22 characters that stands for the message. It holds no text of the message, no room and no name. The menu closes. There is no other feedback, as with Copy Text. A pending message has no such item, because it has no address until the server has it. *Why the browser's address:* the copy must not wait for the server. A person who uses the server under a second address copies links with that address, and such a link works only for people who can reach it.
 
 ### Editing
 
@@ -212,7 +216,7 @@ This page specifies how one message appears in the conversation. A message shows
 
 ### Without a connection
 
-**MR-75** Reactions, edits, deletes, pins and the GIF star need a connection. Without a connection, these actions change nothing: a tap on a pill, a quick reaction, a pick in the reaction picker, the star, Save, Delete, Pin Message and Unpin Message. They show "Needs a connection" at the message for two seconds. Pending messages are an exception. Their Edit and Remove act on the device. Reply and Copy Text work as usual. Media that the reader saw before also opens as usual.
+**MR-75** Reactions, edits, deletes, pins and the GIF star need a connection. Without a connection, these actions change nothing: a tap on a pill, a quick reaction, a pick in the reaction picker, the star, Save, Delete, Pin Message and Unpin Message. They show "Needs a connection" at the message for two seconds. Pending messages are an exception. Their Edit and Remove act on the device. Reply, Copy Text and Copy Message Link work as usual. Media that the reader saw before also opens as usual.
 
 ### Pinning
 
@@ -241,10 +245,12 @@ This page specifies how one message appears in the conversation. A message shows
 | Pick in the picker | mouse, touch | Picker closes; reaction toggled; emoji moved to the front of recents. |
 | Tap outside the picker, Escape | mouse, touch, keyboard | Picker closes. Nothing else happens. |
 | Reply | mouse, touch | Reply bar in the input box, draft focused, message tinted. |
-| More | mouse, touch | Dropdown (desktop) or bottom sheet (phone). Copy Text shows when the message has text. Pin Message, or Unpin Message on a pinned message, shows when the reader may pin (MR-77) and the message is not pending. Delete Message shows on own messages. |
+| More | mouse, touch | Dropdown (desktop) or bottom sheet (phone). Copy Text shows when the message has text. Copy Message Link shows when the message is not pending. Pin Message, or Unpin Message on a pinned message, shows when the reader may pin (MR-77) and the message is not pending. Delete Message shows on own messages. |
 | Tap outside the menu | mouse, touch | Menu closes. Nothing under it is pressed. |
 | Scroll with the menu open | touch | Menu stays open. |
 | Copy Text | mouse, touch | Text copied as typed; menu closes. |
+| Copy Message Link | mouse, touch | The address of the message copied; menu closes (MR-84). |
+| Click or tap on a link to a message of this server | mouse, touch | The message opens in the same tab (MR-85, TL-43). |
 | Edit | mouse, touch | Editor in the message, caret at the end, bar hidden. Phone: the keyboard opens. |
 | Enter in the editor | keyboard, device without touch | Saves. |
 | Enter in the editor | keyboard, device with touch | Newline. |
@@ -296,7 +302,7 @@ This page specifies how one message appears in the conversation. A message shows
 | GIF star tooltips | "Add to favorites"; "Remove from favorites" |
 | Bar tooltips | the emoji itself; "Add Reaction"; "Reply"; "Edit"; "More" |
 | Video play control | "Play video" |
-| More menu | "Copy Text"; "Pin Message"; "Unpin Message"; "Delete Message" |
+| More menu | "Copy Text"; "Copy Message Link"; "Pin Message"; "Unpin Message"; "Delete Message" |
 | Pin refusals | "Up to 6 pinned messages. Unpin one first."; "You cannot pin messages here."; "You cannot unpin messages here."; "A system line cannot be pinned." |
 | System line refusals | "A system line cannot be edited."; "A system line cannot be quoted."; "System lines do not accept reactions." |
 | Editor | "✓ Save" (tooltip "Save"); "✕ Cancel" (tooltip "Cancel"); "Enter to save · Shift+Enter for newline · Esc to cancel" |

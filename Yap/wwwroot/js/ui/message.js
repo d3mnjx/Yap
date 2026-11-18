@@ -19,6 +19,7 @@ import { openInstallDialog } from '../pwa.js';
 import { voicePlayer } from './voice.js';
 import { video, gifLoop } from './video.js';
 import { recordEditedEmojis } from '../recent-emoji.js';
+import { linkOf } from '../message-links.js';
 
 const MAX_TEXT = 4000;   // MR-11
 
@@ -385,7 +386,10 @@ function renderActions(rowNode, m) {
   // a failed row is pending too: Edit corrects the text and sends it again (MR-72)
   if (isOwn(m) && (m.text || !hasMedia(m))) { edit.hidden = false; edit.addEventListener('click', () => startEdit(rowNode, m)); } else edit.remove();   // a text row, or a media row with a caption (MR-57)
   const more = bar.querySelector('.action-more');
-  if (m.text || isOwn(m) || (!m.pending && mayPin())) { more.hidden = false; more.addEventListener('click', e => openMore(rowNode, m, e.currentTarget, e)); } else more.remove();   // MR-47; Pin for a media row of someone else (MR-77)
+  // MR-47: every row has More. A sent row has Copy Message Link (MR-84) at least, and a row that is not sent is the
+  // reader's own and has Remove.
+  more.hidden = false;
+  more.addEventListener('click', e => openMore(rowNode, m, e.currentTarget, e));
 }
 
 function openReactionPicker(rowNode, m, anchor) {
@@ -405,9 +409,12 @@ function openMore(rowNode, m, anchor, event) {
     pin.addEventListener('click', () => { close(); togglePin(rowNode, m, pinned); });
   }
   if (!m.text) copy.remove();   // the caption of a media row copies too (MR-56)
+  const link = layer.querySelector('[data-action="link"]');
+  if (m.pending) link.remove();   // MR-84: a row that is not sent has an id of this device only, and no address leads to it
   if (!isOwn(m) || m.pending) del.remove();
   if (!m.pending) remove.remove();
   copy.addEventListener('click', () => { navigator.clipboard?.writeText(m.text).catch(() => {}); close(); });   // MR-56
+  link.addEventListener('click', () => { navigator.clipboard?.writeText(linkOf(m.id)).catch(() => {}); close(); });   // MR-84: no feedback, as Copy Text
   del.addEventListener('click', e => { close(); if (e.shiftKey) deleteNow(rowNode, m); else confirmDelete(rowNode, m); });   // MR-67
   remove.addEventListener('click', () => { close(); sender.remove(m); });
   layer.querySelector('.more-menu-backdrop').addEventListener('click', () => close());

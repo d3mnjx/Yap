@@ -22,6 +22,9 @@ const patterns = [
   [/^\/login$/, () => ({ page: 'login' })],
   [/^\/verify\/([^/]+)$/, m => ({ page: 'verify', username: decodeURIComponent(m[1]) })],
   [/^\/invite\/([^/]+)$/, m => ({ page: 'invite', code: m[1] })],
+  // A message link (TL-43). Every text after /m/ is taken: the page refuses a text that is no code, and the reader
+  // gets "Message not found." in the lobby (TL-44), not the Not Found page.
+  [/^\/m\/([^/]+)$/, m => ({ page: 'message-link', code: m[1] })],
 ];
 
 function parse(full) {
