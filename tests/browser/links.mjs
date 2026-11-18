@@ -13,8 +13,7 @@ async function send(page, text) { await page.fill('.message-input', text); await
 const pathOf = page => new URL(page.url()).pathname;
 const atPath = (page, path, ms = 5000) => waitTrue(() => pathOf(page) === path, ms, 50);
 const rows = page => page.locator('.messages-container .message-group:not(.system-message)');
-const lit = (page, selector) => waitTrue(async () => ((await page.locator(selector).first().getAttribute('class').catch(() => '')) ?? '').includes('highlight-message'), 5000, 50);
-const litRow = (page, text) => waitTrue(async () => ((await row(page, text).first().getAttribute('class').catch(() => '')) ?? '').includes('highlight-message'), 5000, 50);
+const lit = locator => waitTrue(async () => ((await locator.first().getAttribute('class').catch(() => '')) ?? '').includes('highlight-message'), 5000, 50);   // the highlight of a jump
 const sentId = async (page, text) => {   // the id of a row that the server has: a pending row has an id of the device
   await waitTrue(async () => (await row(page, text).count()) === 1 && !(await row(page, text).getAttribute('class')).includes('pending'), 5000);
   return (await row(page, text).getAttribute('id')).slice('msg-'.length);
@@ -105,7 +104,7 @@ await step(4, 'A click on a link in a message opens the other room in the same t
   await link.waitFor({ timeout: 5000 });
   await link.click();
   const moved = await atPath(B, `/room/${roomIds.homelab}`);
-  const jumped = await litRow(B, 'the backup runs at 03:00');
+  const jumped = await lit(row(B, 'the backup runs at 03:00'));
   check(moved && jumped && ctxB.pages().length === 1, `path ${pathOf(B)}; the linked row has the highlight ${jumped}; tabs of the reader: ${ctxB.pages().length}`);
 });
 
@@ -115,7 +114,7 @@ await step(5, 'A link to a message of the open room jumps and keeps the address 
   await link.waitFor({ timeout: 5000 });
   await waitTrue(async () => !((await row(B, 'the backup runs at 03:00').getAttribute('class')) ?? '').includes('highlight-message'), 4000, 100);   // the highlight of step 4 is over
   await link.click();
-  const jumped = await litRow(B, 'the backup runs at 03:00');
+  const jumped = await lit(row(B, 'the backup runs at 03:00'));
   check(jumped && pathOf(B) === `/room/${roomIds.homelab}` && ctxB.pages().length === 1, `the linked row has the highlight ${jumped}; path ${pathOf(B)}; tabs: ${ctxB.pages().length}`);
 });
 
@@ -143,7 +142,7 @@ await step(6, 'A link to a direct message: a third person gets "Message not foun
   await forPartner.waitFor({ timeout: 5000 });
   await forPartner.click();
   const moved = await atPath(B, '/dm/boss');
-  const jumped = await litRow(B, 'the price is 40');
+  const jumped = await lit(row(B, 'the price is 40'));
   check(moved && jumped, `the partner: path ${pathOf(B)}; the linked row has the highlight ${jumped}`);
 });
 
@@ -161,7 +160,7 @@ await step(7, 'An opened address shows a message that is not loaded, and Back do
   await C.waitForSelector('.message-input', { timeout: 10000 });
   await C.goto(`${BASE}/m/${await codeOf(A, oldId)}`);
   const moved = await atPath(C, `/room/${roomIds.archive}`, 10000);
-  const jumped = await lit(C, `[id="msg-${oldId}"]`);
+  const jumped = await lit(C.locator(`[id="msg-${oldId}"]`));
   const window = (await C.locator('.newer-messages').count()) === 1;
   check(moved && jumped && window, `path ${pathOf(C)}; the linked row has the highlight ${jumped}; the rows are a window with an end row ${window}`);
   await C.goBack();
@@ -190,7 +189,7 @@ await step(9, 'A person who is not signed in signs in and gets the message (SH-4
   await D.waitForSelector('.username-form .join-button:not([disabled])', { timeout: 5000 });
   await D.press('.username-input', 'Enter');
   const moved = await atPath(D, `/room/${roomIds.homelab}`, 10000);
-  const jumped = await litRow(D, 'the backup runs at 03:00');
+  const jumped = await lit(row(D, 'the backup runs at 03:00'));
   check(moved && jumped, `path ${pathOf(D)}; the linked row has the highlight ${jumped}`);
   await ctxD.close();
 });

@@ -71,18 +71,14 @@ public partial class LinkPreviewService
             // Strip trailing punctuation that's likely not part of the URL
             url = StripTrailingPunctuation(url);
 
-            // Only allow http/https schemes (or no scheme = assume https)
-            if (url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
-                url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-            {
-                if (!IsMessageLink(url)) urls.Add(url);
-            }
-            else if (!url.Contains("://"))
-            {
-                // Bare domain like example.com/path — prepend https
-                if (!IsMessageLink("https://" + url)) urls.Add("https://" + url);
-            }
-            // Skip javascript:, ftp:, etc.
+            // Only allow http/https schemes (or no scheme = assume https): skip javascript:, ftp:, etc.
+            var hasScheme = url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                            url.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
+            if (!hasScheme && url.Contains("://")) continue;
+
+            // Bare domain like example.com/path — prepend https
+            var full = hasScheme ? url : "https://" + url;
+            if (!IsMessageLink(full)) urls.Add(full);
         }
 
         return urls;

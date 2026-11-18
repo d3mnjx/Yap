@@ -16,7 +16,7 @@ import * as overlays from './ui/overlays.js';
 import { jumpTo } from './ui/timeline.js';
 import { notice } from './ui/confirm.js';
 
-export const NOT_FOUND = 'Message not found.';   // the sentence of a refused jump (TL-41); TL-44 says why it is the only one
+const NOT_FOUND = 'Message not found.';   // the sentence of a refused jump (TL-41); TL-44 says why it is the only one
 const MAX_IDS = 50;                              // the server reads the first 50 ids of a call (ChatService.MaxMessageLinks)
 
 // ---- the two writings of a message id ----
@@ -56,7 +56,7 @@ export function messageIdOf(href) {
 // question asks the server again; an entry and a null stay until the page loads again or the session ends.
 
 // Asks the server about the ids that have no promise yet, in one call. Ids after the first 50 wait for the next call.
-export function ask(ids) {
+function ask(ids) {
   const links = state.messageLinks;
   const unknown = [...new Set(ids)].filter(id => !links.has(id)).slice(0, MAX_IDS);
   if (!unknown.length) return;
@@ -71,38 +71,35 @@ export function ask(ids) {
   }
 }
 
-function answerFor(id) {
-  ask([id]);
-  return state.messageLinks.get(id);
-}
-
 // ---- the open of a link (TL-43) ----
 
 // The jump that waits for the open of its conversation. A link to another conversation navigates there, and the
 // chat page takes the jump when the server's rows are in the timeline (pages/chat.js). A jump straight after the
 // navigation would meet the device's stored rows, and jumpTo answers 'Try again' when the rows change under it.
-let waiting = null;   // { channelId, id }
+// It is state.waitingJump ({ channelId, id }), in the store for the reason the answers are there: reset() takes it
+// away with the account, so the next person on the device never gets the jump of the one before.
 
 // The chat page calls this after each open that the server answered. The message to jump to, when the waiting jump
 // belongs to this conversation. Nothing waits afterwards in every case: a reconnect opens the conversation again and
 // must not jump a second time, and the open of another conversation ends the wait.
 export function takeJump(channelId) {
-  const jump = waiting;
-  waiting = null;
+  const jump = state.waitingJump;
+  state.waitingJump = null;
   return jump?.channelId === channelId ? jump.id : null;
 }
 
 // Opens the message of a link. `link` is the clicked element; without one, the address itself was opened
 // (pages/message-link.js), and `id` is null when the text after /m/ was no code.
 export async function open(id, link) {
-  const answer = id && await answerFor(id);
+  if (id) ask([id]);
+  const answer = id && await state.messageLinks.get(id);
   if (!answer || answer.error) { refuse(answer?.error ?? NOT_FOUND, link); return; }
   if (router.current.page === 'chat' && state.open?.channelId === answer.channelId) {
     const reason = await jumpTo(id);
     if (reason) refuse(reason, link);
     return;
   }
-  waiting = { channelId: answer.channelId, id };
+  state.waitingJump = { channelId: answer.channelId, id };
   // An opened address leaves no entry of its own in the history: Back must not come back to /m/{code} and open the
   // link a second time.
   router.navigate(answer.dmUser ? router.dmPath(answer.dmUser) : router.roomPath({ id: answer.channelId }, lobby()?.id), { replace: !link });
@@ -111,9 +108,11 @@ export async function open(id, link) {
 // GEN-02: the reason shows at the place of the action. A clicked link stays where it is, and the reason shows for
 // two seconds at the element that holds it: reason() puts its text into the element it gets, and inside the link the
 // text would be a part of the link. An opened address has no place, so the lobby opens and a dialog says the reason.
+// A clicked link can be gone when the answer comes: a reaction drew its row again during the wait. The reader then
+// stays where they are, as after every click (TL-44), and the dialog says the reason.
 function refuse(reason, link) {
   if (link?.isConnected) { overlays.reason(link.parentElement, reason); return; }
-  router.navigate('/lobby', { replace: true });   // before the dialog: a navigation closes every overlay
+  if (!link) router.navigate('/lobby', { replace: true });   // before the dialog: a navigation closes every overlay
   failed(reason);
 }
 

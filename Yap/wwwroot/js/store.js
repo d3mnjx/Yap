@@ -43,6 +43,7 @@ export const state = {
   messageLinks: new Map(),      // message id -> a promise of the server's answer about that message (message-links.js, TL-43).
                                 // Here, and not in that module, so that reset() takes it away with the account: an answer
                                 // says what this account may read. No listener: nothing is drawn from a change of the map.
+  waitingJump: null,            // { channelId, id }: the message of an opened link whose conversation is not open yet (message-links.js)
 };
 
 const listeners = new Map();    // part -> Set of functions
@@ -465,7 +466,7 @@ export function reset() {
   clearTimeout(typingTimer);
   ownEmojiUses = [];
   Object.assign(state, { user: null, rooms: [], users: {}, presence: {}, dms: [], unread: {}, mutes: null, emoji: null,
-    favoriteGifIds: new Set(), open: null, pending: [], drafts: {}, registrations: [], messageLinks: new Map() });
+    favoriteGifIds: new Set(), open: null, pending: [], drafts: {}, registrations: [], messageLinks: new Map(), waitingJump: null });
   for (const part of ['user', 'rooms', 'users', 'presence', 'dms', 'unread', 'mutes', 'emoji', 'favoriteGifIds', 'pending']) changed(part);
   changed('messages', { type: 'reset' });
 }
