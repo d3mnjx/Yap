@@ -304,14 +304,16 @@ public partial class LinkPreviewService
         return preview;
     }
 
-    private static string? ExtractMetaContent(string html, string property, bool isOg = true)
+    // Internal, not private: LinkCardTests calls it with small pieces of HTML.
+    internal static string? ExtractMetaContent(string html, string property, bool isOg = true)
     {
         var q = "[\"']";    // character class matching " or '
-        var nq = "[^\"']*"; // character class matching anything except " or '
 
         // Match both property="og:X" and name="description" variants
         var key = $@"{(isOg ? "property" : "name")}\s*=\s*{q}{Regex.Escape(property)}{q}";
-        var content = $@"content\s*=\s*{q}({nq}){q}";
+        // The value ends at the same quote character that opened it, so content="Don't stop" keeps its apostrophe.
+        // One class for the two quote characters cut that title to "Don". Do not merge the two branches again.
+        var content = """content\s*=\s*(?:"(?<value>[^"]*)"|'(?<value>[^']*)')""";
 
         // The two attributes come in either order. <meta ... property="og:X" ... content="value" ...> is the
         // usual order and goes first, then <meta ... content="value" ... property="og:X" ...>.
@@ -320,7 +322,7 @@ public partial class LinkPreviewService
         {
             var match = Regex.Match(html, pattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
             if (match.Success)
-                return WebUtility.HtmlDecode(match.Groups[1].Value.Trim());
+                return WebUtility.HtmlDecode(match.Groups["value"].Value.Trim());
         }
 
         return null;

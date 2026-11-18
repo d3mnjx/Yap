@@ -156,4 +156,15 @@ public class LinkCardTests : IClassFixture<YapFactory>
         Assert.Null(LinkPreviewService.ResolvePicture("https://a.example/post", ""));    // content="" was no picture before
         Assert.Null(LinkPreviewService.ResolvePicture("https://a.example/post", "#"));   // the page itself is no picture
     }
+
+    [Fact(DisplayName = "A meta value ends at the quote character that opened it, so a title keeps its apostrophe")]
+    public void Meta_value_keeps_the_other_quote_character()
+    {
+        Assert.Equal("Don't Stop Believin'", LinkPreviewService.ExtractMetaContent(
+            """<meta property="og:title" content="Don't Stop Believin'">""", "og:title"));
+        Assert.Equal("The \"best\" song", LinkPreviewService.ExtractMetaContent(
+            """<meta content='The "best" song' property='og:title'>""", "og:title"));   // the other order, single quotes
+        Assert.Equal("A page", LinkPreviewService.ExtractMetaContent(
+            """<meta name="description" content="A page">""", "description", isOg: false));
+    }
 }
